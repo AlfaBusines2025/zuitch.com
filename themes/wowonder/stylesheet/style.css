@@ -360,7 +360,7 @@ textarea.postText{border:none;padding-top:12px;padding-left:50px;height:45px;box
 .wow_hdr_menu_usr_lnk b {max-width: 140px;overflow: hidden;text-overflow: ellipsis;    color: #050505;}
 .wow_hdr_menu_usr_lnk:hover b {
 	color: #fff;
-} 
+}
 .wow_hdr_menu_usr_lnk img {width: 27px;min-width: 27px;height: 27px;border-radius: 50%;}
 .wow_hdr_requests {padding: 10px;font-family: Segoe UI Historic, Segoe UI, Helvetica, Arial, sans-serif;font-family: Segoe UI Historic, Segoe UI, Helvetica, Arial, sans-serif;}
 .wow_hdr_requests .user-request-list {display: flex;align-items: center;justify-content: space-between;}
@@ -633,8 +633,8 @@ header .barloading{
 }
 .sidebar-user-data .sidebar-listed-user-name{
 text-overflow: ellipsis;
-  overflow: hidden; 
-  max-width: 100%; 
+  overflow: hidden;
+  max-width: 100%;
   white-space: nowrap;
   /* bottom:0; *//* left:0; */color: #050505;/* background:linear-gradient(transparent,rgba(0,0,0,.45)); *//* padding:5px; *//* width:100%; */font-weight: 600;margin-top: 5px;/* position:absolute; */font-size: 13px;line-height:16px;max-height:56px}
 .sidebar-ad iframe,.sidebar-ad img,.sidebar-ad script{width:100%;max-width:100%}
@@ -8296,3 +8296,17 @@ div#modal_light_box {
 .user-request-list #wo_useract_btn{
 	    padding: 15px 45px !important;
 }
+
+
+/* Aseguramos que el ELEMENTO 1 siempre esté visible */
+@media (max-width: 550px) {
+    .brand.header-brand {
+        display: block !important;
+    }
+
+    /* Ocultamos ELEMENTO 2 */
+    #wo_home_btns {
+        display: none;
+    }
+}
+
