@@ -1,0 +1,8 @@
+{
+    "sql_db_host": "localhost",
+    "sql_db_user": "red",
+    "sql_db_pass": "3Mr526aKD",
+    "sql_db_name": "admin_red",
+    "site_url": "https://zuitch.com",
+    "purchase_code": "930bbdcb-216c-4df7-a83f-2205a4e3d4aa"
+}

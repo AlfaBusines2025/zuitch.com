@@ -1,0 +1,85 @@
+{strip}
+
+	<div id="vy_lv_prelivedashboard" class="vy_lv_a4cp"> 
+		
+	<div class="vy_lv_ajax_loading1 js__vy_lv_ajax_loading1 __none">	
+		<div class="vy_lv_ajax_loading"></div>
+	</div>
+		<div class="vy_lv_a7t">
+		
+			<div class="vy_lv_a8t">{$this->lang['post']}</div>
+			
+			<div class="vy_lv_a9u">
+				
+					<div class="vy_lv_a10ua"><img src="{$this->USER['profile_photo']}" /></div>
+					<div class="vy_lv_a12np">
+						<div class="vy_lv_a11uf">{$this->USER['fullname']}</div>
+						<div class="vy_lv_a13s">
+							<div class="vy_lv_a14s" id="vy_lv_op_privacy"><i class="vy_lv_a15_ic __everyone"></i>{$this->lang['everyone']}</div>
+							<input type="hidden" value="1" name="vy_lv_audience" />
+						 
+						</div>
+					</div>
+
+			</div>
+			
+			
+			{if $this->page_id > 0}
+			{include file="{dirname(__FILE__)}/to_page.html"}
+			{/if}
+			
+			{if $this->group_id > 0}
+			{include file="{dirname(__FILE__)}/to_group.html"}
+			{/if}
+
+			<div class="vy_lv_a9u">
+			
+				<input type="text" onkeyup="vy_lvst.updateGoLiveData(this,'title');" class="vy_lv_a16t" name="vy_lv_title" value="" placeholder="{$this->lang['title_optional']}"/>
+			
+			</div>
+
+			<div class="vy_lv_a9u">
+			
+				<textarea name="vy_lv_descr" id="vy_lv_txtemojis" onkeyup="vy_lvst.updateGoLiveData(this,'description');" placeholder="{$this->lang['stream_description']}" class="vy_lv_a17t"></textarea>
+			
+			</div>
+
+
+
+
+			<div class="vy_lv_a9u" id="vy_lvst_add_product_cnt">
+			
+				<a href="javascript:void(0);" class="vy_lv_a24t" id="vy_lv_addproduct_btn" onclick="vy_lvst.addProduct(this,event);">{$this->svg['plus_ic']} {$this->lang['add_product']}</a>
+			
+			</div>
+
+
+
+
+			{if $this->recording}
+			<div class="vy_lv_a9u">
+
+				<label class="nm_tx" for="vy_ch_recordingtotimeline">{$this->lang['record_stream']}</label>
+				<label class="el-switch">
+				 <input type="checkbox" onclick="vy_lvst.updateGoLiveData(this,'record');" id="vy_ch_recordingtotimeline" name="vy_record_to_timeline" checked>
+				 <span class="el-switch-style"></span></label>
+			</div>
+			</div>
+ 
+			{/if}
+			
+			
+			<Div class="vy_lv_fbt_go">
+				<div class="vy_lv_p16">
+					
+					<button disabled readonly class="vy_lv_fvbbt_govtn js__vy_lv_fvbbtgo __disabled">{$this->lang['go_live']}</button>
+				
+				</div>
+			</div>
+			
+		</div>
+	
+	</div>
+	
+	
+	{/strip}

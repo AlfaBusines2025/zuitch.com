@@ -1,0 +1,263 @@
+
+.vpl-settings-holder,
+.vpl-player-controls-bottom,
+.vpl-volume-seekbar,
+.vpl-player-controls-top .vpl-contr-btn,
+.vpl-share-data,
+.vpl-info-data,
+.vpl-resume-data,
+.vpl-context-menu,
+.vpl-big-play,
+.vpl-pwd-data-wrap{
+	background: #353b49;
+}
+
+.vpl-contr-btn{
+	width:40px;
+	height:100%;
+	float: left;
+	position: relative;
+	cursor: pointer;
+}
+/*  svg icons */
+.vpl-contr-btn svg{
+	position: absolute;
+	top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+	color:#d7e6eb;
+	height: 14px;
+	fill:currentColor;
+	transition: color .1s ease-out;
+}
+.vpl-contr-btn:hover svg{
+	color:#fff !important;
+}
+
+
+.vpl-player-controls-bottom{
+	position: absolute;
+    height: 50px;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    display: flex;
+}
+.vpl-player-controls-top{
+	position:absolute;
+	width:40px;
+	top:10px;
+	right:10px;
+}
+.vpl-player-controls-top .vpl-contr-btn{
+	height: 40px;
+	width: 40px;
+	margin-bottom: 5px;
+	border-radius: 3px;
+	overflow: hidden;
+}
+.vpl-player-controls-top .vpl-contr-btn svg{
+	height: 17px;
+}
+.vpl-player-controls-bottom-left{
+}
+.vpl-player-controls-bottom-right{
+	position: relative;
+    margin-left: auto;
+}
+
+.vpl-media-time-current,
+.vpl-media-time-separator,
+.vpl-media-time-total{
+	position:relative;
+	top: 50%;
+	left:0px;
+	text-align: center;
+	float:left;
+	margin:0!important;
+	font-size:12px!important;
+    -ms-transform: translateY(-50%);
+    -webkit-transform: translateY(-50%);
+    transform: translateY(-50%);
+}
+.vpl-media-time-current{
+	padding-left: 10px;
+}
+.vpl-media-time-total{
+	padding-right: 5px;
+}
+.vpl-media-time-current{
+	color: #62768f;
+}
+.vpl-media-time-separator,
+.vpl-media-time-total{
+	color: #d7e6eb;
+}
+
+.vpl-seekbar-wrap{
+    position:relative;
+	margin: 0 10px;
+    height: 100%;
+    overflow: hidden;
+}
+.vpl-seekbar{
+	overflow: hidden;
+    height: 100%;
+    cursor: pointer;
+    touch-action: none;
+    flex: 1;
+}
+.vpl-progress-bg{
+	position:relative;
+	width:100%;
+	top:23px;
+	height:5px;
+	overflow: hidden;
+	border-radius: 2px;
+}
+.vpl-progress-bg{
+	background:#d1e3e7;
+}
+.vpl-load-level{
+	position:absolute;
+	top:0;
+	height:100%;
+}
+.vpl-load-level{
+	background:#d1e3e7;
+}
+.vpl-progress-level{
+	position:absolute;
+	top:0;
+	height:100%;
+	transition: width 0.2s linear;
+}
+.vpl-progress-level{
+	background:#62768f;
+}
+
+.vpl-volume-wrapper{
+	position: relative;
+	float: left;
+	height:100%;
+}
+.vpl-volume-toggle{
+	position: relative;
+	left:0;
+	top:0;
+	width:40px;	
+	height:100%;
+}
+.vpl-volume-seekbar{
+	position: relative;
+    top: 0;
+    margin-left: 30px;
+    width: 90px;
+    height: 100%;
+    cursor: pointer;
+    touch-action: none;
+}
+.vpl-volume-bg{
+	position: absolute;
+    width: 70px;
+    height: 5px;
+    left: 10px;
+    top: 23px;
+    border-radius: 2px;
+    overflow: hidden;
+}
+.vpl-volume-bg{
+	background:#d1e3e7;
+}
+.vpl-volume-level{
+	position: absolute;
+    height: 100%;
+    left: 0;
+    top: 0;
+    transition: width 0.2s ease-out, height 0.2s ease-out;
+}
+.vpl-volume-level{
+	background:#62768f;
+}
+
+.vpl-settings-holder{
+    margin-bottom: 1px;
+}
+.vpl-menu-item{
+    font-size: 12px;
+}
+.vpl-settings-menu-item-value{
+	color: #999;
+}
+.vpl-menu-header{
+	background-color: #fff;
+	color: #555;
+}
+.vpl-menu-item{
+	color: #eee;
+}
+.vpl-menu-active,
+.vpl-menu-item:hover{
+	background: #fff;
+	color: #555;
+}
+
+.info-title{
+	color: #fff;
+}
+.vpl-info-description{
+	color: #ddd;
+}
+.vpl-info-description a{
+	color: #ffeb3b;
+}
+.vpl-big-play{
+	position:absolute;
+	width:76px;
+	height:76px; 
+	top:50%;
+	left:50%;
+	margin-left:-37px;
+	margin-top:-37px;
+	display:none;
+	text-align:center;
+	line-height: 76px;
+	cursor: pointer;
+	overflow: hidden;
+	border-radius: 3px;
+}
+.vpl-big-play svg{
+	position: absolute;
+	top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+	color:#d7e6eb;
+	height: 26px;
+	fill:currentColor;
+}
+.vpl-big-play:hover svg{
+	color:#fff !important;
+}
+/* font awesome */
+.vpl-big-play svg{
+	font-size: 28px;
+}
+/*  image icons */
+.vpl-big-play img{
+	position: absolute;
+	top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.vpl-tooltip{
+	background:#353b49;
+	color:#fff!important;
+}
+
+
+
+
+
+
+

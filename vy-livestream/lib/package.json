@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "babelify": "^10.0.0",
+    "browserify-css": "^0.15.0"
+  }
+}

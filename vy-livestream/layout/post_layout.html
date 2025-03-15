@@ -1,0 +1,413 @@
+<?php 
+$vy_lv22 = new LIVE_STREAM;
+$broadcast_data22 = $vy_lv22->getBroadcastData($current_post['id']);
+$b_usdt = $vy_lv22->lv_getUserDetails($broadcast_data22['user_id']);
+$broadcast_contain_product = $vy_lv22->ifBroadcastHaveProduct($broadcast_data22['id']);
+
+ 
+?>
+<?php if( $broadcast_data22['islivenow'] == 'yes'){ ?>
+         <div class="vy_lv_feedb1">
+                    <?php
+                    if($broadcast_contain_product)
+                     echo '<div class="ff245_00A">'.$vy_lv22->getTopProduct($broadcast_data22['id'])['template'].'</div>';
+
+                    ?>
+<script>
+ 
+(function () {
+  "use strict";
+  let cmd_f = typeof vy_lvst.ajax_url == 'undefined' ? '/vy-livestream-cmd.php' : vy_lvst.ajax_url
+  , pid = "<?php echo $current_post['id'];?>"
+  , bpid = "<?php echo md5($current_post['id']);?>"
+  , video = $('#vylv_feedstream_'+pid).get(0)
+  , s_url = "<?php echo $GLOBALS['V_Y']['site_url'];?>"
+  , rtmp_port = "<?php echo $GLOBALS['V_Y']['port']['rtmp_nginx_tls'];?>"
+  , direct_u = `${s_url}:${rtmp_port}/dash/${bpid}.mpd`
+  , video_pause_btn = $('#vylv_feedvieocontrol_pause_'+pid)
+  , video_play_btn = $('#vylv_feedvieocontrol_play_'+pid)
+  , video_unmuted_btn = $('#vylv_feedvieocontrol_unmute_'+pid)
+  , video_muted_btn = $('#vylv_feedvieocontrol_mute_'+pid)
+  , video_reload = $('#vylv_feedvieocontrol_reload_'+pid)
+  , retry_btn = $('#vy_lv_feed_retry_btn_'+pid)
+  , retry_cnt = $('#vylement_feed_err_'+pid)
+  , broad_ended = $('#vylvelment_feed_ended_'+pid)
+  , all_controls = $('#vyelement_feed_allcontrols_'+pid)
+  , vd_loading_ic = $('#vy_lv_feedloadingvd_'+pid);
+  var d_player = {}, _timeout = {};
+
+
+
+const player_catch_events = (e) => {
+console.log("Event received: " , e);
+if(typeof e != 'object') {console.log('return false event');return false;}
+switch(e.type){
+    case 'play':
+
+    break;
+    case "bufferStalled":
+        console.log('bufferStalled',e);
+    break;
+    case "canPlay":
+        if(video.paused) {video.play();}
+        hide_loading();
+        console.log('play');
+    break;
+    case "error":
+        console.log('error',e);
+        broadcast_alive(pid);
+    break;
+    case "playbackEnded":
+         console.log('playback ended',e);
+    break;
+}
+};
+const show_loading = () => {
+    vd_loading_ic.show();
+};
+const hide_loading = () => {
+    vd_loading_ic.hide();
+};
+const constructVideo = () => {
+    
+d_player[pid] = dashjs.MediaPlayer().create();
+d_player[pid].initialize(video, direct_u, true);
+
+d_player[pid].on('loadstart',function(){
+    console.log('video loading............');
+});
+d_player[pid].on(dashjs.MediaPlayer.events['BUFFER_EMPTY'],player_catch_events);
+d_player[pid].on(dashjs.MediaPlayer.events['CAN_PLAY'],player_catch_events);
+d_player[pid].on(dashjs.MediaPlayer.events['ERROR'],player_catch_events);
+d_player[pid].on(dashjs.MediaPlayer.events['PLAYBACK_ENDED'],player_catch_events);
+d_player[pid].on(dashjs.MediaPlayer.events['BUFFER_LOADED'],player_catch_events);
+
+}
+const destroy_player = (post_id) =>{
+    if(d_player.hasOwnProperty(post_id)) {
+        d_player[post_id].destroy();
+        /*d_player[post_id].MediaPlayer.reset();*/
+        delete d_player[post_id];
+    }
+}
+const _estop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+}
+const reload_video = (post_id) => {
+  destroy_player(post_id);
+ /* d_player[post_id].attachSource(direct_u);*/
+  video.pause();
+  constructVideo();
+};
+const rm_stream = (id) => {
+$.post(`${vy_lvst_website_host}${cmd_f}`, {'cmd':'delete_stream','id':escape(post_id)}, function(data){
+    console.log('stream has been removed. response: '+data);
+});
+};
+const broadcast_alive = async (post_id) =>{
+await $.ajax({
+            url: 'https://' + vy_lvst_socket_url + '/isbroadcastalive',
+            contentType: 'application/json',
+            data: JSON.stringify({'post_id':escape(post_id)}),
+            type: 'POST',
+            success: function(d) {
+
+                if(d.exists){
+
+                $.post(`${vy_lvst_website_host}${cmd_f}`, {'cmd':'isbroadcastalive','id':escape(post_id)}, function(data){
+                    hide_loading();
+                    if(data <= 0){
+                        destroy_player(post_id);
+                        reload_video(post_id);
+                        broad_ended.show();
+                        retry_cnt.hide();
+                        all_controls.hide();
+                        $(video).hide();
+                    } else {  
+                        retry_cnt.show();
+                    }
+                });
+            } else {
+
+               rm_stream(post_id);
+            }
+
+
+            },
+            error: function(xhr, status, error) {
+                rm_stream(post_id);
+                console.log('Error, no stream: ' + error.message);
+ 
+            },
+});
+  
+}
+const retry_e = async (e) => {
+const post_id = $(e.target).data('id');
+$(e.target).closest('#vylement_feed_err_'+post_id).hide();
+reload_video(post_id);
+show_loading();
+};
+const toggleMute = () => {
+  video.muted = !video.muted;
+};
+const startvlf = async (post_id) => {
+var timeout_sec = 9000;
+clearTimeout(_timeout[post_id]);
+if(typeof vy_lvst.getViewers == 'function'){
+    const viewers_count = await vy_lvst.getViewers(post_id,0,1);
+    $('#vy_lv_feed_2peoplecount_'+post_id).text(viewers_count.viewers.length);
+    
+} else {
+timeout_sec = 250;  
+}
+
+_timeout[post_id] = setTimeout(() => {
+
+    if($(document).find('#vylv_feedbroadcast_'+post_id).length){
+        startvlf(post_id);
+    }
+
+},timeout_sec);
+
+}
+constructVideo();
+startvlf(pid);
+video_pause_btn.off('click.vylv_pausefeedvideo').on('click.vylv_pausefeedvideo', function(e){
+    _estop(e);
+    video.pause();
+});
+video_play_btn.off('click.vylv_playsefeedvideo').on('click.vylv_playsefeedvideo', function(e){
+    _estop(e);
+    video.play();
+});
+retry_btn.off('click.vy_lv_retry_feed').on('click.vy_lv_retry_feed', retry_e);
+video_reload.off('click.vylv_video_reload').on('click.vylv_video_reload', reload_video);
+video_unmuted_btn.off('click.vylv_unmutesefeedvideo').on('click.vylv_unmutesefeedvideo', toggleMute);
+video_muted_btn.off('click.vylv_mutesefeedvideo').on('click.vylv_mutesefeedvideo', toggleMute);
+video.onplay = (e) => {
+video_play_btn.hide();      
+video_pause_btn.show();
+};
+video.onpause = (e) => {
+video_play_btn.show();      
+video_pause_btn.hide();
+};
+video.canplay = (e) => {
+video.play();
+};
+video.onended = (e) => {
+    alert('ended');
+}
+video.onvolumechange = (e) => { 
+    if(video.muted) { 
+        video_muted_btn.show();
+        video_unmuted_btn.hide();
+    } else {
+        video_muted_btn.hide();
+        video_unmuted_btn.show();
+        if(video.volume < 1)
+            video.volume = 1;
+    }
+
+}
+Object.defineProperty(HTMLMediaElement.prototype, 'vylv_playing_'+bpid, {
+    get: function () {
+        return !!(this.currentTime > 0 && !this.paused && !this.ended && this.readyState > 2);
+    },
+    configurable: true
+});
+$(document).off('click.fixiosautoplay touchstart.fixiosautoplay').on('click.fixiosautoplay touchstart.fixiosautoplay', () => {
+      if (!video['vylv_playing_'+bpid]) video.play();
+});
+})();
+</script>
+ <div class="vylv_feedbroadcast" id="vylv_feedbroadcast_<?php echo $current_post['id'];?>">
+ 
+<div class="vylvelment-k5klkh-DivSwiperContent e7kdtp33">
+    <div class="vylvelment-13g49ks-DivLiveContainer e14c6d571">
+        <div class="vylvelment-1wtb8fn-DivLiveContent e14c6d572">
+            <div class="vylvelment-ry7ftq-DivLiveMainContent e14c6d573">
+                <div class="vylvelment-wszwz-DivLiveRoomPlayerContainer e14c6d576">
+                    <div class="vylvelment-wx0vpv-DivFeedLivePlayerContainer ev4k9610">
+                        <div class="vylvelment-1nfnqda-DivFeedLivePlayerCoreContainer ev4k9611">
+                            <div class="vylvelment-h28j5b-DivLivePlayerContainer e19tq4ft0 xgplayer_autohide xgplayer xgplayer-pc xgplayer-playing xgplayer-inactive" data-e2e="live-player" data-testid="live-player" role="video-container" style="width: 100%; height: 100%;">
+
+
+    <video poster="<?php echo $broadcast_data22['full_cover_url'];?>" id="vylv_feedstream_<?php echo $current_post['id'];?>" autoplay muted webkit-playsinline x5-playsinline playsinline tabindex="2" mediatype="video"></video> 
+ 
+
+
+                                <div data-e2e="live-player-fullscreen-top" data-testid="live-player-fullscreen-top" role="fullscreen-banner" class="vylvelment-1uhmqok-DivLivePlayerHeader e19tq4ft3"></div>
+                                <div class="vylvelment-uskur1-DivPlayerBackground ev4k9613">
+                                    <div class="vylvelment-1kdnu10-DivPlayerCover ev4k9612"></div><img src="<?php echo $b_usdt['avatar'];?>" style="display: block; width: 100%; height: 100%;">
+                                </div>
+<div class="vylvelment_feed_ended" id="vylvelment_feed_ended_<?php echo $current_post['id'];?>" style="display:none;">
+    <div class="vylvelment_feed_ended_avatar"><img src="<?php echo $b_usdt['avatar'];?>" /></div>
+    <h3 class="vylvelment_feed_ended_avatar_str">LIVE has ended</h3>
+</div>
+<div class="vylvelment-1tq0a51-DivFeedLiveFatalContainer erjacs63" style="display:none;" id="vylement_feed_err_<?php echo $current_post['id'];?>">
+  <div class="vylvelment-h18sn3-DivFeedLiveStatus e14rz8gh0">
+    <div class="vylvelment-11kdsjh-DivLiveExceptionWrapper e14rz8gh7">
+      <div class="vylvelment-1vinvlw-DivExceptionWrapper e9fk530">
+        <div class="vylvelment-1hny6av-DivExceptionContent e9fk531">
+          <div class="vylvelment-1swazki-DivIconWrapper e9fk532">
+            <div class="vylvelment-6dbek6-DivVideoSVG e9fk537">
+                 <?php echo $vy_lv22->svg['live_feed_camera_ic'];?>
+            </div>
+          </div>
+          <h3 class="vylvelment-1waxuv7-H3Title e9fk533">Server error</h3>
+          <h5 class="vylvelment-1yuls39-H5SubTitle e9fk534">Something is wrong on our end. We apologize for any inconvenience and should be back soon.</h5>
+          <div class="vylvelment-4ffi1Uit1">
+          <button type="button" id="vy_lv_feed_retry_btn_<?php echo $current_post['id'];?>" data-id="<?php echo $current_post['id'];?>" class="vylvelment-2ozoao-Button ehk74z00">Retry</button>
+          <button type="button" onclick="vy_global_openLiveStream(event,this,<?php echo $current_post['id'];?>);" class="vylvelment-2ozoao-Button ehk74z00">Open broadcast</button>
+            </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+                                <div class="vylvelment-z0wp4v-DivFeedPlayerGradient erjacs61"></div>
+                                <div id="vy_lv_feedloadingvd_<?php echo $current_post['id'];?>" class="vylvelment-y0wp4v-DivFeedPlayerGradient">
+                                    <div class="vylv_3xTlds-ring"><div></div><div></div><div></div><div></div></div>
+                                </div>
+                                <div class="vylvelment-j9m7lb-DivFeedPlayerControls erjacs60" id="vyelement_feed_allcontrols_<?php echo $current_post['id'];?>">
+                                    <div class="vylvelment-kw4pr6-DivFeedPlayerClickArea esmutj80" onclick="vy_global_openLiveStream(event,this,<?php echo $current_post['id'];?>);">
+                                        <div data-e2e="click-tips-test-id" data-testid="click-tips-test-id" class="vylvelment-u9gd8i-DivClickTips e1vdaz20">
+                                            <div class="vylvelment-18xriun-DivLine e1vdaz21"></div>
+                                            <div class="vylvelment-1u9wvxs-DivStreamingIcon e1vdaz23">
+
+                                                <?php echo $vy_lv22->svg['feed_live_playing'];?>
+
+
+                                            </div>
+                                            <div class="vylvelment-4hl5ml-DivClickTipsText e1vdaz22"><?php echo $vy_lv22->lang['click_to_watch'];?></div>
+                                            <div class="vylvelment-18xriun-DivLine e1vdaz21"></div>
+                                        </div>
+                                    </div>
+                                    <div class="vylvelment-cznx31-DivFeedPlayerDetailsBarContainer esmutj81" onclick="vy_global_openLiveStream(event,this,<?php echo $current_post['id'];?>);">
+                                        <div data-e2e="details-bar-test-id" data-testid="details-bar-test-id" class="vylvelment-reynfh-DivDetailsBar eawfp3g0">
+                                            <div class="vylvelment-mt74r7-DivLeftContainer eawfp3g6">
+                                                <div class="vylvelment-1wwk0db-DivTagContainer eawfp3g7">
+                                                    <div data-e2e="live-tag" class="vylvelment-1fptdeg-DivLiveTag exh5ca40">LIVE</div>
+                                                </div>
+                                                <div class="vylvelment-1g1mtx-DivDetailsLine eawfp3g1"><span class="vylvelment-14ntc7b-SpanNickName eawfp3g2"><?php echo $b_usdt['fullname'];?></span><span class="vylvelment-1d8qkjd-SpanTwoPerson eawfp3g3">
+
+                                                    
+                                                    <?php echo $vy_lv22->svg['live_2people'];?>
+
+                                                    </span><span id="vy_lv_feed_2peoplecount_<?php echo $current_post['id'];?>" class="vylvelment-uaefg8-SpanPersonCount eawfp3g4">&middot; </span></div>
+                                                <?php
+                                                    if(!empty($current_post['postText'])){
+
+                                                    ?><div class="vylvelment-1g1mtx-DivDetailsLine eawfp3g1"><?php echo $current_post['postText'];?></div><?php
+
+                                                    }
+
+                                                ?>
+                                                    
+                                            </div>
+                                            <div class="vylvelment-1vs8zus-DivRightContainer eawfp3g5"></div>
+                                        </div>
+                                    </div>
+                                    <div class="vylvelment-k9neec-DivFeedPlayerFooterContainer e1x2tbja0">
+                                        <div data-e2e="control-bar-id" data-testid="control-bar-id" class="vylvelment-pgx82w-DivControlsContainer e1f853ml0">
+                                            <div class="vylvelment-f0jib0-DivInnerController-StyledLeftControlsGroup e1f853ml2">
+                                                <div data-e2e="play-icon" data-testid="control-container" class="vylvelment-u4xbe9-DivControlContainer e10xci3l2">
+                                                    <div data-e2e="control-icon" data-testid="control-icon" class="vylvelment-c52qon-DivControlIcon e10xci3l3">
+
+
+                                                        <div id="vylv_feedvieocontrol_play_<?php echo $current_post['id'];?>" style=""><?php echo $vy_lv22->svg['live_video_play'];?></div>
+                                                        <div id="vylv_feedvieocontrol_pause_<?php echo $current_post['id'];?>" style="display:none;"><?php echo $vy_lv22->svg['live_video_pause'];?></div>
+
+                                                    </div>
+                                                </div>
+                                                <div data-e2e="replay-icon" data-testid="control-container" class="vylvelment-u4xbe9-DivControlContainer e10xci3l2">
+                                                    <div data-e2e="control-icon" data-testid="control-icon" class="vylvelment-c52qon-DivControlIcon e10xci3l3">
+                                                        <div id="vylv_feedvieocontrol_reload_<?php echo $current_post['id'];?>"><?php echo $vy_lv22->svg['live_video_reload'];?></div>
+
+
+
+
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="vylvelment-iqc0z2-DivInnerController-StyledRightControlsGroup e1f853ml4">
+                                                <div data-e2e="volume-icon" data-testid="control-container" class="vylvelment-u4xbe9-DivControlContainer e10xci3l2">
+                                                    <div id="vylv_feedvieocontrol_volume_<?php echo $current_post['id'];?>" data-e2e="volume-slider" data-testid="volume-slider" class="vylvelment-ujngbb-DivVolumeSlider e6f71pj0" style="display: none;">
+                                                        <div data-e2e="volume-bar-id" data-testid="volume-bar-id" class="vylvelment-qdghpq-DivVolumeBar e6f71pj1">
+                                                            <div class="vylvelment-5q40yf-DivDragBar e6f71pj2"></div>
+                                                            <div class="vylvelment-zd3urs-DivDot e6f71pj3"></div>
+                                                        </div>
+                                                    </div>
+                                                    <div data-e2e="volume-icon-id" data-testid="volume-icon-id" class="vylvelment-c52qon-DivControlIcon e10xci3l3"><span data-testid="volume-mute-icon-id" style="width: 18px; height: 18px;">
+
+
+                                                        <div id="vylv_feedvieocontrol_mute_<?php echo $current_post['id'];?>" style=""><?php echo $vy_lv22->svg['live_video_muted'];?>
+                                                        </div>
+                                                        <div id="vylv_feedvieocontrol_unmute_<?php echo $current_post['id'];?>" style="display:none;"><?php echo $vy_lv22->svg['live_video_unmuted'];?>
+                                                        </div>
+
+                                                        </span></div>
+
+
+                                                </div>
+                                                <div style="display:none!important;" data-e2e="auto-play-icon" data-testid="control-container" class="vylvelment-u4xbe9-DivControlContainer e10xci3l2">
+                                                    <div data-e2e="control-icon" data-testid="control-icon" class="vylvelment-c52qon-DivControlIcon e10xci3l3">
+                                                        <div class="vylvelment-1reuqqt-DivAutoPlayIcon exa82qc0">Auto-play:<span class="vylvelment-1j9ibii-SpanAutoPlaySpanIcon exa82qc1">Off</span></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="vylvelment-110v49-DivLivePlayerFooter e19tq4ft4"></div><xg-bar class="xg-top-bar" data-index="-1"></xg-bar><xg-bar class="xg-left-bar" data-index="-1"></xg-bar><xg-bar class="xg-right-bar" data-index="-1"></xg-bar>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+   </div>
+ 
+            <?php } else if($broadcast_data22['islivenow'] == 'no' && !count($broadcast_contain_product)) { ?>
+          <div class="post-file" id="fullsizeimg">
+            <div id="vy_lv_player_loading_<?php echo $broadcast_data22['id'];?>" class="vy_lv_player_loading">
+            </div>
+            <?php   
+
+
+                echo $vy_lv22->createRecordPostPlayer($broadcast_data22);
+ 
+         ?>
+
+
+          </div>
+<?php } else if(count($broadcast_contain_product) && $broadcast_data22['islivenow'] == 'no') {
+
+ 
+    echo $vy_lv22->createRecordPostPlayerWithProduct($broadcast_data22);
+
+} else {
+echo $vy_lv22->_f404();
+} ?>      

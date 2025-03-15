@@ -1,0 +1,83 @@
+{strip}
+
+<section id="vy-livest" class="js__vylivest_{$live_id}">
+
+<div class="vy-live-entry-cnt">
+<div style="position: absolute;top:200px;left:0" id="243ushfdiush"></div>
+ <div id="vy_lv_productauthor_preview"></div>
+
+  <div class="vy_lv_host_away"><img src="{$cover_path}" border="0"/><div class="vy_lv_host_away_text">{$this->lang['host_is_away']}</div></div>
+  <div class="vy_lv_host_ended"><div class="_img" style="background-image:url({$cover_path});"></div><div class="vy_lv_host_ended_text">{$this->lang['stream_ended']}</div></div>
+  <div class="vy_lv_host_reconnecting"><div class="vy_lv_host_reconnecting_text">{$this->lang['host_network_problems']}</div></div>
+  <div class="vy-live-e1v">
+		<video playsinline autoplay id="vy_lv_livestream" poster="{$cover_path}"></video>	
+		<div class="vy_lv_author">
+		<div class="vy_lv_author_flex">
+			<div class="vy_lv_author_avatar"><img src="{$author.avatar}" border="0" /></div>
+			<div class="vy_lv_author_nvws">
+			<div class="vy_lv_author1">{$author.fullname}</div>
+			{if $rows['islivenow'] == 'yes'}
+			<div class="vy_lv_viewers_count"><span class="js__vylv4_count_viewers">0</span> {$this->lang['viewers']}</div>
+			{else}
+			<div class="vy_lv_duration">{$this->lang['duration']}: {$this->getNiceDuration($rows['time'])}</div>
+			{/if}
+			</div>
+						<div class="vy_lv_ftopbtn">{Wo_GetFollowButton($author.id)}</div>
+			</div>
+			</div>
+			{if $rows['islivenow'] == 'yes'}
+  			<div class="vy_lv_dashboard_llv_vvw_tm vy_lv_viewer_dashboard js__au4x2">
+			
+				<div class="vy_lv_dsh_llv_vvw">{$this->svg['live']}&nbsp;<div class="vy_lv_eyes">{$this->svg['eye']}&nbsp;<span class="js__vylv_count2_viewers">0</span></div></div>
+				<div class="vy_lv_dsh_tm js__vy_lv_dsh_tm">00:00</div>
+			
+			</div>
+			{/if}
+ 
+		<div class="vy-lv-close" onclick="vy_lvst.exitFromStream({$id});">{$this->svg['close']}</div>
+		<div class="vy_lv_reactions_floating" id="vy_lv_reactions_floating"></div>
+	</div>
+{if $rows['islivenow'] == 'yes'}
+<div class="vy_lv_entryli" id="vy_lv_comments_sectionstick">
+<!-- comments -->
+<div class="vy_lv_comments_section_inp_andcmm">
+<div class="vy_lv_comments-section" id="vy_lv_comments_section">
+
+{foreach $comments as $comment}
+ 
+{assign var=user value=$this->lv_getUserDetails($comment.user_id)}
+ 					<div class="vy_lv_comment" onclick="vy_lvst.replyToComment(this,event);">
+								<div class="vy_lv_comment2a"><img src="{$user.avatar}" border="0"/></div>
+								<div class="vy_lv_comment_str3">
+								<input type="hidden" class="__none js__comment_author_name" value="{$user.fullname}">
+								<span class="vy_lv_comment3a js__comment_author">{$user.fullname}</span>
+								<div class="vy_lv_comment4_str">{$comment.text}</div>
+								</div>
+								</div>
+
+{/foreach}
+
+</div>
+
+<div class="vy-lv-comments-section js__vy-lv-comments-section">
+<input type="text" class="vy-lv-inputfantom js__inputfantom" onclick="vy_lvst.addCommentTxtarea(this,event,'{$id}');" onfocus="vy_lvst.addCommentTxtarea(this,event,'{$id}');"  placeholder="{$this->lang['add_comments']}" />
+
+
+<!-- reactions -->
+<div class="vy_lv_reactions_bt js__vy_lv_reactions_bt">
+
+</div>
+</div>
+
+
+</div>
+
+
+</div>
+{/if}
+
+</div>
+ 
+
+</section>
+{/strip}

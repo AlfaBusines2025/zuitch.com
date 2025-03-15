@@ -1,0 +1,11 @@
+{strip}
+{assign var=item value=$this->getPageDetails($this->page_id)}
+ 
+<div class="vy_lv_brd_related_to2">
+	<div class="nm_tx">{$this->lang['broadcasting_in']}: <a href="/livestream" class="vy_lv_brdin_close">{$this->svg['close']}</a></div>
+    <select id="js__vy_lv_brd_related_to" class="vy_disabled">
+        <option value="0" data-imagesrc="{$item.avatar}"
+            data-description="Page">{$item.name}</option>
+    </select>
+</div>
+{/strip}

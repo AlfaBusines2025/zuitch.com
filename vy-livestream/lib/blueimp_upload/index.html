@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <!-- Force latest IE rendering engine or ChromeFrame if installed -->
+    <!--[if IE]>
+      <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <![endif]-->
+    <meta charset="utf-8" />
+    <title>Product Upload files</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- Bootstrap styles -->
+    <link
+      rel="stylesheet"
+      href="node_modules/bootstrap/dist/css/bootstrap.min.css"
+    />
+    <!--[if gte IE 9]><!-->
+    <!-- Pintura Image Editor styles -->
+    <link rel="stylesheet" href="pintura/pintura.min.css" />
+    <!--<![endif]-->
+    <!-- Generic page styles -->
+    <style>
+    html,body{
+      background: transparent!important;
+    }
+      #navigation {
+        margin: 10px 0;
+      }
+      @media (max-width: 767px) {
+        #title,
+        #description {
+          display: none;
+        }
+      }
+      [href*="?unlicensed"], html:not(.pintura-editor-validated) .pintura-editor:after{
+        display: none!Important;
+      }
+      .table>tbody>tr>td, .table>tbody>tr>th, .table>tfoot>tr>td, .table>tfoot>tr>th, .table>thead>tr>td, .table>thead>tr>th{
+        padding: 6px!important;
+      }
+@media (max-width: 767px){
+      .files audio, .files video {
+    max-width: 136px!important;
+}
+}
+
+button.btn.btn-primary.start._none {
+    pointer-events: none;
+    opacity: 0.4;
+    cursor: not-allowed;
+    display: none;
+}
+.title {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 16px;
+    font-weight: 500;
+    margin: 6px 0;
+    color: #646464;
+    padding: 1px 0 6px 0;
+    margin-bottom: 15px;
+}.table-striped>tbody>tr:nth-of-type(odd) {
+    background-color: transparent!important;
+}.files .name, .files .size {
+ 
+    color: #aaa;
+}.progress{
+  background-color: #bababa;
+}
+table td{
+  border-color: #4d4d4d;
+}
+.btn-danger.delete{
+  display: none;
+}
+    </style>
+
+    <!-- blueimp Gallery styles -->
+    <link
+      rel="stylesheet"
+      href="blueimp-gallery.min.css"
+    />
+    <!-- CSS to style the file input field as button and adjust the Bootstrap progress bars -->
+    <link rel="stylesheet" href="node_modules/blueimp-file-upload/css/jquery.fileupload.css" />
+    <link rel="stylesheet" href="node_modules/blueimp-file-upload/css/jquery.fileupload-ui.css" />
+    <!-- CSS adjustments for browsers with JavaScript disabled -->
+    <noscript
+      ><link rel="stylesheet" href="css/jquery.fileupload-noscript.css"
+    /></noscript>
+    <noscript
+      ><link rel="stylesheet" href="css/jquery.fileupload-ui-noscript.css"
+    /></noscript>
+  </head>
+  <body>
+
+
+
+<h3 class="title" id="main_title">Add Product Media (images/videos)</h3>
+
+      <form
+        id="fileupload"
+        action="../../../livestream/up"
+        method="POST"
+        enctype="multipart/form-data"
+      >
+        <!-- Redirect browsers with JavaScript disabled to the origin page -->
+        <noscript
+          ><input
+            type="hidden"
+            name="redirect"
+            value="https://support.google.com/adsense/answer/12654?hl=en"
+        /></noscript>
+        <!-- The fileupload-buttonbar contains buttons to add/delete files and start/cancel the upload -->
+        <div class="row fileupload-buttonbar" id="fileuploaderbuttbar">
+          <div class="col-lg-7">
+            <!-- The fileinput-button span is used to style the file input field as button -->
+            <span class="btn btn-success fileinput-button">
+              <i class="glyphicon glyphicon-plus"></i>
+              <span>Add files...</span>
+              <input type="file" name="files[]" accept="image/jpeg,image/gif,image/png,video/mp4" multiple />
+            </span>
+            <button id="start_upload_btn" type="submit" class="btn btn-primary start _none">
+              <i class="glyphicon glyphicon-upload"></i>
+              <span>Start upload</span>
+            </button>
+            <button type="reset" id="cancel_all_files" class="btn btn-warning cancel">
+              <i class="glyphicon glyphicon-ban-circle"></i>
+              <span>Cancel upload</span>
+            </button>
+            <button type="button" class="btn btn-danger delete">
+              <i class="glyphicon glyphicon-trash"></i>
+              <span>Delete selected</span>
+            </button>
+            <input type="checkbox" class="toggle" />
+            <!-- The global file processing state -->
+            <span class="fileupload-process"></span>
+          </div>
+          <!-- The global progress state -->
+          <div class="col-lg-5 fileupload-progress fade">
+            <!-- The global progress bar -->
+            <div
+              class="progress progress-striped active"
+              role="progressbar"
+              aria-valuemin="0"
+              aria-valuemax="100"
+            >
+              <div
+                class="progress-bar progress-bar-success"
+                style="width: 0%;"
+              ></div>
+            </div>
+            <!-- The extended global progress state -->
+            <div class="progress-extended">&nbsp;</div>
+          </div>
+        </div>
+        <!-- The table listing the files available for upload/download -->
+        <table role="presentation" class="table table-striped">
+          <tbody class="files"></tbody>
+        </table>
+
+        <div class="Footerbtn"><button id="continue_button" type="button" class="btn btn-primary" style="display: none;width: 100%;" onclick="_submit(event,this);">Continue</button></div>
+      </form>
+
+<div id="blueimp-gallery" class="blueimp-gallery blueimp-gallery-controls" aria-label="image gallery" aria-modal="true" role="dialog" data-filter=":even">
+      <div class="slides" aria-live="polite"></div>
+      <h3 class="title"></h3>
+      <a class="prev" aria-controls="blueimp-gallery" aria-label="previous slide" aria-keyshortcuts="ArrowLeft"></a>
+      <a class="next" aria-controls="blueimp-gallery" aria-label="next slide" aria-keyshortcuts="ArrowRight"></a>
+      <a class="close" aria-controls="blueimp-gallery" aria-label="close" aria-keyshortcuts="Escape"></a>
+      <a class="play-pause" aria-controls="blueimp-gallery" aria-label="play slideshow" aria-keyshortcuts="Space" aria-pressed="false" role="button"></a>
+      <ol class="indicator"></ol>
+    </div>
+      <!-- The template to display files available for upload -->
+    <script id="template-upload" type="text/x-tmpl">
+      {% for (var i=0, file; file=o.files[i]; i++) { %}
+          <tr class="template-upload fade{%=o.options.loadImageFileTypes.test(file.type)?' image':''%}">
+              <td>
+                  <span class="preview"></span>
+              </td>
+              <td>
+                  <p class="name">{%=file.name%}</p>
+                  <strong class="error text-danger"></strong>
+              </td>
+              <td>
+                  <p class="size">Processing...</p>
+                  <div class="progress progress-striped active" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div class="progress-bar progress-bar-success" style="width:0%;"></div></div>
+              </td>
+              <td>
+                  {% if (!o.options.autoUpload && o.options.edit && o.options.loadImageFileTypes.test(file.type)) { %}
+                    <button class="btn btn-success edit" data-index="{%=i%}" disabled>
+                        <i class="glyphicon glyphicon-edit"></i>
+                        <span>Edit</span>
+                    </button>
+                  {% } %}
+                  {% if (!i && !o.options.autoUpload) { %}
+                      <button class="btn btn-primary start _none" disabled>
+                          <i class="glyphicon glyphicon-upload"></i>
+                          <span>Start</span>
+                      </button>
+                  {% } %}
+                  {% if (!i) { %}
+                      <button class="btn btn-warning cancel">
+                          <i class="glyphicon glyphicon-ban-circle"></i>
+                          <span>Cancel</span>
+                      </button>
+                  {% } %}
+              </td>
+          </tr>
+      {% } %}
+    </script>
+    <!-- The template to display files available for download -->
+    <script id="template-download" type="text/x-tmpl">
+      {% for (var i=0, file; file=o.files[i]; i++) { %}
+          <tr class="template-download fade{%=file.thumbnailUrl?' image':''%}">
+              <td>
+                  <span class="preview">
+                      {% if (file.thumbnailUrl) { %}
+                          <a href="{%=file.url%}" title="{%=file.name%}" download="{%=file.name%}" data-gallery><img src="{%=file.thumbnailUrl%}"></a>
+                      {% } %}
+                  </span>
+              </td>
+              <td>
+                  <p class="name">
+                      {% if (file.url) { %}
+                          <a href="{%=file.url%}" title="{%=file.name%}" download="{%=file.name%}" {%=file.thumbnailUrl?'data-gallery':''%}>{%=file.name%}</a>
+                      {% } else { %}
+                          <span>{%=file.name%}</span>
+                      {% } %}
+                  </p>
+                  {% if (file.error) { %}
+                      <div><span class="label label-danger">Error</span> {%=file.error%}</div>
+                  {% } %}
+              </td>
+              <td>
+                  <span class="size">{%=o.formatFileSize(file.size)%}</span>
+              </td>
+              <td>
+                  {% if (file.deleteUrl) { %}
+                      <button class="btn btn-danger delete" data-type="{%=file.deleteType%}" data-url="{%=file.deleteUrl%}"{% if (file.deleteWithCredentials) { %} data-xhr-fields='{"withCredentials":true}'{% } %}>
+                          <i class="glyphicon glyphicon-trash"></i>
+                          <span>Delete</span>
+                      </button>
+                      <input type="checkbox" name="delete" value="1" class="toggle">
+                  {% } else { %}
+                      <button class="btn btn-warning cancel">
+                          <i class="glyphicon glyphicon-ban-circle"></i>
+                          <span>Cancel</span>
+                      </button>
+                  {% } %}
+              </td>
+          </tr>
+      {% } %}
+    </script>
+ 
+    <script src="node_modules/jquery/dist/jquery.min.js"></script>
+    <!-- The jQuery UI widget factory, can be omitted if jQuery UI is already included -->
+    <script src="node_modules/blueimp-file-upload/js/vendor/jquery.ui.widget.js"></script>
+    <!-- The Templates plugin is included to render the upload/download listings -->
+    <script src="node_modules/blueimp-tmpl/js/tmpl.min.js"></script>
+ 
+    <!-- The Load Image plugin is included for the preview images and image resizing functionality -->
+    <script src="node_modules/blueimp-load-image/js/load-image.all.min.js"></script>
+    <!-- The Canvas to Blob plugin is included for image resizing functionality -->
+    <script src="node_modules/blueimp-canvas-to-blob/js/canvas-to-blob.min.js"></script>
+    <!-- blueimp Gallery script -->
+    <script src="node_modules/blueimp-gallery/js/jquery.blueimp-gallery.min.js"></script>
+    <!-- The Iframe Transport is required for browsers without support for XHR file uploads -->
+    <script src="node_modules/blueimp-file-upload/js/jquery.iframe-transport.js"></script>
+    <!-- The basic File Upload plugin -->
+    <script src="node_modules/blueimp-file-upload/js/jquery.fileupload.js"></script>
+    <!-- The File Upload processing plugin -->
+    <script src="node_modules/blueimp-file-upload/js/jquery.fileupload-process.js"></script>
+    <!-- The File Upload image preview & resize plugin -->
+    <script src="node_modules/blueimp-file-upload/js/jquery.fileupload-image.js"></script>
+    <!-- The File Upload audio preview plugin -->
+    <script src="node_modules/blueimp-file-upload/js/jquery.fileupload-audio.js"></script>
+    <!-- The File Upload video preview plugin -->
+    <script src="node_modules/blueimp-file-upload/js/jquery.fileupload-video.js"></script>
+    <!-- The File Upload validation plugin -->
+    <script src="node_modules/blueimp-file-upload/js/jquery.fileupload-validate.js"></script>
+    <!-- The File Upload user interface plugin -->
+    <script src="node_modules/blueimp-file-upload/js/jquery.fileupload-ui.js"></script>
+
+ 
+    <!-- The main application script -->
+    <script>
+      window.global_up_done = false;
+      var interval_global_up_callback;
+      function getKeyByValue(object, value) {
+        return Object.keys(object).find(key => object[key] === value);
+      }
+      function startUpload(){
+
+          return new Promise(async (resolve, reject) => {
+
+        $('.btn-warning.cancel,.btn-success.edit,#fileuploaderbuttbar,#continue_button').hide();
+        $('#main_title').text('The live broadcast will start immediately after the upload process is completed.');
+        $('#start_upload_btn').trigger('click');
+
+
+
+        interval_global_up_callback = setInterval(function(){
+
+          if(window.global_up_done){
+            clearInterval(interval_global_up_callback);
+
+            resolve(1);
+
+          }
+
+        },500);
+        talkwithparent('start_upload');
+      });
+      }
+      var nbElementsToUpload = 0;
+      var nbElementsUploaded = 0;
+      var _files = [];
+      var submit_btn = document.getElementById('continue_button');
+      function _submit(ev,el){
+        ev.preventDefault(); 
+
+        let image_found = false;
+        for(var i in window.parent.vy_lvst.product_param.files)
+        {
+
+          var file = window.parent.vy_lvst.product_param.files[i];
+          if(file.type.split('/')[0] == 'image')
+            image_found = true;
+
+        }
+ 
+        if(!image_found)
+          return talkwithparent('upload_at_least_one_image');
+        else
+          talkwithparent('submit');
+        
+      }
+      var fileupload =  $('#fileupload').fileupload({
+      maxFileSize:1000000000, // 1gb
+      maxChunkSize: 1000000000, // 1 gb
+
+     uniqueFilenames: {},
+      maxNumberOfFiles: 10,
+      acceptFileTypes: /(\.|\/)(gif|jpe?g|png|mp4)$/i // Allowed File Types
+ 
+
+    }).on('fileuploadadd', function(e,data){
+        nbElementsToUpload++;
+        submit_btn.style.display='block';
+
+        window.parent.vy_lvst.product_param.files.push(data.files[0]);
+ 
+    }).on('fileuploadfail',function(e,data){
+ 
+        for(i = 0; i < window.parent.vy_lvst.product_param.files.length;++i)
+        if(window.parent.vy_lvst.product_param.files[i].lastModified == data.files[0].lastModified)
+          window.parent.vy_lvst.product_param.files.splice(i,1);
+
+      
+         if(!window.parent.vy_lvst.product_param.files.length) 
+          submit_btn.style.display='none';
+
+        nbElementsToUpload--;
+    }).on('fileuploadalways', function (e, data) {
+    _files.push(data.result.files[0].name);
+          nbElementsUploaded++;
+          if(nbElementsToUpload === nbElementsUploaded){
+          window.parent.vy_lvst._loading();
+
+            const ready_fun = function(){
+
+              const parent_elems_need_removed = window.parent.$('#vy_lv_prod_add_modal,#vy_lv_prod_add_images_modal,#vy_lvst_add_product_cnt,.hystmodal__shadow');
+              window.parent.vy_lvst.product_param.files = new Array();
+              window.parent.vy_lvst.product_param.files = _files;
+              window.parent.vy_lvst.product_close_all_modals();
+              //window.parent.vy_lvst._hystmodal['long'].close();
+              parent_elems_need_removed.hide();
+              //window.parent.vy_lvst._hystmodal['simple'].close();
+              window.parent.vy_lvst.canstart_live = true;
+              //talkwithparent('startBroadcast');
+              window.global_up_done = 1;
+              window.parent.vy_lvst._rLoading();
+              setTimeout(function(){
+
+                parent_elems_need_removed.remove();
+
+              },500);
+
+
+            }
+
+            setTimeout(ready_fun,1200);
+
+        }
+    });</script>
+    <!-- The XDomainRequest Transport is included for cross-domain file deletion for IE 8 and IE 9 -->
+    <!--[if (gte IE 8)&(lt IE 10)]>
+      <script src="jquery.xdr-transport.js"></script>
+    <![endif]-->
+    <input type="radio" style="display: none;" value="night" name="theme" id="theme-night">
+    <input type="radio" value="day" style="display: none;" name="theme" id="theme-day">
+      <script>
+      function _getCookie(name) {
+          let cookie = document.cookie.match('(^|;) ?' + name + '=([^;]*)(;|$)');
+          return cookie ? cookie[2] : null;
+      }
+
+      try {
+        const script_theme = _getCookie('mode') ? _getCookie('mode') : false;
+        let prf = script_theme == 'night' ? true : false;
+
+        if(!_getCookie('mode'))
+          prf = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+
+
+        document.getElementById('theme-night').checked = prf;
+        document.getElementById('theme-day').checked = !prf;
+    }
+    catch(err) {
+        document.getElementById('theme-night').checked = true;
+    }
+  </script>
+    <style>
+    [id=theme-night]:checked~.pintura-editor {
+    --color-background: 33,34,35;
+    --color-foreground: 255,255,255;
+    }
+    </style>
+    <script type="module">
+        // import Pintura Image Editor functionality:
+      import { openDefaultEditor } from './pintura/pintura.min.js';
+      $(function () {
+        $('#fileupload').fileupload('option', {
+          // When editing a file use Pintura Image Editor:
+          edit: function (file) {
+            return new Promise((resolve, reject) => {
+
+              talkwithparent('fullscreen');
+              const editor = openDefaultEditor({
+                src: file,
+                imageCropAspectRatio: 1,
+              });
+              editor.on('process', ({ dest }) => {
+                talkwithparent('exitfullscreen');
+                resolve(dest);
+              });
+              editor.on('close', () => {
+                talkwithparent('exitfullscreen');
+                resolve(file);
+              });
+
+            });
+          }
+        });
+      });
+    </script>
+    <script>
+ 
+function talkwithparent(msg){
+
+               window.parent.postMessage({
+                  'func': 'vy_lv_prod_iframetalking',
+                  'message': msg,
+                  'iframe_id': 'vy_prod_up_iframe'
+              }, "*");
+}
+
+$(document).ready(async () => {
+
+  const cryp25osv = Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(window.top.location.href)))).map((b) => b.toString(16).padStart(2, '0')).join('');  
+ 
+  const getParamValue = function(p)
+  {
+      var url = window.location.search.substring(1);  
+      var qArray = url.split('&'); 
+      for (var i = 0; i < qArray.length; i++) 
+      {
+          var pArr = qArray[i].split('='); 
+          if (pArr[0] == p) 
+              return pArr[1];  
+      }
+  }
+
+    if(cryp25osv !== getParamValue('t'))
+        window.top.location.href = '/404';
+      });
+</script>

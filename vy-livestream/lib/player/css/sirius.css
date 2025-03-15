@@ -1,0 +1,277 @@
+
+.vpl-settings-holder,
+.vpl-share-data,
+.vpl-info-data,
+.vpl-context-menu,
+.vpl-resume-data,
+.vpl-volume-seekbar,
+.vpl-pwd-data-wrap{
+	background:rgba(0,0,0,0.15);
+}
+
+
+/* icons */
+.vpl-contr-btn{
+	width:40px;
+	height:100%;
+	float: left;
+	position: relative;
+	cursor: pointer;
+}
+.vpl-contr-btn svg{
+	position: absolute;
+	top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+	color:#ddd;
+	height: 14px;
+	fill:currentColor;
+	transition: color .1s ease-out;
+}
+.vpl-contr-btn svg:hover{
+	color:#fff !important;
+}
+
+.vpl-previous-toggle{
+    position: absolute; 
+    top: 50%; 
+    left: 12px; 
+    -webkit-transform: translateY(-50%); 
+    -ms-transform: translateY(-50%);
+    transform: translateY(-50%); 
+    height: 50px;
+}
+.vpl-next-toggle{
+    position: absolute; 
+    top: 50%; 
+    right: 12px; 
+    -webkit-transform: translateY(-50%); 
+    -ms-transform: translateY(-50%);
+    transform: translateY(-50%); 
+    height: 50px;
+}
+.vpl-previous-toggle svg,
+.vpl-next-toggle svg{
+    height: 18px;
+}
+
+.vpl-player-controls-top{
+	position:absolute;
+	top:15px;
+	right:15px;
+	height: 20px;
+}
+
+.vpl-player-controls-bottom-wrap{
+	position: absolute;
+    height: 40px;
+    bottom: 0;
+    left: 15px;
+    right: 15px;
+}
+.vpl-player-controls-bottom{
+	display: flex;
+	height: 100%;
+}
+.vpl-player-controls-bottom-left{
+}
+.vpl-player-controls-bottom-right{
+	position: relative;
+    margin-left: auto;
+}
+
+.vpl-media-time-current,
+.vpl-media-time-total{
+	position:relative;
+	top: 50%;
+	left:0px;
+	text-align: center;
+	float:left;
+	margin:0!important;
+	padding: 0!important;
+	font-size:11px!important;
+    -ms-transform: translateY(-50%);
+    -webkit-transform: translateY(-50%);
+    transform: translateY(-50%);
+    color:#eee;
+}
+.vpl-media-time-current,
+.vpl-media-time-total{
+	padding-left: 5px!important;
+	padding-right: 5px!important;
+}
+
+.vpl-seekbar-wrap{
+	position:relative;
+	margin: 0 10px;
+    height: 100%;
+    overflow: hidden;
+}
+.vpl-seekbar{
+    overflow: hidden;
+    height: 100%;
+    cursor: pointer;
+    touch-action: none;
+    flex: 1;
+}
+.vpl-progress-bg{
+	position:relative;
+	width:100%;
+	top:20px;
+	height:1px;
+}
+.vpl-progress-bg{
+	background:#bbb;
+}
+.vpl-load-level{
+	position:absolute;
+	top:0;
+	height:100%;
+}
+.vpl-load-level{
+	background:#ccc;
+}
+.vpl-progress-level{
+	position:absolute;
+	top:0;
+	height:100%;
+	transition: width 0.2s linear;
+}
+.vpl-progress-level{
+	background:#fff;
+}
+
+.vpl-volume-toggle{
+	position: absolute;
+	left:0;
+	top:0;
+	width:100%;	
+	height:40px;
+}
+.vpl-volume-seekbar{
+	position:absolute;
+	top:-80px;
+	left:0;
+	width:30px;
+	height:80px;
+	display:none;
+	cursor: pointer;
+	touch-action: none;
+}
+.vpl-volume-wrapper:hover .vpl-volume-seekbar{
+	display: block;
+}
+.vpl-volume-bg{
+	position:absolute;
+	width:1px;
+	height:60px;
+	left:14px;
+	bottom:10px;
+}
+.vpl-volume-bg{
+	background:#bbb;
+}
+.vpl-volume-level{
+	position:absolute;
+	width:100%;
+	left:0;
+	bottom:0;
+}
+.vpl-volume-level{
+	background:#fff;
+	transition: width 0.2s ease-out, height 0.2s ease-out;
+}
+
+.vpl-settings-holder{
+	margin-bottom: 0;
+}
+.vpl-menu-item{
+    font-size: 12px;
+}
+.vpl-settings-menu-item-value{
+	color: #888;
+}
+.vpl-menu-header{
+	background-color: #fff;
+	color: #555;
+}
+.vpl-menu-item{
+	color: #eee;
+}
+.vpl-menu-active,
+.vpl-menu-item:hover{
+	background: #fff;
+	color: #555;
+}
+
+.info-title{
+	color: #fff;
+}
+.vpl-info-description{
+	color: #ddd;
+}
+.vpl-info-description a{
+	color: #ffeb3b;
+}
+
+.vpl-big-play{
+	position:absolute;
+	width:76px;
+	height:76px; 
+	top:50%;
+	left:50%;
+	margin-left:-37px;
+	margin-top:-37px;
+	border-radius: 50%!important;
+	display:none;
+	text-align:center;
+	line-height: 76px;
+	cursor: pointer;
+}
+.vpl-big-play svg{
+	position: absolute;
+	top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+	color:#ddd;
+	height: 30px;
+	fill:currentColor;
+}
+.vpl-big-play:hover svg{
+	color:#fff !important;
+}
+
+
+.vpl-pwd-field-wrap{
+	border: 1px solid #333;
+}
+.vpl-pwd-field{
+	background: #232323!important;
+	color: #fff!important;
+}
+.vpl-pwd-title{
+	color: #fff;
+}
+.vpl-pwd-info{
+	color: #888;
+}
+.vpl-pwd-confirm{
+	background: #fff;
+	color: #555;
+}
+
+.vpl-tooltip{
+	background:#fff;
+	color:#333!important;
+}
+
+.vpl-player-controls-gradient {
+    pointer-events: none;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(180deg, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0) 30%, rgba(0,0,0,0) 70%, rgba(0,0,0,0.5) 100%);
+}

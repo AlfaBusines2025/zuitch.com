@@ -1,0 +1,286 @@
+<?php 
+if(isset($_REQUEST['lend']) || isset($_GET['lend'])){
+?>
+<script>
+window.vy_lv_lend = 1;
+</script>
+<?php } ?>
+<script id="vy_lvst_script">
+var vy_lvst = function(){};
+var player_opts = {};
+window.vy_lv_window_loaded = false;
+window.vy_lv_wss = null;
+window.continents_data_update = function(){};
+window.vy_lvst_iframe_resize_timeout = function(){};
+(function() {
+    var po = document.createElement('script');
+    po.type = 'text/javascript';
+    po.async = true;
+    po.src = 'https://webrtc.github.io/adapter/adapter-latest.js';
+    var s = document.getElementsByTagName('script')[0];
+    s.parentNode.insertBefore(po, s);
+})();
+</script> 
+<script type="text/javascript" src="<?php echo $GLOBALS['V_Y']['host'];?>/vy-livestream/js/getAssets.js?v=<?php echo $GLOBALS['V_Y']['version'];?>"></script>
+<script src="<?php echo $GLOBALS['V_Y']['host'];?>/vy-livestream/lib/dash/js/dash.all.min.js?v=<?php echo $GLOBALS['V_Y']['version'];?>"></script>
+<script src="<?php echo $GLOBALS['V_Y']['host'];?>/vy-livestream/lib/fluidplayer/compiled.js?v=<?php echo $GLOBALS['V_Y']['version'];?>"></script>
+
+<script type="text/javascript">
+		var 
+		 vy_lv_version = "<?php echo $GLOBALS['V_Y']['version'];?>",
+		 vy_lv_themes = ["wondertag","sunshine","wowonder"],
+		 vy_lvst_code = "<?php echo $GLOBALS['V_Y']['license_key'];?>",
+		 vy_lvst_server_name = "<?php echo $GLOBALS['V_Y']['nodejs_server']['url'];?>",
+		 vy_lvst_socket_url = "<?php echo $GLOBALS['V_Y']['nodejs_server']['full_url'];?>",
+		 vy_lvst_rtmp_app_name = "/<?php echo $GLOBALS['V_Y']['record']['app_name'];?>/",
+		 vy_lvst_rtmp_url = "<?php echo $GLOBALS['V_Y']['nodejs_server']['RTMP_URL'];?>",
+		 vy_lvst_stream_rtmp_url = vy_lvst_rtmp_url+"<?php echo $GLOBALS['V_Y']['record']['stream_key_prefix'];?>-<?php echo md5($GLOBALS['V_Y']['user']['user_id']);?>.flv",
+		 vy_lvst_website_host = "<?php echo $GLOBALS['V_Y']['host'];?>",
+		 vy_lvst_assets = "<?php echo $GLOBALS['V_Y']['plugin_assets'];?>",
+	     vy_lvst_w_theme_custom = "<?php echo $GLOBALS['V_Y']['config']['theme'];?>",
+		 vy_lvst_w_theme = vy_lv_themes.includes(vy_lvst_w_theme_custom) ? vy_lvst_w_theme_custom : "<?php echo $GLOBALS['V_Y']['original_theme_name'];?>",
+		 vy_lvst_uid = <?php echo $GLOBALS['V_Y']['user']['user_id'];?>,
+		 vy_lvst_muid = "<?php echo md5($GLOBALS['V_Y']['user']['user_id']);?>",
+		 vy_lvst_user = {i:<?php echo $GLOBALS['V_Y']['user']['user_id'];?>,ip:"<?php echo $_SERVER['REMOTE_ADDR'];?>",p:"<?php echo $GLOBALS['V_Y']['user']['avatar'];?>",last_name:"<?php echo empty($GLOBALS['V_Y']['user']['last_name']) ? $GLOBALS['V_Y']['user']['username'] : $GLOBALS['V_Y']['user']['last_name'];?>",first_name:"<?php echo empty($GLOBALS['V_Y']['user']['first_name']) ? $GLOBALS['V_Y']['user']['username'] : $GLOBALS['V_Y']['user']['first_name'];?>",username:"<?php echo $GLOBALS['V_Y']['user']['username'];?>",fn:"<?php echo (empty($GLOBALS['V_Y']['user']['first_name']) ? $GLOBALS['V_Y']['user']['username'] : $GLOBALS['V_Y']['user']['first_name'].' '.$GLOBALS['V_Y']['user']['last_name']);?>"},
+		 vy_lvst_reconnecting = <?php echo $GLOBALS['V_Y']['record']['reconnecting'];?>,
+		 vy_lvst_svgi = <?php echo json_encode(LIVE_STREAM::getSvgIcons());?>,
+		 vy_lv_reactions = <?php echo json_encode(LIVE_STREAM::getReactionsBtns());?>,
+		 vy_lv_privacy_ops = <?php echo json_encode(LIVE_STREAM::getPrivacyOpts());?>,
+		 vy_lv_recording = <?php echo LIVE_STREAM::isRecording();?>,
+		 vy_lv_recording_audio_bits = <?php echo LIVE_STREAM::recordingBits('audio');?>,
+		 vy_lv_recording_video_bits = <?php echo LIVE_STREAM::recordingBits();?>,
+		 vy_lv_recording_fr_msec = <?php echo LIVE_STREAM::fr_miliseconds();?>,
+		 vy_lv_rec_type = "<?php echo LIVE_STREAM::recType();?>",
+		 vy_lvst_sounds = <?php echo json_encode(LIVE_STREAM::getSounds());?>,
+		 vy_lvst_away_desktop = <?php echo json_encode(LIVE_STREAM::awayDesktop());?>,
+		 vy_lvst_product_categs = <?php echo json_encode(LIVE_STREAM::productsCategs());?>, 
+		 vy_lvst_continents_countries = <?php echo json_encode(LIVE_STREAM::continents_countries());?>, 
+		 vy_lvst_lang = <?php echo json_encode(LIVE_STREAM::getLLang());?>;
+		 
+		 if(!vy_lv_themes.includes(vy_lvst_w_theme)) alert('Sorry, this theme is not supported.')
+ 
+   const vy_lv_js_assets = [
+							{"deep_search":"/lib/deepsearch/deepsearch.js"},
+   							{"loadingios":["/lib/loadingios/js/iosOverlay.js",
+										  "/lib/loadingios/js/spin.min.js"]},
+							{"socket.io":["check","/lib/socket.io/socket.io.2.3.0.js"]},
+							{"kurento": "/lib/kurento/bower_components/kurento-utils/js/kurento-utils.min.js"},
+							{"flv":"/lib/flv/flv.min.1.5.0.js"},
+							{"easytimer" : "/lib/easytimer/js/easytimer.min.js"},
+							{"createjs":"/lib/createjs/createjs.min.js"},
+							//{"record":"/lib/record/RecordRTC.js"},
+							{"ddslick":"/lib/ddslick/jquery.ddslick.min.js"},
+							{"floating":"/lib/floating/floating.js"},
+							{"sweetalert":"/lib/sweetalert/js/sweetalert2.min.js"},
+							{"emoji":"/lib/emoji/emoji.js"},
+							{"meteorEmoji":"/lib/meteorEmoji/meteorEmoji.min.js"},
+							{"notify":"/lib/notify/notify.min.js"},
+							{"mobselect":"/lib/mobselect/js/mobileSelect.js"},
+							{"ionic":["module","/lib/ionic/js/ionic.esm.js","nomodule","/lib/ionic/js/ionic.js"]},
+							{"cupertino":"/lib/cupertino/cupertino-pane.min.js"},
+							{"intlTelInput":"/lib/intlTelInput/js/intlTelInput.js"},
+							{"hystmodal":"/lib/hystmodal/js/hystmodal.min.js"},
+							{"cart":"/lib/cart/js/cart.js"},
+							{"liveStream":"/js/liveStream.js"},
+   
+   ];
+   const vy_lv_css_assets = [
+   							 {"loadingios":"/lib/loadingios/css/iosOverlay.css"},
+							 {"style":"/css/style.css"},
+							 {"intlTelInput":"/lib/intlTelInput/css/intlTelInput.css"},
+							 {"three_dots_loading":"/lib/three-dots-loading/three-dots.min.css"},
+							 {"sweetalert":"/lib/sweetalert/css/sweetalert2.min.css"},
+							 {"loading_intro":"/lib/loading_intro/css/style.css"},
+							 {"ionic":"/lib/ionic/css/ionic.bundle.css"},
+							 {"mobselect":"/lib/mobselect/css/mobileSelect.css"},
+							 {"hystmodal":"/lib/hystmodal/css/hystmodal.min.css"},
+							 {"cart":"/lib/cart/css/style.css"},
+							 {"checkbox" : "/lib/checkbox/css/checkbox.min.css"},
+							 {"normalize" : "/css/normalize.css"}
+   ];
+     
+	 
+   const vy_lv_init_opts = {
+			'target':'.btn-go-live',
+			'button_title':vy_lvst_lang.go_live,
+			'button_icon': vy_lvst_svgi.golive_ic,
+			'body': document.body
+		};	 
+   VYLV_ASSETS.init({"version":"<?php echo $GLOBALS['V_Y']['version'];?>","path":"<?php echo $GLOBALS['V_Y']['host'].DIRECTORY_SEPARATOR;?>vy-livestream","css":vy_lv_css_assets,"js":vy_lv_js_assets});
+   VYLV_ASSETS.load(function() { 
+ 
+ 
+		vy_lvst = new VY_LIVE_STREAM(vy_lv_init_opts);
+ 
+		if(window.location.pathname.includes('livestream') && vy_lvst_w_theme == 'wondertag'){
+		
+			$('html').addClass('vy_lv_themefix vy_lv_'+vy_lvst_w_theme);
+		
+		} 
+
+		vy_lvst.enableTopMinProductMouseevents();
+
+		if(window.vy_lv_lend){
+			setTimeout(function(){
+				
+			const Toast = Swal.mixin({
+			  toast: true,
+			  position: 'top-end',
+			  showConfirmButton: false,
+			  timer: 6000,
+			  timerProgressBar: true,
+			  didOpen: (toast) => {
+				toast.addEventListener('mouseenter', Swal.stopTimer)
+				toast.addEventListener('mouseleave', Swal.resumeTimer)
+			  }
+			  ,
+			  didClose: () => {
+			
+
+			  }
+			})
+
+			Toast.fire({
+			  icon: 'success',
+			  title: vy_lvst_lang.we_process_your_stream
+			});
+	 
+			},1000);
+			window.history.replaceState({}, document.title, "/" );
+		}
+ 		__j('.js_vy_prod_addtocart').fadeIn('slow');
+
+
+   });
+    
+if(vy_lvst_w_theme != 'wondertag')
+$(document).on('click.VY_LV_CREATEBUTTON','.btn-go-live,[data-ajax="?link1=live"]',function(e){
+	e.preventDefault();
+	e.stopImmediatePropagation();
+	if(!$('body').find('#vy_lv_startbutton').length)
+	createInitButtonv2();
+	
+});
+else 
+$(document).on('click.VY_LV_CREATEBUTTON','.btn.live',function(e){
+	e.preventDefault();
+	e.stopImmediatePropagation();
+
+	if(!$('body').find('#vy_lv_startbutton').length)
+	createInitButtonv2_wondertag();
+});
+ 
+
+function createInitButtonv2_wondertag(){
+
+	 let loading_css = '<span data-vylvinitbutton="'+vy_lv_init_opts.target+'" class="vy_lv_btn_ic_loading vy_lv_wondertag"></span>';
+	 let el_to_replace = $(document).find('#vy_lv_startbutton').length ? $(document).find('#vy_lv_startbutton') : $(document).find(vy_lv_init_opts.target);
+
+
+		if(vy_lvst_w_theme == 'wondertag'){
+			if(!$(document).find('.vy_lv_btn_ic_loading').length)
+				$(document).find('.btn.live').replaceWith(loading_css);
+		}
+	 
+	 if(typeof vy_lvst.generateInitButton == 'undefined')
+			setTimeout(createInitButtonv2_wondertag,1000);
+	   else 
+			setTimeout(function(){ vy_lvst.generateInitButton('wondertag',1);},1500);
+	  
+	
+}
+function createInitButtonv2(){
+
+	 let loading_css = '<span data-vylvinitbutton="'+vy_lv_init_opts.target+'" class="vy_lv_btn_ic_loading"></span>';
+	 let el_to_replace = $(document).find('#vy_lv_startbutton').length ? $(document).find('#vy_lv_startbutton') : $(document).find(vy_lv_init_opts.target);
+
+	 if(vy_lvst_w_theme == 'sunshine'){
+	 
+	 el_to_replace = $(document).find('[data-ajax="?link1=live"]');
+	 
+	 } 
+ 
+
+		if(vy_lvst_w_theme == 'wowonder' || vy_lvst_w_theme == 'sunshine')
+			el_to_replace.replaceWith(loading_css);
+	 
+ 
+	 
+	 if(typeof vy_lvst.generateInitButton == 'undefined')
+			setTimeout(createInitButtonv2,1000);
+	   else 
+			setTimeout(function(){ vy_lvst.generateInitButton(false,1);},1500);
+	  
+	
+}
+
+function vy_resizeIframe(obj) {
+	if(!obj || !obj.contentWindow) return clearTimeout(window.vy_lvst_iframe_resize_timeout);
+  	const h = obj.contentWindow.document.documentElement.scrollHeight;
+    obj.style.height = (h < 200 ? 200 : h)  + 'px';
+
+    if(obj && typeof obj == 'object')
+    window.vy_lvst_iframe_resize_timeout = setTimeout(vy_resizeIframe,500,obj);
+  }
+ 
+ 
+if (window.addEventListener) {
+    window.addEventListener("message", vy_iframe_onMessage, false);        
+} 
+else if (window.attachEvent) {
+    window.attachEvent("onmessage", vy_iframe_onMessage, false);
+}
+function vy_iframe_onMessage(event) {
+  
+    var data = event.data;
+
+    if (typeof(window[data.func]) == "function") {
+        window[data.func].call(null, data.message, data.iframe_id, data.mob, data.callback);
+    }
+}
+
+// Function to be called from iframe
+function vy_lv_prod_iframetalking(message,iframe_id,mob,callback) {
+	const ifr = $('#'+iframe_id);
+     switch(message){
+
+     	case 'fullscreen':
+     	ifr.closest('.hystmodal__window--long').addClass('vy_fullscreen');
+     	ifr.addClass('vy_fullscreen');
+     	ifr.closest('#vy_lv_fullscreen_helper').addClass('vy_fullscreen');
+
+     	break;
+
+     	case 'exitfullscreen':
+     	ifr.closest('.hystmodal__window--long').removeClass('vy_fullscreen');
+     	ifr.removeClass('vy_fullscreen');
+     	ifr.closest('#vy_lv_fullscreen_helper').removeClass('vy_fullscreen');
+
+     	break;
+
+     	case 'submit':
+     	__j('#vy_lv_prod_add_images_modal').find('[data-hystclose]').trigger('click');
+     	break;
+
+     	case 'start_upload':
+     	__j('#vy_lv_prod_add_images_modal').find('[data-hystclose]').hide();
+     	break;
+
+     	case 'upload_at_least_one_image':
+     	            Swal.fire(
+				                'Uppssssss!',
+				                'The product should contain at least 1 image.',
+				                'warning'
+				            );
+     	break;
+
+     	case 'startBroadcast':
+     	vy_lvst.goLive();
+     	break;
+
+     }
+}
+
+
+
+</script>

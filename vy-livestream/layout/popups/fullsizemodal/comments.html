@@ -1,0 +1,43 @@
+{strip}
+{assign var=q_comm value=$this->getComments($r.post_id,300)}
+
+{if count($q_comm)}
+<Div class="vy_lvprodufull_comments">
+<div class="d-flex justify-content-center">
+  <div class="">
+      <div class="">
+
+        <div class="card">
+                            <div class="card-body">
+                                <h4 class="card-title">{$this->lang['recent_comments']}</h4>
+                                <h6 class="card-subtitle">{$this->lang['latest.comments.by.users']}</h6> </div>
+
+                            <div class="comment-widgets m-b-20">
+                            {foreach $q_comm as $row}
+                            {assign var=us value=$this->lv_getUserDetails($row.user_id)}
+                                <div class="d-flex flex-row comment-row">
+                                    <div class="p-2"><span class="round"><img style="object-fit: cover;" src="{$us.avatar}" alt="user" width="50"></span></div>
+                                    <div class="comment-text w-100">
+                                        <h5>{$us.fullname}</h5>
+                                        <div class="comment-footer">
+                                            <span class="date">{date('j F, Y', $r.added)}</span>
+                                            <span class="label label-info">Pending</span> <span class="action-icons">
+                                                    <a href="#" data-abc="true"><i class="fa fa-pencil"></i></a>
+                                                    <a href="#" data-abc="true"><i class="fa fa-rotate-right"></i></a>
+                                                    <a href="#" data-abc="true"><i class="fa fa-heart"></i></a>
+                                                </span>
+                                        </div>
+                                        <p class="m-b-5 m-t-10">{$row.text}</p>
+                                    </div>
+                                </div>
+                               {/foreach}
+
+                            </div>
+                        </div>
+
+      </div>
+  </div>
+</div>
+</Div>
+{/if}
+{/strip}

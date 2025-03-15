@@ -1,0 +1,34 @@
+{strip}  
+{assign var=product value=$this->getTopProduct($r.id)}
+<div class="post-file" id="fullsizeimg">
+
+	<div class="_3nc5v42G">
+ 
+<div class="_3nc5v42Gbb"> 
+	
+	{$product.template}
+
+</div>
+<a href="javascript:void(0);" data-pi="{$product.row.id}" onclick="{literal}if(typeof vy_lvst.displayProduct == 'function'){vy_lvst.displayProduct(event,this);}{/literal}">
+<video id="vy_feed_prod_aseeen_{$product.row.id}" style="background-color: #000;" class="vy_lv_post_html5nativeplayer_withprod" poster="{$r['full_cover_url']}" autoplay="true" muted playsinline loop>
+  <source src="{$r['full_file_path']}" type="video/mp4">
+Your browser does not support the video tag.
+</video> 
+</a> 
+<div class="_3nc5v f__022ff">
+<div class="_36e-c"><div class="_2LwjR"><div class="_1EZZH"><div class="_3DBed"><span class="nP_Cm">{$this->lang['WAS']}&nbsp;<span class="_3zOMB">{$this->lang['LIVE']}</span>{date('l', $r.added)}, {date('j M Y', $r.added)}</span></div><button data-pi="{$product.row.id}" onclick="vy_lvst.displayProduct(event,this);" class="_3y336 _1TAoA"><span class="_1UvFh">{$this->lang['product_from']}</span><span class="_15agB">{if $product.row.discount_price > 0}${$product.row.discount_price} <span class="vylvtaier">${$product.row.price}</span>{else}${$product.row.price}{/if}</span><strong>{$this->lang['BUY']}</strong></button></div></div></div>
+</div> 
+</div>
+<script>
+let __v_i = "{$product.row.id}";
+{literal}
+setTimeout(function(){
+let __v = $('#vy_feed_prod_aseeen_'+__v_i);
+__v.get(0).play();
+},2000);
+{/literal}
+
+
+</script>
+</div> 
+{/strip}

@@ -1,0 +1,46 @@
+/changes
+/cache
+/upload
+/*_updated.php
+/config.php
+/upload/photos/2018
+/upload/photos/2017
+/upload/videos/
+/upload/sounds/
+/upload/photos/
+/nodejs/models/wo_langs.js
+
+
+# Archivos de sistema
+.DS_Store
+Thumbs.db
+
+# Configuración de servidor
+php.ini
+nginx.conf
+web.config.xml
+htaccess.txt
+
+# Caché y logs
+cache/
+logs/
+*.log
+
+# Bases de datos y archivos SQL
+*.sql
+
+# Archivos ZIP y comprimidos (eliminar de Git)
+*.zip
+*.tar.gz
+*.rar
+
+# Directorios de instalación y dependencias
+node_modules/
+vendor/
+
+# Configuración sensible (si aplica)
+config.php
+.env
+
+# Archivos temporales y de instalación
+install/

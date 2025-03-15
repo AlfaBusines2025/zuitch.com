@@ -1,0 +1,54 @@
+{strip}
+<div id="vy_lv_playerlightbox" style="display:none;" class="vy_lv_productrecorded_vd">
+<video id="vy_lv_recordplayer_id_{$broadcast.id}" poster="{$broadcast.full_cover_path}" muted autoplay playsinline>
+    <source src="{$broadcast.full_file_path}" type="video/mp4" />
+</video>
+</div>
+<script type="text/javascript">
+(function() {
+var player_id = {$broadcast.id};  
+player_opts[player_id] = {};
+player_opts[player_id]['fpath'] = "{$broadcast.full_file_path}";
+player_opts[player_id]['poster'] = "{$broadcast.full_cover_path}";
+{literal} 
+player_opts[player_id]['f'] = function(){
+player_opts[player_id] = fluidPlayer(
+'vy_lv_recordplayer_id_'+player_id, {
+  "layoutControls": {
+    "primaryColor":"red",
+    "controlBar": {
+      "autoHideTimeout": 3,
+      "animated": true,
+      "autoHide": true,
+      "playbackRates": [
+        "x2",
+        "x1.5",
+        "x1",
+        "x0.5"
+      ]
+    },
+    "autoPlay": true,
+    "mute": true,
+    "allowTheatre": true,
+    "playPauseAnimation": false,
+    "playbackRateEnabled": true,
+    "allowDownload": false,
+    "playButtonShowing": true,
+    "fillToContainer": true,
+    "posterImage": player_opts[player_id]['poster']
+  },
+  playerInitCallback:     (function() {})
+});
+
+}      
+$(document).off('click.playvid30_Zko2').on('click.playvid30_Zko2', '#vy_lv-prod_playerlbghx', function(e){
+e.preventDefault();
+e.stopImmediatePropagation();
+$('#vy_lv_playerlightbox').show();
+$('#vy_lv-prod_playerlbghx,.js__v3320ap_DdAl').hide();
+player_opts[player_id]['f']();
+});
+})();
+{/literal}
+</script>
+{/strip}

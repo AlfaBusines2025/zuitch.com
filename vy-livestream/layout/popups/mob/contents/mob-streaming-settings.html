@@ -1,0 +1,25 @@
+{strip}
+
+	
+ <section class="vy_lv_mob_popup_allincard">
+<fieldset>
+<legend><b> {$this->lang['viewers']} </b> </legend>
+ <button data-id="{$id}" data-kind="viewers" data-title="Block/Mute Viewers" class="vy_lv_ripple" onclick="vy_lvst.mobstf(event,this);">{$this->lang['block_mute_viewers']}</button>
+</fieldset>
+</section>
+
+ <section class="vy_lv_mob_popup_allincard">
+<fieldset>
+<legend><b> {$this->lang['add_moderators']} </b> </legend>
+ <button data-id="{$id}" data-kind="new-moder" data-title="Add moderators" class="vy_lv_ripple" onclick="vy_lvst.mobstf(event,this);">{$this->lang['add_moderators']}</button>
+</fieldset>
+</section>
+
+ <section class="vy_lv_mob_popup_allincard">
+<fieldset>
+<legend><b> {$this->lang['remove_moderators']} </b> </legend>
+ <button data-id="{$id}" data-kind="remove-moder" data-title="Remove moderators" class="vy_lv_ripple" onclick="vy_lvst.mobstf(event,this);">{$this->lang['remove_moderators']}</button>
+</fieldset>
+</section>
+
+{/strip}

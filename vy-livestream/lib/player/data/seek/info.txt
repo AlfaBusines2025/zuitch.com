@@ -1,0 +1,25 @@
+preview seek examples (created with ffmpeg and ImageMagick)
+
+Player supports Thumbnail Sprites; multiple thumbnails stitched together into a single image. 
+
+In the VTT file, the individual thumbnails can be identified by appending their coordinates to the thumbnail URL using a spatial Media Fragment, for example:
+
+Player only supports pixel-based fragments, not percentage-based ones.
+
+WEBVTT
+
+00:00:00.000 --> 00:00:05.000
+data/seek/01_seek.png#xywh=0,0,120,68
+
+00:00:05.000 --> 00:00:10.000
+data/seek/01_seek.png#xywh=120,0,120,68
+
+00:00:10.000 --> 00:00:15.000
+data/seek/01_seek.png#xywh=0,68,120,68
+
+00:00:15.000 --> 00:00:20.000
+data/seek/01_seek.png#xywh=120,68,120,68
+
+
+
+VTT files are subject to cross-domain security restrictions and therefore won't automatically load from another domain than the player.

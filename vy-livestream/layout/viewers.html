@@ -1,0 +1,105 @@
+{strip}
+
+{assign var=i value=0}
+{assign var=blocked_users value=$users.blocked_viewers}
+{assign var=muted_users value=$users.muted_viewers}
+ 
+<div class="vy_lvst_pp_header">
+<a href="javascript:void(0);" class="vy_lvst_popup_backbtn" id="vy_lvst_popup_back">{$this->svg['back']}</a>
+<h3>{$this->lang['your_viewers']}</h3>
+<div class="vy_lvst_header_search_filer _258ak">
+<input type="text" onkeyup="vy_lvst.searchInViewers(event,this);" class="vy_lvst_header_search_filer_inp" placeholder="{$this->lang['search_for_viewers']}" />
+</div>
+</div>
+ 
+ 
+  {if count($blocked_users)}
+ {assign var=i value=1}
+ <h3>{$this->lang['blocked_users']}</h3>
+ <ul class="vy_lv_blocked_list">
+ {foreach $blocked_users as $user}
+ {assign var=ud value=$this->lv_getUserDetails($user)}
+<li class="vy_lv-pcontact" id="vy_lv_blocked_viewer_{$user}">
+<div class="vy_lvst-pcontact_avatar">
+<img src="{$ud.avatar}">
+</div>
+<div class="vy_lvst-pcontact_details">
+<div class="vy_lvst-pcontact_name js__lvst_pcontact_name"><username>{$ud.fullname}</username></div>
+</div>
+<div class="vy_lvst_viewer_mng js__vy_lvst_viewer_mng">
+	<a href="javascript:void(0);" onclick="vy_lvst.unBlockViewer(event,this,{$user},{$live_id});" class="vy_lvst_viewer_btn_mng __unblock">{$this->svg['unblock']} {$this->lang['unblock']}</a>
+</div>
+</li> 
+
+ {/foreach}
+ </ul>
+{/if}
+
+
+ {if count($muted_users)}
+ {assign var=i value=1}
+ <h3>{$this->lang['muted_users']}</h3>
+ <ul class="vy_lv_muted_list">
+ {foreach $muted_users as $user}
+ {assign var=ud value=$this->lv_getUserDetails($user)}
+<li class="vy_lv-pcontact" id="vy_lv_muted_viewer_{$user}">
+<div class="vy_lvst-pcontact_avatar">
+<img src="{$ud.avatar}">
+</div>
+<div class="vy_lvst-pcontact_details">
+<div class="vy_lvst-pcontact_name js__lvst_pcontact_name"><username>{$ud.fullname}</username></div>
+</div>
+<div class="vy_lvst_viewer_mng js__vy_lvst_viewer_mng">
+	{if !in_array($user, $blocked_users)}
+	<a href="javascript:void(0);" onclick="vy_lvst.blockViewer(event,this,{$user},{$live_id});" class="vy_lvst_viewer_btn_mng __block">{$this->svg['block']} {$this->lang['block']}</a>
+	{/if}
+	<a href="javascript:void(0);" onclick="vy_lvst.unMuteViewer(event,this,{$user},{$live_id});" class="vy_lvst_viewer_btn_mng __unmute">{$this->svg['unmute']} {$this->lang['unmute']}</a>
+</div>
+</li> 
+
+ {/foreach}
+ </ul>
+{/if}
+  <h3>{$this->lang['viewers']}</h3>
+ <ul id="vy_lvst_viewers_ul">
+ 
+{foreach $users.viewers as $user}
+{assign var=ud value=$this->lv_getUserDetails($user)}
+
+
+{assign var=i value=1}
+
+<li class="vy_lv-pcontact" id="vy_lv_viewer_{$user}">
+<div class="vy_lvst-pcontact_avatar">
+<img src="{$ud.avatar}">
+</div>
+<div class="vy_lvst-pcontact_details">
+<div class="vy_lvst-pcontact_name js__lvst_pcontact_name"><username>{$ud.fullname}</username></div>
+</div>
+<div class="vy_lvst_viewer_mng js__vy_lvst_viewer_mng">
+	<a href="javascript:void(0);" onclick="vy_lvst.blockViewer(event,this,{$user},{$live_id});" class="vy_lvst_viewer_btn_mng __block">{$this->svg['block']} {$this->lang['block']}</a>
+	<a href="javascript:void(0);" onclick="vy_lvst.muteViewer(event,this,{$user},{$live_id});" class="vy_lvst_viewer_btn_mng __mute">{$this->svg['mute']} {$this->lang['mute']}</a>
+</div>
+</li> 
+
+{foreachelse}
+<div class="vy_lvst_st_popup_no_data">{$this->lang['no_viewers_yet']}</div>
+{/foreach}
+
+ </ul>
+ 
+
+{if $i <= 0}
+<script>
+{literal}
+Swal.fire({
+  icon: 'info',
+  title: 'Empty!',
+  text: 'No viewers yet!'
+});
+vy_lvst.playSound('openpopup');
+ {/literal}
+</script>
+ {/if}
+ 
+{/strip}

@@ -1,0 +1,30 @@
+{strip}
+
+{include file="{dirname(__DIR__)}/header.html"}
+{assign var=i value=1}
+
+	<ul class="vy_lv_audienceul">
+	{foreach $arr as $item}
+		<li>
+		<label class="vy_lv_audience_lb" for="vylvcbx_{$item.ic}">
+			<div class="vy_lv_audience_ic_c"><i class="vy_lv_audience_ic {$item.ic}"></i></div>
+				<div class="vy_lv_audience_tx">
+					<div class="vy_lv_audience_tl">{$item.title}</div>
+					<div class="vy_lv_audience_ds">{$item.descr}</div>
+				</div>
+				<div class="vy_lv_radio_cn">
+					<input {if $value == $i || $i == 1}checked{/if} type="radio" class="vy_lv_radio" name="vy_lv_audiencev" id="vylvcbx_{$item.ic}" value="{$i}">
+				</div>
+			</label>
+		</li>
+		{$i = $i+1}
+	{/foreach}
+	</ul>
+
+<script>
+var vy_lv_privacy_arr = '{json_encode($arr)}';
+</script>
+
+{include file="{dirname(__DIR__)}/footer.html"}
+
+{/strip}

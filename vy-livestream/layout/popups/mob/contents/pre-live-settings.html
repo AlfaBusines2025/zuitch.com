@@ -1,0 +1,46 @@
+{strip}
+	
+
+	{assign var=pr_opts value=$this->getPrivacyOpts()}
+	
+ <section class="vy_lv_mob_popup_allincard">
+<fieldset>
+<legend><b> {$this->lang['privacy']} </b> </legend>
+ <div class="vy_lv__ios-selector_parent"><input type="hidden" value="1" name="vy_lv_audience" /><div id="vy_lv__ios-selector" class="background-gradient1">{$pr_opts[0]['title']}</div></div>
+</fieldset>
+</section>
+ <section class="vy_lv_mob_popup_allincard">
+<fieldset>
+<legend><b> {$this->lang['title']} </b> </legend>
+	<div class="vy_lv__mobpost_title"><input name="vy_lv_title" oninput="vy_lvst.updateGoLiveData(this,'title');" onkeyup="vy_lvst.updateGoLiveData(this,'title');" type="text" placeholder="Aa.." class="vy_lv_mob_newpost_title" maxlength="40" /></div>
+</fieldset>
+</section>
+
+<section class="vy_lv_mob_popup_allincard">
+<fieldset>
+<legend><b> {$this->lang['description']} </b> </legend>
+<div class="vy_lv__mobpost_title"><textarea name="vy_lv_descr" onkeyup="vy_lvst.updateGoLiveData(this,'description');" oninput="vy_lvst.updateGoLiveData(this,'description');this.style.height = '5px';this.style.height = (this.scrollHeight)+'px';" placeholder="{$this->lang['join_to_my_stream']}" class="vy_lv_mob_newpost_title vy_lv_mob_newpost_desc" maxlength="250"></textarea></div>
+</fieldset>
+</section>
+
+
+<section class="vy_lv_mob_popup_allincard">
+<fieldset>
+<legend><b> {$this->lang['add_product']} </b> </legend>
+<div class="vy_lv__mobpost_title">
+<a href="javascript:void(0);" class="vy_lv_a24t" id="vy_lv_addproduct_btn" onclick="vy_lvst.addProduct(this,event);">{$this->svg['plus_ic']} {$this->lang['add_product']}</a>
+</div>
+</fieldset>
+</section>
+
+
+{if $this->recording}
+ <section class="vy_lv_mob_popup_allincard">
+<fieldset>
+<legend><b> {$this->lang['recording']}</b>  </legend>
+<div class="vy_lv__mobpost_recording"><div class="vy_lv__mobpost_recording_t"><label for="vy_ch_recordingtotimeline">{$this->lang['record_stream']}</label></div><label class="el-switch"><input type="checkbox" ontouchend="vy_lvst.updateGoLiveData(this,'record');" onclick="vy_lvst.updateGoLiveData(this,'record');" id="vy_ch_recordingtotimeline" name="vy_record_to_timeline" checked><span class="el-switch-style"></span></label></div>
+ 
+</fieldset>
+</section>
+{/if}
+{/strip}
