@@ -240,6 +240,15 @@ RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^([^\/]+)(\/|)$  index.php?link1=timeline&u=$1 [QSA]
 
+# Live Plugin
+RewriteRule ^livestream$ vy-livestream-cmd.php [QSA]
+RewriteRule ^watchstream$ vy-livestream-cmd.php?cmd=watchstream [QSA]
+Redirect 301 /live /livestream
+RewriteRule ^livestream/g/([^\/]+)(\/|)$ vy-livestream-cmd.php?group_id=$1 [NC,QSA]
+RewriteRule ^livestream/p/([^\/]+)(\/|)$ vy-livestream-cmd.php?page_id=$1 [NC,QSA]
+RewriteRule ^livestream/up$ vy-livestream-cmd.php?cmd=blueimpupload [NC,QSA]
+RewriteRule ^livestream/u/(.*)$ vy-livestream-cmd.php?cmd=openuser&id=$1 [NC,QSA]
+
 
 
 <IfModule mod_deflate.c>

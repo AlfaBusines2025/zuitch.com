@@ -1,9 +1,9 @@
 {
    "iceServers":[
       {
-         "urls":"turn:YOUR_SERVER_IP:PORT", 
-         "username":"YOUR_TURN_SERVER_USERNAME", 
-         "credential":"YOUR_TURN_SERVER_CREDENTIAL" 
+         "urls": "turn:147.93.45.142:3478",
+		  "username": "olaturn",
+		  "credential": "secretoturn"
       },
       {
          "urls":"stun:stun.l.google.com:19302"

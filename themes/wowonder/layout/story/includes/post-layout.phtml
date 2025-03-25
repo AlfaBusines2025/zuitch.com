@@ -92,6 +92,13 @@ $current_post = $wo['current_post'] = $wo['story'];
         <!-- shared_post -->
          <?php include 'shared_post.phtml'; ?>
         <!-- shared_post -->
+		<!-- vy live stream -->
+		  <?php 
+
+		  if($current_post['vy-live'] == 'yes')
+			  include(getcwd().'/vy-livestream/layout/post_layout.html');
+
+		  ?>
 
 		<?php  if (empty($current_post['parent_id'])) { ?>
       <!-- product -->
