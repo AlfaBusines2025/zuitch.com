@@ -32,8 +32,6 @@ footer, footer .footer-wrapper, .second-footer {display: none}
 </div>
 <?php if ($wo['config']['millicast_live_video'] == 1 && !empty($wo['config']['live_token']) && !empty($wo['config']['live_account_id'])) {
   echo Wo_LoadPage('live/millicast');
-} elseif ($wo['config']['agora_live_video'] == 1 && !empty($wo['config']['agora_app_id'])) {
-  echo Wo_LoadPage('live/agora');
 } ?>
 
 

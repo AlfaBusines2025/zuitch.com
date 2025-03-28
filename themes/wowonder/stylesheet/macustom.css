@@ -1,0 +1,11 @@
+/* Ejemplo: ocultar el contenido del primer video sin quitar el contenedor padre */
+#post-description-138 .vylvelment-k5klkh-DivSwiperContent {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+
+*{
+
+	background-color: red;
+}

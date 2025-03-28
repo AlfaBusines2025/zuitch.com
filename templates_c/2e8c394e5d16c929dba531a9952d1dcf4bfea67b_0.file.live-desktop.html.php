@@ -1,18 +1,18 @@
 <?php
-/* Smarty version 3.1.34-dev-7, created on 2025-03-19 17:14:48
+/* Smarty version 3.1.34-dev-7, created on 2025-03-28 19:43:18
   from '/var/www/vhosts/zuitch.com/httpdocs/vy-livestream/layout/live-desktop.html' */
 
 /* @var Smarty_Internal_Template $_smarty_tpl */
 if ($_smarty_tpl->_decodeProperties($_smarty_tpl, array (
   'version' => '3.1.34-dev-7',
-  'unifunc' => 'content_67daed78620fb2_52464685',
+  'unifunc' => 'content_67e6edc6efc3c4_87296689',
   'has_nocache_code' => false,
   'file_dependency' => 
   array (
     '2e8c394e5d16c929dba531a9952d1dcf4bfea67b' => 
     array (
       0 => '/var/www/vhosts/zuitch.com/httpdocs/vy-livestream/layout/live-desktop.html',
-      1 => 1693731894,
+      1 => 1743009492,
       2 => 'file',
     ),
   ),
@@ -20,7 +20,7 @@ if ($_smarty_tpl->_decodeProperties($_smarty_tpl, array (
   array (
   ),
 ),false)) {
-function content_67daed78620fb2_52464685 (Smarty_Internal_Template $_smarty_tpl) {
+function content_67e6edc6efc3c4_87296689 (Smarty_Internal_Template $_smarty_tpl) {
 ?><section id="vy-livest" class="vylvdesktop js__vylivest_<?php echo $_smarty_tpl->tpl_vars['live_id']->value;?>
  chatopen"><div class="vylv_f3522"><div class="vy-live-entry-cnt"><div style="position: absolute;top:200px;left:0" id="243ushfdiush"></div><div id="vy_lv_productauthor_preview"></div><div class="vy_lv_host_away"><img src="<?php echo $_smarty_tpl->tpl_vars['cover_path']->value;?>
 " border="0"/><div class="vy_lv_host_away_text"><?php echo $_smarty_tpl->tpl_vars['this']->value->lang['host_is_away'];?>
