@@ -10,7 +10,7 @@
 		
 		{{#if chatTxt}}
 			{{#if onwer }}
-			<p class="message-text" dir="auto" style="background: {{backgroundColor}}; color:{{color}};">
+			<p class="message-text" data-translate-text="{{chatmsgId}}" dir="auto" style="background: {{backgroundColor}}; color:{{color}};">
 				{{#if hasHTML}}
 					{{{chatTxt}}}
 				{{else}}
@@ -26,11 +26,11 @@
 			</div>
 			</p>
 			{{else}}
-			<p class="message-text" dir="auto" style="background: {{backgroundColor}}; color:{{color}};">
+			<p class="message-text" data-translate-text="{{chatmsgId}}" dir="auto" style="background: {{backgroundColor}}; color:{{color}};">
 				{{#if hasHTML}}
-					{{{chatTxt}}}
+					{{{chatTxt}}} xdcd
 				{{else}}
-					{{chatTxt}}
+					{{chatTxt}} xdcd
 				{{/if}}
 			<div class="deleteMessage right" onclick="Wo_DeleteChatMessage({{chatmsgId}});">
 				<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
@@ -40,8 +40,17 @@
 					<path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
 				</svg>
 			</div>
+			  <span onclick="Wo_Translate('12', 'es')"
+				  id="12"
+				  data-language="es"
+				  data-trans-btn="12"
+				  class="pointer time"
+				  title="Translate">
+				- Translate
+			  </span>
 			</p>
 			{{/if}}
+			  
 		{{/if}}
 
 		<div class="clear"></div>

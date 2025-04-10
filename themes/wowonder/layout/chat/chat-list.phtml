@@ -11,12 +11,21 @@ if ($wo['chatMessage']['from_id'] != $wo['user']['user_id']) {
 	<?php } ?>
 	<div class="message <?php if (!empty($wo['chatMessage']['product_id'])) {$wo['product'] = Wo_GetProduct($wo['chatMessage']['product_id']);if (!empty($wo['product'])) {?>wo_msg_prod_prnt<?php } } ?> <?php echo ($wo['chatMessage']['onwer'] == 1) ? 'outgoing pull-right' : 'incoming pull-left';?>" onclick="Wo_ShowMessageOptions(<?php echo $wo['chatMessage']['id'] ?>);">
 		<?php if (!empty($wo['chatMessage']['text'])): ?>
-			<div class="message-text" id="message_text_reply_<?php echo $wo['chatMessage']['id'] ?>" dir="auto" style="background: <?php echo ($wo['chatMessage']['onwer'] == 1 && isset($wo['chat']['color'])) ? $wo['chat']['color'] . ' !important;' : '';?>;<?php echo ($wo['chatMessage']['onwer'] == 1) ? ' color:#fff !important;' : '';?>">
+			<div class="message-text" id="message_text_reply_<?php echo $wo['chatMessage']['id'] ?>" data-translate-text="message_<?php echo $wo['chatMessage']['id'] ?>" dir="auto" style="background: <?php echo ($wo['chatMessage']['onwer'] == 1 && isset($wo['chat']['color'])) ? $wo['chat']['color'] . ' !important;' : '';?>;<?php echo ($wo['chatMessage']['onwer'] == 1) ? ' color:#fff !important;' : '';?>">
 				<?php if($wo['chatMessage']['type_two'] == 'contact'): 
 					$json = json_decode(trim(htmlspecialchars_decode($wo['chatMessage']['text'])), true);
 					echo $json['Value'] . ' (' . $json['Key'] . ')';
 				?>
 				<?php else: echo $wo['chatMessage']['text']; endif;?>
+				
+				<!-- Función de traducción agregada -->
+                <?php if ((strlen($wo['chatMessage']['text']) >= 2 && ($wo['config']['google_translate'] == 1 || $wo['config']['yandex_translate'] == 1)) && $wo['chatMessage']['onwer'] != 1): ?>
+                    <span onclick="Wo_Translate($(this).attr('id'), $(this).attr('data-language'))" title="<?php echo $wo['lang']['translate'];?>" class="pointer time" id="message_<?php echo $wo['chatMessage']['id']; ?>" data-language="<?php echo DetermineUserLang(); ?>"  data-trans-btn="message_<?php echo $wo['chatMessage']['id']; ?>" >
+                        - <i class="fa fa-language"></i> <?php echo $wo['lang']['translate'];?>
+                    </span>
+                <?php endif; ?>
+				
+				
 				<!-- <div class="deleteMessage <?php echo ($wo['chatMessage']['onwer'] == 0) ? 'right': '';?>" onclick="Wo_DeleteChatMessage(<?php echo $wo['chatMessage']['id'] ?>);">
 				  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-trash"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
 				</div> -->

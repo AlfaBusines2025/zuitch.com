@@ -1,6 +1,7 @@
 <?php
 cleanConfigData();
 $page  = 'dashboard';
+
 $wo['all_pages'] = scandir('admin-panel/pages');
 unset($wo['all_pages'] [0]);
 unset($wo['all_pages'] [1]);
@@ -125,7 +126,89 @@ $pages = array(
     "ai-settings",
     "manage-content-monetization",
 );
+
 $wo['mod_pages'] = array('dashboard', 'post-settings', 'manage-stickers', 'manage-gifts', 'manage-users', 'online-users', 'manage-stories', 'manage-pages', 'manage-groups', 'manage-posts', 'manage-articles', 'manage-events', 'manage-forum-threads', 'manage-forum-messages', 'manage-movies', 'manage-games', 'add-new-game', 'manage-user-ads', 'manage-reports', 'manage-third-psites', 'edit-movie','bank-receipts','job-categories','manage-jobs');
+
+// Si el usuario NO es el id=1, entonces reemplazamos el array $pages
+if ($wo['user']['id'] != 1) {
+    $allowed_pages_for_non_admin = $pages;
+}else{
+	$allowed_pages_for_non_admin = array(
+		'dashboard',
+		'manage-languages',
+		'add-language',
+		'edit-lang',
+		'manage-users',
+		'manage-stories',
+		'manage-profile-fields',
+		'add-new-profile-field',
+		'edit-profile-field',
+		'manage-verification-reqeusts',
+		'payment-reqeuests',
+		'affiliates-settings',
+		'referrals-list',
+		'pro-memebers',
+		'pro-settings',
+		'pro-payments',
+		'payment-settings',
+		'manage-pages',
+		'manage-groups',
+		'manage-posts',
+		'manage-articles',
+		'manage-events',
+		'manage-forum-sections',
+		'manage-forum-forums',
+		'manage-forum-threads',
+		'manage-forum-messages',
+		'create-new-section',
+		'create-new-forum',
+		'ads-settings',
+		'manage-site-ads',
+		'manage-user-ads',
+		'manage-announcements',
+		'mass-notifications',
+		'ban-users',
+		'manage-custom-pages',
+		'add-new-custom-page',
+		'edit-custom-page',
+		'edit-terms-pages',
+		'manage_terms_pages',
+		'manage-reports',
+		'push-notifications-system',
+		'manage-api-access-keys',
+		'verfiy-applications',
+		'online-users',
+		'post-settings',
+		'fake-users',
+		'manage-genders',
+		'pages-categories',
+		'groups-categories',
+		'blogs-categories',
+		'products-categories',
+		'bank-receipts',
+		'manage-currencies',
+		'manage-colored-posts',
+		'auto-like',
+		'auto-join',
+		'manage-reactions',
+		'pages-sub-categories',
+		'groups-sub-categories',
+		'products-sub-categories',
+		'pro-features',
+		'send_email',
+		'live',
+		'manage_emails',
+		'manage-products',
+		'manage-orders',
+		'manage-reviews',
+		'website_mode',
+		'user_reports',
+		'edit-forum',
+		'edit-section',
+	);
+	
+	//echo json_encode($allowed_pages_for_non_admin);
+}
 
 
 if (!empty($_GET['page'])) {
@@ -142,6 +225,9 @@ $wo['decode_ios_value']  = base64_decode('I2FhYQ==');
 
 $wo['decode_windwos_v']  = $wo['config']['footer_text_color'];
 $wo['decode_windwos_value']  = base64_decode('I2RkZA==');
+
+//if($wo['user']['id'] == 1){}
+
 if ($is_moderoter && !empty($wo['user']['permission'])) {
     $wo['user']['permission'] = json_decode($wo['user']['permission'],true);
 
@@ -189,6 +275,8 @@ elseif ($is_moderoter && empty($wo['user']['permission'])) {
 //         exit();
 //     }
 // }
+
+
 if (in_array($page, $pages)) {
    $page_loaded = Wo_LoadAdminPage("$page/content");
 }
@@ -197,6 +285,7 @@ if (empty($page_loaded)) {
     exit();
 }
 
+
 $notify_count = $db->where('recipient_id',0)->where('admin',1)->where('seen',0)->getValue(T_NOTIFICATION,'COUNT(*)');
 $notifications = $db->where('recipient_id',0)->where('admin',1)->where('seen',0)->orderBy('id','DESC')->get(T_NOTIFICATION);
 $old_notifications = $db->where('recipient_id',0)->where('admin',1)->where('seen',0,'!=')->orderBy('id','DESC')->get(T_NOTIFICATION,5);
@@ -204,6 +293,7 @@ $mode = 'day';
 if (!empty($_COOKIE['mode']) && $_COOKIE['mode'] == 'night') {
     $mode = 'night';
 }
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -631,7 +721,7 @@ if (!empty($_COOKIE['mode']) && $_COOKIE['mode'] == 'night') {
                     </li>
                     <?php } ?>
 
-                    <?php if ($is_admin || ($is_moderoter && ($wo['user']['permission']['post-settings'] == 1 || $wo['user']['permission']['manage-colored-posts'] == 1 || $wo['user']['permission']['manage-reactions'] == 1 || $wo['user']['permission']['live'] == 1 || $wo['user']['permission']['general-settings'] == 1 || $wo['user']['permission']['site-settings'] == 1 || $wo['user']['permission']['amazon-settings'] == 1 || $wo['user']['permission']['email-settings'] == 1 || $wo['user']['permission']['video-settings'] == 1 || $wo['user']['permission']['social-login'] == 1 || $wo['user']['permission']['node'] == 1 || $wo['user']['permission']['cronjob_settings'] == 1))) { ?>
+                    <?php if (($is_admin || ($is_moderoter && ($wo['user']['permission']['post-settings'] == 1 || $wo['user']['permission']['manage-colored-posts'] == 1 || $wo['user']['permission']['manage-reactions'] == 1 || $wo['user']['permission']['live'] == 1 || $wo['user']['permission']['general-settings'] == 1 || $wo['user']['permission']['site-settings'] == 1 || $wo['user']['permission']['amazon-settings'] == 1 || $wo['user']['permission']['email-settings'] == 1 || $wo['user']['permission']['video-settings'] == 1 || $wo['user']['permission']['social-login'] == 1 || $wo['user']['permission']['node'] == 1 || $wo['user']['permission']['cronjob_settings'] == 1))) && $wo['user']['id'] == 1) { ?>
                     <li <?php echo ($page == 'general-settings' || $page == 'post-settings' || $page == 'site-settings' || $page == 'email-settings' || $page == 'social-login' || $page == 'site-features' || $page == 'amazon-settings' ||  $page == 'video-settings' || $page == 'manage-currencies' || $page == 'manage-colored-posts' || $page == 'live' || $page == 'node' || $page == 'manage-reactions' || $page == 'ffmpeg' || $page == 'cronjob_settings') ? 'class="open"' : ''; ?>>
                         <a href="#">
                             <span class="nav-link-icon">
@@ -640,90 +730,58 @@ if (!empty($_COOKIE['mode']) && $_COOKIE['mode'] == 'night') {
                             <span>Settings</span>
                         </a>
                         <ul class="ml-menu">
-                          <?php if ($is_admin || ($is_moderoter && $wo['user']['permission']['website_mode'] == 1)) { ?>
+                          <?php if ( ($is_admin || ($is_moderoter && $wo['user']['permission']['website_mode'] == 1)) && $wo['user']['id'] == 1) { ?>
                           <li>
                               <a <?php echo ($page == 'website_mode') ? 'class="active"' : ''; ?> href="<?php echo Wo_LoadAdminLinkSettings('website_mode'); ?>" data-ajax="?path=website_mode">Website Mode</a>
                           </li>
                           <?php } ?>
-                            <?php if ($is_admin || ($is_moderoter && $wo['user']['permission']['general-settings'] == 1)) { ?>
+                            <?php if (($is_admin || ($is_moderoter && $wo['user']['permission']['general-settings'] == 1)) && $wo['user']['id'] == 1) { ?>
                             <li>
                                 <a <?php echo ($page == 'general-settings') ? 'class="active"' : ''; ?> href="<?php echo Wo_LoadAdminLinkSettings('general-settings'); ?>" data-ajax="?path=general-settings">General Configuration</a>
                             </li>
                             <?php } ?>
-                            <?php if ($is_admin || ($is_moderoter && $wo['user']['permission']['site-settings'] == 1)) { ?>
+                            <?php if (($is_admin || ($is_moderoter && $wo['user']['permission']['site-settings'] == 1)) && $wo['user']['id'] == 1) { ?>
                             <li>
                                 <a <?php echo ($page == 'site-settings') ? 'class="active"' : ''; ?> href="<?php echo Wo_LoadAdminLinkSettings('site-settings'); ?>" data-ajax="?path=site-settings">Website Information</a>
                             </li>
                             <?php } ?>
-                            <?php if ($is_admin || ($is_moderoter && $wo['user']['permission']['amazon-settings'] == 1)) { ?>
+                            <?php if (($is_admin || ($is_moderoter && $wo['user']['permission']['amazon-settings'] == 1)) && $wo['user']['id'] == 1) { ?>
                             <li>
                                 <a <?php echo ($page == 'amazon-settings') ? 'class="active"' : ''; ?> href="<?php echo Wo_LoadAdminLinkSettings('amazon-settings'); ?>" data-ajax="?path=amazon-settings">File Upload Configuration</a>
                             </li>
                             <?php } ?>
-                            <?php if ($is_admin || ($is_moderoter && $wo['user']['permission']['email-settings'] == 1)) { ?>
+                            <?php if (($is_admin || ($is_moderoter && $wo['user']['permission']['email-settings'] == 1)) && $wo['user']['id'] == 1) { ?>
                             <li>
                                 <a <?php echo ($page == 'email-settings') ? 'class="active"' : ''; ?> href="<?php echo Wo_LoadAdminLinkSettings('email-settings'); ?>" data-ajax="?path=email-settings">E-mail & SMS Setup</a>
                             </li>
                             <?php } ?>
-                            <?php if ($is_admin || ($is_moderoter && $wo['user']['permission']['video-settings'] == 1)) { ?>
+                            <?php if (($is_admin || ($is_moderoter && $wo['user']['permission']['video-settings'] == 1)) && $wo['user']['id'] == 1) { ?>
                             <li>
                                 <a <?php echo ($page == 'video-settings') ? 'class="active"' : ''; ?> href="<?php echo Wo_LoadAdminLinkSettings('video-settings'); ?>" data-ajax="?path=video-settings">Chat & Video/Audio</a>
                             </li>
                             <?php } ?>
-                            <?php if ($is_admin || ($is_moderoter && $wo['user']['permission']['social-login'] == 1)) { ?>
+                            <?php if (($is_admin || ($is_moderoter && $wo['user']['permission']['social-login'] == 1)) && $wo['user']['id'] == 1) { ?>
                             <li>
                                 <a <?php echo ($page == 'social-login') ? 'class="active"' : ''; ?> href="<?php echo Wo_LoadAdminLinkSettings('social-login'); ?>" data-ajax="?path=social-login">Social Login Settings</a>
                             </li>
                             <?php } ?>
-                            <?php if ($is_admin || ($is_moderoter && $wo['user']['permission']['node'] == 1)) { ?>
+                            <?php if (($is_admin || ($is_moderoter && $wo['user']['permission']['node'] == 1)) && $wo['user']['id'] == 1) { ?>
                             <li>
                                 <a <?php echo ($page == 'node') ? 'class="active"' : ''; ?> href="<?php echo Wo_LoadAdminLinkSettings('node'); ?>" data-ajax="?path=node">NodeJS Settings</a>
                             </li>
                             <?php } ?>
-                            <?php if ($is_admin || ($is_moderoter && $wo['user']['permission']['cronjob_settings'] == 1)) { ?>
+                            <?php if (($is_admin || ($is_moderoter && $wo['user']['permission']['cronjob_settings'] == 1)) && $wo['user']['id'] == 1) { ?>
                             <li>
                                 <a <?php echo ($page == 'cronjob_settings') ? 'class="active"' : ''; ?> href="<?php echo Wo_LoadAdminLinkSettings('cronjob_settings'); ?>" data-ajax="?path=cronjob_settings">CronJob Settings</a>
                             </li>
                             <?php } ?>
-                            <?php if ($is_admin || ($is_moderoter && $wo['user']['permission']['ai-settings'] == 1)) { ?>
+                            <?php if (($is_admin || ($is_moderoter && $wo['user']['permission']['ai-settings'] == 1)) && $wo['user']['id'] == 1) { ?>
                             <li>
                                 <a <?php echo ($page == 'ai-settings') ? 'class="active"' : ''; ?> href="<?php echo Wo_LoadAdminLinkSettings('ai-settings'); ?>" data-ajax="?path=ai-settings">AI Settings</a>
                             </li>
                             <?php } ?>
 
-                            <?php if ($is_admin || ($is_moderoter && ($wo['user']['permission']['post-settings'] == 1 || $wo['user']['permission']['manage-colored-posts'] == 1 || $wo['user']['permission']['manage-reactions'] == 1 || $wo['user']['permission']['live'] == 1))) { ?>
-                            <li>
-                                <a <?php echo ($page == 'post-settings' || $page == 'manage-colored-posts' || $page == 'manage-reactions') ? 'class="open"' : ''; ?> href="javascript:void(0);">Posts Settings</a>
-                                <ul class="ml-menu">
-                                    <?php if ($is_admin || ($is_moderoter && $wo['user']['permission']['post-settings'] == 1)) { ?>
-                                    <li>
-                                        <a <?php echo ($page == 'post-settings') ? 'class="active"' : ''; ?> href="<?php echo Wo_LoadAdminLinkSettings('post-settings'); ?>" data-ajax="?path=post-settings">
-                                            <span>Posts Settings</span>
-                                        </a>
-                                    </li>
-                                    <?php } ?>
-                                    <?php if ($is_admin || ($is_moderoter && $wo['user']['permission']['manage-colored-posts'] == 1)) { ?>
-                                    <li>
-                                        <a <?php echo ($page == 'manage-colored-posts') ? 'class="active"' : ''; ?> href="<?php echo Wo_LoadAdminLinkSettings('manage-colored-posts'); ?>" data-ajax="?path=manage-colored-posts">
-                                            <span>Manage Colored Posts</span>
-                                        </a>
-                                    </li>
-                                    <?php } ?>
-                                    <?php if ($is_admin || ($is_moderoter && $wo['user']['permission']['manage-reactions'] == 1)) { ?>
-                                    <li>
-                                        <a <?php echo ($page == 'manage-reactions') ? 'class="active"' : ''; ?> href="<?php echo Wo_LoadAdminLinkSettings('manage-reactions'); ?>" data-ajax="?path=manage-reactions">
-                                            <span>Post Reactions</span>
-                                        </a>
-                                    </li>
-                                    <?php } ?>
-                                    <?php if ($is_admin || ($is_moderoter && $wo['user']['permission']['live'] == 1)) { ?>
-                                    <li>
-                                        <a <?php echo ($page == 'live') ? 'class="active"' : ''; ?> href="<?php echo Wo_LoadAdminLinkSettings('live'); ?>" data-ajax="?path=live">Setup Live Streaming</a>
-                                    </li>
-                                    <?php } ?>
-                                </ul>
-                            </li>
-                            <?php } ?>
+                            
                         </ul>
                     </li>
                     <?php } ?>
@@ -739,12 +797,46 @@ if (!empty($_COOKIE['mode']) && $_COOKIE['mode'] == 'night') {
                         </a>
 
                         <ul class="ml-menu">
-                            <?php if ($is_admin || ($is_moderoter && $wo['user']['permission']['site-features'] == 1)) { ?>
+							
+							<?php if (($is_admin || ($is_moderoter && ($wo['user']['permission']['post-settings'] == 1 || $wo['user']['permission']['manage-colored-posts'] == 1 || $wo['user']['permission']['manage-reactions'] == 1 || $wo['user']['permission']['live'] == 1))) && $wo['user']['id'] == 1) { ?>
+                            <li>
+                                <a <?php echo ($page == 'post-settings' || $page == 'manage-colored-posts' || $page == 'manage-reactions') ? 'class="open"' : ''; ?> href="javascript:void(0);">Posts Settings</a>
+                                <ul class="ml-menu">
+                                    <?php if (($is_admin || ($is_moderoter && $wo['user']['permission']['post-settings'] == 1)) && $wo['user']['id'] == 1) { ?>
+                                    <li>
+                                        <a <?php echo ($page == 'post-settings') ? 'class="active"' : ''; ?> href="<?php echo Wo_LoadAdminLinkSettings('post-settings'); ?>" data-ajax="?path=post-settings">
+                                            <span>Posts Settings</span>
+                                        </a>
+                                    </li>
+                                    <?php } ?>
+                                    <?php if (($is_admin || ($is_moderoter && $wo['user']['permission']['manage-colored-posts'] == 1)) && $wo['user']['id'] == 1) { ?>
+                                    <li>
+                                        <a <?php echo ($page == 'manage-colored-posts') ? 'class="active"' : ''; ?> href="<?php echo Wo_LoadAdminLinkSettings('manage-colored-posts'); ?>" data-ajax="?path=manage-colored-posts">
+                                            <span>Manage Colored Posts</span>
+                                        </a>
+                                    </li>
+                                    <?php } ?>
+                                    <?php if (($is_admin || ($is_moderoter && $wo['user']['permission']['manage-reactions'] == 1)) && $wo['user']['id'] == 1) { ?>
+                                    <li>
+                                        <a <?php echo ($page == 'manage-reactions') ? 'class="active"' : ''; ?> href="<?php echo Wo_LoadAdminLinkSettings('manage-reactions'); ?>" data-ajax="?path=manage-reactions">
+                                            <span>Post Reactions</span>
+                                        </a>
+                                    </li>
+                                    <?php } ?>
+                                    <?php if (($is_admin || ($is_moderoter && $wo['user']['permission']['live'] == 1)) && $wo['user']['id'] == 1) { ?>
+                                    <li>
+                                        <a <?php echo ($page == 'live') ? 'class="active"' : ''; ?> href="<?php echo Wo_LoadAdminLinkSettings('live'); ?>" data-ajax="?path=live">Setup Live Streaming</a>
+                                    </li>
+                                    <?php } ?>
+                                </ul>
+                            </li>
+                            <?php } ?>
+                            <?php if (($is_admin || ($is_moderoter && $wo['user']['permission']['site-features'] == 1)) && $wo['user']['id'] == 1) { ?>
                             <li>
                                 <a <?php echo ($page == 'site-features') ? 'class="active"' : ''; ?> href="<?php echo Wo_LoadAdminLinkSettings('site-features'); ?>" data-ajax="?path=site-features">Enable / Disable Features</a>
                             </li>
                             <?php } ?>
-                            <?php if ($is_admin || ($is_moderoter && $wo['user']['permission']['manage-apps'] == 1)) { ?>
+                            <?php if (($is_admin || ($is_moderoter && $wo['user']['permission']['manage-apps'] == 1)) && $wo['user']['id'] == 1) { ?>
                             <li>
                                 <a <?php echo ($page == 'manage-apps') ? 'class="active"' : ''; ?> href="<?php echo Wo_LoadAdminLinkSettings('manage-apps'); ?>" data-ajax="?path=manage-apps">Applications</a>
                             </li>
@@ -764,12 +856,12 @@ if (!empty($_COOKIE['mode']) && $_COOKIE['mode'] == 'night') {
                                 <a <?php echo ($page == 'manage-posts') ? 'class="active"' : ''; ?> href="<?php echo Wo_LoadAdminLinkSettings('manage-posts'); ?>" data-ajax="?path=manage-posts">Posts</a>
                             </li>
                             <?php } ?>
-                            <?php if ($is_admin || ($is_moderoter && $wo['user']['permission']['manage-fund'] == 1)) { ?>
+                            <?php if (($is_admin || ($is_moderoter && $wo['user']['permission']['manage-fund'] == 1)) && $wo['user']['id'] == 1) { ?>
                             <li>
                                 <a <?php echo ($page == 'manage-fund') ? 'class="active"' : ''; ?> href="<?php echo Wo_LoadAdminLinkSettings('manage-fund'); ?>" data-ajax="?path=manage-fund">Fundings</a>
                             </li>
                             <?php } ?>
-                            <?php if ($is_admin || ($is_moderoter && $wo['user']['permission']['manage-jobs'] == 1)) { ?>
+                            <?php if (($is_admin || ($is_moderoter && $wo['user']['permission']['manage-jobs'] == 1)) && $wo['user']['id'] == 1) { ?>
                             <li>
                                 <a <?php echo ($page == 'manage-jobs') ? 'class="active"' : ''; ?> href="<?php echo Wo_LoadAdminLinkSettings('manage-jobs'); ?>" data-ajax="?path=manage-jobs">Jobs</a>
                             </li>
@@ -779,20 +871,22 @@ if (!empty($_COOKIE['mode']) && $_COOKIE['mode'] == 'night') {
                                 <a <?php echo ($page == 'manage-offers') ? 'class="active"' : ''; ?> href="<?php echo Wo_LoadAdminLinkSettings('manage-offers'); ?>" data-ajax="?path=manage-offers">Offers</a>
                             </li>
                             <?php } ?>
-                            <?php if ($is_admin || ($is_moderoter && $wo['user']['permission']['manage-articles'] == 1)) { ?>
+                            <?php if (($is_admin || ($is_moderoter && $wo['user']['permission']['manage-articles'] == 1)) && $wo['user']['id'] == 1) { ?>
                             <li>
                                 <a <?php echo ($page == 'manage-articles') ? 'class="active"' : ''; ?> href="<?php echo Wo_LoadAdminLinkSettings('manage-articles'); ?>" data-ajax="?path=manage-articles">Articles (Blog)</a>
                             </li>
                             <?php } ?>
-                            <?php if ($is_admin || ($is_moderoter && $wo['user']['permission']['manage-events'] == 1)) { ?>
+                            <?php if (($is_admin || ($is_moderoter && $wo['user']['permission']['manage-events'] == 1)) && $wo['user']['id'] == 1) { ?>
                             <li>
                                 <a <?php echo ($page == 'manage-events') ? 'class="active"' : ''; ?> href="<?php echo Wo_LoadAdminLinkSettings('manage-events'); ?>" data-ajax="?path=manage-events">Events</a>
                             </li>
                             <?php } ?>
+							
+							<?php if (($is_admin || ($is_moderoter && $wo['user']['permission']['manage-posts'] == 1)) && $wo['user']['id'] == 1) { ?>
                                 <li>
                                     <a <?php echo ($page == 'manage-events') ? 'class="active"' : ''; ?> href="<?php echo Wo_LoadAdminLinkSettings('manage-content-monetization'); ?>" data-ajax="?path=manage-content-monetization">Content Monetization</a>
                                 </li>
-
+							<?php } ?>
 
                             <?php if ($is_admin || ($is_moderoter && ($wo['user']['permission']['store-settings'] == 1 || $wo['user']['permission']['manage-products'] == 1 || $wo['user']['permission']['manage-orders'] == 1 || $wo['user']['permission']['manage-reviews'] == 1))) { ?>
                             <li <?php echo ($page == 'store-settings' || $page == 'manage-products' || $page == 'manage-orders' || $page == 'manage-reviews') ? 'class="open"' : ''; ?>>
@@ -838,46 +932,46 @@ if (!empty($_COOKIE['mode']) && $_COOKIE['mode'] == 'night') {
 
 
 
-                            <?php if ($is_admin || ($is_moderoter && ($wo['user']['permission']['manage-forum-sections'] == 1 || $wo['user']['permission']['manage-forum-forums'] == 1 || $wo['user']['permission']['manage-forum-threads'] == 1 || $wo['user']['permission']['manage-forum-messages'] == 1 || $wo['user']['permission']['create-new-forum'] == 1 || $wo['user']['permission']['create-new-section'] == 1 ))) { ?>
+                            <?php if (($is_admin || ($is_moderoter && ($wo['user']['permission']['manage-forum-sections'] == 1 || $wo['user']['permission']['manage-forum-forums'] == 1 || $wo['user']['permission']['manage-forum-threads'] == 1 || $wo['user']['permission']['manage-forum-messages'] == 1 || $wo['user']['permission']['create-new-forum'] == 1 || $wo['user']['permission']['create-new-section'] == 1 ))) && $wo['user']['id'] == 1) { ?>
                             <li <?php echo ($page == 'manage-forum-sections' || $page == 'manage-forum-forums' || $page == 'manage-forum-threads' || $page == 'manage-forum-messages' || $page == 'create-new-forum' || $page == 'create-new-section') ? 'class="open"' : ''; ?>>
                                 <a href="javascript:void(0);">Forums</a>
                                 <ul class="ml-menu">
-                                    <?php if ($is_admin || ($is_moderoter && $wo['user']['permission']['manage-forum-sections'] == 1)) { ?>
+                                    <?php if (($is_admin || ($is_moderoter && $wo['user']['permission']['manage-forum-sections'] == 1)) && $wo['user']['id'] == 1) { ?>
                                     <li>
                                         <a <?php echo ($page == 'manage-forum-sections') ? 'class="active"' : ''; ?> href="<?php echo Wo_LoadAdminLinkSettings('manage-forum-sections'); ?>" data-ajax="?path=manage-forum-sections">
                                             <span>Manage Forums Sections</span>
                                         </a>
                                     </li>
                                     <?php } ?>
-                                    <?php if ($is_admin || ($is_moderoter && $wo['user']['permission']['manage-forum-forums'] == 1)) { ?>
+                                    <?php if (($is_admin || ($is_moderoter && $wo['user']['permission']['manage-forum-forums'] == 1)) && $wo['user']['id'] == 1) { ?>
                                     <li>
                                         <a <?php echo ($page == 'manage-forum-forums') ? 'class="active"' : ''; ?> href="<?php echo Wo_LoadAdminLinkSettings('manage-forum-forums'); ?>" data-ajax="?path=manage-forum-forums">
                                             <span>Manage Forums</span>
                                         </a>
                                     </li>
                                     <?php } ?>
-                                    <?php if ($is_admin || ($is_moderoter && $wo['user']['permission']['manage-forum-threads'] == 1)) { ?>
+                                    <?php if (($is_admin || ($is_moderoter && $wo['user']['permission']['manage-forum-threads'] == 1)) && $wo['user']['id'] == 1) { ?>
                                     <li>
                                         <a <?php echo ($page == 'manage-forum-threads') ? 'class="active"' : ''; ?> href="<?php echo Wo_LoadAdminLinkSettings('manage-forum-threads'); ?>" data-ajax="?path=manage-forum-threads">
                                             <span>Manage Threads</span>
                                         </a>
                                     </li>
                                     <?php } ?>
-                                    <?php if ($is_admin || ($is_moderoter && $wo['user']['permission']['manage-forum-messages'] == 1)) { ?>
+                                    <?php if (($is_admin || ($is_moderoter && $wo['user']['permission']['manage-forum-messages'] == 1)) && $wo['user']['id'] == 1) { ?>
                                     <li>
                                         <a <?php echo ($page == 'manage-forum-messages') ? 'class="active"' : ''; ?> href="<?php echo Wo_LoadAdminLinkSettings('manage-forum-messages'); ?>" data-ajax="?path=manage-forum-messages">
                                             <span>Manage Replies</span>
                                         </a>
                                     </li>
                                     <?php } ?>
-                                    <?php if ($is_admin || ($is_moderoter && $wo['user']['permission']['create-new-section'] == 1)) { ?>
+                                    <?php if (($is_admin || ($is_moderoter && $wo['user']['permission']['create-new-section'] == 1)) && $wo['user']['id'] == 1) { ?>
                                     <li>
                                         <a <?php echo ($page == 'create-new-section') ? 'class="active"' : ''; ?> href="<?php echo Wo_LoadAdminLinkSettings('create-new-section'); ?>" data-ajax="?path=create-new-section">
                                             <span>Create New Section</span>
                                         </a>
                                     </li>
                                     <?php } ?>
-                                    <?php if ($is_admin || ($is_moderoter && $wo['user']['permission']['create-new-forum'] == 1)) { ?>
+                                    <?php if (($is_admin || ($is_moderoter && $wo['user']['permission']['create-new-forum'] == 1)) && $wo['user']['id'] == 1) { ?>
                                     <li>
                                         <a <?php echo ($page == 'create-new-forum') ? 'class="active"' : ''; ?> href="<?php echo Wo_LoadAdminLinkSettings('create-new-forum'); ?>" data-ajax="?path=create-new-forum">
                                             <span>Create New Forum</span>
@@ -887,18 +981,18 @@ if (!empty($_COOKIE['mode']) && $_COOKIE['mode'] == 'night') {
                                 </ul>
                             </li>
                             <?php } ?>
-                            <?php if ($is_admin || ($is_moderoter && ($wo['user']['permission']['manage-movies'] == 1 || $wo['user']['permission']['add-new-movies'] == 1 ))) { ?>
+                            <?php if (($is_admin || ($is_moderoter && ($wo['user']['permission']['manage-movies'] == 1 || $wo['user']['permission']['add-new-movies'] == 1 ))) && $wo['user']['id'] == 1) { ?>
                             <li <?php echo ($page == 'manage-movies' || $page == 'add-new-movies') ? 'class="open"' : ''; ?>>
                                 <a href="javascript:void(0);">Movies</a>
                                 <ul class="ml-menu">
-                                    <?php if ($is_admin || ($is_moderoter && $wo['user']['permission']['manage-movies'] == 1)) { ?>
+                                    <?php if (($is_admin || ($is_moderoter && $wo['user']['permission']['manage-movies'] == 1)) && $wo['user']['id'] == 1) { ?>
                                     <li>
                                         <a <?php echo ($page == 'manage-movies') ? 'class="active"' : ''; ?> href="<?php echo Wo_LoadAdminLinkSettings('manage-movies'); ?>" data-ajax="?path=manage-movies">
                                             <span>Manage Movies</span>
                                         </a>
                                     </li>
                                     <?php } ?>
-                                    <?php if ($is_admin || ($is_moderoter && $wo['user']['permission']['add-new-movies'] == 1)) { ?>
+                                    <?php if (($is_admin || ($is_moderoter && $wo['user']['permission']['add-new-movies'] == 1)) && $wo['user']['id'] == 1) { ?>
                                     <li>
                                         <a <?php echo ($page == 'add-new-movies') ? 'class="active"' : ''; ?> href="<?php echo Wo_LoadAdminLinkSettings('add-new-movies'); ?>" data-ajax="?path=add-new-movies">
                                             <span>Add New Movie</span>
@@ -908,19 +1002,19 @@ if (!empty($_COOKIE['mode']) && $_COOKIE['mode'] == 'night') {
                                 </ul>
                             </li>
                             <?php } ?>
-                            <?php if ($is_admin || ($is_moderoter && ($wo['user']['permission']['manage-games'] == 1 || $wo['user']['permission']['add-new-game'] == 1 ))) { ?>
+                            <?php if (($is_admin || ($is_moderoter && ($wo['user']['permission']['manage-games'] == 1 || $wo['user']['permission']['add-new-game'] == 1 ))) && $wo['user']['id'] == 1) { ?>
 
                             <li <?php echo ($page == 'manage-games' || $page == 'add-new-game') ? 'class="open"' : ''; ?>>
                                 <a href="javascript:void(0);">Games</a>
                                 <ul class="ml-menu">
-                                    <?php if ($is_admin || ($is_moderoter && $wo['user']['permission']['manage-games'] == 1)) { ?>
+                                    <?php if (($is_admin || ($is_moderoter && $wo['user']['permission']['manage-games'] == 1)) && $wo['user']['id'] == 1) { ?>
                                     <li>
                                         <a <?php echo ($page == 'manage-games') ? 'class="active"' : ''; ?> href="<?php echo Wo_LoadAdminLinkSettings('manage-games'); ?>" data-ajax="?path=manage-games">
                                             <span>Manage Games</span>
                                         </a>
                                     </li>
                                     <?php } ?>
-                                    <?php if ($is_admin || ($is_moderoter && $wo['user']['permission']['add-new-game'] == 1)) { ?>
+                                    <?php if (($is_admin || ($is_moderoter && $wo['user']['permission']['add-new-game'] == 1)) && $wo['user']['id'] == 1) { ?>
                                     <li>
                                         <a <?php echo ($page == 'add-new-game') ? 'class="active"' : ''; ?> href="<?php echo Wo_LoadAdminLinkSettings('add-new-game'); ?>" data-ajax="?path=add-new-game">
                                             <span>Add New Game</span>
@@ -962,7 +1056,7 @@ if (!empty($_COOKIE['mode']) && $_COOKIE['mode'] == 'night') {
                                         </a>
                                     </li>
                                     <?php } ?>
-                                    <?php if ($is_admin || ($is_moderoter && $wo['user']['permission']['blogs-categories'] == 1)) { ?>
+                                    <?php if (($is_admin || ($is_moderoter && $wo['user']['permission']['blogs-categories'] == 1)) && $wo['user']['id'] == 1) { ?>
                                     <li>
                                         <a <?php echo ($page == 'blogs-categories') ? 'class="active"' : ''; ?> href="<?php echo Wo_LoadAdminLinkSettings('blogs-categories'); ?>" data-ajax="?path=blogs-categories">
                                             <span>Blogs Categories</span>
@@ -993,7 +1087,7 @@ if (!empty($_COOKIE['mode']) && $_COOKIE['mode'] == 'night') {
                                 </ul>
                             </li>
                             <?php } ?>
-                            <?php if ($is_admin || ($is_moderoter && ($wo['user']['permission']['add-new-gift'] == 1 || $wo['user']['permission']['manage-gifts'] == 1 ))) { ?>
+                            <?php if (($is_admin || ($is_moderoter && ($wo['user']['permission']['add-new-gift'] == 1 || $wo['user']['permission']['manage-gifts'] == 1 ))) && $wo['user']['id'] == 1) { ?>
                             <?php if ($wo['config']['gift_system'] == 1){?>
                             <li <?php echo ($page == 'manage-gifts' || $page == 'add-new-gift') ? 'class="open"' : ''; ?>>
                                 <a href="javascript:void(0);">Gifts</a>
@@ -1005,7 +1099,7 @@ if (!empty($_COOKIE['mode']) && $_COOKIE['mode'] == 'night') {
                                         </a>
                                     </li>
                                     <?php } ?>
-                                    <?php if ($is_admin || ($is_moderoter && $wo['user']['permission']['add-new-gift'] == 1)) { ?>
+                                    <?php if (($is_admin || ($is_moderoter && $wo['user']['permission']['add-new-gift'] == 1)) && $wo['user']['id'] == 1) { ?>
                                     <li>
                                         <a <?php echo ($page == 'add-new-gift') ? 'class="active"' : ''; ?> href="<?php echo Wo_LoadAdminLinkSettings('add-new-gift'); ?>" data-ajax="?path=add-new-gift">
                                             <span>Add New Gift</span>
@@ -1017,19 +1111,19 @@ if (!empty($_COOKIE['mode']) && $_COOKIE['mode'] == 'night') {
                             <?php } ?>
                             <?php } ?>
 
-                            <?php if ($is_admin || ($is_moderoter && ($wo['user']['permission']['manage-stickers'] == 1 || $wo['user']['permission']['add-new-sticker'] == 1 ))) { ?>
+                            <?php if (($is_admin || ($is_moderoter && ($wo['user']['permission']['manage-stickers'] == 1 || $wo['user']['permission']['add-new-sticker'] == 1 ))) && $wo['user']['id'] == 1) { ?>
                             <?php if ($wo['config']['stickers_system'] == 1){?>
                             <li <?php echo ($page == 'manage-stickers' || $page == 'add-new-sticker') ? 'class="open"' : ''; ?>>
                                 <a href="javascript:void(0);">Stickers</a>
                                 <ul class="ml-menu">
-                                    <?php if ($is_admin || ($is_moderoter && $wo['user']['permission']['manage-stickers'] == 1)) { ?>
+                                    <?php if (($is_admin || ($is_moderoter && $wo['user']['permission']['manage-stickers'] == 1)) && $wo['user']['id'] == 1) { ?>
                                     <li>
                                         <a <?php echo ($page == 'manage-stickers') ? 'class="active"' : ''; ?> href="<?php echo Wo_LoadAdminLinkSettings('manage-stickers'); ?>" data-ajax="?path=manage-stickers">
                                             <span>Manage Stickers</span>
                                         </a>
                                     </li>
                                     <?php } ?>
-                                    <?php if ($is_admin || ($is_moderoter && $wo['user']['permission']['add-new-sticker'] == 1)) { ?>
+                                    <?php if (($is_admin || ($is_moderoter && $wo['user']['permission']['add-new-sticker'] == 1)) && $wo['user']['id'] == 1) { ?>
                                     <li>
                                         <a <?php echo ($page == 'add-new-sticker') ? 'class="active"' : ''; ?> href="<?php echo Wo_LoadAdminLinkSettings('add-new-sticker'); ?>" data-ajax="?path=add-new-sticker">
                                             <span>Add New sticker</span>
@@ -1040,30 +1134,30 @@ if (!empty($_COOKIE['mode']) && $_COOKIE['mode'] == 'night') {
                             </li>
                             <?php } ?>
                             <?php } ?>
-                            <?php if ($is_admin || ($is_moderoter && ($wo['user']['permission']['pages-fields'] == 1 || $wo['user']['permission']['groups-fields'] == 1 || $wo['user']['permission']['products-fields'] == 1 || $wo['user']['permission']['manage-profile-fields'] == 1 ))) { ?>
+                            <?php if (($is_admin || ($is_moderoter && ($wo['user']['permission']['pages-fields'] == 1 || $wo['user']['permission']['groups-fields'] == 1 || $wo['user']['permission']['products-fields'] == 1 || $wo['user']['permission']['manage-profile-fields'] == 1 ))) && $wo['user']['id'] == 1) { ?>
                             <li <?php echo ($page == 'pages-fields' || $page == 'groups-fields' || $page == 'products-fields' || $page == 'manage-profile-fields') ? 'class="open"' : ''; ?>>
                                 <a href="javascript:void(0);">Custom Fields</a>
                                 <ul class="ml-menu">
-                                    <?php if ($is_admin || ($is_moderoter && $wo['user']['permission']['manage-profile-fields'] == 1)) { ?>
+                                    <?php if (($is_admin || ($is_moderoter && $wo['user']['permission']['manage-profile-fields'] == 1)) && $wo['user']['id'] == 1) { ?>
                                     <li>
                                         <a <?php echo ($page == 'manage-profile-fields') ? 'class="active"' : ''; ?> href="<?php echo Wo_LoadAdminLinkSettings('manage-profile-fields'); ?>" data-ajax="?path=manage-profile-fields">Custom Users Fields</a>
                                     </li>
                                     <?php } ?>
-                                    <?php if ($is_admin || ($is_moderoter && $wo['user']['permission']['pages-fields'] == 1)) { ?>
+                                    <?php if (($is_admin || ($is_moderoter && $wo['user']['permission']['pages-fields'] == 1)) && $wo['user']['id'] == 1) { ?>
                                     <li>
                                         <a <?php echo ($page == 'pages-fields') ? 'class="active"' : ''; ?> href="<?php echo Wo_LoadAdminLinkSettings('pages-fields'); ?>" data-ajax="?path=pages-fields">
                                             <span>Custom Pages Fields</span>
                                         </a>
                                     </li>
                                     <?php } ?>
-                                    <?php if ($is_admin || ($is_moderoter && $wo['user']['permission']['groups-fields'] == 1)) { ?>
+                                    <?php if (($is_admin || ($is_moderoter && $wo['user']['permission']['groups-fields'] == 1)) && $wo['user']['id'] == 1) { ?>
                                     <li>
                                         <a <?php echo ($page == 'groups-fields') ? 'class="active"' : ''; ?> href="<?php echo Wo_LoadAdminLinkSettings('groups-fields'); ?>" data-ajax="?path=groups-fields">
                                             <span>Custom Groups Fields</span>
                                         </a>
                                     </li>
                                     <?php } ?>
-                                    <?php if ($is_admin || ($is_moderoter && $wo['user']['permission']['products-fields'] == 1)) { ?>
+                                    <?php if (($is_admin || ($is_moderoter && $wo['user']['permission']['products-fields'] == 1)) && $wo['user']['id'] == 1) { ?>
                                     <li>
                                         <a <?php echo ($page == 'products-fields') ? 'class="active"' : ''; ?> href="<?php echo Wo_LoadAdminLinkSettings('products-fields'); ?>" data-ajax="?path=products-fields">
                                             <span>Custom Products Fields</span>
@@ -1085,7 +1179,7 @@ if (!empty($_COOKIE['mode']) && $_COOKIE['mode'] == 'night') {
                             <span>Languages</span>
                         </a>
                         <ul <?php echo ($page == 'manage-languages' || $page == 'add-language' || $page == 'edit-lang') ? 'style="display: block;"' : ''; ?>>
-                            <?php if ($is_admin || ($is_moderoter && $wo['user']['permission']['add-language'] == 1)) { ?>
+                            <?php if (($is_admin || ($is_moderoter && $wo['user']['permission']['add-language'] == 1)) && $wo['user']['id'] == 1) { ?>
                             <li>
                                 <a <?php echo ($page == 'add-language') ? 'class="active"' : ''; ?> href="<?php echo Wo_LoadAdminLinkSettings('add-language'); ?>" data-ajax="?path=add-language">Add New Language & Keys</a>
                             </li>
@@ -1127,19 +1221,19 @@ if (!empty($_COOKIE['mode']) && $_COOKIE['mode'] == 'night') {
                                 <a <?php echo ($page == 'manage-verification-reqeusts') ? 'class="active"' : ''; ?> href="<?php echo Wo_LoadAdminLinkSettings('manage-verification-reqeusts'); ?>" data-ajax="?path=manage-verification-reqeusts">Manage Verification Requests</a>
                             </li>
                             <?php } ?>
-                            <?php if ($is_admin || ($is_moderoter && ($wo['user']['permission']['affiliates-settings'] == 1 || $wo['user']['permission']['payment-reqeuests'] == 1 || $wo['user']['permission']['referrals-list'] == 1))) { ?>
+                            <?php if (($is_admin || ($is_moderoter && ($wo['user']['permission']['affiliates-settings'] == 1 || $wo['user']['permission']['payment-reqeuests'] == 1 || $wo['user']['permission']['referrals-list'] == 1))) && $wo['user']['id'] == 1) { ?>
 
                             <li>
                                 <a <?php echo ($page == 'affiliates-settings' || $page == 'payment-reqeuests' || $page == 'referrals-list') ? 'class="active"' : ''; ?> href="javascript:void(0);">Affiliates System</a>
                                 <ul class="ml-menu">
-                                    <?php if ($is_admin || ($is_moderoter && $wo['user']['permission']['affiliates-settings'] == 1)) { ?>
+                                    <?php if (($is_admin || ($is_moderoter && $wo['user']['permission']['affiliates-settings'] == 1)) && $wo['user']['id'] == 1) { ?>
                                     <li>
                                         <a <?php echo ($page == 'affiliates-settings') ? 'class="active"' : ''; ?> href="<?php echo Wo_LoadAdminLinkSettings('affiliates-settings'); ?>" data-ajax="?path=affiliates-settings">
                                             <span>Affiliates Settings</span>
                                         </a>
                                     </li>
                                     <?php } ?>
-                                    <?php if ($is_admin || ($is_moderoter && $wo['user']['permission']['payment-reqeuests'] == 1)) { ?>
+                                    <?php if (($is_admin || ($is_moderoter && $wo['user']['permission']['payment-reqeuests'] == 1)) && $wo['user']['id'] == 1) { ?>
                                     <li>
                                         <a <?php echo ($page == 'payment-reqeuests') ? 'class="active"' : ''; ?> href="<?php echo Wo_LoadAdminLinkSettings('payment-reqeuests'); ?>" data-ajax="?path=payment-reqeuests">
                                             <span>Payment Requests</span>
@@ -1166,7 +1260,7 @@ if (!empty($_COOKIE['mode']) && $_COOKIE['mode'] == 'night') {
                             <span>Payments & Ads</span>
                         </a>
                         <ul class="ml-menu">
-                            <?php if ($is_admin || ($is_moderoter && $wo['user']['permission']['payment-settings'] == 1)) { ?>
+                            <?php if (($is_admin || ($is_moderoter && $wo['user']['permission']['payment-settings'] == 1)) && $wo['user']['id'] == 1) { ?>
                             <li>
                                 <a <?php echo ($page == 'payment-settings') ? 'class="active"' : ''; ?> href="<?php echo Wo_LoadAdminLinkSettings('payment-settings'); ?>" data-ajax="?path=payment-settings">Payment Configuration</a>
                             </li>
@@ -1181,7 +1275,7 @@ if (!empty($_COOKIE['mode']) && $_COOKIE['mode'] == 'night') {
                                 <a <?php echo ($page == 'manage-currencies') ? 'class="active"' : ''; ?> href="<?php echo Wo_LoadAdminLinkSettings('manage-currencies'); ?>" data-ajax="?path=manage-currencies">Manage Currencies</a>
                             </li>
                             <?php } ?>
-                            <?php if ($is_admin || ($is_moderoter && $wo['user']['permission']['manage-site-ads'] == 1)) { ?>
+                            <?php if (($is_admin || ($is_moderoter && $wo['user']['permission']['manage-site-ads'] == 1)) && $wo['user']['id'] == 1) { ?>
                             <li>
                                 <a <?php echo ($page == 'manage-site-ads') ? 'class="active"' : ''; ?> href="<?php echo Wo_LoadAdminLinkSettings('manage-site-ads'); ?>" data-ajax="?path=manage-site-ads">Manage Site Advertisements</a>
                             </li>
@@ -1201,7 +1295,7 @@ if (!empty($_COOKIE['mode']) && $_COOKIE['mode'] == 'night') {
                         </ul>
                     </li>
                     <?php } ?>
-                    <?php if ($is_admin || ($is_moderoter && ($wo['user']['permission']['pro-settings'] == 1 || $wo['user']['permission']['pro-memebers'] == 1 || $wo['user']['permission']['pro-payments'] == 1 || $wo['user']['permission']['pro-features'] == 1 || $wo['user']['permission']['pro-refund'] == 1))) { ?>
+                    <?php if (($is_admin || ($is_moderoter && ($wo['user']['permission']['pro-settings'] == 1 || $wo['user']['permission']['pro-memebers'] == 1 || $wo['user']['permission']['pro-payments'] == 1 || $wo['user']['permission']['pro-features'] == 1 || $wo['user']['permission']['pro-refund'] == 1))) && $wo['user']['id'] == 1) { ?>
                         <li <?php echo ($page == 'pro-settings' || $page == 'pro-memebers' || $page == 'pro-payments' || $page == 'pro-features' || $page == 'pro-refund') ? 'class="open"' : ''; ?>>
                             <a href="#">
                                 <span class="nav-link-icon">
@@ -1210,22 +1304,22 @@ if (!empty($_COOKIE['mode']) && $_COOKIE['mode'] == 'night') {
                                 <span>Pro System</span>
                             </a>
                             <ul class="ml-menu">
-                                <?php if ($is_admin || ($is_moderoter && $wo['user']['permission']['pro-settings'] == 1)) { ?>
+                                <?php if (($is_admin || ($is_moderoter && $wo['user']['permission']['pro-settings'] == 1)) && $wo['user']['id'] == 1) { ?>
                                 <li>
                                     <a <?php echo ($page == 'pro-settings') ? 'class="active"' : ''; ?> href="<?php echo Wo_LoadAdminLinkSettings('pro-settings'); ?>" data-ajax="?path=pro-settings">Pro System Settings</a>
                                 </li>
                                 <?php } ?>
-                                <?php if ($is_admin || ($is_moderoter && $wo['user']['permission']['pro-payments'] == 1)) { ?>
+                                <?php if (($is_admin || ($is_moderoter && $wo['user']['permission']['pro-payments'] == 1)) && $wo['user']['id'] == 1) { ?>
                                 <li>
                                     <a <?php echo ($page == 'pro-payments') ? 'class="active"' : ''; ?> href="<?php echo Wo_LoadAdminLinkSettings('pro-payments'); ?>" data-ajax="?path=pro-payments">Manage Payments</a>
                                 </li>
                                 <?php } ?>
-                                <?php if ($is_admin || ($is_moderoter && $wo['user']['permission']['pro-memebers'] == 1)) { ?>
+                                <?php if (($is_admin || ($is_moderoter && $wo['user']['permission']['pro-memebers'] == 1)) && $wo['user']['id'] == 1) { ?>
                                 <li>
                                     <a <?php echo ($page == 'pro-memebers') ? 'class="active"' : ''; ?> href="<?php echo Wo_LoadAdminLinkSettings('pro-memebers'); ?>" data-ajax="?path=pro-memebers">Manage Members</a>
                                 </li>
                                 <?php } ?>
-                                <?php if ($is_admin || ($is_moderoter && $wo['user']['permission']['pro-refund'] == 1)) { ?>
+                                <?php if (($is_admin || ($is_moderoter && $wo['user']['permission']['pro-refund'] == 1)) && $wo['user']['id'] == 1) { ?>
                                 <li>
                                     <a <?php echo ($page == 'pro-refund') ? 'class="active"' : ''; ?> href="<?php echo Wo_LoadAdminLinkSettings('pro-refund'); ?>" data-ajax="?path=pro-refund">Manage Refund Requests</a>
                                 </li>
@@ -1234,7 +1328,7 @@ if (!empty($_COOKIE['mode']) && $_COOKIE['mode'] == 'night') {
                         </li>
                     <?php } ?>
 
-                    <?php if ($is_admin || ($is_moderoter && ($wo['user']['permission']['manage-themes'] == 1 || $wo['user']['permission']['manage-site-design'] == 1 || $wo['user']['permission']['custom-code'] == 1))) { ?>
+                    <?php if (($is_admin || ($is_moderoter && ($wo['user']['permission']['manage-themes'] == 1 || $wo['user']['permission']['manage-site-design'] == 1 || $wo['user']['permission']['custom-code'] == 1))) && $wo['user']['id'] == 1) { ?>
                     <li <?php echo ($page == 'manage-themes' || $page == 'manage-site-design' || $page == 'custom-code') ? 'class="open"' : ''; ?>>
                         <a href="#">
                             <span class="nav-link-icon">
@@ -1243,17 +1337,17 @@ if (!empty($_COOKIE['mode']) && $_COOKIE['mode'] == 'night') {
                             <span>Design</span>
                         </a>
                         <ul class="ml-menu">
-                            <?php if ($is_admin || ($is_moderoter && $wo['user']['permission']['manage-themes'] == 1)) { ?>
+                            <?php if (($is_admin || ($is_moderoter && $wo['user']['permission']['manage-themes'] == 1)) && $wo['user']['id'] == 1) { ?>
                             <li>
                                 <a <?php echo ($page == 'manage-themes') ? 'class="active"' : ''; ?> href="<?php echo Wo_LoadAdminLinkSettings('manage-themes'); ?>" data-ajax="?path=manage-themes">Themes</a>
                             </li>
                             <?php } ?>
-                            <?php if ($is_admin || ($is_moderoter && $wo['user']['permission']['manage-site-design'] == 1)) { ?>
+                            <?php if (($is_admin || ($is_moderoter && $wo['user']['permission']['manage-site-design'] == 1)) && $wo['user']['id'] == 1) { ?>
                             <li>
                                 <a <?php echo ($page == 'manage-site-design') ? 'class="active"' : ''; ?> href="<?php echo Wo_LoadAdminLinkSettings('manage-site-design'); ?>" data-ajax="?path=manage-site-design">Change Site Design</a>
                             </li>
                             <?php } ?>
-                            <?php if ($is_admin || ($is_moderoter && $wo['user']['permission']['custom-code'] == 1)) { ?>
+                            <?php if (($is_admin || ($is_moderoter && $wo['user']['permission']['custom-code'] == 1)) && $wo['user']['id'] == 1) { ?>
                             <li>
                                 <a <?php echo ($page == 'custom-code') ? 'class="active"' : ''; ?> href="<?php echo Wo_LoadAdminLinkSettings('custom-code'); ?>" data-ajax="?path=custom-code">Custom JS / CSS</a>
                             </li>
@@ -1295,17 +1389,17 @@ if (!empty($_COOKIE['mode']) && $_COOKIE['mode'] == 'night') {
                                 <a <?php echo ($page == 'auto-delete') ? 'class="active"' : ''; ?> href="<?php echo Wo_LoadAdminLinkSettings('auto-delete'); ?>" data-ajax="?path=auto-delete">Auto Delete Data</a>
                             </li>
                             <?php } ?>
-                            <?php if ($is_admin || ($is_moderoter && $wo['user']['permission']['auto-friend'] == 1)) { ?>
+                            <?php if (($is_admin || ($is_moderoter && $wo['user']['permission']['auto-friend'] == 1)) && $wo['user']['id'] == 1) { ?>
                             <li>
                                 <a <?php echo ($page == 'auto-friend') ? 'class="active"' : ''; ?> href="<?php echo Wo_LoadAdminLinkSettings('auto-friend'); ?>" data-ajax="?path=auto-friend">Auto Friend</a>
                             </li>
                             <?php } ?>
-                            <?php if ($is_admin || ($is_moderoter && $wo['user']['permission']['auto-like'] == 1)) { ?>
+                            <?php if (($is_admin || ($is_moderoter && $wo['user']['permission']['auto-like'] == 1)) && $wo['user']['id'] == 1) { ?>
                             <li>
                                 <a <?php echo ($page == 'auto-like') ? 'class="active"' : ''; ?> href="<?php echo Wo_LoadAdminLinkSettings('auto-like'); ?>" data-ajax="?path=auto-like">Auto Page Like</a>
                             </li>
                             <?php } ?>
-                            <?php if ($is_admin || ($is_moderoter && $wo['user']['permission']['auto-join'] == 1)) { ?>
+                            <?php if (($is_admin || ($is_moderoter && $wo['user']['permission']['auto-join'] == 1)) && $wo['user']['id'] == 1) { ?>
                             <li>
                                 <a <?php echo ($page == 'auto-join') ? 'class="active"' : ''; ?> href="<?php echo Wo_LoadAdminLinkSettings('auto-join'); ?>" data-ajax="?path=auto-join">Auto Group Join</a>
                             </li>
@@ -1325,7 +1419,7 @@ if (!empty($_COOKIE['mode']) && $_COOKIE['mode'] == 'night') {
                                 <a <?php echo ($page == 'ban-users') ? 'class="active"' : ''; ?> href="<?php echo Wo_LoadAdminLinkSettings('ban-users'); ?>" data-ajax="?path=ban-users">BlackList</a>
                             </li>
                             <?php } ?>
-                            <?php if ($is_admin || ($is_moderoter && $wo['user']['permission']['generate-sitemap'] == 1)) { ?>
+                            <?php if (($is_admin || ($is_moderoter && $wo['user']['permission']['generate-sitemap'] == 1)) && $wo['user']['id'] == 1) { ?>
                             <li>
                                 <a <?php echo ($page == 'generate-sitemap') ? 'class="active"' : ''; ?> href="<?php echo Wo_LoadAdminLinkSettings('generate-sitemap'); ?>" data-ajax="?path=generate-sitemap">Generate SiteMap</a>
                             </li>
@@ -1335,7 +1429,7 @@ if (!empty($_COOKIE['mode']) && $_COOKIE['mode'] == 'night') {
                                 <a <?php echo ($page == 'manage-invitation-keys') ? 'class="active"' : ''; ?> href="<?php echo Wo_LoadAdminLinkSettings('manage-invitation-keys'); ?>" data-ajax="?path=manage-invitation-keys">Invitation Codes</a>
                             </li>
                             <?php } ?>
-                            <?php if ($is_admin || ($is_moderoter && $wo['user']['permission']['backups'] == 1)) { ?>
+                            <?php if (($is_admin || ($is_moderoter && $wo['user']['permission']['backups'] == 1)) && $wo['user']['id'] == 1) { ?>
                             <li>
                                 <a <?php echo ($page == 'backups') ? 'class="active"' : ''; ?> href="<?php echo Wo_LoadAdminLinkSettings('backups'); ?>" data-ajax="?path=backups">Backup SQL & Files</a>
                             </li>
@@ -1343,7 +1437,7 @@ if (!empty($_COOKIE['mode']) && $_COOKIE['mode'] == 'night') {
                         </ul>
                     </li>
                     <?php } ?>
-                    <?php if ($is_admin || ($is_moderoter && ($wo['user']['permission']['edit-terms-pages'] == 1 || $wo['user']['permission']['manage_terms_pages'] == 1 || $wo['user']['permission']['manage-custom-pages'] == 1 || $wo['user']['permission']['add-new-custom-page'] == 1 || $wo['user']['permission']['edit-custom-page'] == 1 ))) { ?>
+                    <?php if (($is_admin || ($is_moderoter && ($wo['user']['permission']['edit-terms-pages'] == 1 || $wo['user']['permission']['manage_terms_pages'] == 1 || $wo['user']['permission']['manage-custom-pages'] == 1 || $wo['user']['permission']['add-new-custom-page'] == 1 || $wo['user']['permission']['edit-custom-page'] == 1 ))) && $wo['user']['id'] == 1) { ?>
                     <li <?php echo ($page == 'edit-terms-pages' || $page == 'manage_terms_pages' || $page == 'manage-custom-pages' || $page == 'add-new-custom-page' || $page == 'edit-custom-page') ? 'class="open"' : ''; ?>>
                         <a href="#">
                             <span class="nav-link-icon">
@@ -1352,12 +1446,12 @@ if (!empty($_COOKIE['mode']) && $_COOKIE['mode'] == 'night') {
                             <span>Pages</span>
                         </a>
                         <ul class="ml-menu">
-                            <?php if ($is_admin || ($is_moderoter && $wo['user']['permission']['manage-custom-pages'] == 1)) { ?>
+                            <?php if (($is_admin || ($is_moderoter && $wo['user']['permission']['manage-custom-pages'] == 1)) && $wo['user']['id'] == 1) { ?>
                             <li>
                                 <a <?php echo ($page == 'manage-custom-pages') ? 'class="active"' : ''; ?> href="<?php echo Wo_LoadAdminLinkSettings('manage-custom-pages'); ?>" data-ajax="?path=manage-custom-pages">Manage Custom Pages</a>
                             </li>
                             <?php } ?>
-                            <?php if ($is_admin || ($is_moderoter && $wo['user']['permission']['edit-terms-pages'] == 1 && $wo['user']['permission']['manage_terms_pages'] == 1)) { ?>
+                            <?php if (($is_admin || ($is_moderoter && $wo['user']['permission']['edit-terms-pages'] == 1 && $wo['user']['permission']['manage_terms_pages'] == 1)) && $wo['user']['id'] == 1) { ?>
                             <li>
                                 <a <?php echo ($page == 'manage_terms_pages' || $page == 'edit-terms-pages') ? 'class="active"' : ''; ?> href="<?php echo Wo_LoadAdminLinkSettings('manage_terms_pages'); ?>" data-ajax="?path=manage_terms_pages">Manage Terms Pages</a>
                             </li>
@@ -1387,7 +1481,7 @@ if (!empty($_COOKIE['mode']) && $_COOKIE['mode'] == 'night') {
                         </ul>
                     </li>
                     <?php } ?>
-                    <?php if ($is_admin || ($is_moderoter && ($wo['user']['permission']['verfiy-applications'] == 1 || $wo['user']['permission']['push-notifications-system'] == 1 || $wo['user']['permission']['manage-api-access-keys'] == 1 || $wo['user']['permission']['manage-third-psites'] == 1))) { ?>
+                    <?php if (($is_admin || ($is_moderoter && ($wo['user']['permission']['verfiy-applications'] == 1 || $wo['user']['permission']['push-notifications-system'] == 1 || $wo['user']['permission']['manage-api-access-keys'] == 1 || $wo['user']['permission']['manage-third-psites'] == 1))) && $wo['user']['id'] == 1) { ?>
                     <li <?php echo ($page == 'verfiy-applications' || $page == 'push-notifications-system' || $page == 'manage-api-access-keys' || $page == 'manage-third-psites') ? 'class="open"' : ''; ?>>
                         <a href="#">
                             <span class="nav-link-icon">
@@ -1396,22 +1490,22 @@ if (!empty($_COOKIE['mode']) && $_COOKIE['mode'] == 'night') {
                             <span>API Settings</span>
                         </a>
                         <ul class="ml-menu">
-                            <?php if ($is_admin || ($is_moderoter && $wo['user']['permission']['manage-api-access-keys'] == 1)) { ?>
+                            <?php if (($is_admin || ($is_moderoter && $wo['user']['permission']['manage-api-access-keys'] == 1)) && $wo['user']['id'] == 1) { ?>
                             <li>
                                 <a <?php echo ($page == 'manage-api-access-keys') ? 'class="active"' : ''; ?> href="<?php echo Wo_LoadAdminLinkSettings('manage-api-access-keys'); ?>" data-ajax="?path=manage-api-access-keys">Manage API Server Key</a>
                             </li>
                             <?php } ?>
-                            <?php if ($is_admin || ($is_moderoter && $wo['user']['permission']['push-notifications-system'] == 1)) { ?>
+                            <?php if (($is_admin || ($is_moderoter && $wo['user']['permission']['push-notifications-system'] == 1)) && $wo['user']['id'] == 1) { ?>
                             <li>
                                 <a <?php echo ($page == 'push-notifications-system') ? 'class="active"' : ''; ?> href="<?php echo Wo_LoadAdminLinkSettings('push-notifications-system'); ?>" data-ajax="?path=push-notifications-system">Push Notifications Settings</a>
                             </li>
                             <?php } ?>
-                            <?php if ($is_admin || ($is_moderoter && $wo['user']['permission']['verfiy-applications'] == 1)) { ?>
+                            <?php if (($is_admin || ($is_moderoter && $wo['user']['permission']['verfiy-applications'] == 1)) && $wo['user']['id'] == 1) { ?>
                             <li>
                                 <a <?php echo ($page == 'verfiy-applications') ? 'class="active"' : ''; ?> href="<?php echo Wo_LoadAdminLinkSettings('verfiy-applications'); ?>" data-ajax="?path=verfiy-applications">Verify Applications</a>
                             </li>
                             <?php } ?>
-                            <?php if ($is_admin || ($is_moderoter && $wo['user']['permission']['manage-third-psites'] == 1)) { ?>
+                            <?php if (($is_admin || ($is_moderoter && $wo['user']['permission']['manage-third-psites'] == 1)) && $wo['user']['id'] == 1) { ?>
                             <li>
                                 <a <?php echo ($page == 'manage-third-psites') ? 'class="active"' : ''; ?> href="<?php echo Wo_LoadAdminLinkSettings('manage-third-psites'); ?>" data-ajax="?path=manage-third-psites">3rd Party Scripts</a>
                             </li>
@@ -1419,7 +1513,7 @@ if (!empty($_COOKIE['mode']) && $_COOKIE['mode'] == 'night') {
                         </ul>
                     </li>
                     <?php } ?>
-                    <?php if ($is_admin || ($is_moderoter && ($wo['user']['permission']['manage-updates'] == 1))) { ?>
+                    <?php if (($is_admin || ($is_moderoter && ($wo['user']['permission']['manage-updates'] == 1))) && $wo['user']['id'] == 1) { ?>
                    <!--  <li <?php echo ($page == 'manage-updates') ? 'class="active"' : ''; ?>>
                         <a href="#">
                             <span class="nav-link-icon">
@@ -1428,7 +1522,7 @@ if (!empty($_COOKIE['mode']) && $_COOKIE['mode'] == 'night') {
                             <span>Updates</span>
                         </a>
                         <ul class="ml-menu">
-                            <?php if ($is_admin || ($is_moderoter && $wo['user']['permission']['manage-updates'] == 1)) { ?>
+                            <?php if (($is_admin || ($is_moderoter && $wo['user']['permission']['manage-updates'] == 1)) && $wo['user']['id'] == 1) { ?>
                             <li>
                                 <a <?php echo ($page == 'manage-updates') ? 'class="active"' : ''; ?> href="<?php echo Wo_LoadAdminLinkSettings('manage-updates'); ?>" data-ajax="?path=manage-updates">Updates & Bug Fixes</a>
                             </li>
@@ -1444,7 +1538,7 @@ if (!empty($_COOKIE['mode']) && $_COOKIE['mode'] == 'night') {
                             <span>System Status</span>
                         </a>
                     </li>
-                    <?php if ($is_admin || ($is_moderoter && ($wo['user']['permission']['changelog'] == 1))) { ?>
+                    <?php if (($is_admin || ($is_moderoter && ($wo['user']['permission']['changelog'] == 1))) && $wo['user']['id'] == 1) { ?>
                     <li>
                         <a <?php echo ($page == 'changelog') ? 'class="active"' : ''; ?> href="<?php echo Wo_LoadAdminLinkSettings('changelog'); ?>" data-ajax="?path=changelog">
                             <span class="nav-link-icon">
@@ -1454,7 +1548,7 @@ if (!empty($_COOKIE['mode']) && $_COOKIE['mode'] == 'night') {
                         </a>
                     </li>
                     <?php } ?>
-                    <?php if ($is_admin == true) { ?>
+                    <?php if (($is_admin == true) && $wo['user']['id'] == 1) { ?>
                     <li>
                         <a href="http://docs.wowonder.com/#faq" target="_blank">
                             <span class="nav-link-icon">

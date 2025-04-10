@@ -1,8 +1,9 @@
+
 /*
 
 Livestream Plugin.
-email: movileanuion@gmail.com 
-Copyright 2022 by Vanea Young 
+email: movileanuion@gmail.com
+Copyright 2022 by Vanea Young
 @version: 1.2.24
 */
 'use strict';
@@ -15,7 +16,7 @@ window.onerror = function(msg, url, lineNo, columnNo, error) {
     alert('error: ' + error);
     return false;
 }
-*/ 
+*/
 if (typeof __j == 'undefined') {
     var __j = function(a) {
         return $(a);
@@ -34,7 +35,7 @@ var VY_LIVE_STREAM = function(o) {
     this.gl_mdevices = {
         c: null,
         a: null,
-        v: null 
+        v: null
     };
     this.videoTrack;
     this.audioTrack;
@@ -279,7 +280,7 @@ $.extend(VY_LIVE_STREAM.prototype, {
 
             console.log("%c" + vy_lvst_lang.you_dont_have_ssl_enabled, "color: red; font-size:12px;");
         }
-      
+
         return io.connect(vy_lvst_socket_url, {
             query: {
                 'token': vy_lvst_muid,
@@ -515,7 +516,7 @@ $.extend(VY_LIVE_STREAM.prototype, {
                 vy_lvst._rLoading();
                 if (error) return vy_lvst.ws_onError(error);
 
-        
+
                 this.generateOffer(reconn ? vy_lvst.reconnect_onOfferPresenter : vy_lvst.onOfferPresenter);
 
 
@@ -553,7 +554,7 @@ $.extend(VY_LIVE_STREAM.prototype, {
     },
     onOfferPresenter: function(error, offerSdp) {
         if (error) return vy_lvst.ws_onError(error);
- 
+
         const message = {
             id: 'presenter',
             post_id:vy_lvst.ws_post_id,
@@ -594,7 +595,7 @@ $.extend(VY_LIVE_STREAM.prototype, {
             vy_lvst.webRtcPeer = kurentoUtils.WebRtcPeer.WebRtcPeerRecvonly(options, function(error) {
                 vy_lvst._rLoading();
                 if (error) return vy_lvst.ws_onError(error);
-               
+
                 this.generateOffer(vy_lvst.onOfferViewer);
                 const pc = this.peerConnection;
                                 if(typeof callback == 'function') callback(pc);
@@ -622,7 +623,7 @@ $.extend(VY_LIVE_STREAM.prototype, {
         vy_lvst.ws_sendMessage({
             id: 'onIceCandidate',
             post_id:self.ws_post_id,
-            candidate: candidate 
+            candidate: candidate
         });
     },
     k_stop: function(post_id) {
@@ -651,7 +652,7 @@ $.extend(VY_LIVE_STREAM.prototype, {
         }
 
         r_user_id = r_user_id || vy_lvst_uid;
- 
+
         vy_lvst.ws = new WebSocket(`wss://${vy_lvst_socket_url}/vybroadcasting?p=${post_id}&u=${vy_lvst_uid}`);
         window.vy_lv_wss = vy_lvst.ws;
 
@@ -691,7 +692,7 @@ $.extend(VY_LIVE_STREAM.prototype, {
             };
 
             if(self.author && self.author == vy_lvst_user.i){
-                o.filename = encodeURIComponent(self.filename); 
+                o.filename = encodeURIComponent(self.filename);
             }
 
             if(self.post_to_timeline == 'yes')
@@ -775,7 +776,7 @@ $.extend(VY_LIVE_STREAM.prototype, {
                                     'user_id': escape(vy_lvst_user.i),
                                     'user': vy_lvst_user
                                 }));
-                              
+
                             }
 
                         } else {
@@ -787,7 +788,7 @@ $.extend(VY_LIVE_STREAM.prototype, {
             self.ws_close();
             if(vy_lvst_reconnecting) reconnecting_att(); else reconnecting_dis();
 
-            
+
             if(vy_lvst_reconnecting) {
                 if (err == 'client namespace disconnect')
                     clearTimeout(self.timeouts['disconnect_client_recon']);
@@ -818,7 +819,7 @@ $.extend(VY_LIVE_STREAM.prototype, {
 
         });
         this.socket.on('connect', function() {
- 
+
             self.socket.emit('connect_user', vy_lvst_uid, vy_lvst_muid);
 
         });
@@ -895,7 +896,7 @@ $.extend(VY_LIVE_STREAM.prototype, {
 
 
                 const comments_section = self.cnt.find('#vy_lv_comments_section,#vylveelement_commentsv2river');
-                user = self.validateJson(user); 
+                user = self.validateJson(user);
                 switch (d.notification) {
 
                     case 'muted':
@@ -1068,7 +1069,7 @@ $.extend(VY_LIVE_STREAM.prototype, {
         this.socket.on('wait_broadcast', self.wait_broadcast);
 
 
-        this.socket.on('ss_update_product_views', function(product_id) {  
+        this.socket.on('ss_update_product_views', function(product_id) {
             let prod_views_layer = __j("#vy_lv_prod_activeid__"+product_id), prod_views_curr_count = parseInt(prod_views_layer.text());
              ++prod_views_curr_count;
 
@@ -1137,7 +1138,7 @@ $.extend(VY_LIVE_STREAM.prototype, {
                     return false;
                 }
             }
- 
+
             if (data.user_id != vy_lvst_user.i) {
 
 
@@ -1219,7 +1220,7 @@ $.extend(VY_LIVE_STREAM.prototype, {
     },
     uploadToCloud:function(data){
         const self = this;
- 
+
         $.ajax({
             url: 'https://' + vy_lvst_socket_url + '/uploadtocloud',
             contentType: 'application/json',
@@ -1232,7 +1233,7 @@ $.extend(VY_LIVE_STREAM.prototype, {
             type: 'POST',
             success: function(data) {
 
-       
+
             },
             error: function(xhr, status, error) {
                 console.log('Error: ' + error.message);
@@ -1353,7 +1354,7 @@ $.extend(VY_LIVE_STREAM.prototype, {
         }
     },
     host_restored: function() {
-        
+
         vy_lvst._rthreedotsloading();
         __j('body').find('#vy-livest').removeClass('__reconnecting');
 
@@ -1367,7 +1368,7 @@ $.extend(VY_LIVE_STREAM.prototype, {
         vy_lvst._threedotsloading();
         vy_lvst.pause_timer();
         vy_lvst.checkManuallyIfHostIsBack(id);
- 
+
         switch (reason) {
 
             case 'ping_timeout':
@@ -1455,15 +1456,15 @@ $.extend(VY_LIVE_STREAM.prototype, {
         const self = this;
 
         self.evstop(ev, 1);
- 
+
         if (user_id == vy_lvst_uid) return;
- 
+
         if (self.im_host) {
-     
+
             return vy_lvst.mViewer(el, ev, user_id);
-        } else if (self.im_moderator) { 
+        } else if (self.im_moderator) {
             return vy_lvst.mViewer(el, ev, user_id);
-        } else { 
+        } else {
             return vy_lvst.replyToComment(el, ev, user_id);
         }
 
@@ -1578,7 +1579,7 @@ $.extend(VY_LIVE_STREAM.prototype, {
 
 
 
-        // delete OBS 
+        // delete OBS
         if (self.obs_stream) {
 
             self.stopObsfirst(1);
@@ -1645,7 +1646,7 @@ $.extend(VY_LIVE_STREAM.prototype, {
     },
     removePopups: function() {
 
-        // remove popups 
+        // remove popups
         __j('.js_vy_lv_global_pp').remove();
 
     },
@@ -2273,13 +2274,13 @@ $.extend(VY_LIVE_STREAM.prototype, {
                 if (self.timeouts.hasOwnProperty('close_textarea')) clearTimeout(self.timeouts['close_textarea']);
                 self.evstop(e, 1);
 
- 
+
     const target = e.target;
     switch (target.tagName) {
         case "INPUT":
         case "TEXTAREA":
         case "SELECT":
-        
+
             self.html.addClass('keyboard_active');
     }
 
@@ -2327,7 +2328,7 @@ $.extend(VY_LIVE_STREAM.prototype, {
 
 
 
- 
+
                 comments.append(self.r( is_desktopv2_comm ? self.comment_markup_desktop_v2 : self.comment_markup, {
                     '%user_id': vy_lvst_uid,
                     '%moderator': self.isModerator(id, self.im_moderator),
@@ -2336,7 +2337,7 @@ $.extend(VY_LIVE_STREAM.prototype, {
                     '%comment': self.encodeHTML(comment_text)
                 }));
                 self.scrollComments(comments, 1);
-            
+
 
                 self.socket.emit('add_comment', JSON.stringify({
                     'comment': self.encodeHTML(comment_text),
@@ -2828,8 +2829,8 @@ $.extend(VY_LIVE_STREAM.prototype, {
         settings.on('click',async function(e){
              self.evstop(e);
              self.playSound('click');
-                await self.getMobileCards({'title':'Post', 'cmd': 'mob_popup','kind':'mob-pre-live-settings'}); 
-              
+                await self.getMobileCards({'title':'Post', 'cmd': 'mob_popup','kind':'mob-pre-live-settings'});
+
           });*/
 
         // __j('body,html').trigger('click touchend');
@@ -3544,7 +3545,7 @@ $.extend(VY_LIVE_STREAM.prototype, {
 
         const self = this;
         self.body = self.body || __j('body');
- 
+
                 __j(document).off('mouseover mouseenter').on('mouseover mouseenter', '.js__vylv_streamViewHeader', function(e){
                    self.evstop(e,1);
                    clearTimeout(self.timeouts['product.toggle.hide']);
@@ -3556,13 +3557,13 @@ $.extend(VY_LIVE_STREAM.prototype, {
                    clearTimeout(self.timeouts['product.toggle.hide']);
                    self.timeouts['product.toggle.show'] = setTimeout(function(){
                         __j('.js__2jOp21rr').removeClass('_9_JQL _2JE6s');
-                   },250); 
+                   },250);
                 }).off('mouseout mouseleave').on('mouseout mouseleave', '.vy_lv_a5v,.vy-live-e1v,._3nc5v42G', function(e){
                     self.evstop(e,1);
                     clearTimeout(self.timeouts['product.toggle.show']);
                     self.timeouts['product.toggle.hide'] = setTimeout(function(){
                         __j('.js__2jOp21rr').addClass('_9_JQL _2JE6s');
-                    },1250); 
+                    },1250);
                 });
     },
     showProductInStream: function(template){
@@ -3597,7 +3598,7 @@ $.extend(VY_LIVE_STREAM.prototype, {
         }
 
         self._loading();
- 
+
         data['cmd'] = 'golive';
         data['descr'] = this.golive_data['description'];
         data['privacy'] = this.golive_data['audience'];
@@ -3605,12 +3606,12 @@ $.extend(VY_LIVE_STREAM.prototype, {
         data['product'] = JSON.stringify(this.golive_data['product']['id'] <= 0 ? this.default_prod_param() : this.golive_data['product']);
         data['obs'] = 'no';
         data['post_to_timeline'] = "no";
- 
+
         if (vy_lv_recording) {
 
             self.post_to_timeline = this.golive_data['record'];
             data['post_to_timeline'] = this.golive_data['record'];
- 
+
         }
 
         if (self.obs_stream) {
@@ -3625,7 +3626,7 @@ $.extend(VY_LIVE_STREAM.prototype, {
             data['group_id'] = self.group_id;
 
         let send = this.jajax(this.ajax_url, 'post', data);
-        send.done(function(d) {  
+        send.done(function(d) {
 
             self._rLoading();
             if (callback) callback();
@@ -3634,22 +3635,22 @@ $.extend(VY_LIVE_STREAM.prototype, {
 
             __j(document).scrollTop(0);
             d = self.validateJson(d);
-            
+
             self.live_id = d.post_id;
             self.broadcast_id = d.broadcast_id;
             self.broadcastData(self.live_id);
             self.filename = d.filename == 'undefined' ? self.generateToken(36) :  d.filename;
 
             if (!mob)
-                self.changeLiveDashboard(self.live_id,function(){               
+                self.changeLiveDashboard(self.live_id,function(){
                     if(d.product.id > 0)
                         self.showProductInStream(d.product_template);
-                    
+
                 });
             else {
                   if(d.product.id > 0)
                     self.showProductInStream(d.product_template);
-                
+
                 __j('#vy_lv_mob_gohomebtn_ripple').remove();
             }
 
@@ -3724,7 +3725,7 @@ $.extend(VY_LIVE_STREAM.prototype, {
                 });
             }
 
- 
+
             setTimeout(() => {self.generateCover(d.post_id);},1000);
 
 
@@ -4372,10 +4373,10 @@ $.extend(VY_LIVE_STREAM.prototype, {
                 self._rLoading();
 
                 /*if(self.blocked_users.hasOwnProperty(Live_ID)){
-                    
+
                     if(self.findinObj(self.blocked_users[Live_ID],id))
                         self.blocked_users[Live_ID].splice(self.blocked_users[Live_ID].indexOf(id),1);
-                    
+
                 }*/
 
                 Swal.fire(
@@ -4597,7 +4598,7 @@ $.extend(VY_LIVE_STREAM.prototype, {
     responsiveinLiveMob: function() {
 
         const h = window.innerHeight, w = window.innerWidth;
- 
+
         if (this.is_live)
             __j('#vy_lv_rtmpv,#vy_lv_container_box').css({'width':`${w}px`,'height':`${h}px`});
 
@@ -4621,7 +4622,7 @@ $.extend(VY_LIVE_STREAM.prototype, {
         const _rm = _remove || false;
         /*
           if(_remove){
-              
+
               self.socket.emit('delete_obs_record',self.obs_stream_p,vy_lvst_uid);
           }
           */
@@ -4795,7 +4796,7 @@ $.extend(VY_LIVE_STREAM.prototype, {
         const self = this;
         window.history.replaceState({}, document.title, self.original_state);
     },
- 
+
     exitFromStream: function(live_id) {
         this.html.removeClass('vy_lv_ismobiledevice vy_lv_watchingstream');
         this.destroy_timer();
@@ -4819,7 +4820,7 @@ $.extend(VY_LIVE_STREAM.prototype, {
     },
     hideScroll: function(p) {
         this.html.addClass('vy-lv-noscroll vy_lv_popupvis');
- 
+
     },
     showScroll: function(p) {
         this.html.removeClass('vy-lv-noscroll vy_lv_popupvis');
@@ -4842,12 +4843,12 @@ $.extend(VY_LIVE_STREAM.prototype, {
         let _Txt_area = this.cnt.find('#vy_lv_txtaddcomment_js,#vy_lv_txtaddcomment_js2').get(0);
 
         const selRange = (el) => {
- 
+
              let _Txt_area_length = __j(el).val().length || __j(el).text().length;
 
              el.focus();
 
-             
+
             if(typeof el.setSelectionRange != 'undefined')
                 el.setSelectionRange(_Txt_area_length,_Txt_area_length);
             else {
@@ -4857,7 +4858,7 @@ $.extend(VY_LIVE_STREAM.prototype, {
 
                 range.setStart(el.childNodes[0], parseInt(_Txt_area_length));
                 range.collapse(true);
-                
+
                 sel.removeAllRanges();
                 sel.addRange(range);
 
@@ -4867,7 +4868,7 @@ $.extend(VY_LIVE_STREAM.prototype, {
         }
 
         selRange(_Txt_area);
-   
+
 
 
 
@@ -4969,7 +4970,7 @@ $.extend(VY_LIVE_STREAM.prototype, {
 
         __j('.js__vylivest_' + live_id).find('.js__vy-lv-comments-section').hide();
     },
-    openLiveStream: async function(evt, el, id) { 
+    openLiveStream: async function(evt, el, id) {
         const self = this;
         self.evstop(evt, 1);
         //this.responsive();
@@ -4986,7 +4987,7 @@ $.extend(VY_LIVE_STREAM.prototype, {
         self.live_id = id;
         self._loading();
 
-        const _delbroad = i =>{  
+        const _delbroad = i =>{
                 self.jajax(self.ajax_url, 'post', {
                     'cmd': 'delete-crashed',
                     'id': escape(i)
@@ -4997,9 +4998,9 @@ $.extend(VY_LIVE_STREAM.prototype, {
             'cmd': 'join_live',
             'id': escape(id),
             'mobile': self._is_smartphone() ? 'yes' : 'no'
-        }).done(function(r) { 
+        }).done(function(r) {
             d = self.validateJson(r);
- 
+
             self._rLoading();
 
         });
@@ -5024,10 +5025,10 @@ $.extend(VY_LIVE_STREAM.prototype, {
 
         }
         if (d.post['islivenow'] == 'yes') {
- 
+
             const live_data = await self.beforeOpenLiveStream(id,d.post['obs']);
             _timer = live_data.time;
- 
+
             if (live_data.blocked == 'yes') {
 
                 self.playSound('openpopup');
@@ -5043,7 +5044,7 @@ $.extend(VY_LIVE_STREAM.prototype, {
                 setTimeout(function() {
                     self.hidePostCommentBox(id);
                 }, 1100);
-            } else if (live_data.terminated) {  
+            } else if (live_data.terminated) {
                 _delbroad(id);
                 self.playSound('openpopup');
                 return Swal.fire(
@@ -5057,7 +5058,7 @@ $.extend(VY_LIVE_STREAM.prototype, {
             },250);
             }
 
- 
+
             if (live_data.moderator)
                 self.im_moderator = 1;
         }
@@ -5125,7 +5126,7 @@ $.extend(VY_LIVE_STREAM.prototype, {
 
         for (var i = 0; i < vy_lv_reactions.length; i++)
             reactions += '<a href="javascript:void(0);" data-post-id="' + post_id + '" data-reaction-lang="' + vy_lv_reactions[i]['name'] + '" data-reaction-id="' + vy_lv_reactions[i]['id'] + '" data-reaction="' + vy_lv_reactions[i]['name'] + '" onclick="vy_lvst.sendReaction(this,event);" class="vy_lv_reaction ' + size + ' ' + vy_lv_reactions[i]['class'] + '"><label>' + vy_lv_reactions[i]['name'] + '</label></a>';
- 
+
         this.cnt.find('.js__vy_lv_reactions_bt').html(reactions);
 
     },
@@ -5146,10 +5147,10 @@ $.extend(VY_LIVE_STREAM.prototype, {
             'sender': vy_lvst_user.i,
             'icon': reaction_icon
         }));
- 
+
         el = __j('#likes-bar').length ? __j('#likes-bar') : el;
         if (!sessionStorage.getItem("reacted_posts_" + _post_id)) {
- 
+
             /*Wo_LikeSystem(_post_id, 'like', el, 'is_ajax');*/
             Wo_RegisterReaction(el,'',1);
             sessionStorage.setItem("reacted_posts_" + _post_id, _post_id);
@@ -5161,7 +5162,7 @@ $.extend(VY_LIVE_STREAM.prototype, {
         const self = this;
         const j_video = __j('#vy_lv_livestream');
         const video = j_video[0];
- 
+
         if (flvjs.isSupported() && !self.isIosSafari()) {
             this.flvPlayer
             this.flvPlayer = flvjs.createPlayer({
@@ -5184,7 +5185,7 @@ $.extend(VY_LIVE_STREAM.prototype, {
                 'id': rows['user_id']
             }).done(function(path) {
                 self._rLoading();
-                j_video.attr('src', path);  
+                j_video.attr('src', path);
                 j_video[0].muted = false;
             });
 
@@ -5194,7 +5195,7 @@ $.extend(VY_LIVE_STREAM.prototype, {
 
         self.unJoinOnUnload(rows.post_id);
 
- 
+
     },
 
     joinToLive: async function(post_id, reconnect, callback) {
@@ -5202,7 +5203,7 @@ $.extend(VY_LIVE_STREAM.prototype, {
         const self = this;
         const _socket = self.socket;
         this.video =  __j('#vy_lv_livestream');
- 
+
         if (Object.keys(this.config).length <= 0) {
 
             await this.getTurnCredentials();
@@ -5210,8 +5211,8 @@ $.extend(VY_LIVE_STREAM.prototype, {
         }
         if (reconnect)
             vy_lvst.webRtcPeer = null;
- 
- 
+
+
         vy_lvst._wss_connect(post_id, function(){
 
             vy_lvst.viewer(post_id,callback);
@@ -5232,7 +5233,7 @@ $.extend(VY_LIVE_STREAM.prototype, {
                 if(m) v.get(0).muted = false;
                 v.get(0).play();
             }
-            
+
         },500);
 
     },
@@ -5402,7 +5403,7 @@ $.extend(VY_LIVE_STREAM.prototype, {
         this.body.find('#vy_lv_product_category_picker__').empty();
 
     },
- 
+
     getcategsmarkup: function(){
 
         return {'markup': `<div class="_39fxc _39fxc_js">
@@ -5462,7 +5463,7 @@ $.extend(VY_LIVE_STREAM.prototype, {
             else if(!data.length) return picker.find('#vy_lv_prod_categs_list').empty();
 
             // remove duplicates
-            data = data.filter(function (value, index, array) { 
+            data = data.filter(function (value, index, array) {
                         return array.indexOf(value) === index;
                     });
 
@@ -5481,7 +5482,7 @@ $.extend(VY_LIVE_STREAM.prototype, {
                     for(var i2=0;i2<t_categ.sub.length;i2++){
 
                         const t_categ_sub = t_categ.sub[i2];
- 
+
                         if(t_categ_sub.hasOwnProperty('categ_name') && (t_categ_sub.categ_name.toUpperCase().indexOf(key) > -1 || t_categ_sub.categ_name.toUpperCase().includes(key))){
 
                             search_res_data += categs_markup.replace('%sub_id%',i2).replace('%sub2categ_html%','').replace('%main_categ_name%',t_categ.category_name).replace('%main_categ_name_style%','display:flex').replace('%subcategs_exists%',(t_categ_sub.sub2.length === 0 ? '' : 'subcategs2_exists subcategs_exists')).replace('%subcategs_ic%',(t_categ_sub.sub2.length === 0 ? '' : subcateg_ic)).replace('%sub2_id%',i2).replace('%id%',t_categ.id).replace(/%categ_name%/g,t_categ_sub.categ_name);
@@ -5508,7 +5509,7 @@ $.extend(VY_LIVE_STREAM.prototype, {
 
 
             }
- 
+
            loc_setcategslist(search_res_data,0,1);
             if(key && $.trim(key)) {
                let searchInput = picker.find('#CategoryPicker_search_input');
@@ -5524,37 +5525,37 @@ $.extend(VY_LIVE_STREAM.prototype, {
             exact: false,
             include: false
           });
- 
+
           return categs_search_result(result.length > 0 ? result : [],val);
-            
+
         }
         const loc_setcategslist = function(list,plus,n){
 
             picker.html(markup.replace('%categs%',list).replace('%search_key%',search_key));
             picker.find('._39fxc_js').css({'top':parseInt(picker.position().top) - parseInt(picker.parent().find('#vy_lv_product_category_picker_input').height() + 2)});
- 
+
             if(n) return;
 
             if(plus)
                 categs_pages++; else --categs_pages;
         }
-                          
+
         const categorySel = function(id,sub_id,sub2_id){
 
             let categs_html = '', sub2_enabled = false;
 
-            self.product_param['categ']['id'] = id; 
+            self.product_param['categ']['id'] = id;
             self.product_param['categ']['sub_id'] = sub_id;
             self.product_param['categ']['sub2_id'] = sub2_id;
 
- 
+
             for(let j = 0;j < json_categs.length; j++){
 
                 const each_categ = json_categs[j];
 
                 if(each_categ.id == id){
 
- 
+
 
                     categs_html += categ_sel_name.replace('%category_selected_name%',each_categ.category_name);
 
@@ -5564,12 +5565,12 @@ $.extend(VY_LIVE_STREAM.prototype, {
                         sub2_enabled = 1;
 
                     }
-                        
-                    
- 
+
+
+
                      if(each_categ.hasOwnProperty('sub') && sub2_enabled && each_categ.sub[sub_id].hasOwnProperty('sub2') && each_categ.sub[sub_id].sub2.length)
                         categs_html += categ_sel_name.replace('%category_selected_name%',each_categ.sub[sub_id].sub2[sub2_id]);
-                    
+
 
                     break;
 
@@ -5584,7 +5585,7 @@ $.extend(VY_LIVE_STREAM.prototype, {
             for(let i = 0;i < json_categs.length; i++){
 
                 let categ = json_categs[i];
-                
+
                 all_categs += categs_markup.replace('%sub_id%','-1').replace('%sub2categ_html%','').replace('%main_categ_name%','').replace('%main_categ_name_style%','display:none').replace('%subcategs_exists%',(categ.sub.length === 0 ? '' : 'subcategs_exists')).replace('%subcategs_ic%',(categ.sub.length === 0 ? '' : subcateg_ic)).replace('%sub2_id%','-1').replace('%id%',categ.id).replace(/%categ_name%/g,categ.category_name);
 
             }
@@ -5596,20 +5597,20 @@ $.extend(VY_LIVE_STREAM.prototype, {
 
 
             // click on a category
-            __j(document).off('click.sel_categs').on('click.sel_categs', '.js__vy_lv_categevt', function(e){ 
-  
+            __j(document).off('click.sel_categs').on('click.sel_categs', '.js__vy_lv_categevt', function(e){
+
                 self.evstop(e,1);
                 const id = __j(this).data('categid');
                 const sub_id = __j(this).data('subcategid');
                 const sub2_categ_id = __j(this).data('sub2categid');
- 
+
                 all_categs = '';
 
                 if(!__j(this).hasClass('subcategs_exists')){
 
                     return categorySel(id,sub_id,sub2_categ_id);
 
-                } 
+                }
 
                 if(!__j(this).hasClass('subcategs2_exists')){
 
@@ -5619,7 +5620,7 @@ $.extend(VY_LIVE_STREAM.prototype, {
 
 
                         if(categ.id == id) {
-                            
+
 
 
                             if(categ.sub.length > -1){
@@ -5629,7 +5630,7 @@ $.extend(VY_LIVE_STREAM.prototype, {
 
                             }
 
-                       
+
                         }
 
                 }
@@ -5643,19 +5644,19 @@ $.extend(VY_LIVE_STREAM.prototype, {
 
 
                         if(categ.id == id) {
-                            
+
                             if(categ.sub.length > -1 && categ.sub[sub2_categ_id].sub2.length > -1){
- 
+
                                 for(let i = 0;i < categ.sub[sub2_categ_id].sub2.length; i++)
                                  all_categs += categs_markup.replace('%sub_id%',sub2_categ_id).replace('%sub2_id%',i).replace('%sub2categ_html%',subcateg2_ic.replace('%sub2categ_name%',categ.sub[sub2_categ_id].categ_name)).replace('%main_categ_name%',categ.category_name).replace('%main_categ_name_style%','display:flex').replace('%id%',id).replace('%subcategs_ic%','').replace(/%categ_name%/g,categ.sub[sub2_categ_id].sub2[i]);
 
                             }
 
-                       
+
                         }
 
                 }
- 
+
                 sub2_categs = all_categs;
 
                 }
@@ -5666,15 +5667,15 @@ $.extend(VY_LIVE_STREAM.prototype, {
             // click back button
             __j(document).off('click.back_categs').on('click.back_categs', '#vy_lv_categs_back', function(e){
                 self.evstop(e,1);
- 
+
                 loc_setcategslist((categs_pages > 2 ? sub_categs : startup_categs));
- 
-                if(categs_pages <= 1){  
+
+                if(categs_pages <= 1){
                     categs_pages = 1;
                     search_key = '';
                     picker.find('#CategoryPicker_search_input').val('');
                     picker.find('#vy_lv_categs_back').hide();
-                } else {  
+                } else {
                     picker.find('#vy_lv_categs_back').show();
                 }
             });
@@ -5693,7 +5694,7 @@ $.extend(VY_LIVE_STREAM.prototype, {
                       search_key = '';
                       categs_search_result([],value);
                     }
-     
+
 
 
             });
@@ -5743,7 +5744,7 @@ const getProductsSuggestions = function(){
 let _suggestions = await getProductsSuggestions(), _sugg_lowcase = _suggestions.lower;
 
 _suggestions = _suggestions.original;
- 
+
 
 const _select = function(element){
     let selectData = element.textContent;
@@ -5771,14 +5772,14 @@ const _showSuggestions = function(list){
 inputBox.onkeyup = (e)=>{
     let userData = e.target.value; //user enetered data
     let emptyArray = [];
- 
- 
+
+
     if(_sugg_lowcase.indexOf(userData.toLocaleLowerCase()) <= -1) return;
 
-  
- 
- 
- 
+
+
+
+
     if(userData){
         icon.onclick = ()=>{
             webLink = `https://www.google.com/search?q=${userData}`;
@@ -5817,7 +5818,7 @@ inputBox.onkeyup = (e)=>{
 
         return `<div onclick="vy_lvst.showProductDetailsInPopup();" class="vy_lv_pord134lix_d">
 
-        <Div class="vy_lv_pord134lix_d__cnt"> 
+        <Div class="vy_lv_pord134lix_d__cnt">
             <Div class="vy_lv_pord134lix_d__img"><div class="vy_lv_prod134lix_d__onsale">${vy_lvst_lang.product_on_sale}</div><img src="${data.files[0].fileurl}" border="0" /><div style="display:none;" class="vy_lv_pord134lix_d__imgbg" style="background-image:url(${data.files[0].fileurl});"></div></div>
             <Div class="vy_lv_pord134lix_d__details">
                 <div class="vy_lv_pord134lix_d__details_title">${data.name}</div>
@@ -5833,8 +5834,8 @@ inputBox.onkeyup = (e)=>{
 
         const self = this;
 
-        const ulchref = Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(window.location.href)))).map((b) => b.toString(16).padStart(2, '0')).join('');  
-  
+        const ulchref = Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(window.location.href)))).map((b) => b.toString(16).padStart(2, '0')).join('');
+
         el = __j(el);
         const modal_long_markup = `<div class="hystmodal hystmodal--simple" id="vy_lv_prod_add_images_modal" aria-hidden="true">
                                 <div class="hystmodal__wrap">
@@ -5844,7 +5845,7 @@ inputBox.onkeyup = (e)=>{
                             <div id="vy_lv_fullscreen_helper" class="hystmodal__styled">
 
 
- 
+
 <iframe id="vy_prod_up_iframe" frameborder="0" seamless="seamless" scrolling="no" onload="const that = this;setTimeout(vy_resizeIframe(that),500);" src="${vy_lvst_website_host}${vy_lvst_assets}/lib/blueimp_upload/index.html?t=${ulchref}&${parseInt(Math.random()*99)}"></iframe>
 
 
@@ -5868,7 +5869,7 @@ inputBox.onkeyup = (e)=>{
 
 
 <div class="vylv_prod__container"><div class="containerx22342fq">
- 
+
         <form action="#" id="vylv_prod_form">
 
             <div style="display:none;" class="vy_lv_prod_showhistory">
@@ -5894,7 +5895,7 @@ inputBox.onkeyup = (e)=>{
 
                         <div class="input-field">
                             <label class="form-label form-label--required">${vy_lvst_lang.product_price}</label>
-                          
+
                             <div class="vylv_product_prices">
                            <div class="_3CJCZ _2vs-K"> <div class="_1Y-ta"><div class="wZssB">$</div></div><input style="padding-left: 40px;width:100%;" onblur="if(!$.trim(this.value)){ this.style.borderColor='red'; } else { vy_lvst.product_param['price']=this.value; this.style.borderColor='#aaa';}" onkeypress="const fi2sh2 = document.getElementById('vy_lv_product_retail_price'); if(parseInt(this.value) > 9999999){ fi2sh2.style.display='inline'; this.value = 999999; return false;} else {fi2sh2.style.display='none';}" type="number" name="product_price" placeholder="0.00">
                            <div style="display:none;" id="vy_lv_product_retail_price" class="_2St1G"><small>${vy_lvst_lang.product_retail_price_err}</small></div>
@@ -5922,7 +5923,7 @@ inputBox.onkeyup = (e)=>{
 
                             <label class="form-label form-label--required">${vy_lvst_lang.product_mob_number}</label>
                             <input type="tel" name="product_contact_number" style="width:100%;" id="vy_lv_phone_number_product" onblur="if($.trim(this.value) && this.value.length >= 6){vy_lvst.product_param['contact_number']=this.value;}" placeholder="Enter mobile number">
-                        
+
                         </div>
 
 
@@ -5930,18 +5931,18 @@ inputBox.onkeyup = (e)=>{
 
                             <label class="form-label form-label--required">${vy_lvst_lang.product_item_units}</label>
                             <input type="number" name="product_item_units" style="width:100%;" id="vy_lv_product_item_units" onblur="if($.trim(this.value) && this.value.length > 0){vy_lvst.product_param['units']=this.value;}" placeholder="0">
-                        
+
                         </div>
 
 
                         </div>
                         </div>
- 
+
                     </div>
 
 
-    
- 
+
+
                          <div class="input-field ">
                             <label class="form-label form-label--required">${vy_lvst_lang.product_descr}</label>
                             <div class="_3kzIo _3p755 vy_lv_prodaddtxteditorcnt">
@@ -5997,7 +5998,7 @@ inputBox.onkeyup = (e)=>{
 
 
 <div id="vylv_addmediatoprod" class="vylv_addmediatoprod">
-    
+
     <div id="vylv_addmedia_to_newprod" class="dm-uploader p-5 text-center">
   <h3 class="mb-5 mt-5 text-muted">${vy_lvst_lang.product_touch_to_upload}</h3>
 </div><!-- /uploader -->
@@ -6005,7 +6006,7 @@ inputBox.onkeyup = (e)=>{
   </div>
 
 
-  
+
                     </div>
 
                     <div class="buttons12323">
@@ -6019,7 +6020,7 @@ inputBox.onkeyup = (e)=>{
                             <span class="btnText">${vy_lvst_lang.attach_product}</span>
                         </button>
                     </div>
-                </div> 
+                </div>
             </div>
         </form>
     </div></div>
@@ -6045,7 +6046,7 @@ inputBox.onkeyup = (e)=>{
                 'insert_img':false
               });
             });
-        } 
+        }
 
            /* self.searchInProducts(); */
 // create intlTelInput
@@ -6066,7 +6067,7 @@ nextBtn.addEventListener("click", (e)=> {
             if(!self.productCheckFirstStep()) return false;
 
             self.product_param.descr = __j('#vy_lv_prodaddtxteditor').Editor("getText").replace('position:absolute','').replace('position: absolute','').replace('position:fixed','').replace('position: fixed','');
- 
+
             form.classList.add('secActive');
             $backBtn.addClass('vis');
             // add react code for countries and continents
@@ -6078,7 +6079,7 @@ nextBtn.addEventListener("click", (e)=> {
 
                 });
 
-        } 
+        }
 
 
 })
@@ -6096,15 +6097,15 @@ self._hystmodal['simple'] = new HystModal({
     waitTransitions: true,
     closeOnEsc: false,
     beforeOpen: function(modal){
- 
+
     },
     afterClose: function(modal){
- 
+
     }
 });
 
     self._hystmodal['simple'].open("#vy_lv_prod_add_modal");
- 
+
     __j(document).off('click.closemodal').on('click.closemodal', 'button.hystmodal_close_simple', function(e){
         self.evstop(e,1);
         self._hystmodal['simple'].close();
@@ -6121,7 +6122,7 @@ self._hystmodal['simple'] = new HystModal({
     closeOnEsc: false,
     closeOnOverlay:false,
     beforeOpen: function(modal){
-    
+
     },
     afterClose: function(modal){
     self._hystmodal['simple'].open("#vy_lv_prod_add_modal");
@@ -6130,7 +6131,7 @@ self._hystmodal['simple'] = new HystModal({
     },
 });
 
-    
+
     __j(document).off('click.openmodal').on('click.openmodal', '#vylv_addmediatoprod', function(e){
         self.evstop(e,1);
         self._hystmodal['simple'].close();
@@ -6138,13 +6139,13 @@ self._hystmodal['simple'] = new HystModal({
 
             self._hystmodal['long'].open("#vy_lv_prod_add_images_modal");
         },500);
-        
-      
+
+
     });
     __j(document).off('click.closemodal').on('click.closemodal', 'button.hystmodal_close_long', function(e){
         self.evstop(e,1);
         self._hystmodal['long'].close();
-        
+
     });
 
 
@@ -6160,7 +6161,7 @@ self._hystmodal['simple'] = new HystModal({
 
     },
     productCheckFirstStep: function(){
- 
+
         let p = vy_lvst.product_param, text_editor = __j('#vy_lv_prodaddtxteditor');
 
 
@@ -6202,7 +6203,7 @@ self._hystmodal['simple'] = new HystModal({
         }
 
         // check product item units
-        if($.trim(p.units) && parseInt(p.units) <= 0){ 
+        if($.trim(p.units) && parseInt(p.units) <= 0){
             this.showSwalErr(vy_lvst_lang.product_units_err);
             return false;
         } else if(isNaN(p.units)){
@@ -6225,9 +6226,9 @@ self._hystmodal['simple'] = new HystModal({
         return true;
     },
     productCheck2Step: function(){
-        
+
          let p = vy_lvst.product_param;
- 
+
          // check if countries are selected
          if(!p.countries.length){
 
@@ -6250,7 +6251,7 @@ self._hystmodal['simple'] = new HystModal({
 
     },
     product_close_all_modals: function(r){
- 
+
         for(let i in this._hystmodal)
             this._hystmodal[i].close();
 
@@ -6262,7 +6263,7 @@ self._hystmodal['simple'] = new HystModal({
     },
     attachReadyProduct(el,ev){
         const self = this;
- 
+
         self.evstop(ev,1);
 
         window.continents_data_update();
@@ -6276,7 +6277,7 @@ self._hystmodal['simple'] = new HystModal({
         return true;
 
     },
- 
+
     removeProduct: function(el,ev){
 
         const self = this;
@@ -6292,7 +6293,7 @@ self._hystmodal['simple'] = new HystModal({
             document.getElementById("vylv_prod_form").reset();
             // remove all files attached in iframe
             __j('#vy_prod_up_iframe').contents().find('#cancel_all_files').trigger('click');
-            // remove files count 
+            // remove files count
             __j('#vy_lv_add_product_media_count').empty();
         }
 
@@ -6328,15 +6329,15 @@ self._hystmodal['simple'] = new HystModal({
                             const that = __j(this);
                             this.continent_name = that.find('._2KezC > label').text();
 
-                            
+
                             if(parseInt(this.continent_name.split('(')[1].split('/')[0]) >= 1){
                                 __j(this).find('._3eZoM > button').trigger('click');
- 
+
  setTimeout(function(){
 
           const parent = continents_countries.find('._3PFQS');
           const scrollbar_ptop = parent.first().scrollTop();
-       
+
             const country_pos= continents_countries.find('input[name="'+cc+'"]').parent().parent().position();
             const offset = that.height() / 2;
 
@@ -6357,7 +6358,7 @@ self._hystmodal['simple'] = new HystModal({
 
                  for(let j=0; j < obj.countries.length;j++){
                     const obj_sel = obj.countries[j];
-                    if(obj_sel.code == cc){ 
+                    if(obj_sel.code == cc){
                         setTimeout(open_dropdown,500);
                         self.product_param['location'] = obj_sel.code;
                         return `<span style="cursor:pointer;text-decoration:underline;" onclick='const i = __j("#vy_lv_continent_countries input[name=query]").get(0);const e = new Event("input", { bubbles: true,cancelable: true });var ev = document.createEvent("Event");ev.bubbles=true;ev.initEvent("input", true, true);i.value="${obj_sel.name}";i.dispatchEvent(ev);'>
@@ -6370,12 +6371,12 @@ self._hystmodal['simple'] = new HystModal({
                         break;
 
                     }
-                } 
+                }
 
-            } 
+            }
           }
         } else __j('#ku25nakoi_d3').remove();
-       
+
 
     },
     get_top_navbar_el:function(){
@@ -6384,21 +6385,21 @@ self._hystmodal['simple'] = new HystModal({
 
         if(!n.length)
             n = __j('.navbar-fixed-top');
-  
+
         return n;
-    }, 
+    },
     resizeFullSizeModal: function($temp){
         const self = this;
 
       __j(window).on('resize.vy_lvst', function() {
-        $temp.attr('style',`--margintop211: ${Number(self.get_top_navbar_el().height())}px;`); 
+        $temp.attr('style',`--margintop211: ${Number(self.get_top_navbar_el().height())}px;`);
         if (self._is_smartphone()) {
              self.html.addClass('vy_prodshowfrommob');
              $temp.addClass('vylv_fullsizemodal_Onmob');
        } else {
             self.html.removeClass('vy_prodshowfrommob');
             $temp.removeClass('vylv_fullsizemodal_Onmob');
-       } 
+       }
 
         }).trigger('resize.vy_lvst');
 
@@ -6424,7 +6425,7 @@ self._hystmodal['simple'] = new HystModal({
                 let $temp = __j(template);
                 self.body.append($temp);
                 self.html.addClass('vylv_productmodalshow');
-                
+
 
                 self.resizeFullSizeModal($temp);
 
@@ -6438,10 +6439,10 @@ self._hystmodal['simple'] = new HystModal({
                         if(!__j('#vy-livest').length) self.showScroll();
                         self.html.removeClass('vylv_productmodalshow');
                     },300);
-                    
 
 
-                    
+
+
 
                 });
 
@@ -6498,7 +6499,7 @@ self._hystmodal['simple'] = new HystModal({
                         }));
                         self.product_views[product_id] = self.live_id;
                     }
-                       
+
                     const call_royalslider = function(){
 
                       let thumbs_opts =  {
@@ -6518,8 +6519,8 @@ self._hystmodal['simple'] = new HystModal({
                         },
                         imageScalePadding:0,
                         controlNavigation: 'thumbnails',
-                        autoScaleSlider: true, 
-                        autoScaleSliderWidth: 960,     
+                        autoScaleSlider: true,
+                        autoScaleSliderWidth: 960,
                         autoScaleSliderHeight: 850,
                         loop: false,
                         imageScaleMode: 'fit-if-smaller',
@@ -6535,25 +6536,25 @@ self._hystmodal['simple'] = new HystModal({
                         video: {
                           autoHideArrows:false,
                           autoHideControlNav:false
-                        },  
+                        },
                         thumbs: thumbs_opts
                       }).data('royalSlider');
 
                     self.slider.ev.on('rsOnCreateVideoElement', function(e, url) {
                             self.slider.videoObj = __j('<video controls playsinline autoplay src="' + url + '"></video>');
                     });
-             
+
                     setTimeout(function(){
                          modal.find('#vy_lv_product_cntload').fadeIn('fast',function(){
                             self._rthreedotsloading();
                             modal.find('#vy_lv_product_loading_details').remove();
                             self.slider.updateSliderSize(true);
-                    });                       
+                    });
 
 
      },250);
- 
- 
+
+
 
                     }
 
@@ -6575,7 +6576,7 @@ self._hystmodal['simple'] = new HystModal({
 
                 }
 
-                
+
 
 
 
@@ -6601,7 +6602,7 @@ self._hystmodal['simple'] = new HystModal({
     },
     changeProductDefaultImage:function(e,id){
         const self = this;
- 
+
         let this_img = self.slider.currSlide.bigImage, $button = __j('#v34ooal__dD2GfAF');
 
         this_img = this_img.split('/')[this_img.split('/').length-1];
@@ -6613,13 +6614,13 @@ self._hystmodal['simple'] = new HystModal({
                     className: 'error'
                 });
         });
- 
+
 
     },
     insertToCart: function(id,callback,value){
 
         const self = this;
- 
+
         if(id > 0)
         this.jajax(self.ajax_url,'post',{'cmd':'insertocart','id':escape(id),'val':escape(value)}).done(function(id){
 
@@ -6644,16 +6645,16 @@ self._hystmodal['simple'] = new HystModal({
         const self = this;
         const _socket = this.socket;
         this.video =  __j('#vylv_feedstream_'+post_id);
- 
+
         if (Object.keys(this.config).length <= 0) {
 
             await this.getTurnCredentials();
 
         }
- 
-        vy_lvst.viewer(post_id,callback); 
 
-  
+        vy_lvst.viewer(post_id,callback);
+
+
     },
     feedTrackStreams: function(){
 
@@ -6666,7 +6667,7 @@ self._hystmodal['simple'] = new HystModal({
           const triggerTop = __j('.trigger-top').position();
           const triggerBottom = __j('.trigger-bottom').position();
           if (trackerPosition >= triggerTop.top && trackerPosition <= triggerBottom.top ) {
-           
+
                 self.feed_viewer(post_id);
                 $video.get(0).play();
   return 'playing!';
@@ -6686,7 +6687,7 @@ self._hystmodal['simple'] = new HystModal({
 position: relative;
     width: 100vw;
     height: 100%;
-}                   
+}
 .debug {
   font-size:20px;
   position:fixed;
@@ -6698,7 +6699,7 @@ position: relative;
   padding:15px;
   background:rgba(0,0,0,0.05);
 }
- 
+
 /* Position these two as you please */
 .trigger-top,
 .trigger-bottom {
@@ -6737,7 +6738,7 @@ position: relative;
 
                     </style>
                                 <div id="vy_lv_trackerviewport">
- 
+
                                   <div class="trigger-top">top trigger</div>
                                   <div class="trigger-bottom">bottom trigger</div>
 
@@ -6775,7 +6776,7 @@ position: relative;
          });
 
 
- 
+
 
 
 
@@ -6797,7 +6798,7 @@ position: relative;
             lv.removeClass('chatopen');
         } else {
             lv.addClass('chatopen');
-            divchat.addClass('isopen') 
+            divchat.addClass('isopen')
         }
 
     },
@@ -6815,7 +6816,7 @@ position: relative;
             if (!self._is_smartphone())
                 new MeteorEmoji();
 
-            self.cnt.find('#vy_lv_txtaddcomment_js2').on('keydown.sendComment', function(e) { 
+            self.cnt.find('#vy_lv_txtaddcomment_js2').on('keydown.sendComment', function(e) {
 
             setTimeout(() => {
 
@@ -6827,7 +6828,7 @@ position: relative;
             },50);
 
 
-                if (e.keyCode == 13) {  
+                if (e.keyCode == 13) {
                     if (self.im_muted) {
                         return self.MutedToast();
                     } else {

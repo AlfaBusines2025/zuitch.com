@@ -567,6 +567,7 @@ function Wo_Translate(id,lang){
     <?php if ($wo['config']['google_translate'] != 1 && $wo['config']['yandex_translate'] != 1) { ?>
       return false;
     <?php } ?>
+	  //console.log("this is the id_for_translate: "+id);
     var translatable_text = $("[data-translate-text="+id+"]").text();
     if (lang == Wo_DetectTextLang(translatable_text)) {
       // $("[data-trans-btn=" + id + "]").removeAttr('onclick')
@@ -581,7 +582,7 @@ function Wo_Translate(id,lang){
       return false;
     }
     $("[data-translate-text="+id+"]").parents('.post-description').append('<span class="hidden data_translated">'+translatable_text+'</span>');
-    
+    //console.log("this is the translatable_text: "+translatable_text);
     <?php if ($wo['config']['google_translate'] == 1) { ?>
       let url = "https://translation.googleapis.com/language/translate/v2?key=<?php echo($wo['config']['google_translation_api']); ?>";
       let method = "POST";
@@ -606,6 +607,7 @@ function Wo_Translate(id,lang){
     }).done(function(data) {
       <?php if ($wo['config']['google_translate'] == 1) { ?>
       let translation = data.data.translations[0].translatedText;
+		//console.log("this is the translation: "+translation);
       $("[data-translate-text="+id+"]").text(translation)
       <?php }else if($wo['config']['yandex_translate'] == 1){ ?>
       if (data.code == 200) {

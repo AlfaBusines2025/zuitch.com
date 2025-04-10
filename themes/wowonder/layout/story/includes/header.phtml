@@ -1122,8 +1122,8 @@ if ($wo['story']['vy-live'] == 'yes') {
          <?php //if (empty($current_post['parent_id'])) { ?>
          <!-- Hide privacy -->
          <?php if (!empty($wo['story']['postText']) && strlen($wo['story']['postText']) >= 2 && ($wo['config']['google_translate'] == 1 || $wo['config']['yandex_translate'] == 1)): ?>
-         <span onclick="Wo_Translate($(this).attr('id'),$(this).attr('data-language'))" title="<?php echo $wo['lang']['translate'];?>" class="pointer time" id="<?php echo $wo['story']['id']; ?>" data-language="<?php echo DetermineUserLang(); ?>" data-trans-btn="<?php echo $wo['story']['id']; ?>">
-         - <?php echo $wo['lang']['translate'];?>
+         <span onclick="Wo_Translate($(this).attr('id'),$(this).attr('data-language'))" title="<?php echo $wo['lang']['translate'];?>" class="pointer time" style="font-size: 15px; cursor: pointer; color: #000; " id="<?php echo $wo['story']['id']; ?>" data-language="<?php echo DetermineUserLang(); ?>" data-trans-btn="<?php echo $wo['story']['id']; ?>">
+         - <i class="fa fa-language"></i> <?php echo $wo['lang']['translate'];?>
          </span>
          <?php endif ?>
          <?php  if ($wo['story']['admin'] === true && $wo['story']['group_recipient_exists'] == false && empty($wo['story']['product_id'])) { ?>
