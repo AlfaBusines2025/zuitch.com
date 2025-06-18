@@ -14,6 +14,27 @@
          <div class="login_innre">
          <form id="login" method="post">
             <p class="title main"><?php echo $wo['lang']['welcome_back']?></p>
+			 <!-- Asegúrate de tener Font Awesome cargado en tu proyecto -->
+
+
+				<a href="javascript:void(0);" class="btn btn-main btn-mat add_wow_loader py-3"
+				   data-toggle="modal"
+				   data-target="#select-language"
+				   id="language_select">
+				  <!-- Icono de idioma (globo) -->
+				  <i class="fa fa-globe" aria-hidden="true"></i>
+				  <!-- Texto dinámico -->
+				  <?php echo $wo['lang']['select']." ".$wo['lang']['language']; ?>
+				  <!-- SVG indicativo -->
+				  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 -960 960 960">
+					<circle cx="12" cy="12" r="10"></circle>
+					<line x1="2" y1="12" x2="22" y2="12"></line>
+					<path fill="currentColor" d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+				  </svg>
+				</a>
+			 <br>
+			 <br>
+			 
             <p class="desc"><?php echo str_replace(array('{site_name}', '{Site_Name}', '{sito_name}'), array($wo['config']['siteName'], $wo['config']['siteName'], $wo['config']['siteName']), $wo['lang']['register_create_account'])?></p>
             <div class="alert alert-danger errors"></div>
             <div class="wow_form_fields">
@@ -36,6 +57,7 @@
                   </label>
                   <div class="clear"></div>
                </div>
+				
                <?php } ?>
                <a href="<?php echo Wo_SeoLink('index.php?link1=forgot-password');?>" class="main"><?php echo $wo['lang']['forget_password']?></a>
             </div>

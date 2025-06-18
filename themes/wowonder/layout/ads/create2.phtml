@@ -139,53 +139,6 @@
 							<?php endforeach;?>
 						</select>
 					</div>
-					<!-- Segmentación unificada por categorías -->
-					<div class="wow_form_fields">
-						<label for="ads-unified-categories">
-							<?php echo $wo['lang']['select']." ".$wo['lang']['categories']; /* Añade esta clave en tu fichero de idiomas, por ejemplo "Categorias unificadas" */ ?>
-						</label>
-						<select 
-							id="ads-unified-categories" 
-							name="unified_categories[]" 
-							class="selectpicker" 
-							data-live-search="true" 
-							data-actions-box="true" 
-							data-size="7" 
-							multiple>
-							<?php
-							// 1. Páginas
-							$page_keys  = Wo_GetCategoriesKeys(T_PAGES_CATEGORY);
-							foreach ($wo['page_categories'] as $id => $name) {
-								$label = 'Página: ' . htmlspecialchars($name);
-								echo '<option value="page_' . $id . '">' . $label . '</option>';
-							}
-							// 2. Grupos
-							$group_keys = Wo_GetCategoriesKeys(T_GROUPS_CATEGORY);
-							foreach ($wo['group_categories'] as $id => $name) {
-								$label = 'Grupo: ' . htmlspecialchars($name);
-								echo '<option value="group_' . $id . '">' . $label . '</option>';
-							}
-							// 3. Productos
-							$product_keys = Wo_GetCategoriesKeys(T_PRODUCTS_CATEGORY);
-							foreach ($wo['product_categories'] as $id => $name) {
-								$label = 'Producto: ' . htmlspecialchars($name);
-								echo '<option value="product_' . $id . '">' . $label . '</option>';
-							}
-							?>
-						</select>
-					</div>
-
-					<script>
-						// Inicializa el selectpicker si aún no está inicializado
-						jQuery(document).ready(function($) {
-							$('#ads-unified-categories').selectpicker({
-								noneSelectedText: "<?php echo $wo['lang']['nothing_selected'] ?>",
-								selectAllText: "<?php echo $wo['lang']['select_all'] ?>",
-								deselectAllText: "<?php echo $wo['lang']['deselect_all'] ?>"
-							});
-						});
-					</script>
-					<!-- /Segmentación por categorías de productos -->
 					<div class="wow_form_fields">
 						<label for="gender"><?php echo $wo['lang']['gender']; ?></label>
 						<select name="gender" id="gender">

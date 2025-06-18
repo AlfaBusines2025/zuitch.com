@@ -1,4 +1,3 @@
-
 /*
 
 Livestream Plugin.
@@ -1188,11 +1187,11 @@ $.extend(VY_LIVE_STREAM.prototype, {
                 self.file_type = "mp4";
 
 
-                if (self.current_min < 1 && self.post_to_timeline == 'yes' && vy_lv_recording) {
+                // if (self.current_min < 1 && self.post_to_timeline == 'yes' && vy_lv_recording) {
 
-                    return self.removeShortVideos();
+                //     return self.removeShortVideos();
 
-                }
+                // }
                 self.obs_stream = 0;
                 if (self.post_to_timeline == 'no') {
                     self.socket.emit('delete_obs_record', self.obs_stream_p, vy_lvst_uid);
@@ -4130,11 +4129,11 @@ $.extend(VY_LIVE_STREAM.prototype, {
     beforeStopLive: function() {
         const self = this;
 
-        if (self.current_min < 1 && self.post_to_timeline == 'yes' && vy_lv_recording) {
+        // if (self.current_min < 1 && self.post_to_timeline == 'yes' && vy_lv_recording) {
 
-            return self.confirmDeletingShortStreams();
+        //     return self.confirmDeletingShortStreams();
 
-        }
+        // }
 
         Swal.fire({
             title: vy_lvst_lang.q_are_you_sure_you_want_to_end_broadcast,
@@ -4681,10 +4680,10 @@ $.extend(VY_LIVE_STREAM.prototype, {
         let data = {};
 
 
-        if (self.obs_stream && self.current_min < 1 && self.post_to_timeline == 'yes' && vy_lv_recording && window_unload) {
+        // if (self.obs_stream && self.current_min < 1 && self.post_to_timeline == 'yes' && vy_lv_recording && window_unload) {
 
-            return self.removeShortVideos(self.live_id);
-        }
+        //     return self.removeShortVideos(self.live_id);
+        // }
 
         if (self.obs_stream) {
             return self.stopObsfirst();
@@ -4692,11 +4691,11 @@ $.extend(VY_LIVE_STREAM.prototype, {
         }
 
 
-        if (self.current_min < 1 && self.post_to_timeline == 'yes' && vy_lv_recording && window_unload) {
+        // if (self.current_min < 1 && self.post_to_timeline == 'yes' && vy_lv_recording && window_unload) {
 
-            return self.removeShortVideos(self.live_id);
+        //     return self.removeShortVideos(self.live_id);
 
-        }
+        // }
 
         self.live_stopped = 1;
         self.socket_end_broadcast();
@@ -4739,7 +4738,7 @@ $.extend(VY_LIVE_STREAM.prototype, {
 
         self.socket.close();
         self._disconnect();
-        vy_lvst.k_stop(self.live_id);
+        // vy_lvst.k_stop(self.live_id);
 
 
 
