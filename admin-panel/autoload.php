@@ -1533,11 +1533,12 @@ if (!empty($_COOKIE['mode']) && $_COOKIE['mode'] == 'night') {
                     <?php } ?>
                     <?php if ($is_admin) { ?>
                     <li>
-                        <a <?php echo ($page == 'daas') ? 'class="active"' : ''; ?> href="<?php echo Wo_LoadAdminLinkSettings('daas'); ?>" data-ajax="?path=daas">
+                        <?php /* Full page load (no data-ajax): widget.js must run on DOM ready */ ?>
+                        <a <?php echo ($page == 'daas') ? 'class="active"' : ''; ?> href="<?php echo Wo_LoadAdminLinkSettings('daas'); ?>">
                             <span class="nav-link-icon">
                                 <i class="material-icons">cloud_sync</i>
                             </span>
-                            <span>DaaS + GitHub</span>
+                            <span>Pedidos UX/UI (DaaS)</span>
                         </a>
                     </li>
                     <?php } ?>
