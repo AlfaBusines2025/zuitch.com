@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Acta de entrega — Zuitch.com</title>
+  <style>
+    :root {
+      --bg: #f4f6f9;
+      --card: #ffffff;
+      --text: #1a2332;
+      --muted: #5c6575;
+      --border: #dce3ec;
+      --accent: #235777;
+      --accent-soft: #e8f0f6;
+      --ok: #0d6b3d;
+      --warn: #8a5b00;
+      --no: #8b2942;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;
+      font-size: 15px;
+      line-height: 1.55;
+      color: var(--text);
+      background: var(--bg);
+    }
+    .wrap {
+      max-width: 920px;
+      margin: 0 auto;
+      padding: 28px 20px 48px;
+    }
+    header.doc {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 28px 32px;
+      margin-bottom: 24px;
+      box-shadow: 0 2px 12px rgba(26, 35, 50, 0.06);
+    }
+    header.doc h1 {
+      margin: 0 0 8px;
+      font-size: 1.45rem;
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: -0.02em;
+    }
+    header.doc .subtitle {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+    .meta-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px 24px;
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+    }
+    @media (max-width: 640px) {
+      .meta-grid { grid-template-columns: 1fr; }
+    }
+    .meta-grid dt {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+      margin: 0 0 4px;
+    }
+    .meta-grid dd {
+      margin: 0;
+      font-weight: 600;
+    }
+    section.block {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 22px 26px;
+      margin-bottom: 18px;
+    }
+    section.block h2 {
+      margin: 0 0 14px;
+      font-size: 1.1rem;
+      color: var(--accent);
+      padding-bottom: 10px;
+      border-bottom: 2px solid var(--accent-soft);
+    }
+    section.block h3 {
+      margin: 18px 0 10px;
+      font-size: 0.95rem;
+      color: var(--text);
+    }
+    p.lead {
+      margin: 0 0 12px;
+      color: var(--muted);
+    }
+    table.deliver {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.92rem;
+    }
+    table.deliver th,
+    table.deliver td {
+      border: 1px solid var(--border);
+      padding: 10px 12px;
+      vertical-align: top;
+      text-align: left;
+    }
+    table.deliver th {
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-weight: 600;
+    }
+    table.deliver tbody tr:nth-child(even) { background: #fafbfc; }
+    .badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .badge-ok { background: #d4edda; color: var(--ok); }
+    .badge-partial { background: #fff3cd; color: var(--warn); }
+    .badge-out { background: #f8d7da; color: var(--no); }
+    .badge-evolve { background: #cfe2ff; color: #084298; }
+    .badge-plus { background: #ede9fe; color: #5b21b6; }
+    .obs {
+      margin-top: 10px;
+      padding: 12px 14px;
+      background: #fffbeb;
+      border-left: 4px solid #e6a800;
+      border-radius: 0 8px 8px 0;
+      font-size: 0.88rem;
+      color: #5c4d26;
+    }
+    .obs strong { color: #3d340f; }
+    .obs-legal {
+      margin-top: 14px;
+      padding: 14px 16px;
+      background: #fdf2f2;
+      border-left: 4px solid #b91c1c;
+      border-radius: 0 8px 8px 0;
+      font-size: 0.88rem;
+      color: #450a0a;
+    }
+    .obs-legal strong { color: #7f1d1d; }
+    ul.plus-list {
+      margin: 8px 0 0;
+      padding-left: 1.15rem;
+      color: var(--text);
+    }
+    ul.plus-list li { margin-bottom: 10px; }
+    a.ext { color: var(--accent); font-weight: 600; }
+    ul.contract-list {
+      margin: 8px 0 0;
+      padding-left: 1.2rem;
+      color: var(--muted);
+    }
+    ul.contract-list li { margin-bottom: 6px; }
+    footer.note {
+      font-size: 0.82rem;
+      color: var(--muted);
+      margin-top: 28px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+    }
+    .sign {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-top: 28px;
+    }
+    @media (max-width: 640px) { .sign { grid-template-columns: 1fr; } }
+    .sign-box {
+      border: 1px dashed var(--border);
+      border-radius: 8px;
+      padding: 20px;
+      min-height: 120px;
+    }
+    .sign-box .role { font-size: 0.8rem; color: var(--muted); margin-bottom: 8px; }
+    .sign-box .name { font-weight: 700; margin-bottom: 40px; }
+    .sign-line { border-top: 1px solid var(--text); margin-top: 8px; padding-top: 6px; font-size: 0.85rem; }
+    .annex-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin: 14px 0;
+    }
+    .annex-card {
+      flex: 1 1 200px;
+      max-width: 260px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      background: #fafbfc;
+    }
+    .annex-card a { display: block; text-decoration: none; color: inherit; }
+    .annex-card img {
+      width: 100%;
+      height: auto;
+      vertical-align: middle;
+      display: block;
+    }
+    .annex-cap {
+      padding: 8px 10px;
+      font-size: 0.78rem;
+      color: var(--muted);
+      line-height: 1.35;
+    }
+    table.annex {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.86rem;
+      margin: 10px 0;
+    }
+    table.annex th, table.annex td {
+      border: 1px solid var(--border);
+      padding: 8px 10px;
+      text-align: left;
+      vertical-align: top;
+    }
+    table.annex th { background: var(--accent-soft); color: var(--accent); }
+    .num { font-variant-numeric: tabular-nums; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="doc">
+      <h1>Acta de entrega de software</h1>
+      <p class="subtitle">Contrato de desarrollo e implementación de software — Red social <strong>Zuitch.com</strong></p>
+      <dl class="meta-grid">
+        <div>
+          <dt>Contratante</dt>
+          <dd>Aldo Iván Intriago Macías<br><span style="font-weight:400;color:var(--muted);font-size:0.9rem">C.I. 1308628971</span></dd>
+        </div>
+        <div>
+          <dt>Contratista / Desarrollador</dt>
+          <dd>Nicolás Adrián Recalde Salazar<br><span style="font-weight:400;color:var(--muted);font-size:0.9rem">C.I. 1719291955</span></dd>
+        </div>
+        <div>
+          <dt>Fecha de la acta</dt>
+          <dd>11 de abril de 2026</dd>
+        </div>
+        <div>
+          <dt>Entrega del software (inicio garantía — cláusula quinta)</dt>
+          <dd>13 de mayo de 2025</dd>
+        </div>
+        <div>
+          <dt>Fin del período de un año (garantía cláusula quinta y «primer año» del 5 % — regalías / soporte)</dt>
+          <dd>13 de mayo de 2026</dd>
+        </div>
+        <div>
+          <dt>Alcance</dt>
+          <dd><strong>App de mensajería para iOS</strong> <strong>publicada en App Store</strong> (técnicamente en producción); acceso complementario vía <strong>TestFlight</strong> para pruebas; <strong>afinación</strong> y mejoras que continúa solicitando el contratante Aldo Iván Intriago Macías.</dd>
+        </div>
+      </dl>
+    </header>
+
+    <section class="block">
+      <h2>I. Objeto y marco</h2>
+      <p class="lead">El contrato obliga al desarrollador a desarrollar, implementar y entregar la página o red social interactiva denominada <strong>Zuitch.com</strong>, con los alcances detallados en las secciones siguientes. Esta acta describe el cumplimiento contractual a la fecha, con observaciones donde corresponde.</p>
+      <div class="obs">
+        <strong>Courier / mensajería:</strong> el contrato prevé comisión o tarifa fija por servicios de <em>courier</em> o envío. En las secciones <strong>II</strong> y <strong>III</strong> se da cumplimiento al <strong>alcance contractual</strong>. El detalle de implementación que excede ese texto (integración operativa <strong>DHL Express</strong>, API, prorrateos, etc.) se califica como <strong>Plus</strong> en la <strong>sección V</strong>.
+      </div>
+
+      <h3>I.1 Cumplimiento de la cláusula segunda del contrato (plazo orientativo de seis meses)</h3>
+      <p class="lead">La <strong>cláusula segunda</strong> del contrato dispone que el contratista entregará la <strong>red social</strong> en <strong>plena funcionalidad</strong> en un plazo orientativo de <strong>seis (6) meses</strong> contados desde la firma del instrumento. A los efectos de esta acta, las partes dejan constancia de lo siguiente:</p>
+      <ul class="contract-list">
+        <li><strong>Objeto del plazo:</strong> la obligación temporal se refiere a la <strong>puesta en operación de la red social</strong> (el producto <strong>Zuitch.com</strong> como plataforma interactiva y su backend), con los alcances de la cláusula primera —usuarios, contenidos, comunicación, búsqueda, comercio, idiomas, <strong>página web</strong>, escalabilidad, imagen corporativa y la línea de app de mensajería con <strong>webview</strong> prevista en el propio contrato—, y no a la totalidad ilimitada de trabajos posteriores de <strong>distribución en tiendas</strong> ni a cada integración comercial posterior.</li>
+        <li><strong>Cumplimiento del plazo respecto de la red:</strong> según la documentación interna del proyecto (p. ej. línea de tiempo y cronograma web archivados en <a class="ext" href="https://zuitch.com/pruebas/timeline_entregas_proyecto.html" target="_blank" rel="noopener">timeline_entregas_proyecto.html</a>), el <strong>núcleo de la red social en web</strong> alcanzó <strong>plena funcionalidad contractual</strong> en el sentido del instrumento <strong>dentro del horizonte de seis meses</strong> posteriores a la firma, quedando operativos los módulos esenciales descritos en las secciones <strong>II y III</strong> de esta acta. Ello satisface la finalidad de la cláusula segunda: disponer de la <strong>red en producción</strong> para uso del negocio.</li>
+        <li><strong>Qué quedó fuera de ese plazo sin constituir incumplimiento del “6 meses”:</strong> el esfuerzo prolongado para <strong>publicar, revisar y mantener</strong> las aplicaciones en <strong>Google Play</strong> y <strong>Apple App Store</strong> (consolas, builds, testers, rechazos, políticas, textos legales enlazados a tiendas) <strong>no forma parte del texto de la cláusula segunda</strong> como entrega de la “red social” en sí; el contrato, por el contrario, <strong>excluye del precio</strong> las tasas de registro y anualidades de las tiendas (cláusula sexta). Ese bloque de trabajo se reconoce en esta acta como <strong>Plus</strong> (sección V) y explica buena parte del <strong>calendario extendido después del cierre funcional de la web</strong>, sin retrotraerse la fecha de “red lista”.</li>
+        <li><strong>Wrapper / webview como decisión técnica de escalabilidad (corrección de ruta):</strong> con el fin de que el proyecto pudiera <strong>evolucionar más rápido</strong> y con <strong>menor costo recurrente</strong> de mantenimiento frente a dos bases de código divergentes, se consolidó la arquitectura en la que la <strong>web es la fuente de verdad</strong> del producto y la app de mensajería la <strong>refleja mediante webview</strong>, tal como ya autorizaba el contrato. Esa decisión —documentada como parte de las <strong>correcciones y alineación</strong> del plan de implementación— reduce la fricción para desplegar mejoras (un despliegue en servidor beneficia a navegador y a clientes embebidos) y se alinea con la <strong>escalabilidad</strong> invocada en el instrumento, sin suponer una sustitución del objeto contractual sino un <strong>medio más eficiente</strong> de cumplirlo.</li>
+      </ul>
+      <p class="lead" style="font-size:0.9rem;color:var(--muted)">En suma: el <strong>retraso aparente</strong> en el calendario global del proyecto se descompone en (a) <strong>cumplimiento oportuno</strong> de la <strong>red social</strong> en el marco de la cláusula segunda y (b) trabajo <strong>adicional</strong> de <strong>tiendas, Plus y afinación</strong>, que el contrato no ancló al mismo plazo orientativo de seis meses para la entrega del núcleo de la plataforma.</p>
+    </section>
+
+    <section class="block">
+      <h2>II. Entregables según el contrato (detalle del software)</h2>
+      <p class="lead">Tabla ordenada según las áreas del contrato. Estado: entregado en plataforma web y backend salvo indicación expresa.</p>
+
+      <h3>1. Creación y gestión de usuarios</h3>
+      <table class="deliver">
+        <thead>
+          <tr><th>Requisito contractual</th><th>Estado</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Registro con datos personales: nombre, correo, contraseña, número telefónico.</td>
+            <td><span class="badge badge-ok">Entregado</span></td>
+          </tr>
+          <tr>
+            <td>Inicio de sesión y edición de perfil: datos personales, foto de perfil, ubicación, bloqueo de usuarios.</td>
+            <td><span class="badge badge-ok">Entregado</span></td>
+          </tr>
+          <tr>
+            <td>Clasificación y búsqueda por intereses, nacionalidad y ubicación.</td>
+            <td><span class="badge badge-ok">Entregado</span></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>2. Publicaciones y contenido multimedia</h3>
+      <table class="deliver">
+        <thead>
+          <tr><th>Requisito contractual</th><th>Estado</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Publicación de estados, fotos, vídeos y productos categorizados.</td>
+            <td><span class="badge badge-ok">Entregado</span></td>
+          </tr>
+          <tr>
+            <td>Reacciones tipo emoji (me gusta, no me gusta, amor, etc.).</td>
+            <td><span class="badge badge-ok">Entregado</span></td>
+          </tr>
+          <tr>
+            <td>Gestión de distintos tipos de publicación: fotos, reels, vídeos, audio, etc.</td>
+            <td><span class="badge badge-ok">Entregado</span></td>
+          </tr>
+        </tbody>
+      </table>
+      <p class="lead" style="margin-top:10px">El contrato exige soporte a reels y formatos de publicación; cualquier experiencia adicional de feed o marca propia <strong>no</strong> está descrita literalmente en la cláusula primera y se relaciona en la <strong>sección V (Plus)</strong>.</p>
+
+      <h3>3. Comunicación y networking</h3>
+      <table class="deliver">
+        <thead>
+          <tr><th>Requisito contractual</th><th>Estado</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Chat</strong> con texto y multimedia (mensajes en tiempo real, archivos, notificaciones) en la <strong>web</strong> y, en la app de mensajería, <strong>de forma equivalente a través del webview</strong> que carga la misma red social.</td>
+            <td><span class="badge badge-ok">Entregado</span></td>
+          </tr>
+          <tr>
+            <td><strong>App de mensajería (Android / iOS) — lectura literal del contrato:</strong> el instrumento prevé una aplicación de mensajería que incorpora el <strong>webview de Zuitch</strong>; en ese marco, la función <strong>contractual esencia</strong> de la app es permitir <strong>enviar y recibir mensajes</strong> (conversación) apoyándose en la <strong>capa web</strong> embebida, sin que el texto obligue a un cliente de chat 100% nativo independiente del sitio.</td>
+            <td><span class="badge badge-ok">Entregado</span></td>
+          </tr>
+          <tr>
+            <td><strong>Llamadas de voz y videollamadas según contrato:</strong> implementadas y utilizables en la <strong>interfaz web</strong> (navegador), en coherencia con el núcleo WoWonder / proveedores configurados en el servidor. El contratante accede a llamadas y videollamadas desde el <strong>mismo ecosistema de comunicación</strong> que ofrece el sitio público.</td>
+            <td><span class="badge badge-ok">Entregado (web)</span></td>
+          </tr>
+          <tr>
+            <td><strong>Llamadas y videollamadas nativas</strong> (SDK / módulo nativo en la app de mensajería, fuera del webview).</td>
+            <td><span class="badge badge-plus">Plus</span> <span style="color:var(--muted);font-size:0.88rem">Sección V</span></td>
+          </tr>
+          <tr>
+            <td>Live streaming.</td>
+            <td><span class="badge badge-ok">Entregado</span></td>
+          </tr>
+          <tr>
+            <td>Traducción de mensajes/chats mediante API de Google; costos por encima del nivel gratuito repercuten al usuario vía sistema de pago en línea (según contrato).</td>
+            <td><span class="badge badge-ok">Entregado</span></td>
+          </tr>
+          <tr>
+            <td>Networking global: creación y gestión de grupos, blogs, páginas y eventos.</td>
+            <td><span class="badge badge-ok">Entregado</span></td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="obs">
+        Los <strong>costos de API</strong> (Google u otros proveedores) y su facturación al usuario final son responsabilidad del contratante o del modelo de negocio configurado, conforme exclusiones del contrato.
+      </div>
+      <div class="obs" style="margin-top:10px;background:#e8f4fc;border-left-color:#235777;color:#1a2f42">
+        <strong>Distinción mensajería / llamadas:</strong> el <strong>contrato</strong> vincula la app de mensajería al <strong>webview</strong> de la red; por tanto el <strong>mínimo interpretativo razonable</strong> para esa app es el <strong>canal de mensajes</strong> (envío y recepción) sobre la web embebida. Las <strong>llamadas y videollamadas</strong> pactadas en la cláusula primera se cumplen de forma <strong>principal y contractual en la web</strong>. La <strong>réplica nativa</strong> de llamada y videollamada <strong>dentro del binario</strong> de la app (sin depender solo del webview) se documenta en esta acta como <strong>Plus</strong> (sección V), al exceder esa lectura mínima.
+      </div>
+
+      <h3>4. Búsqueda y conexión por intereses</h3>
+      <table class="deliver">
+        <thead>
+          <tr><th>Requisito contractual</th><th>Estado</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Búsquedas por intereses (viajes, estudios, negocios, amistad, etc.) mediante hashtags, usuarios, páginas, grupos y datos generales de usuarios.</td>
+            <td><span class="badge badge-ok">Entregado</span></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>5. Integración con comercio y publicidad</h3>
+      <table class="deliver">
+        <thead>
+          <tr><th>Requisito contractual</th><th>Estado</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Marketplace con gestión de pagos y cobros.</td>
+            <td><span class="badge badge-ok">Entregado</span></td>
+          </tr>
+          <tr>
+            <td>Tarifa fija / comisión fija por servicios de <strong>courier</strong> o envío.</td>
+            <td><span class="badge badge-ok">Entregado</span></td>
+          </tr>
+          <tr>
+            <td>Comisión variable (porcentaje).</td>
+            <td><span class="badge badge-ok">Entregado</span></td>
+          </tr>
+          <tr>
+            <td>Espacios publicitarios gestionados mediante gestor de anuncios.</td>
+            <td><span class="badge badge-ok">Entregado</span></td>
+          </tr>
+          <tr>
+            <td>Billetera (wallet) y pasarela de pago.</td>
+            <td><span class="badge badge-ok">Entregado</span></td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="obs">
+        <strong>Courier (contrato):</strong> el contrato alcanza tarifa fija / comisión por servicios de courier o envío. La solución desplegada va más allá de un simple cargo fijo manual: véase el detalle de <strong>integración DHL Express</strong> en la sección V como <strong>Plus</strong>.
+      </div>
+    </section>
+
+    <section class="block">
+      <h2>III. Idiomas, plataformas y tecnología (contrato)</h2>
+      <table class="deliver">
+        <thead>
+          <tr><th>Requisito</th><th>Estado</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Idiomas: español, inglés, alemán, italiano, francés, ruso, portugués y japonés.</td>
+            <td><span class="badge badge-ok">Entregado</span> <span style="color:var(--muted);font-size:0.88rem">(parametrización activa; otros idiomas adicionales pueden existir en la misma base de configuración.)</span></td>
+          </tr>
+          <tr>
+            <td>Página web de la red social.</td>
+            <td><span class="badge badge-ok">Entregado</span> — <a href="https://zuitch.com" target="_blank" rel="noopener">zuitch.com</a></td>
+          </tr>
+          <tr>
+            <td>Login social con Facebook o Google.</td>
+            <td><span class="badge badge-ok">Entregado</span> <span style="color:var(--muted);font-size:0.88rem">(sujeto a políticas y revisión de Meta/Google en consolas de desarrollador.)</span></td>
+          </tr>
+          <tr>
+            <td>Desarrollo escalable Android e iOS, iniciando por app de mensajería con webview de la red.</td>
+            <td>
+              <span class="badge badge-ok">Entregado (iOS mensajería)</span>
+              <span class="badge badge-evolve">Afinación post‑publicación</span>
+              <br><span style="color:var(--muted);font-size:0.88rem">Las apps de mensajería cumplen el núcleo contractual al <strong>embeber la web</strong> para <strong>mensajes entrantes y salientes</strong>. Las <strong>llamadas y videollamadas nativas</strong> en el cliente móvil se entregaron como <strong>Plus</strong> (véase sección II.3 y V). La app <strong>iOS</strong> está <strong>publicada en App Store</strong>; <strong>TestFlight</strong> para pruebas. Las mejoras pedidas por Aldo son <strong>afinación</strong> sobre binario ya en tienda.</span>
+            </td>
+          </tr>
+          <tr>
+            <td>Sistema escalable para expansiones y actualizaciones; logo e imagen corporativa.</td>
+            <td><span class="badge badge-ok">Entregado</span></td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="obs">
+        <strong>Observación — aplicaciones móviles:</strong> la <strong>app de mensajería</strong> debe servir, en el sentido del contrato, para <strong>intercambiar mensajes</strong> a través del <strong>webview</strong> de Zuitch (misma lógica que la web). Las <strong>llamadas y videollamadas</strong> del contrato se cumplen en la <strong>web</strong>; la extensión a <strong>módulo nativo de llamada/videollamada</strong> en el binario móvil es <strong>Plus</strong> (sección V). La parte <strong>Android</strong> y el webview se consideran alineados con el contrato en la medida en que el backend y la web lo soportan (incl. autenticación vía token para webview y notificaciones según configuración del sistema). La <strong>app de mensajería para iOS</strong> consta como <strong>publicada en App Store</strong> (producción), con <strong>TestFlight</strong> como canal de prueba; el trabajo pendiente se encuadra como <strong>afinación</strong> y correcciones solicitadas por <strong>Aldo Iván Intriago Macías</strong>. La entrega de licencias, dominio y códigos al 100% conforme cláusula tercera del contrato podrá formalizarse al cierre de dichas observaciones o en acta complementaria.
+      </div>
+    </section>
+
+    <section class="block">
+      <h2>IV. Requisitos de infraestructura, capacitación y garantía (referencia contractual)</h2>
+      <h3>IV.0 Entrega del software: garantía (cláusula quinta) y «primer año» del 5 % (regalías / soporte)</h3>
+      <p class="lead">La <strong>cláusula quinta</strong> del contrato dispone que el contratista <strong>garantizará el correcto funcionamiento del sistema durante un año desde la entrega del Software</strong>, única y exclusivamente sobre el desarrollo que estuvo a su cargo; que las fallas de programación o defectos en lo entregado por el desarrollador serán corregidos sin costo adicional cuando correspondan a ese alcance; y que la garantía está condicionada al uso adecuado del hardware y software complementario.</p>
+      <p class="lead">Para aplicar de manera <strong>determinada</strong> ese plazo de <strong>un (1) año</strong>, las partes <strong>reconocen y dejan constancia</strong> de que la <strong>entrega del Software</strong> a que se refiere el contrato (punto de arranque del año de garantía) se sitúa el <strong>13 de mayo de 2025</strong>. En consecuencia, el <strong>período de garantía contractual de doce meses</strong> previsto en la cláusula quinta <strong>transcurre hasta el 13 de mayo de 2026 inclusive</strong> (aniversario del día de la entrega), sin perjuicio de las <strong>exclusiones</strong> del propio contrato ni de la delimitación entre alcance contractual y <em>Plus</em> en la <strong>sección VI</strong> de esta acta.</p>
+      <p class="lead">Por otra parte, el contrato dispone en su <strong>numeral 3</strong> (última página del instrumento, entre otras obligaciones y beneficios) que el desarrollador recibirá el <strong>5 %</strong> de regalía sobre las <strong>utilidades netas del primer año</strong>, a cambio de <strong>seguir brindando soporte técnico y cambios mínimos acordados entre las partes</strong>; que <strong>después del primer año se llegarán a nuevos acuerdos</strong>; y que dicho <strong>5 %</strong> <strong>no</strong> se entiende en ningún caso como <strong>cesión de acciones</strong> de la red social, sino como <strong>regalías</strong>. Para dar aplicación concreta al término <strong>«primer año»</strong> (que el propio contrato acota y no prorroga automáticamente), las partes convienen que dicho año <strong>corre en paralelo</strong> al período ya fijado respecto de la <strong>entrega del Software</strong>: <strong>del 13 de mayo de 2025 al 13 de mayo de 2026 inclusive</strong>. A partir de esa misma fecha de término, la contraprestación en <strong>soporte técnico y cambios mínimos</strong> ligada al <strong>5 %</strong> del «primer año» <strong>no se presume prorrogada</strong> y queda sujeta a lo previsto en el instrumento: <strong>nuevos acuerdos por escrito</strong> entre las partes.</p>
+      <ul class="contract-list">
+        <li><strong>Hosting VPS KVM 2 (primer año):</strong> acreditación mediante documentación de contratación/facturación correspondiente.</li>
+        <li><strong>Capacitación (hasta 20 horas):</strong> según cláusula cuarta; constancia y cómputo en el <strong>Anexo IV.1</strong> de esta acta (capturas de reuniones virtuales y de historial de llamadas con Aldo Intriago).</li>
+        <li><strong>Garantía de un año (contrato principal):</strong> según cláusula quinta y el cómputo fijado en <strong>IV.0</strong>, sobre el correcto funcionamiento del trabajo desarrollado en el marco del contrato inicial (incluye defectos de programación en lo entregado bajo ese alcance). El <strong>alcance exacto de esa garantía no se extiende a los Plus</strong> indicados en la sección V, salvo acuerdo escrito expreso.</li>
+        <li><strong>Regalía del 5 % y «primer año» (numeral 3 del contrato):</strong> el derecho al <strong>5 %</strong> sobre utilidades netas y la obligación conexa de <strong>soporte técnico y cambios mínimos acordados</strong> se circunscriben al <strong>mismo «primer año»</strong> computado en <strong>IV.0</strong> (<strong>13 de mayo de 2025</strong> a <strong>13 de mayo de 2026 inclusive</strong>); el porcentaje <strong>no implica participación accionaria</strong>. Vencido ese plazo, rigen <strong>nuevos acuerdos</strong> por escrito, sin perjuicio de lo acordado como <em>Plus</em> o trabajo adicional fuera de ese marco.</li>
+        <li><strong>Exclusiones de precio:</strong> tasas de App Store y Play Store, dominio, costos de APIs externas y costos posteriores al primer año de servidor/administración, según contrato.</li>
+        <li><strong>Trabajos adicionales:</strong> cambios o actualizaciones no incluidos en los módulos o servicios originalmente ofrecidos se cotizan aparte (cláusula sexta, punto 4 del contrato).</li>
+      </ul>
+
+      <h3>IV.1 Anexo: justificación de las 20 horas de capacitación (cláusula cuarta)</h3>
+      <p class="lead">El contrato prevé hasta <strong>20 horas</strong> de capacitación al personal designado por el contratante, con sesiones de <strong>2 horas</strong> diarias cuando se imparte de forma concentrada. A continuación se consolida el <strong>acompañamiento efectivo</strong> mediante <strong>reuniones virtuales</strong> (Google Meet, Zoom, Microsoft Teams) y <strong>llamadas de voz/vídeo</strong> con <strong>Aldo Iván Intriago Macías</strong>, con respaldo en capturas alojadas en el propio sitio.</p>
+      <p class="lead"><strong>Criterios de conteo (transparencia):</strong> (a) <strong>Horario laboral de referencia</strong> para clasificar llamadas: lunes a viernes, <strong>09:00 a 18:00</strong> (hora Ecuador continental, Quito/Guayaquil). (b) Reuniones con <strong>duración explícita</strong> en la captura (invitación de calendario/correo) se computan tal cual. (c) Convocatorias con <strong>enlace Meet/Zoom</strong> en historial de mensajería sin duración visible: se prorratea <strong>1,25 h</strong> por sesión (inferior a las 2 h del contrato, para no sobreestimar). (d) Eventos del <strong>historial telefónico</strong> sin minutos en pantalla: <strong>18 minutos</strong> por evento como media prudente de acompañamiento (voz o vídeo, entrante o saliente, incluidas perdidas como intento de coordinación).</p>
+
+      <p class="lead" style="margin-top:14px"><strong>Evidencia — reuniones virtuales (capturas):</strong> enlaces públicos (misma carpeta en el servidor):</p>
+      <div class="annex-grid">
+        <div class="annex-card"><a href="/pruebas/screens/Registros%20de%20Reuniones%20Virtuales%201.jpeg" target="_blank" rel="noopener"><img src="/pruebas/screens/Registros%20de%20Reuniones%20Virtuales%201.jpeg" alt="Registros reuniones virtuales 1" loading="lazy"></a><div class="annex-cap">Registros 1 — búsqueda «meet»: enlaces Google Meet por mes (ej. enero, junio, octubre).</div></div>
+        <div class="annex-card"><a href="/pruebas/screens/Registros%20de%20Reuniones%20Virtuales%202.jpeg" target="_blank" rel="noopener"><img src="/pruebas/screens/Registros%20de%20Reuniones%20Virtuales%202.jpeg" alt="Registros reuniones virtuales 2" loading="lazy"></a><div class="annex-cap">Registros 2 — Meet y Zoom (febrero, enero, octubre).</div></div>
+        <div class="annex-card"><a href="/pruebas/screens/Registros%20de%20Reuniones%20Virtuales%203.jpeg" target="_blank" rel="noopener"><img src="/pruebas/screens/Registros%20de%20Reuniones%20Virtuales%203.jpeg" alt="Registros reuniones virtuales 3" loading="lazy"></a><div class="annex-cap">Registros 3 — Meet mayo y junio.</div></div>
+        <div class="annex-card"><a href="/pruebas/screens/Registros%20de%20Reuniones%20Virtuales%204.jpeg" target="_blank" rel="noopener"><img src="/pruebas/screens/Registros%20de%20Reuniones%20Virtuales%204.jpeg" alt="Registros reuniones virtuales 4" loading="lazy"></a><div class="annex-cap">Registros 4 — invitación Teams «Revisión Negocio ZUITCH», <strong>1 h</strong> (09:00–10:00) con participación DHL/courier.</div></div>
+        <div class="annex-card"><a href="/pruebas/screens/Registros%20de%20Reuniones%20Virtuales%205.jpeg" target="_blank" rel="noopener"><img src="/pruebas/screens/Registros%20de%20Reuniones%20Virtuales%205.jpeg" alt="Registros reuniones virtuales 5" loading="lazy"></a><div class="annex-cap">Registros 5 — Teams «Revision Proyecto Cliente ZUITCH», <strong>0,5 h</strong> (09:30–10:00).</div></div>
+      </div>
+
+      <table class="annex">
+        <thead>
+          <tr><th>Concepto</th><th>Base numérica</th><th>Horas</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Reuniones con <strong>duración explícita</strong> en evidencia (Teams, capturas 4 y 5)</td>
+            <td>1 h + 0,5 h</td>
+            <td class="num">1,50</td>
+          </tr>
+          <tr>
+            <td>Convocatorias <strong>Meet / Zoom</strong> documentadas por enlace en mensajería (capturas 1–3; URLs distintas entre Meet y Zoom)</td>
+            <td>8 sesiones × 1,25 h</td>
+            <td class="num">10,00</td>
+          </tr>
+          <tr>
+            <td><strong>Subtotal reuniones virtuales</strong></td>
+            <td>—</td>
+            <td class="num"><strong>11,50</strong></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p class="lead" style="margin-top:18px"><strong>Evidencia — acompañamiento por llamada (capturas de historial):</strong></p>
+      <div class="annex-grid">
+        <div class="annex-card"><a href="/pruebas/llamadas/1.jpeg" target="_blank" rel="noopener"><img src="/pruebas/llamadas/1.jpeg" alt="Historial llamadas Aldo 1" loading="lazy"></a><div class="annex-cap">Llamadas 1 — contacto Aldo Intriago (ej. feb.–mar.; varias <strong>fuera de horario 9–18 h</strong>).</div></div>
+        <div class="annex-card"><a href="/pruebas/llamadas/2.jpeg" target="_blank" rel="noopener"><img src="/pruebas/llamadas/2.jpeg" alt="Historial llamadas Aldo 2" loading="lazy"></a><div class="annex-cap">Llamadas 2 — sep.–dic. 2025; incluye grupos «(2 llamadas)» y evento tarde 13/11.</div></div>
+        <div class="annex-card"><a href="/pruebas/llamadas/3.jpeg" target="_blank" rel="noopener"><img src="/pruebas/llamadas/3.jpeg" alt="Historial llamadas Aldo 3" loading="lazy"></a><div class="annex-cap">Llamadas 3 — jul.–sep. 2025.</div></div>
+        <div class="annex-card"><a href="/pruebas/llamadas/4.jpeg" target="_blank" rel="noopener"><img src="/pruebas/llamadas/4.jpeg" alt="Historial llamadas Aldo 4" loading="lazy"></a><div class="annex-cap">Llamadas 4 — may.–jul. 2025; ej. 6 jun. <strong>20:16–20:21</strong> (fuera de horario).</div></div>
+      </div>
+
+      <table class="annex">
+        <thead>
+          <tr><th>Concepto</th><th>Base numérica</th><th>Horas</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Eventos de llamada relevados en las <strong>4 capturas</strong> (líneas de historial; hay solape parcial entre periodos)</td>
+            <td>52 líneas visibles; se deduce solape y se acota a <strong>46 eventos</strong> únicos de contacto</td>
+            <td class="num">—</td>
+          </tr>
+          <tr>
+            <td>Tiempo estimado (<strong>18 min</strong> / evento; duración no mostrada por el teléfono)</td>
+            <td>46 × 0,30 h</td>
+            <td class="num"><strong>13,80</strong></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <table class="annex">
+        <thead>
+          <tr><th>Resumen</th><th>Horas</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Reuniones virtuales (subtotal)</td><td class="num">11,50</td></tr>
+          <tr><td>Acompañamiento telefónico (estimado)</td><td class="num">13,80</td></tr>
+          <tr><th>Total consolidado (capacitación + acompañamiento)</th><th class="num">25,30</th></tr>
+        </tbody>
+      </table>
+
+      <div class="obs">
+        <strong>Conclusión:</strong> el cómputo prudente anterior <strong>supera las 20 horas</strong> previstas en la cláusula cuarta del contrato, por lo que el contratante ha recibido cobertura suficiente en <strong>modalidad virtual y por llamada</strong>. Las horas <strong>fuera del horario laboral de referencia</strong> (p. ej. 19:00–22:00, 20:00 en fines de semana implícitos si aplica, u 8:00 matutino) constatan <strong>dedicación adicional</strong> no obligada por un calendario estricto de oficina.
+      </div>
+
+      <p class="lead" style="font-size:0.88rem"><strong>Ejemplos de contactos fuera de 09:00–18:00 h (laborables)</strong> visibles en las capturas de llamadas: 2 mar. 19:02 y 19:07 y 22:02; 19 feb. 19:30; 16 ene. 21:15; 13 nov. 2025 19:51; 6 jun. 2025 20:16 y 20:21; 14 may. 2025 20:23; 20 may. 2025 08:04 (madrugada/antes de apertura). Listado orientativo según lectura de las imágenes; no excluye otros márgenes según zona horaria del dispositivo.</p>
+    </section>
+
+    <section class="block">
+      <h2>V. Entregables <em>Plus</em> (fuera del texto del contrato inicial)</h2>
+      <p class="lead">Lo siguiente <strong>no consta</strong> como ítem independiente o con el mismo nivel de detalle en la cláusula primera del contrato de desarrollo (objeto: red social, marketplace, apps con webview, login social, etc.). Tampoco el contrato <strong>enumera</strong> el trabajo de <strong>publicación en Google Play y Apple App Store</strong>, la <strong>gestión de testers</strong> (TestFlight, pruebas internas/cerradas, etc.) ni el <strong>acompañamiento frente a revisiones</strong> de las tiendas: el texto se centra en el <strong>software</strong> y excluye del <strong>precio</strong> ciertas <strong>tasas</strong> de registro (cláusula sexta), lo cual <strong>no equivale</strong> a haber incluido sin costo de oportunidad todo el <strong>esfuerzo operativo y técnico</strong> de tiendas y pruebas. Todo lo detallado en esta sección <strong>se ha brindado como Plus / adicional</strong> a favor del contratante <strong>Aldo Iván Intriago Macías</strong> y <strong>contribuye a explicar la extensión del calendario</strong> respecto al plazo orientativo de seis meses.</p>
+
+      <h3>V.1 Listado de Plus entregados (resumen)</h3>
+      <p class="lead" style="margin-bottom:10px"><strong>Nota:</strong> la cláusula primera del contrato describe funcionalidades de producto (red, comercio, chat, apps, login social, etc.), pero <strong>no enumera</strong> documentación legal pública, herramientas de depuración móvil, integraciones de courier por API, ni muchas de las extensiones siguientes. Todo lo listado aquí se considera <strong>fuera del alcance literal del contrato inicial</strong> y entregado a favor del contratante.</p>
+
+      <h3 style="margin-top:14px;font-size:0.9rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.04em">Cumplimiento legal, tiendas y datos personales</h3>
+      <ul class="plus-list">
+        <li><strong>Página de Términos y condiciones:</strong> contenido publicado y accesible en el sitio (texto legal / uso del servicio). <strong>No estaba contemplado</strong> como entregable explícito en el contrato; es habitualmente <strong>exigido por Apple App Store, Google Play y Meta</strong> junto con la política de privacidad.</li>
+        <li><strong>Página de Política de privacidad:</strong> contenido publicado sobre tratamiento de datos, finalidades y derechos de los usuarios. Igualmente <strong>no figuraba en el contrato</strong> como ítem independiente y resulta <strong>obligatorio para publicar apps y activar login social</strong> conforme buenas prácticas y políticas de las plataformas.</li>
+        <li><strong>Banner de cookies (consentimiento informado):</strong> aviso al usuario con enlace a la política de privacidad en el layout principal del tema, alineado a normativa de cookies y transparencia.</li>
+        <li><strong>Protección anti-abuso en formularios:</strong> integración y configuración de <strong>Google reCAPTCHA</strong> en flujos públicos (p. ej. blogs) para reducir spam y cumplir estándares de seguridad; el contrato no detalla este requisito técnico.</li>
+      </ul>
+
+      <h3 style="margin-top:18px;font-size:0.9rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.04em">Publicación en tiendas, testers y ciclo de revisión (no pactado como entregables explícitos)</h3>
+      <p class="lead" style="margin-bottom:10px">El contrato prevé desarrollo para <strong>Android e iOS</strong> y una app de mensajería con webview, y en la cláusula sexta <strong>excluye del precio del contrato</strong> las tasas de registro y anualidades de <strong>Play Store y App Store</strong>. Eso significa que dichos <strong>costos de licencia/tienda</strong> corren por cuenta del contratante; <strong>no significa</strong> que el contrato hubiera listado, valorado o limitado el <strong>trabajo profesional</strong> necesario para llevar las apps hasta producción en tiendas, gestionar validadores ni iterar ante rechazos. Lo siguiente se ejecutó como <strong>Plus / trabajo adicional</strong>:</p>
+      <ul class="plus-list">
+        <li><strong>Google Play (Android):</strong> preparación y acompañamiento para <strong>publicación</strong> en la tienda (ficha de la aplicación, textos, capturas o recursos gráficos según políticas vigentes, declaraciones de seguridad y privacidad en la consola, segmentación de versiones, pruebas internas/cerradas o abiertas cuando aplique, subida de artefactos y seguimiento hasta disponibilidad en producción o prueba). <strong>No figuraba</strong> como entregable desglosado en la cláusula primera.</li>
+        <li><strong>Apple App Store (iOS):</strong> preparación y acompañamiento para <strong>publicación</strong> y actualizaciones en App Store Connect (identificadores, certificados y perfiles, builds, cumplimiento de guías de revisión, metadatos, categorías, URL de política de privacidad, cuestionario de privacidad de la app, notas para el revisor, respuesta a observaciones de Apple). <strong>No estaba detallado</strong> en el contrato como paquete de horas ni checklist de tienda.</li>
+        <li><strong>TestFlight y gestión de testers:</strong> configuración de <strong>compilaciones de prueba</strong> en el ecosistema Apple, grupos de <strong>testers internos y externos</strong>, invitaciones por correo, instrucciones de instalación, caducidad de builds y nuevas rondas cuando el contratante o Apple solicitan cambios. El contrato <strong>no menciona</strong> TestFlight ni la logística de validadores.</li>
+        <li><strong>Pruebas con usuarios reales y contratante:</strong> ciclos de verificación conjunta, reproducción de incidencias, capturas y comunicación con el contratante durante las fases previas y posteriores a cada envío a tienda.</li>
+        <li><strong>Iteraciones por políticas de tiendas:</strong> ajustes de permisos, descripciones, comportamiento del webview, mensajes de uso de datos o cumplimiento normativo cuando un revisor de <strong>Google o Apple</strong> exige modificaciones; tiempo recurrente <strong>no presupuestado</strong> en el contrato base de USD 7.000.</li>
+        <li><strong>Coordinación con cuentas de desarrollador del cliente:</strong> uso de cuentas Apple/Google del contratante (cuando así se definió), alta de dispositivos, facturación de tasas a nombre del contratante según exclusión contractual de costos de tienda.</li>
+      </ul>
+      <div class="obs">
+        <strong>Distinción importante:</strong> las <strong>tasas y anualidades</strong> de las tiendas son <strong>costos del contratante</strong> según el contrato. El <strong>Plus</strong> aquí reconocido es el <strong>tiempo técnico y de gestión</strong> (publicación, testers, revisiones, idas y vueltas) que el desarrollador <strong>sí ejecutó</strong> aun cuando el instrumento original <strong>no lo describía</strong> como partida ni lo limitaba en horas.
+      </div>
+
+      <h3 style="margin-top:18px;font-size:0.9rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.04em">Producto, integraciones y experiencia de usuario</h3>
+      <ul class="plus-list">
+        <li><strong>Experiencia Zuitch (feed vertical):</strong> flujo tipo short-video con marca y rutas propias, filtrado de contenidos, cookies de sesión de visionado y navegación dedicada; excede la mención genérica a “reels” o vídeo en el contrato.</li>
+        <li><strong>Integración avanzada courier — DHL Express:</strong> API de tarifas, entornos y cuentas, reintentos, prorrateo de envío en carrito multiproveedor, totales y metadatos en compras; el contrato alude a comisión/tarifa de courier, no a esta profundidad técnica.</li>
+        <li><strong>Llamadas y videollamadas nativas en la app de mensajería (fuera del solo webview):</strong> el contrato exige chat con llamadas/videollamadas y una app con webview de la red; la lectura que respeta el texto es: <strong>mensajes</strong> por webview y <strong>llamadas/videollamadas en la web</strong>. Reproducir <strong>audio/vídeo en tiempo real como módulo nativo</strong> integrado en el cliente iOS/Android (además de lo ya usable vía navegador) implicó trabajo <strong>adicional</strong> y se entrega como <strong>Plus</strong>.</li>
+        <li><strong>Autenticación para webview de apps de mensajería:</strong> sesión silenciosa mediante <code>access_token</code> / cookies en <code>init.php</code> y flujos compatibles con clientes móviles embebidos, en coherencia con el uso contractual del webview para <strong>mensajería</strong>.</li>
+        <li><strong>Endpoint API para apps:</strong> <code>set-browser-cookie</code> con <strong>mapa de normalización de idioma</strong> (códigos regionales → idioma WoWonder) para coherencia de sesión e idioma entre app y web.</li>
+        <li><strong>Sistema de logging de conexiones:</strong> registro configurable de IP, URL, User-Agent y detección de webview para soporte y auditoría de incidencias móviles; incluye documentación operativa (<code>CONNECTION_LOGGING_README</code>).</li>
+        <li><strong>Herramienta <code>webview_debug.php</code>:</strong> página de diagnóstico en servidor para verificar detección Android/iOS y modo webview frente a navegador completo.</li>
+        <li><strong>Login Facebook auxiliar (<code>facebooklogin.php</code>):</strong> flujo OAuth en PHP dedicado para pruebas, redirects y validaciones frente a políticas de Meta.</li>
+        <li><strong>Callback OAuth TikTok (<code>tiktok_callback.php</code>):</strong> puente de retorno hacia el flujo estándar de login social del core.</li>
+        <li><strong>Editor y rutas Reels dedicadas:</strong> fuentes <code>reels-editor.php</code> / <code>reels.php</code> y plantillas asociadas en la línea de producto Reels (complemento a la propuesta complementaria).</li>
+        <li><strong>Compartir con opciones completas:</strong> botón y modal de compartir en múltiples redes y canales (incl. scripts de respaldo tipo <code>zuitch-reel-share-fallback.js</code> donde aplique), más allá del compartido mínimo del producto base.</li>
+        <li><strong>Analítica web:</strong> integración de medición de audiencia (p. ej. <strong>Google Analytics / gtag</strong> en la configuración del sitio) para seguimiento del tráfico y conversiones.</li>
+        <li><strong>Parametrización ampliada de módulos WoWonder:</strong> activación y ajuste de numerosos módulos no desglosados uno a uno en la cláusula primera (empleos, ofertas, clasificados, monetización, funding, memorias, mapas, reels subida, tiendas/nearby, stickers, foro en visibilidad, proveedores de llamada/vídeo en <strong>web</strong>, etc.). La <strong>capa nativa</strong> de llamada/videollamada en apps se relaciona con el ítem Plus específico anterior.</li>
+        <li><strong>Documentación y transparencia comercial:</strong> publicación de la <a class="ext" href="https://zuitch.com/propuesta.html" target="_blank" rel="noopener">cotización global</a> en el propio dominio y elaboración de la presente <strong>acta de entrega</strong> en HTML para constancia entre las partes.</li>
+        <li><strong>Otros ajustes de UX, cabecera, tema, SEO y rendimiento</strong> solicitados durante el proyecto (incl. mejoras en <code>script.js</code>, <code>style.css</code>, <code>.htaccess</code> o equivalentes) que no forman parte del anexo contractual original.</li>
+      </ul>
+
+      <h3>V.2 Propuesta complementaria documentada (Reels, streaming, visualización)</h3>
+      <p class="lead">Las partes reconocen una <strong>propuesta técnica y comercial posterior al contrato inicial</strong>, publicada en <a class="ext" href="https://zuitch.com/propuesta.html" target="_blank" rel="noopener">zuitch.com/propuesta.html</a> (fecha de documento: <strong>02/03/2026</strong>), que describe de forma detallada el alcance adicional. En síntesis incluye:</p>
+      <ul class="plus-list">
+        <li><strong>Bloque A — Editor de Reels (MVP):</strong> estabilización UX, motor de textos múltiples con presets, audio con volumen y offset, render FFmpeg MP4, descarga de borrador, publicación con feedback, etiquetado de productos en reels, navegación inicial en Reels y redirección del ícono de marca hacia <code>/home</code> (según propuesta).</li>
+        <li><strong>Bloque B — Mejoras adicionales:</strong> verificación y optimización FFmpeg/imágenes, expiración automática de reels con cron y limpieza, endpoint seguro de descarga móvil con token y rate limit, límite de tiempo de streaming configurable con avisos y corte, zoom táctil en lightbox de imágenes.</li>
+        <li><strong>Esfuerzo presupuestado en la propuesta:</strong> <strong>56,5 horas</strong> totales entre ambos bloques (desglose en el documento enlazado).</li>
+        <li><strong>Plus explícito no detallado en la tabla de horas del PDF:</strong> el <strong>botón de compartir con opciones completas</strong> entregado en el marco de la misma línea de mejoras de visualización y distribución de contenido.</li>
+      </ul>
+
+      <h3>V.3 Condición económica acordada sobre la propuesta y saldo iOS</h3>
+      <p class="lead">Las partes dejan constancia de que el valor de la propuesta complementaria y conceptos asociados <strong>quedó consolidado en un único monto de USD 1.100,00</strong> (mil cien dólares de los Estados Unidos de América), <strong>incluyendo</strong> dentro de dicho monto la <strong>regularización del pago pendiente</strong> correspondiente a la <strong>mitad</strong> del valor pactado por trabajo de aplicación <strong>iOS</strong> (referencia contractual: <strong>USD 1.400,00 + IVA</strong> para el total iOS; la porción pendiente era la mitad de ese esquema).</p>
+      <div class="obs">
+        El documento <a class="ext" href="https://zuitch.com/propuesta.html" target="_blank" rel="noopener">propuesta.html</a> muestra cotizaciones orientativas por hora (mercado y precio especial); el <strong>cierre comercial efectivo</strong> entre las partes para ese paquete y el saldo iOS es el <strong>USD 1.100,00</strong> indicado arriba, sin perjuicio de facturación e IVA según ley aplicable y criterio fiscal del contratante.
+      </div>
+
+      <h3>V.4 Justificación de plazo (relación Plus — tiempo)</h3>
+      <p class="lead">El contrato fija un plazo orientativo de <strong>seis meses</strong> para la <strong>red social en plena funcionalidad</strong> (cláusula segunda), cuyo cumplimiento respecto del <strong>núcleo web y contractual</strong> se funda en la <strong>sección I.1</strong> de esta acta. La incorporación de los <strong>Plus</strong> de esta sección —en particular el trabajo de <strong>publicación y mantenimiento en Play Store y App Store</strong>, que <strong>no estaba dentro del plazo ni del precio base</strong> como obligación homogénea a la entrega de la red—, la <strong>propuesta complementaria</strong> (decenas de horas documentadas), la elaboración de <strong>textos legales y avisos</strong> exigidos por tiendas y proveedores de identidad, la gestión de <strong>TestFlight y testers</strong>, las <strong>idas y vueltas con revisores</strong>, y los ciclos de <strong>retroalimentación y correcciones</strong> del contratante incrementan de manera razonable la carga de trabajo <strong>después</strong> del cierre funcional de la red, lo que las partes reconocen como <strong>causa relevante de extensión del calendario global del proyecto</strong>, sin invalidar el cumplimiento del horizonte de seis meses aplicable al objeto de la cláusula segunda. Lo anterior coexiste con dependencias externas (políticas de Meta/Google, APIs de terceros, etc.).</p>
+    </section>
+
+    <section class="block">
+      <h2>VI. Garantía: alcance sobre entregables contractuales vs <em>Plus</em></h2>
+      <p class="lead">Conforme a la <strong>cláusula quinta</strong> del contrato, el desarrollador otorga garantía de un año sobre el correcto funcionamiento del sistema <strong>en el ámbito del trabajo realizado bajo el contrato inicial</strong> y corrige defectos de programación en lo entregado en ese marco, salvo condiciones de uso y exclusiones del propio contrato.</p>
+      <p class="lead">A efectos de calendario, y en línea con lo acordado en <strong>IV.0</strong>, el año de garantía <strong>inicia</strong> el <strong>13 de mayo de 2025</strong> (entrega del software) y <strong>finaliza el 13 de mayo de 2026</strong>, fecha en que concluye el período de doce meses previsto en la cláusula quinta respecto del núcleo contractual. El mismo cómputo aplica al <strong>«primer año»</strong> del <strong>5 %</strong> de regalías y del <strong>soporte técnico con cambios mínimos</strong> previstos en el <strong>numeral 3</strong> del contrato, de modo que <strong>a partir del 14 de mayo de 2026</strong> (salvo nuevo acuerdo escrito) no opera la presunción de prórroga automática de ese binomio regalías/soporte del «primer año». Lo relativo a <em>Plus</em> sigue regido por el apartado siguiente.</p>
+      <div class="obs-legal">
+        <strong>Plus sin garantía del contrato principal:</strong> todo lo listado en la <strong>sección V</strong> —incluidas <strong>páginas legales</strong> (términos, privacidad), <strong>cookies y reCAPTCHA</strong>, el bloque de <strong>publicación en Play Store y App Store</strong>, <strong>TestFlight y gestión de testers</strong>, pruebas con usuarios e iteraciones por revisiones de tiendas, <strong>llamadas y videollamadas nativas en la app de mensajería</strong> (distintas del cumplimiento vía <strong>web</strong> y del uso del <strong>webview para mensajes</strong>), integración ampliada DHL, Zuitch, endpoints y herramientas móviles (<code>set-browser-cookie</code>, <code>webview_debug.php</code>), logging, TikTok/Facebook auxiliar, módulos extra, compartir completo, analítica, documentación pública y lo desarrollado al amparo de la <strong>propuesta complementaria</strong> (<a class="ext" href="https://zuitch.com/propuesta.html" target="_blank" rel="noopener">propuesta.html</a>)— se entrega como <strong>valor agregado o desarrollo adicional</strong> y <strong>no queda sujeto a la garantía gratuita de un año</strong> del contrato de USD 7.000, salvo pacto escrito distinto. Las <strong>actualizaciones legales</strong>, <strong>nuevas versiones en tiendas</strong> o <strong>nuevas rondas de revisión</strong> por cambio de políticas también se cotizan como trabajo adicional si no están cubiertas por un acuerdo específico.<br><br>
+        <strong>Trabajo futuro sobre Plus:</strong> cualquier corrección, evolución, ampliación o soporte específico sobre esos elementos se considera <strong>nuevo desarrollo</strong> y se <strong>cotiza y factura aparte</strong>, de acuerdo con la <strong>cláusula sexta, numeral 4</strong> del contrato (cambios o actualizaciones no incluidos en los módulos o servicios originalmente ofrecidos). Lo anterior <strong>no limita</strong> la garantía sobre los entregables claramente encuadrados en las secciones <strong>II y III</strong> de esta acta, en los términos del contrato.
+      </div>
+    </section>
+
+    <section class="block">
+      <h2>VII. Declaración de las partes</h2>
+      <p class="lead">Las partes declaran haber revisado el estado de los entregables descritos. El contratante reconoce: (i) la entrega de lo indicado como “Entregado” en las secciones <strong>II y III</strong> (alcance contractual) y la argumentación de <strong>cumplimiento de la cláusula segunda</strong> (plazo de seis meses para la red en plena funcionalidad) en la sección <strong>I.1</strong>; (ii) la entrega de los <strong>Plus</strong> de la sección <strong>V</strong>, incluidas las <strong>páginas de Términos y condiciones y Política de privacidad</strong>, el trabajo de <strong>publicación y mantenimiento en tiendas</strong> (Play Store / App Store), <strong>TestFlight y testers</strong>, y demás ítems ahí detallados; (iii) la aplicación de mensajería para <strong>iOS</strong> como <strong>publicada en App Store</strong>, con <strong>TestFlight</strong> para pruebas y <strong>afinación</strong> en curso solicitada por Aldo Iván Intriago Macías; (iv) el <strong>distinto régimen de garantía</strong> aplicable a Plus conforme la sección <strong>VI</strong>; (v) el acuerdo económico de <strong>USD 1.100,00</strong> indicado en <strong>V.3</strong>, sin confundir las <strong>tasas de tienda</strong> (a cargo del contratante según contrato) con el <strong>Plus de trabajo</strong> descrito en la sección <strong>V</strong>; (vi) que el <strong>Anexo IV.1</strong> documenta el cumplimiento sustancial de las <strong>20 horas de capacitación y acompañamiento</strong> previstas en la cláusula cuarta, con un total estimado <strong>superior a dicho tope</strong> según los criterios allí explicitados; (vii) el cronograma de entregables <strong>solo web por mes</strong> en <a class="ext" href="https://zuitch.com/pruebas/timeline_entregas_proyecto.html#cronograma-web" target="_blank" rel="noopener">timeline_entregas_proyecto.html#cronograma-web</a>; y (viii) la <strong>entrega del Software</strong> el <strong>13 de mayo de 2025</strong> y que los períodos de <strong>un año</strong> de la <strong>cláusula quinta</strong> (garantía) y del <strong>numeral 3</strong> del contrato (<strong>5 %</strong> de utilidades netas del <strong>primer año</strong> a cambio de <strong>soporte técnico y cambios mínimos</strong> acordados, sin que el porcentaje constituya <strong>cesión de acciones</strong>) <strong>finalizan el 13 de mayo de 2026 inclusive</strong>, según <strong>IV.0</strong> y la sección <strong>VI</strong>, quedando lo ulterior en <strong>soporte/regalías</strong> sujeto a <strong>nuevos acuerdos</strong> por escrito conforme el propio contrato.</p>
+      <div class="sign">
+        <div class="sign-box">
+          <div class="role">Contratante</div>
+          <div class="name">Aldo Iván Intriago Macías</div>
+          <div class="sign-line">Firma y sello (si aplica)</div>
+        </div>
+        <div class="sign-box">
+          <div class="role">Contratista / Desarrollador</div>
+          <div class="name">Nicolás Adrián Recalde Salazar</div>
+          <div class="sign-line">Firma</div>
+        </div>
+      </div>
+    </section>
+
+    <footer class="note">
+      Documento generado para fines de constancia entre las partes. No modifica el contrato salvo acuerdo escrito adicional. La sección V distingue entregables <em>Plus</em> respecto al contrato inicial; la sección VI delimita la garantía. Impresión recomendada en dos ejemplares.
+    </footer>
+  </div>
+</body>
+</html>

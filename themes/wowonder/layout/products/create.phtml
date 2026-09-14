@@ -31,7 +31,8 @@
 					<div class="row">
 						<div class="col-md-8">
 							<div class="wow_form_fields">
-								<label for="category"><?php echo $wo['lang']['category'] ?></label>
+								<label for="category">
+								<?php echo $wo['lang']['category'] ?></label>
 								<select name="category" id="category" onchange="GetProductSubCategory(this)">
 									<?php 
 										foreach ($wo['products_categories'] as $key => $category) {
@@ -341,4 +342,176 @@ var create_pac_input = document.getElementById('location');
 		});
 	});
 <?php } ?>
+</script>
+
+<script>
+(function () {
+  // 1) Idioma del usuario desde PHP/WoWonder
+  const userLangRaw = <?php echo json_encode($wo['user']['language']); ?>;
+
+  // 2) Normalización de idioma -> código corto
+  function normalizeLang(l) {
+    if (!l) return 'en';
+    l = String(l).toLowerCase();
+    if (/^(es|spanish|es_es|es-la|es-mx)/.test(l)) return 'es';
+    if (/^(en|english|en_us|en-gb)/.test(l)) return 'en';
+    if (/^(de|german|de_de)/.test(l)) return 'de';
+    if (/^(it|italian)/.test(l)) return 'it';
+    if (/^(fr|french)/.test(l)) return 'fr';
+    if (/^(ru|russian)/.test(l)) return 'ru';
+    if (/^(pt|portuguese|pt-br|pt-pt)/.test(l)) return 'pt';
+    if (/^(ja|japanese)/.test(l)) return 'ja';
+    return 'en';
+  }
+  const lang = normalizeLang(userLangRaw);
+
+  // 3) Diccionario de traducciones (solo contenido visible)
+  const T = {
+    en: {
+      shippingMethod: 'Shipping Method',
+      originCountryCode: 'Origin Country Code',
+      originPostalCode: 'Origin Postal Code',
+      originCityName: 'Origin City Name',
+      weight: 'Weight',
+      length: 'Length',
+      width: 'Width',
+      height: 'Height'
+    },
+    es: {
+      shippingMethod: 'Método de Envío',
+      originCountryCode: 'Código de País de Origen',
+      originPostalCode: 'Código Postal de Origen',
+      originCityName: 'Ciudad de Origen',
+      weight: 'Peso',
+      length: 'Longitud',
+      width: 'Ancho',
+      height: 'Altura'
+    },
+    de: {
+      shippingMethod: 'Versandmethode',
+      originCountryCode: 'Herkunftsland-Code',
+      originPostalCode: 'Postleitzahl des Herkunftsorts',
+      originCityName: 'Herkunftsstadt',
+      weight: 'Gewicht',
+      length: 'Länge',
+      width: 'Breite',
+      height: 'Höhe'
+    },
+    it: {
+      shippingMethod: 'Metodo di spedizione',
+      originCountryCode: 'Codice paese di origine',
+      originPostalCode: 'CAP di origine',
+      originCityName: 'Città di origine',
+      weight: 'Peso',
+      length: 'Lunghezza',
+      width: 'Larghezza',
+      height: 'Altezza'
+    },
+    fr: {
+      shippingMethod: 'Mode d’expédition',
+      originCountryCode: 'Code pays d’origine',
+      originPostalCode: 'Code postal d’origine',
+      originCityName: 'Ville d’origine',
+      weight: 'Poids',
+      length: 'Longueur',
+      width: 'Largeur',
+      height: 'Hauteur'
+    },
+    ru: {
+      shippingMethod: 'Способ доставки',
+      originCountryCode: 'Код страны отправления',
+      originPostalCode: 'Почтовый индекс отправления',
+      originCityName: 'Город отправления',
+      weight: 'Вес',
+      length: 'Длина',
+      width: 'Ширина',
+      height: 'Высота'
+    },
+    pt: {
+      shippingMethod: 'Método de envio',
+      originCountryCode: 'Código do país de origem',
+      originPostalCode: 'Código postal de origem',
+      originCityName: 'Cidade de origem',
+      weight: 'Peso',
+      length: 'Comprimento',
+      width: 'Largura',
+      height: 'Altura'
+    },
+    ja: {
+      shippingMethod: '配送方法',
+      originCountryCode: '発送元国コード',
+      originPostalCode: '発送元郵便番号',
+      originCityName: '発送元市区町村名',
+      weight: '重量',
+      length: '長さ',
+      width: '幅',
+      height: '高さ'
+    }
+  };
+
+  const BASE = T.en; // etiquetas base en inglés para búsqueda de texto
+  const KEYS = Object.keys(BASE);
+
+  // Utils
+  function setText(el, str) { if (el) el.textContent = str; }
+
+  // Encuentra el label asociado a un input (por id/for o por cercanía)
+  function findLabelForInput(input, key) {
+    if (!input) return null;
+    let lbl = null;
+
+    if (input.id) {
+      lbl = document.querySelector(`label[for="${CSS.escape(input.id)}"]`);
+      if (lbl) return lbl;
+    }
+    // Algunos casos usan name en el for
+    lbl = document.querySelector(`label[for="${CSS.escape(key)}"]`);
+    if (lbl) return lbl;
+
+    // Label contiguo antes del input
+    const prev = input.previousElementSibling;
+    if (prev && prev.tagName && prev.tagName.toLowerCase() === 'label') return prev;
+
+    // Label ancestro envolviendo el input
+    const wrap = input.closest('label');
+    if (wrap) return wrap;
+
+    return null;
+  }
+
+  // Reemplaza textos exactos en nodos “hoja” (sin hijos)
+  function replaceExactText(oldText, newText) {
+    const nodes = Array.from(
+      document.querySelectorAll('body *:not(script):not(style):not(meta):not(title)')
+    ).filter(n => n.childElementCount === 0 && n.textContent.trim() === oldText);
+    nodes.forEach(n => setText(n, newText));
+  }
+
+  function applyTranslations(dict) {
+    KEYS.forEach(key => {
+      const labelText = dict[key];
+
+      // 1) Si existe el input, intenta poner el label
+      const input =
+        document.querySelector(`[name="${CSS.escape(key)}"]`) ||
+        document.getElementById(key);
+
+      const lbl = findLabelForInput(input, key);
+      if (lbl) setText(lbl, labelText);
+
+      // 2) Fallback A: si en tablas/listas aparece el label en inglés -> cámbialo
+      replaceExactText(BASE[key], labelText);
+
+      // 3) Fallback B: si aparece el nombre crudo del campo -> cámbialo
+      replaceExactText(key, labelText);
+    });
+  }
+
+  // 4) Ejecutar cuando el DOM esté listo
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => applyTranslations(T[lang] || T.en));
+  } else {
+    applyTranslations(T[lang] || T.en);
+  }
+})();
 </script>

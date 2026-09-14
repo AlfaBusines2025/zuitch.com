@@ -25,7 +25,10 @@ if ($f == 'get_previous_image') {
         'status' => 200,
         'html' => $html
     );
-    header("Content-type: application/json");
+    header('Content-Type: application/json; charset=UTF-8');
+    header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+    header('Pragma: no-cache');
+    header('Expires: Thu, 01 Jan 1970 00:00:00 GMT');
     echo json_encode($data);
     exit();
 }

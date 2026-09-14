@@ -560,7 +560,7 @@ if ($wo['loggedin'] && $IsOwnerUser) {
                                             <a href="<?php echo Wo_SeoLink('index.php?link1=reels&id=' . $wo['story']['post_id'] . '&user=' . $wo['user_profile']['username'] );?>"
                                                data-ajax="?link1=reels&id=<?php echo $wo['story']['post_id']?>&user=<?php echo $wo['user_profile']['username']?> ">
 
-                                            <video><source src="<?php echo Wo_GetMedia($wo['story']['postFile']);?>" type="video/mp4"></video>
+                                            <video playsinline webkit-playsinline preload="metadata" muted><source src="<?php echo Wo_GetMedia($wo['story']['postFile']);?>" type="video/mp4"></video>
                                             	<div class="profile_reel_views">
 													<svg xmlns="http://www.w3.org/2000/svg" class="feather-thumbs-down" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17M12,4.5C7,4.5 2.73,7.61 1,12C2.73,16.39 7,19.5 12,19.5C17,19.5 21.27,16.39 23,12C21.27,7.61 17,4.5 12,4.5Z"></path></svg>
 													<p id="video-views-count-<?php echo $wo['story']['id'];?>"><?php echo $wo['story']['videoViews'] ?></p>
@@ -1108,7 +1108,7 @@ if ($wo['loggedin'] && $IsOwnerUser) {
 				</div>
 				<?php if (count($stories) > 0) {  ?>
 					<div class="load-more pointer" id="load-more-posts" onclick="Wo_GetMorePosts();">
-						<span class="btn btn-default"><i class="fa fa-chevron-circle-down progress-icon" data-icon="chevron-circle-down"></i> &nbsp;<?php echo $wo['lang']['load_more_posts']; ?><span>
+						<span class="btn btn-default"><i class="fa fa-chevron-circle-down progress-icon" data-icon="chevron-circle-down"></i> &nbsp;<?php echo $wo['lang']['load_more_posts']; ?></span>
 					</div>
 				<?php } ?>
 			</div>
@@ -1220,7 +1220,7 @@ if ($wo['loggedin'] && $IsOwnerUser) {
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"><path fill="currentColor" d="M12,11.5A2.5,2.5 0 0,1 9.5,9A2.5,2.5 0 0,1 12,6.5A2.5,2.5 0 0,1 14.5,9A2.5,2.5 0 0,1 12,11.5M12,2A7,7 0 0,0 5,9C5,14.25 12,22 12,22C12,22 19,14.25 19,9A7,7 0 0,0 12,2Z"></path></svg>
                 <span><?php echo $wo['lang']['located_in'];?> <?php echo $wo['user_profile']['address'];?></span>
                 <?php if (!empty($wo['config']['google_map_api']) && $wo['config']['google_map']) { ?>
-                <iframe width="100%" class="user-location-frame" frameborder="0" style="border:0;margin-top: 10px;" src="https://www.google.com/maps/embed/v1/place?key=<?php echo $wo['config']['google_map_api']; ?>&q=<?php echo $wo['user_profile']['address'];?>&language=en"></iframe>
+                <iframe width="100%" class="user-location-frame zuitch-map-embed" frameborder="0" style="border:0;margin-top: 10px;" data-src="https://www.google.com/maps/embed/v1/place?key=<?php echo $wo['config']['google_map_api']; ?>&q=<?php echo urlencode($wo['user_profile']['address']);?>&language=en" data-zuitch-map-q="<?php echo htmlspecialchars($wo['user_profile']['address'], ENT_QUOTES, 'UTF-8'); ?>" data-zuitch-map-key="<?php echo htmlspecialchars($wo['config']['google_map_api'], ENT_QUOTES, 'UTF-8'); ?>"></iframe>
                 <?php } ?>
                 <?php if ($wo['config']['yandex_map'] == 1) { ?>
 		            <div id="place_<?php echo($wo['user_profile']['user_id']) ?>" <?php echo($wo['config']['yandex_map'] == 1 ? 'style="width: 100%; height: 300px; padding: 0; margin: 10px 0 0;"' : '') ?>></div>

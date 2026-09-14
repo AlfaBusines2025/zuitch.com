@@ -1,0 +1,5 @@
+<div class="zuitch-empty-state wo_reels_cont" style="display:flex;align-items:center;justify-content:center;flex-direction:column;height:100vh;padding:24px;text-align:center;background:#0e0e0e;color:#fff;">
+    <h1 style="font-size:1.35rem;margin:0 0 12px;font-weight:600;">Zuitch</h1>
+    <p style="opacity:.85;max-width:320px;margin:0 0 20px;"><?php echo !empty($wo['lang']['no_posts']) ? $wo['lang']['no_posts'] : 'No hay publicaciones para mostrar.'; ?></p>
+    <a class="btn btn-mat main" href="<?php echo $wo['config']['site_url']; ?>"><?php echo !empty($wo['lang']['home']) ? $wo['lang']['home'] : 'Inicio'; ?></a>
+</div>

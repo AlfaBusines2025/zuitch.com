@@ -20,7 +20,12 @@ window.vy_lvst_iframe_resize_timeout = function(){};
     var s = document.getElementsByTagName('script')[0];
     s.parentNode.insertBefore(po, s);
 })();
-</script> 
+</script>
+<?php
+$zuitch_ios_pol_fs = dirname(__DIR__) . '/themes/wowonder/javascript/zuitch-ios-video-policy.js';
+$zuitch_ios_pol_q = (is_file($zuitch_ios_pol_fs)) ? (int) filemtime($zuitch_ios_pol_fs) : (int) time();
+?>
+<script type="text/javascript" src="<?php echo $GLOBALS['V_Y']['host'];?>/themes/wowonder/javascript/zuitch-ios-video-policy.js?v=<?php echo $GLOBALS['V_Y']['version']; ?>&amp;m=<?php echo $zuitch_ios_pol_q; ?>"></script>
 <script type="text/javascript" src="<?php echo $GLOBALS['V_Y']['host'];?>/vy-livestream/js/getAssets.js?v=<?php echo $GLOBALS['V_Y']['version'];?>"></script>
 <script src="<?php echo $GLOBALS['V_Y']['host'];?>/vy-livestream/lib/dash/js/dash.all.min.js?v=<?php echo $GLOBALS['V_Y']['version'];?>"></script>
 <script src="<?php echo $GLOBALS['V_Y']['host'];?>/vy-livestream/lib/fluidplayer/compiled.js?v=<?php echo $GLOBALS['V_Y']['version'];?>"></script>

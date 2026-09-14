@@ -191,6 +191,8 @@ function Wo_RegisterReaction(element,reaction_icon,is_html){
     }
 
     $('.reactions-box-container-'+post_id).fadeOut(1);
+    $('.reactions-lightbox-container-'+post_id).fadeOut(1);
+    $('.reactions-reels-rail-container-'+post_id).fadeOut(1);
 
     var reaction_color = '';
 
@@ -225,6 +227,17 @@ function Wo_RegisterReaction(element,reaction_icon,is_html){
     $('.status-reaction-'+post_id).html(''+reaction_html+'' + lang).css({"color": reaction_color});
     $('.status-reaction-'+post_id).addClass("active-like");
     $('.status-reaction-'+post_id).addClass("active-like-" + reaction);
+    var $railIcon = $('.reels-rail-react-wrap[data-post-id="' + post_id + '"] .reels-rail-icon-wrap');
+    if ($railIcon.length && reaction_icon) {
+      $railIcon.empty().append($('<img>', { src: reaction_icon, alt: '', css: { width: '22px', height: '22px', display: 'block', objectFit: 'contain', borderRadius: '50%' } }));
+    }
+    var $railLike = $('.reels-rail-react-wrap[data-post-id="' + post_id + '"] .like-btn.reels-rail-stat');
+    if ($railLike.length) {
+      $railLike.removeClass(function (idx, css) {
+        return (css.match(/(^|\s)active-like-\d+/g) || []).join(' ');
+      });
+      $railLike.addClass('active-like active-like-' + reaction);
+    }
     $.get(Wo_Ajax_Requests_File(), {f: 'posts', s: 'register_reaction', post_id: post_id, reaction: reaction}, function (data) {
       if(data.status == 200) {
         <?php if ($wo['config']['node_socket_flow'] == 1) { ?>
@@ -233,6 +246,12 @@ function Wo_RegisterReaction(element,reaction_icon,is_html){
     //}
     <?php } ?>
         $('.post-reactions-icons-'+post_id).html(data.reactions);
+        if (data.reactions) {
+          var _$n = $('<div>').html(data.reactions).find('.how_many_reacts').first().text();
+          if (_$n !== undefined && _$n !== null && _$n !== '') {
+            $('.lb-reels-reaction-count[data-post-id="' + post_id + '"]').text(_$n);
+          }
+        }
 
       }
       if (data.can_send == 1) {
@@ -241,7 +260,6 @@ function Wo_RegisterReaction(element,reaction_icon,is_html){
       $('#react_'+post_id).attr('data_react','1');
     });
 }
-
 
 function Wo_RegisterFollowNotify(id, type) {
   var _follow_con = $('[id=Notify-' + id + ']');

@@ -898,8 +898,20 @@
   <script src="<?php echo $wo['config']['theme_url']; ?>/javascript/flatpickr.js?version=<?php echo $wo['config']['version']; ?>"></script>
 
   <style>
-
+  <?php if ($wo['loggedin'] == true) { ?>
+  /* Tras el resto de hojas del head: ocultar ítems solo-escritorio en la barra izquierda (móvil/tablet) */
+  @media (max-width: 991px) {
+    body .navbar.navbar-default .wow_hdr_innr_left > ul.nav.navbar-nav > li.wow_hdr_desk_only {
+      display: none !important;
+    }
+  }
+  <?php } ?>
   </style>
+  <?php
+  $zuitch_ios_pol_head_fs = dirname(__DIR__) . '/javascript/zuitch-ios-video-policy.js';
+  $zuitch_ios_pol_head_mtime = is_file($zuitch_ios_pol_head_fs) ? filemtime($zuitch_ios_pol_head_fs) : time();
+  ?>
+  <script type="text/javascript" src="<?php echo $wo['config']['theme_url']; ?>/javascript/zuitch-ios-video-policy.js<?php echo $wo['update_cache']; ?>?version=<?php echo $wo['config']['version']; ?>&amp;m=<?php echo (int) $zuitch_ios_pol_head_mtime; ?>"></script>
 </head>
 
 <body <?php if ($wo['config']['chatSystem'] == 0) { ?> chat-off="true" <?php } ?>>
@@ -922,9 +934,12 @@
     $container = 'normal-container';
   } else if ($wo['page'] == 'messages') {
     $container = 'wo-msg-container';
+  } else if ($wo['page'] == 'reels' || $wo['page'] == 'zuitch') {
+    $container = 'reels-container';
   }
   ?>
   <div class="content-container <?php echo $container ?>" style="<?php echo ($wo['page'] == 'timeline' || $wo['page'] == 'page' || $wo['page'] == 'group') ? 'margin-top:25px;' : ''; ?>">
+    <?php if ($wo['page'] != 'reels' && $wo['page'] != 'zuitch'): ?>
     <div class="ad-placement-header-footer">
       <?php
       $header_ad = Wo_GetAd('header', false);
@@ -934,7 +949,9 @@
       }
       ?>
     </div>
+    <?php endif; ?>
     <div id="contnet" class="effect-load"><?php echo $wo['content']; ?></div>
+    <?php if ($wo['page'] != 'reels' && $wo['page'] != 'zuitch'): ?>
     <?php
     $footer_ad = Wo_GetAd('footer', false);
     if ($wo['page'] != 'admin' && $wo['page'] != 'welcome' && $wo['page'] != 'messages' && $wo['page'] != '404' && !empty($footer_ad)) {
@@ -948,6 +965,7 @@
       }
       ?>
     </footer>
+    <?php endif; ?>
     <div class="second-footer" style="<?php echo (in_array($wo['page'], $wo['footer_pages']) ? '' : 'display: none;'); ?> ">
       <?php
       if ($wo['page'] != 'messages') {
@@ -958,7 +976,7 @@
     <div class="extra">
       <?php
       if ($wo['loggedin'] == true && $wo['page'] != 'maintenance') {
-        if ($wo['config']['chatSystem'] == 1 && $wo['page'] != 'get_news_feed' && $wo['page'] != 'sharer' && $wo['page'] != 'video-api' && $wo['page'] != 'messages') {
+        if ($wo['config']['chatSystem'] == 1 && $wo['page'] != 'get_news_feed' && $wo['page'] != 'sharer' && $wo['page'] != 'video-api' && $wo['page'] != 'messages' && $wo['page'] != 'reels' && $wo['page'] != 'zuitch') {
           echo Wo_LoadPage('chat/content');
         }
         echo Wo_LoadPage('modals/logged-out');
@@ -1031,7 +1049,342 @@
   <?php
   }
   ?>
-  <script type="text/javascript" src="<?php echo $wo['config']['theme_url']; ?>/javascript/script.js<?php echo $wo['update_cache']; ?>?version=<?php echo $wo['config']['version']; ?>"></script>
+  <!-- WebView Video Enhancer - Mejora videos para Android WebView -->
+  <script type="text/javascript">
+  (function() {
+      var isReelsPage = !!(window.location && (
+          window.location.pathname.indexOf('/reels') > -1 ||
+          window.location.pathname.indexOf('/zuitch') > -1 ||
+          window.location.search.indexOf('link1=reels') > -1 ||
+          window.location.search.indexOf('link1=zuitch') > -1
+      ));
+
+      // Función para mejorar elementos de video
+      function enhanceVideoElement(video) {
+          // Agregar atributos para mejor compatibilidad con WebView Android
+          video.setAttribute('playsinline', 'true');
+          video.setAttribute('webkit-playsinline', 'true');
+          video.setAttribute('x5-playsinline', 'true'); // Para navegadores X5 (WeChat, QQ Browser)
+          video.setAttribute('x-webkit-airplay', 'allow');
+          
+          // Asegurar que los controles estén habilitados (solo si no tiene autoplay)
+          if (!video.hasAttribute('autoplay')) {
+              video.controls = true;
+          }
+          
+          // Mejorar estilo para responsividad
+          if (!video.style.maxWidth || video.style.maxWidth === '') {
+              video.style.maxWidth = '100%';
+          }
+          if (!video.style.height || video.style.height === '') {
+              video.style.height = 'auto';
+          }
+          video.style.display = 'block';
+          
+          // Prevenir autoplay silencioso (requiere interacción del usuario)
+          // Esto es importante para cumplir con políticas de navegadores.
+          // EXCEPCION: en reels no forzamos muted para permitir audio cuando el usuario da play.
+          if (!isReelsPage && video.hasAttribute('autoplay') && !video.hasAttribute('muted')) {
+              if (!video.muted) {
+                  video.muted = true;
+              }
+          }
+      }
+
+      // Función principal para mejorar todos los videos
+      function enhanceVideos() {
+          // Mejorar todos los videos existentes
+          var videos = document.querySelectorAll('video');
+          videos.forEach(function(video) {
+              if (!video.hasAttribute('data-enhanced')) {
+                  enhanceVideoElement(video);
+                  video.setAttribute('data-enhanced', 'true');
+              }
+          });
+      }
+
+      // Ejecutar cuando el DOM esté listo
+      if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', enhanceVideos);
+      } else {
+          enhanceVideos();
+      }
+
+      // Observar nuevos videos que se agreguen dinámicamente (SPA, AJAX, etc.)
+      var observer = new MutationObserver(function(mutations) {
+          mutations.forEach(function(mutation) {
+              mutation.addedNodes.forEach(function(node) {
+                  if (node.nodeType === 1) { // Element node
+                      // Si el nodo agregado es un video
+                      if (node.tagName === 'VIDEO') {
+                          enhanceVideoElement(node);
+                          node.setAttribute('data-enhanced', 'true');
+                      }
+                      // Buscar videos dentro del nodo agregado
+                      var childVideos = node.querySelectorAll && node.querySelectorAll('video');
+                      if (childVideos) {
+                          childVideos.forEach(function(v) {
+                              if (!v.hasAttribute('data-enhanced')) {
+                                  enhanceVideoElement(v);
+                                  v.setAttribute('data-enhanced', 'true');
+                              }
+                          });
+                      }
+                  }
+              });
+          });
+      });
+
+      // Iniciar observación
+      if (document.body) {
+          observer.observe(document.body, {
+              childList: true,
+              subtree: true
+          });
+      } else {
+          // Si body aún no existe, esperar a que se cree
+          var bodyObserver = new MutationObserver(function(mutations, obs) {
+              if (document.body) {
+                  observer.observe(document.body, {
+                      childList: true,
+                      subtree: true
+                  });
+                  obs.disconnect();
+              }
+          });
+          bodyObserver.observe(document.documentElement, {
+              childList: true
+          });
+      }
+
+      // Mejorar videos cuando se cargan desde iframes o contenido embebido
+      window.addEventListener('load', function() {
+          enhanceVideos();
+      });
+  })();
+  </script>
+  <!-- Solución Específica: Mejorar Visualización del Video Cargado -->
+  <script type="text/javascript">
+  (function() {
+      // Función para mejorar la visualización del video cuando ya está cargado
+      function fixVideoDisplay(video) {
+          // Asegurar que el video sea completamente visible
+          video.style.display = 'block';
+          video.style.visibility = 'visible';
+          video.style.opacity = '1';
+          video.style.width = '100%';
+          video.style.height = 'auto';
+          video.style.maxWidth = '100%';
+          video.style.objectFit = 'contain';
+          video.style.backgroundColor = 'transparent';
+          video.style.border = 'none';
+          video.style.outline = 'none';
+          
+          // Remover cualquier estilo que pueda estar ocultando el video
+          video.removeAttribute('hidden');
+          video.removeAttribute('aria-hidden');
+          
+          // Asegurar que el poster se muestre correctamente
+          if (video.poster) {
+              // Forzar que el poster se cargue y muestre
+              var posterImg = new Image();
+              posterImg.onload = function() {
+                  video.style.backgroundImage = 'url(' + video.poster + ')';
+                  video.style.backgroundSize = 'cover';
+                  video.style.backgroundPosition = 'center';
+                  video.style.backgroundRepeat = 'no-repeat';
+              };
+              posterImg.src = video.poster;
+          }
+          
+          // Remover overlays genéricos del navegador/WebView
+          var parent = video.parentElement;
+          if (parent) {
+              // Ocultar placeholders genéricos del navegador
+              var placeholders = parent.querySelectorAll(
+                  '.video-placeholder, .video-loading, [class*="placeholder"], [class*="loading"], [class*="spinner"]'
+              );
+              placeholders.forEach(function(p) {
+                  if (p !== video && !p.contains(video)) {
+                      p.style.display = 'none';
+                      p.style.visibility = 'hidden';
+                  }
+              });
+              
+              // Remover botones de play genéricos del navegador
+              var genericPlayButtons = parent.querySelectorAll(
+                  '[class*="play-button"], [class*="play-btn"], .play-overlay, [class*="play-overlay"]'
+              );
+              genericPlayButtons.forEach(function(btn) {
+                  if (!btn.closest('video') && !btn.closest('.custom-video-controls')) {
+                      btn.style.display = 'none';
+                      btn.style.visibility = 'hidden';
+                  }
+              });
+          }
+          
+          // Eventos para asegurar visualización correcta
+          video.addEventListener('loadedmetadata', function() {
+              video.style.display = 'block';
+              video.style.visibility = 'visible';
+              if (video.poster) {
+                  video.style.backgroundImage = 'url(' + video.poster + ')';
+                  video.style.backgroundSize = 'cover';
+              }
+          }, { once: true });
+          
+          video.addEventListener('canplay', function() {
+              video.style.display = 'block';
+              video.style.visibility = 'visible';
+              video.style.opacity = '1';
+          }, { once: true });
+          
+          video.addEventListener('loadeddata', function() {
+              video.style.display = 'block';
+          }, { once: true });
+      }
+      
+      // Función para aplicar el fix a todos los videos
+      function applyVideoDisplayFix() {
+          var videos = document.querySelectorAll('video');
+          videos.forEach(function(video) {
+              if (!video.hasAttribute('data-display-fixed')) {
+                  fixVideoDisplay(video);
+                  video.setAttribute('data-display-fixed', 'true');
+              }
+          });
+      }
+      
+      // Ejecutar cuando el DOM esté listo
+      if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', function() {
+              applyVideoDisplayFix();
+              // Ejecutar con delays para capturar videos que se cargan después
+              setTimeout(applyVideoDisplayFix, 300);
+              setTimeout(applyVideoDisplayFix, 800);
+              setTimeout(applyVideoDisplayFix, 1500);
+          });
+      } else {
+          applyVideoDisplayFix();
+          setTimeout(applyVideoDisplayFix, 300);
+          setTimeout(applyVideoDisplayFix, 800);
+          setTimeout(applyVideoDisplayFix, 1500);
+      }
+      
+      // Observar cambios en el DOM para videos dinámicos
+      var observer = new MutationObserver(function(mutations) {
+          var shouldFix = false;
+          mutations.forEach(function(mutation) {
+              if (mutation.addedNodes.length > 0) {
+                  mutation.addedNodes.forEach(function(node) {
+                      if (node.nodeType === 1) {
+                          if (node.tagName === 'VIDEO' || (node.querySelectorAll && node.querySelectorAll('video').length > 0)) {
+                              shouldFix = true;
+                          }
+                      }
+                  });
+              }
+              if (mutation.type === 'attributes' && 
+                  (mutation.attributeName === 'src' || mutation.attributeName === 'poster')) {
+                  shouldFix = true;
+              }
+          });
+          if (shouldFix) {
+              setTimeout(applyVideoDisplayFix, 100);
+          }
+      });
+      
+      if (document.body) {
+          observer.observe(document.body, {
+              childList: true,
+              subtree: true,
+              attributes: true,
+              attributeFilter: ['style', 'class', 'src', 'poster', 'hidden']
+          });
+      }
+      
+      // Ejecutar también cuando la página termine de cargar
+      window.addEventListener('load', function() {
+          setTimeout(applyVideoDisplayFix, 500);
+      });
+      
+      // Ejecutar periódicamente para asegurar que se mantenga el fix
+      setInterval(function() {
+          var videos = document.querySelectorAll('video:not([data-display-fixed])');
+          if (videos.length > 0) {
+              applyVideoDisplayFix();
+          }
+      }, 2000);
+  })();
+  </script>
+  <style>
+  /* Mejorar visualización de videos en WebView */
+  video {
+      display: block !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+      width: 100% !important;
+      max-width: 100% !important;
+      height: auto !important;
+      background-color: transparent !important;
+      border: none !important;
+      outline: none !important;
+      object-fit: contain !important;
+      -webkit-appearance: none !important;
+      -moz-appearance: none !important;
+      appearance: none !important;
+  }
+  
+  /* Ocultar controles genéricos del navegador si es necesario */
+  video::-webkit-media-controls {
+      display: flex !important;
+  }
+  
+  video::-webkit-media-controls-enclosure {
+      background-color: rgba(0, 0, 0, 0.5) !important;
+      border-radius: 4px !important;
+  }
+  
+  /* Asegurar que el poster se muestre correctamente */
+  video[poster] {
+      background-size: cover !important;
+      background-position: center !important;
+      background-repeat: no-repeat !important;
+  }
+  
+  /* Remover cualquier overlay genérico */
+  .video-placeholder,
+  .video-loading,
+  [class*="placeholder"]:not(.draggableHelper_story),
+  [class*="loading"]:not(.mfp_progress_line_),
+  [class*="spinner"] {
+      display: none !important;
+      visibility: hidden !important;
+  }
+  
+  /* Específico para videos de historias */
+  .story-img video,
+  .draggableHelper_story video,
+  #video_story {
+      display: block !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+      width: 100% !important;
+      height: 100% !important;
+      max-width: 100% !important;
+      background-color: transparent !important;
+      object-fit: contain !important;
+  }
+  </style>
+  <?php
+  $zuitch_theme_fs = dirname(__DIR__);
+  $zuitch_script_mtime = (is_file($zuitch_theme_fs . '/javascript/script.js')) ? filemtime($zuitch_theme_fs . '/javascript/script.js') : time();
+  $zuitch_zfb_mtime = (is_file($zuitch_theme_fs . '/javascript/zuitch-reel-share-fallback.js')) ? filemtime($zuitch_theme_fs . '/javascript/zuitch-reel-share-fallback.js') : time();
+  $zuitch_ios_maps_mtime = (is_file($zuitch_theme_fs . '/javascript/zuitch-ios-maps.js')) ? filemtime($zuitch_theme_fs . '/javascript/zuitch-ios-maps.js') : time();
+  ?>
+  <script type="text/javascript" src="<?php echo $wo['config']['theme_url']; ?>/javascript/script.js<?php echo $wo['update_cache']; ?>?version=<?php echo $wo['config']['version']; ?>&amp;m=<?php echo (int) $zuitch_script_mtime; ?>"></script>
+  <script type="text/javascript" src="<?php echo $wo['config']['theme_url']; ?>/javascript/zuitch-reel-share-fallback.js<?php echo $wo['update_cache']; ?>?version=<?php echo $wo['config']['version']; ?>&amp;m=<?php echo (int) $zuitch_zfb_mtime; ?>"></script>
+  <script type="text/javascript" src="<?php echo $wo['config']['theme_url']; ?>/javascript/zuitch-ios-maps.js<?php echo $wo['update_cache']; ?>?version=<?php echo $wo['config']['version']; ?>&amp;m=<?php echo (int) $zuitch_ios_maps_mtime; ?>"></script>
   <?php if ($wo['loggedin'] == true) { ?>
     <?php if ($wo['config']['google_map'] == 1) { ?>
       <script src="https://maps.googleapis.com/maps/api/js?key=<?php echo $wo['config']['google_map_api']; ?>&libraries=places"></script>
@@ -1261,6 +1614,7 @@
   </script>
   <?php if ($wo['page'] != 'get_news_feed') { ?>
     <script>
+		
       window.addEventListener("load", function() {
         window.cookieconsent.initialise({
           "palette": {
@@ -1282,6 +1636,7 @@
           }
         })
       });
+	  
     </script>
   <?php } ?>
   <?php if ($wo['page'] == 'welcome') { ?>

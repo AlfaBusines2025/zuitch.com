@@ -1,10 +1,50 @@
-<div class="lightbox-backgrond" onclick="Wo_CloseLightbox();"></div>
+<div class="lightbox-backgrond" id="lightbox-background-story"></div>
 <?php if ($wo['story']['story_media'][0]['type'] == 'image') { ?>
 <style>
 .wo_imagecombo_lbox.story_lightbox .story_image_owner .draggableHelper_story:before, .wo_imagecombo_lbox.story_lightbox .story_image_not_owner .draggableHelper_story:before {background-image: url(<?php echo $wo['story']['story_media'][0]['filename']. "?cache=" . time();?>)}
 </style>
 <?php } ?>
-<div class="lightbox-content post wo_imagecombo_lbox lightpost-<?php echo $wo['story']['id'];?> <?php echo ($wo['story']['is_owner'] || isset($wo['story']['ad'])) ? 'mobi_stor_box' : '' ?> <?php echo (!$wo['story']['is_owner'] && !isset($wo['story']['ad'])) ? 'story_width_' : '' ?> story_lightbox" id="post-<?php echo $wo['story']['id'];?>" data-post-id="<?php echo $wo['story']['id'];?>">
+<?php 
+// Detectar si es móvil o webview para mostrar historias a pantalla completa
+$is_mobile = Wo_IsMobile();
+
+// Detectar específicamente Android WebView (app Android)
+$userAgent = isset($_SERVER['HTTP_USER_AGENT']) ? strtolower($_SERVER['HTTP_USER_AGENT']) : '';
+$is_android_webview = (
+    strpos($userAgent, 'android') !== false && 
+    (
+        strpos($userAgent, 'wv') !== false || // Android WebView
+        (strpos($userAgent, 'chrome') !== false && strpos($userAgent, 'safari') === false && strpos($userAgent, 'version/') === false)
+    )
+);
+
+// Si es móvil/webview/Android app, usar mobi_stor_box para pantalla completa
+$is_mobile_or_webview = $is_mobile || $is_android_webview;
+$mobile_class = ($is_mobile_or_webview || $wo['story']['is_owner'] || isset($wo['story']['ad'])) ? 'mobi_stor_box' : '';
+$width_class = (!$is_mobile_or_webview && !$wo['story']['is_owner'] && !isset($wo['story']['ad'])) ? 'story_width_' : '';
+
+// Agregar estilos inline para Android WebView si es necesario
+if ($is_android_webview) {
+    echo '<style>
+    .wo_imagecombo_lbox.story_lightbox.android-webview-story {
+        max-width: 100% !important;
+        width: 100% !important;
+        margin: 0 !important;
+    }
+    .wo_imagecombo_lbox.story_lightbox.android-webview-story .story-img {
+        margin-right: 0 !important;
+        margin-left: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+    .wo_imagecombo_lbox.story_lightbox.android-webview-story.story_width_ {
+        max-width: 100% !important;
+        width: 100% !important;
+    }
+    </style>';
+}
+?>
+<div class="lightbox-content post wo_imagecombo_lbox lightpost-<?php echo $wo['story']['id'];?> <?php echo $mobile_class ?> <?php echo $width_class ?> story_lightbox <?php echo ($is_android_webview) ? 'android-webview-story' : ''; ?>" id="post-<?php echo $wo['story']['id'];?>" data-post-id="<?php echo $wo['story']['id'];?>">
 	<div class="mfp-wrap"><span class="mfp_progress_line_"><span class="width_ load"></span><span></div>
 	<div class="wo_story_header">
 		<div class="wo_stor_h_info">
@@ -85,9 +125,10 @@
 				<img src="<?php echo $wo['story']['story_media'][0]['filename']. "?cache=" . time();?>" alt="media" class="<?php echo isset($wo['story']['ad']) ? 'rads-' . $wo['story']['ad']['bidding'] : '' ?>"
                      id="<?php echo isset($wo['story']['ad']) ?  $wo['story']['ad']['id'] : '' ?>">
 			<?php }else{ ?>
-				<video class="" preload="auto" autoplay  style="width: 100%; height: 100%;" data-story-video="<?php echo $wo['story']['story_media'][0]['id'];?>" id="video_story">
+				<video class="" preload="metadata" autoplay playsinline webkit-playsinline x5-playsinline muted style="width: 100%; height: 100%; display: block; max-width: 100%;" data-story-video="<?php echo $wo['story']['story_media'][0]['id'];?>" id="video_story">
 					<source src="<?php echo $wo['story']['story_media'][0]['filename'];?>" type='video/mp4'>
 					<source src="<?php echo $wo['story']['story_media'][0]['filename'];?>" type='video/webm'>
+					Tu navegador no soporta videos HTML5.
 				</video>
 			<?php } ?>
 		</div>
@@ -161,6 +202,284 @@ $( ".story-img" ).mouseleave(function() {
   $( ".changer" ).fadeOut(200);
 });
 
-
+// Activar autoplay con sonido para videos en historias
+$(document).ready(function() {
+  var videoStory = document.getElementById('video_story');
+  if (videoStory) {
+    // Mejorar visualización del video - remover placeholders genéricos
+    function fixStoryVideoDisplay() {
+      // Asegurar que el video sea completamente visible
+      videoStory.style.display = 'block';
+      videoStory.style.visibility = 'visible';
+      videoStory.style.opacity = '1';
+      videoStory.style.width = '100%';
+      videoStory.style.height = '100%';
+      videoStory.style.maxWidth = '100%';
+      videoStory.style.objectFit = 'contain';
+      videoStory.style.backgroundColor = 'transparent';
+      videoStory.style.border = 'none';
+      videoStory.style.outline = 'none';
+      videoStory.style.position = 'relative';
+      videoStory.style.zIndex = '1';
+      
+      // Remover atributos que puedan ocultar el video
+      videoStory.removeAttribute('hidden');
+      videoStory.removeAttribute('aria-hidden');
+      
+      // Remover placeholders y overlays genéricos del contenedor
+      var parent = videoStory.parentElement;
+      if (parent) {
+        // Buscar y ocultar placeholders genéricos
+        var placeholders = parent.querySelectorAll(
+          '.video-placeholder, .video-loading, [class*="placeholder"]:not(.draggableHelper_story), [class*="loading"]:not(.mfp_progress_line_), [class*="spinner"]'
+        );
+        placeholders.forEach(function(p) {
+          if (p !== videoStory && !p.contains(videoStory)) {
+            p.style.display = 'none';
+            p.style.visibility = 'hidden';
+            p.style.opacity = '0';
+          }
+        });
+        
+        // Remover botones de play genéricos
+        var genericPlayButtons = parent.querySelectorAll(
+          '[class*="play-button"], [class*="play-btn"], .play-overlay, [class*="play-overlay"]'
+        );
+        genericPlayButtons.forEach(function(btn) {
+          if (!btn.closest('video') && !btn.closest('.custom-video-controls')) {
+            btn.style.display = 'none';
+            btn.style.visibility = 'hidden';
+          }
+        });
+        
+        // Asegurar que el contenedor no tenga estilos que oculten el video
+        parent.style.backgroundColor = 'transparent';
+      }
+    }
+    
+    // Aplicar fix inmediatamente
+    fixStoryVideoDisplay();
+    
+    // Aplicar fix cuando el video se carga
+    videoStory.addEventListener('loadedmetadata', function() {
+      fixStoryVideoDisplay();
+      videoStory.style.display = 'block';
+      videoStory.style.visibility = 'visible';
+    }, { once: true });
+    
+    videoStory.addEventListener('canplay', function() {
+      fixStoryVideoDisplay();
+      videoStory.style.display = 'block';
+      videoStory.style.visibility = 'visible';
+      videoStory.style.opacity = '1';
+    }, { once: true });
+    
+    videoStory.addEventListener('loadeddata', function() {
+      fixStoryVideoDisplay();
+      videoStory.style.display = 'block';
+    }, { once: true });
+    
+    // Aplicar fix periódicamente para asegurar que se mantenga
+    var fixInterval = setInterval(function() {
+      if (videoStory && document.body.contains(videoStory)) {
+        fixStoryVideoDisplay();
+      } else {
+        clearInterval(fixInterval);
+      }
+    }, 500);
+    
+    // Configurar video para reproducir con sonido
+    videoStory.muted = false;
+    videoStory.volume = 1.0;
+    
+    // Intentar reproducir automáticamente con sonido
+    var playPromise = videoStory.play();
+    
+    if (playPromise !== undefined) {
+      playPromise.then(function() {
+        // Autoplay exitoso con sonido
+        console.log('Historia reproduciéndose con sonido');
+      }).catch(function(error) {
+        // Si falla el autoplay con sonido, intentar silenciado primero
+        console.log('Autoplay con sonido bloqueado, intentando silenciado');
+        videoStory.muted = true;
+        videoStory.play().then(function() {
+          // Una vez que empiece a reproducir, activar sonido después de un breve delay
+          setTimeout(function() {
+            videoStory.muted = false;
+          }, 100);
+        }).catch(function(err) {
+          console.log('Error al reproducir video:', err);
+        });
+      });
+    }
+    
+    // Asegurar que el sonido esté activado cuando el usuario interactúe
+    $(document).on('click touchstart', function() {
+      if (videoStory && videoStory.paused) {
+        videoStory.muted = false;
+        videoStory.play();
+      }
+    });
+  }
+  
+  // Función para detener el video cuando se cierra el lightbox
+  function stopStoryVideo() {
+    // Detener video específico de la historia
+    var videoStory = document.getElementById('video_story');
+    if (videoStory) {
+      try {
+        videoStory.pause();
+        videoStory.currentTime = 0;
+        videoStory.muted = true;
+        videoStory.volume = 0;
+        // Limpiar la fuente del video para detener completamente la reproducción
+        if (videoStory.src) {
+          videoStory.src = '';
+          videoStory.load();
+        }
+        // También limpiar los sources
+        var sources = videoStory.querySelectorAll('source');
+        sources.forEach(function(source) {
+          source.src = '';
+        });
+      } catch(e) {
+        console.log('Error al detener video_story:', e);
+      }
+    }
+    
+    // Detener todos los videos relacionados con historias
+    var storyVideos = document.querySelectorAll('video[data-story-video], .story-image-wrapper video, .story-video video');
+    storyVideos.forEach(function(video) {
+      if (video) {
+        try {
+          video.pause();
+          video.currentTime = 0;
+          video.muted = true;
+          video.volume = 0;
+          if (video.src) {
+            video.src = '';
+            video.load();
+          }
+          // Limpiar sources
+          var sources = video.querySelectorAll('source');
+          sources.forEach(function(source) {
+            source.src = '';
+          });
+        } catch(e) {
+          console.log('Error al detener video:', e);
+        }
+      }
+    });
+    
+    // Detener MediaElementPlayer si está activo
+    if (typeof mejs !== 'undefined') {
+      $('video').each(function() {
+        var player = $(this).data('mediaelementplayer');
+        if (player && player.media) {
+          try {
+            player.pause();
+            player.setCurrentTime(0);
+            player.setMuted(true);
+            player.setVolume(0);
+          } catch(e) {
+            console.log('Error al detener MediaElementPlayer:', e);
+          }
+        }
+      });
+    }
+    
+    // Forzar detención de todos los videos en la página
+    var allVideos = document.querySelectorAll('video');
+    allVideos.forEach(function(video) {
+      if (video && !video.paused) {
+        try {
+          video.pause();
+          video.muted = true;
+          video.volume = 0;
+        } catch(e) {
+          console.log('Error al pausar video:', e);
+        }
+      }
+    });
+  }
+  
+  // Interceptar el cierre del lightbox para detener el video ANTES de cerrar
+  // Guardar la función original si existe
+  if (!window._originalWo_CloseLightbox) {
+    window._originalWo_CloseLightbox = window.Wo_CloseLightbox;
+  }
+  
+  // Crear nueva función que siempre detiene los videos primero
+  window.Wo_CloseLightbox = function() {
+    // Detener videos ANTES de cerrar
+    stopStoryVideo();
+    // Pequeño delay para asegurar que los videos se detengan completamente
+    setTimeout(function() {
+      if (window._originalWo_CloseLightbox) {
+        window._originalWo_CloseLightbox.apply(this, arguments);
+      } else {
+        // Si no hay función original, hacer el cierre básico
+        $('.lightbox-container').remove();
+        document.body.style.overflow = 'auto';
+      }
+    }, 100);
+  };
+  
+  // Detener cuando se hace clic en el botón de cerrar
+  $(document).on('click', '.close-lightbox', function(e) {
+    e.stopPropagation();
+    stopStoryVideo();
+    setTimeout(function() {
+      if (window.Wo_CloseLightbox) {
+        window.Wo_CloseLightbox();
+      }
+    }, 100);
+  });
+  
+  // Detener cuando se hace clic en el fondo del lightbox (usando delegación de eventos)
+  $(document).on('click', '.lightbox-backgrond', function(e) {
+    // Solo procesar si el clic es directamente en el fondo, no en elementos hijos
+    if (e.target === this) {
+      e.preventDefault();
+      e.stopPropagation();
+      stopStoryVideo();
+      setTimeout(function() {
+        if (window.Wo_CloseLightbox) {
+          window.Wo_CloseLightbox();
+        }
+      }, 100);
+      return false;
+    }
+  });
+  
+  // También manejar el clic directamente en el elemento del fondo si existe
+  var backgroundElement = document.getElementById('lightbox-background-story');
+  if (backgroundElement) {
+    backgroundElement.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      stopStoryVideo();
+      setTimeout(function() {
+        if (window.Wo_CloseLightbox) {
+          window.Wo_CloseLightbox();
+        }
+      }, 100);
+      return false;
+    });
+  }
+  
+  // Detener cuando se presiona ESC
+  $(document).on('keydown', function(e) {
+    if (e.keyCode == 27) {
+      stopStoryVideo();
+      setTimeout(function() {
+        if (originalCloseLightbox) {
+          originalCloseLightbox();
+        }
+      }, 50);
+    }
+  });
+});
 
 </script>

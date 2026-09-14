@@ -1,6 +1,8 @@
 <?php
 $post_shared_from = array();
 $current_post = $wo['current_post'] = $wo['story'];
+/** Vy-livestream ya pinta el player del feed; evitar Millicast/Agora nativos del tema en el mismo post. */
+$is_vy_livestream_feed_post = (!empty($wo['story']['vy-live']) && $wo['story']['vy-live'] === 'yes');
 ?>
 <div class="post-container">
   <div class="post<?php echo (!empty($wo['story']['post_is_promoted'])) ? ' boosted': '';?>" id="post-<?php echo $wo['story']['id']; ?>" 
@@ -308,7 +310,7 @@ $current_post = $wo['current_post'] = $wo['story'];
           <!-- postRecord -->
 
           <!-- Live Video -->
-          <?php if (!empty($wo['story']['stream_name']) && empty($wo['story']['agora_resource_id']) && empty($wo['story']['agora_token']) && empty($wo['story']['agora_sid']) && !$wo['story']['is_still_live']) { ?>
+          <?php if (!$is_vy_livestream_feed_post && !empty($wo['story']['stream_name']) && empty($wo['story']['agora_resource_id']) && empty($wo['story']['agora_token']) && empty($wo['story']['agora_sid']) && !$wo['story']['is_still_live']) { ?>
           <div class="post-file" <?php echo $wo['story']['is_still_live'] ? 'style="/*height: 440px;*/"' : ''; ?> id="fullsizeimg">
             <?php
             $wo['media'] = array('filename' => 'https://viewer.millicast.com/v2?streamId='.$wo['config']['live_account_id'].'/'.$wo['story']['stream_name']);
@@ -324,7 +326,7 @@ $current_post = $wo['current_post'] = $wo['story'];
           </div>
           <?php } ?>
 
-          <?php if ($wo['config']['live_video'] == 1 && !empty($wo['story']['stream_name'])) { ?>
+          <?php if (!$is_vy_livestream_feed_post && $wo['config']['live_video'] == 1 && !empty($wo['story']['stream_name'])) { ?>
           <div class="post-file" <?php echo $wo['story']['is_still_live'] ? 'style="/*height: 440px;*/"' : ''; ?> id="fullsizeimg">
             <?php
             if ($wo['config']['millicast_live_video'] == 1) {
@@ -457,7 +459,7 @@ jQuery(document).click(function(event){
   }
 });
 
-<?php if ($wo['config']['live_video'] == 1 && !empty($wo['story']['stream_name']) && $wo['story']['is_still_live'] && $wo['story']['comments_status'] == 1 && $wo['story']['live_ended'] == 0) { ?>
+<?php if (!$is_vy_livestream_feed_post && $wo['config']['live_video'] == 1 && !empty($wo['story']['stream_name']) && $wo['story']['is_still_live'] && $wo['story']['comments_status'] == 1 && $wo['story']['live_ended'] == 0) { ?>
   var post_live_<?php echo $wo['story']['id']; ?> = setInterval(function(){
     data = {};
     for (var i = 0; i < $('.live_comments').length; i++) {
@@ -513,7 +515,7 @@ jQuery(document).click(function(event){
   }, 3000);
 <?php } ?>
 
-<?php if ($wo['config']['agora_live_video'] == 1 && !empty($wo['config']['agora_app_id']) 
+<?php if (!$is_vy_livestream_feed_post && $wo['config']['agora_live_video'] == 1 && !empty($wo['config']['agora_app_id']) 
       && !empty($wo['story']['stream_name']) && $wo['story']['is_still_live']) { ?>
   RunLiveAgora("<?php echo $wo['story']['stream_name']; ?>","post_live_video_<?php echo($wo['story']['id']) ?>","<?php echo($wo['story']['agora_token']) ?>");
 <?php } ?>

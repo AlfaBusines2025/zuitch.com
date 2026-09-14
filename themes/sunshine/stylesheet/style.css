@@ -1,7 +1,6 @@
+@charset "UTF-8";
 @import "https://fonts.googleapis.com/css?family=Lato:400,700";
 @import "https://fonts.googleapis.com/css?family=Hind";
-
-@charset "UTF-8";
 
 /*Basic*/
 body,html{margin:0;padding:0}
@@ -11109,8 +11108,20 @@ body span.flatpickr-weekday {
     object-fit: cover;
     margin: 0;
 }
+.wo_reels_cont .video-text-overlay .shorts_events > div > div {
+    margin-bottom: 14px;
+}
+.wo_reels_cont .video-text-overlay .shorts_events > div > div:last-child {
+    margin-bottom: 0;
+}
+.wo_reels_cont .video-text-overlay .reels-download-btn {
+    margin-bottom: 32px !important;
+}
 .wo_reels_cont .video-text-overlay .reel-save-btn {
-	margin-bottom: 15px;
+    margin-bottom: 32px !important;
+}
+.wo_reels_cont .video-text-overlay .reels-share-btn {
+    margin-bottom: 32px !important;
 }
 .wo_reels_cont .video-text-overlay .shorts_events > div > div svg {
     background-color: rgb(255 255 255 / 30%);
@@ -11119,10 +11130,39 @@ body span.flatpickr-weekday {
     width: 35px;
     height: 35px;
 }
+.wo_reels_cont .video-text-overlay .reels-sound-toggle svg {
+    display: block;
+    transform: translateY(-1px);
+}
 .wo_reels_cont .video-text-overlay .shorts_events > div > div p {
     text-align: center;
     font-weight: 600;
     font-size: 13px;
+}
+
+/* Mobile/WebView reels actions: spacing and touch targets */
+@media (max-width: 768px) {
+    .wo_reels_cont .video-text-overlay .shorts_events > div {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 18px;
+    }
+
+    .wo_reels_cont .video-text-overlay .shorts_events > div > div {
+        margin-bottom: 0 !important;
+    }
+
+    .wo_reels_cont .video-text-overlay .shorts_events > div > div svg {
+        width: 40px;
+        height: 40px;
+        padding: 8px;
+    }
+
+    .wo_reels_cont .video-text-overlay .shorts_events > div > div p {
+        margin-top: 6px;
+        line-height: 1;
+    }
 }
 .wo_reels_cont .story-img .reels-previous-btn, .wo_reels_cont .story-img .reels-next-btn {
     display: flex !important;

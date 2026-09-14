@@ -1,4 +1,8 @@
-<?php if ($wo['config']['second_post_button'] == 'reaction') { ?>
+<?php
+/* En /reels/ la config se fuerza a "disabled" pero reels_ui_second_post_button guarda el modo real (p. ej. reaction). */
+$lw_second_btn = !empty($wo['reels_ui_second_post_button']) ? $wo['reels_ui_second_post_button'] : $wo['config']['second_post_button'];
+?>
+<?php if ($lw_second_btn == 'reaction') { ?>
 	<!-- reaction -->
 	<?php if ( isset($wo['story']['viewmode']) && $wo['story']['viewmode'] == 'lightbox') { ?>
     <div class="wo-reaction wo-reaction-lightbox stat-item unselectable" data-id="<?php echo $wo['story']['id']; ?>">

@@ -4,9 +4,9 @@ if ($f == 'update_data') {
         $sql_query             = mysqli_query($sqlConnect, "UPDATE " . T_APP_SESSIONS . " SET `time` = " . time() . " WHERE `session_id` = '{$session_id}'");
         $data['pop']           = 0;
         $data['status']        = 200;
-        $data['notifications'] = Wo_CountNotifications(array(
+        $data['notifications'] = (int) Wo_CountNotifications(array(
             'unread' => true
-        ));
+        )) + (int) Wo_CountFollowRequests() + (int) Wo_CountGroupChatRequests();
         $data['html']          = '';
         $notifications         = Wo_GetNotifications(array(
             'type_2' => 'popunder',
@@ -52,8 +52,7 @@ if ($f == 'update_data') {
             $data['call_id']              = $wo['incall']['id'];
             $data['audio_calls_html']     = Wo_LoadPage('modals/in_audio_call');
         }
-        $data['followRequests']      = Wo_CountFollowRequests();
-        $data['followRequests']      = $data['followRequests'] + Wo_CountGroupChatRequests();
+        $data['followRequests']      = 0;
         $data['notifications_sound'] = $wo['user']['notifications_sound'];
     }
     $data['count_num'] = 0;

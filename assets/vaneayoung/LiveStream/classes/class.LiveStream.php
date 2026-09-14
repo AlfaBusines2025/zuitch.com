@@ -707,6 +707,19 @@ class LIVE_STREAM extends VY_LIVESTREAM_CORE
 
         if (rename($path, str_replace("writing", $filename, $path))) {
             $response["success"] = 1;
+            $newPath = str_replace("writing", $filename, $path);
+            $docRaw = (string) ($_SERVER['DOCUMENT_ROOT'] ?? '');
+            $doc = rtrim(str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $docRaw), DIRECTORY_SEPARATOR);
+            if ($doc !== '') {
+                $np = str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $newPath);
+                if (strpos($np, $doc) === 0) {
+                    $rel = substr($np, strlen($doc));
+                    $rel = ltrim(str_replace(DIRECTORY_SEPARATOR, '/', $rel), '/');
+                    if (strtolower(substr($rel, -4)) === '.mp4') {
+                        $this->vyLvNormalizeRecordedMp4SafariAudio($rel);
+                    }
+                }
+            }
         }
 
         echo $this->jencode($response);
@@ -740,6 +753,11 @@ class LIVE_STREAM extends VY_LIVESTREAM_CORE
                     VY_LV_TBL["BROADCASTS"] .
                     " set `islivenow`='no',`ended`='yes',`stream_name`='{$filename}',`time`='{$time}' where `id`='{$broadcast_id}'"
             );
+            if (strtolower(substr($filename, -4)) === '.mp4') {
+                $relSpawn = sprintf($this->upload_path_blobs, $this->userid) . $filename;
+                $relSpawn = str_replace('\\', '/', $relSpawn);
+                $this->vyLvSpawnBackgroundSafariNormalize($relSpawn);
+            }
         }
 
         // re-generate the stream keys for OBS
@@ -1166,6 +1184,228 @@ class LIVE_STREAM extends VY_LIVESTREAM_CORE
             ],
         ];
     }
+
+    /**
+     * Comprueba que un binario responde como ffmpeg (válido con open_basedir que oculta /usr/bin a is_file()).
+     */
+    protected function vyLvFfmpegBinaryResponds($path)
+    {
+        $path = (string) $path;
+        if ($path === '') {
+            return false;
+        }
+        $o = [];
+        $r = 1;
+        @exec(escapeshellarg($path) . ' -version 2>/dev/null', $o, $r);
+
+        return $r === 0 && !empty($o[0]) && stripos($o[0], 'ffmpeg') !== false;
+    }
+
+    /**
+     * Ruta ejecutable de ffmpeg (ini + rutas habituales + PATH).
+     * En Plesk suele haber open_basedir solo al vhost: is_file('/usr/bin/ffmpeg') falla pero exec() al binario sí funciona.
+     *
+     * @return string|null
+     */
+    protected function vyLvResolveFfmpegBinary()
+    {
+        $configured = !empty($GLOBALS['V_Y']['record']['ffmpeg_path'])
+            ? $GLOBALS['V_Y']['record']['ffmpeg_path']
+            : '/usr/bin/ffmpeg';
+        $candidates = array_unique(array_filter([
+            $configured,
+            '/usr/bin/ffmpeg',
+            '/usr/local/bin/ffmpeg',
+            '/bin/ffmpeg',
+            '/opt/ffmpeg/bin/ffmpeg',
+        ]));
+        foreach ($candidates as $p) {
+            if ($p === '') {
+                continue;
+            }
+            if (@is_file($p) && @is_executable($p)) {
+                return $p;
+            }
+            if ($this->vyLvFfmpegBinaryResponds($p)) {
+                return $p;
+            }
+        }
+        $o = [];
+        $r = 1;
+        @exec('command -v ffmpeg 2>/dev/null', $o, $r);
+        if ($r === 0 && !empty($o[0]) && $this->vyLvFfmpegBinaryResponds($o[0])) {
+            return $o[0];
+        }
+
+        return null;
+    }
+
+    /**
+     * Los MP4 generados solo con copy/mux a veces llevan esds AAC no estándar (p. ej. objectProfileIndication 0x6B).
+     * Safari usa ese metadato para activar el decoder de audio; Chrome es más tolerante — por eso "en web" oía y en Safari no.
+     * Re-encode solo la pista de audio a AAC LC "correcto" y deja el vídeo en copy.
+     *
+     * @param string $relativeToDocroot Ruta relativa al document root (p. ej. upload/vy-streams-media/1/streams/archivo.mp4)
+     */
+    public function vyLvNormalizeRecordedMp4SafariAudio($relativeToDocroot)
+    {
+        $rel = ltrim(str_replace('\\', '/', (string) $relativeToDocroot), '/');
+        if (substr(strtolower($rel), -4) !== '.mp4') {
+            return true;
+        }
+        $ff = $this->vyLvResolveFfmpegBinary();
+        if ($ff === null) {
+            return false;
+        }
+        $root = rtrim((string) ($_SERVER['DOCUMENT_ROOT'] ?? ''), DIRECTORY_SEPARATOR);
+        if ($root === '') {
+            return false;
+        }
+        $in = $root . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $rel);
+        if (!is_file($in) || filesize($in) < 1024) {
+            return false;
+        }
+        $tmp = $in . '.safari-aac.' . bin2hex(random_bytes(4)) . '.mp4';
+        $br = (int) ($GLOBALS['V_Y']['record']['audioBitsPerSecond'] ?? 128000);
+        if ($br < 64000) {
+            $br = 128000;
+        }
+        $cmd = sprintf(
+            '%s -y -fflags +genpts -i %s -c:v copy -c:a aac -profile:a aac_low -ar 48000 -ac 2 -b:a %d -movflags +faststart %s 2>&1',
+            escapeshellarg($ff),
+            escapeshellarg($in),
+            $br,
+            escapeshellarg($tmp)
+        );
+        exec($cmd, $out, $ret);
+        if ($ret !== 0 || !is_file($tmp) || filesize($tmp) < 1024) {
+            @unlink($tmp);
+
+            return false;
+        }
+        if (!@rename($tmp, $in)) {
+            @unlink($tmp);
+
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Lanza normalización AAC (Safari) en segundo plano: el MP4 final a menudo aún no existe cuando termina stopLive().
+     * Usa bash + ffmpeg (no invoca `php` CLI): en Plesk / php-fpm `php` no está en PATH y nohup fallaba.
+     *
+     * @param string $relativeToDocroot p.ej. upload/vy-streams-media/1/streams/archivo.mp4
+     */
+    protected function vyLvSpawnBackgroundSafariNormalize($relativeToDocroot)
+    {
+        $rel = ltrim(str_replace('\\', '/', (string) $relativeToDocroot), '/');
+        if (substr(strtolower($rel), -4) !== '.mp4') {
+            return;
+        }
+        $doc = rtrim((string) ($_SERVER['DOCUMENT_ROOT'] ?? ''), DIRECTORY_SEPARATOR);
+        if ($doc === '') {
+            return;
+        }
+        $absIn = $doc . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $rel);
+        $tmpOut = $absIn . '.norm.' . bin2hex(random_bytes(4)) . '.mp4';
+        $logDir = $doc . DIRECTORY_SEPARATOR . 'upload' . DIRECTORY_SEPARATOR . 'vy-streams-media';
+        if (!is_dir($logDir)) {
+            @mkdir($logDir, 0755, true);
+        }
+        $log = $logDir . DIRECTORY_SEPARATOR . '.normalize-audio-worker.log';
+
+        $ff = $this->vyLvResolveFfmpegBinary();
+        if ($ff === null) {
+            @file_put_contents(
+                $log,
+                date('c') . ' SKIP normalize: ffmpeg no instalado o no ejecutable (st__ffmpeg_path en ini: ' .
+                (!empty($GLOBALS['V_Y']['record']['ffmpeg_path']) ? $GLOBALS['V_Y']['record']['ffmpeg_path'] : '/usr/bin/ffmpeg') .
+                "). Instale ffmpeg en el servidor (p. ej. dnf install ffmpeg con RPM Fusion en EL9).\n",
+                FILE_APPEND | LOCK_EX
+            );
+
+            return;
+        }
+        $br = (int) ($GLOBALS['V_Y']['record']['audioBitsPerSecond'] ?? 128000);
+        if ($br < 64000) {
+            $br = 128000;
+        }
+
+        $qAbs = escapeshellarg($absIn);
+        $qFf = escapeshellarg($ff);
+        $qTmp = escapeshellarg($tmpOut);
+        $qLog = escapeshellarg($log);
+        /* bash: esperar MP4 estable (Node/RTMP sigue escribiendo) y luego AAC LC + faststart para iOS/WebKit */
+        $bash = 'i=0; while [ $i -lt 72 ]; do '
+            . "if [ -f {$qAbs} ]; then "
+            . "s1=\$(stat -c%s {$qAbs} 2>/dev/null || echo 0); sleep 2; "
+            . "s2=\$(stat -c%s {$qAbs} 2>/dev/null || echo 0); "
+            . 'if [ "$s1" -gt 2048 ] && [ "$s1" = "$s2" ]; then '
+            . "{$qFf} -y -fflags +genpts -i {$qAbs} -c:v copy -c:a aac -profile:a aac_low -ar 48000 -ac 2 -b:a {$br} -movflags +faststart {$qTmp} "
+            . '&& mv -f ' . $qTmp . ' ' . $qAbs . ' '
+            . '&& printf %s\\n ' . escapeshellarg(date('c') . ' OK ' . $rel) . ' >> ' . $qLog . ' && exit 0; '
+            . 'rm -f ' . $qTmp . '; '
+            . 'fi; fi; i=$((i+1)); sleep 3; done; '
+            . 'printf %s\\n ' . escapeshellarg(date('c') . ' FAIL ' . $rel) . ' >> ' . $qLog . '; exit 1';
+
+        if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
+            $cmd =
+                'start /B bash -lc ' .
+                escapeshellarg($bash) .
+                ' >> ' .
+                $qLog .
+                ' 2>&1';
+
+            @pclose(@popen($cmd, 'r'));
+
+            return;
+        }
+        @exec('nohup bash -lc ' . escapeshellarg($bash) . ' >> ' . $qLog . ' 2>&1 &');
+    }
+
+    /**
+     * Reempaqueta audio AAC del MP4 del broadcast (ruta relativa a document root) tras cerrar el live.
+     * Lo invoca el host vía AJAX con reintentos porque el archivo puede aparecer unos segundos después (ensamblado por el socket/RTMP).
+     */
+    public function normalizeLiveRecordingByPostJson()
+    {
+        if (!$this->isLogged()) {
+            return json_encode(['ok' => 0, 'err' => 'auth']);
+        }
+        $post_id = (int) $this->post_vars('post_id');
+        if ($post_id <= 0) {
+            return json_encode(['ok' => 0, 'err' => 'post']);
+        }
+        $q = $this->db->query(
+            "select `user_id`,`stream_name` from " .
+                VY_LV_TBL["BROADCASTS"] .
+                " where `post_id`='" .
+                (int) $post_id .
+                "' limit 1"
+        );
+        $row = $q ? $q->fetch_array(MYSQLI_ASSOC) : null;
+        if (empty($row['stream_name']) || empty($row['user_id'])) {
+            return json_encode(['ok' => 0, 'err' => 'broadcast']);
+        }
+        if ((int) $row['user_id'] !== (int) $this->userid) {
+            return json_encode(['ok' => 0, 'err' => 'forbidden']);
+        }
+        $name = (string) $row['stream_name'];
+        if (strtolower(substr($name, -4)) !== '.mp4') {
+            return json_encode(['ok' => 1, 'skipped' => 1]);
+        }
+        $rel = sprintf($this->upload_path_blobs, $row['user_id']) . $name;
+        $rel = str_replace('\\', '/', $rel);
+        $ok = $this->vyLvNormalizeRecordedMp4SafariAudio($rel);
+        if (!$ok) {
+            return json_encode(['ok' => 0, 'err' => 'ffmpeg', 'path' => $rel]);
+        }
+
+        return json_encode(['ok' => 1, 'path' => $rel]);
+    }
+
     public function recording()
     {
    
@@ -1248,7 +1488,7 @@ class LIVE_STREAM extends VY_LIVESTREAM_CORE
                     $uploadDirectory =
                         $dir .
                         $_POST["filename"] .
-                        $GLOBALS['V_Y']["record"]["recor_type"];
+                        $GLOBALS['V_Y']["record"]["record_type"];
                     if (
                         !move_uploaded_file(
                             $_FILES["video-blob"]["tmp_name"],
@@ -1261,38 +1501,53 @@ class LIVE_STREAM extends VY_LIVESTREAM_CORE
                         $videoFile =
                             $dir .
                             $_POST["filename"] .
-                            $GLOBALS['V_Y']["record"]["recor_type"];
+                            $GLOBALS['V_Y']["record"]["record_type"];
 
                         $mergedFile =
                             $dir .
                             $_POST["filename"] .
                             "-merged" .
-                            $GLOBALS['V_Y']["record"]["recor_type"];
+                            $GLOBALS['V_Y']["record"]["record_type"];
 
                         // ffmpeg depends on yasm
                         // libvpx depends on libvorbis
                         // libvorbis depends on libogg
                         // make sure that you're using newest ffmpeg version!
 
-                        if (!strrpos($CurrOS, "Windows")) {
-                            $cmd =
-                                "-i " .
-                                $audioFile .
-                                " -i " .
-                                $videoFile .
-                                " -map 0:0 -map 1:0 " .
-                                $mergedFile;
-                        } else {
-                            $cmd =
-                                " -i " .
-                                $audioFile .
-                                " -i " .
-                                $videoFile .
-                                " -c:v mpeg4 -c:a vorbis -b:v 64k -b:a 12k -strict experimental " .
-                                $mergedFile;
+                        $ffmpegBin = $this->vyLvResolveFfmpegBinary();
+                        if ($ffmpegBin === null) {
+                            $ffmpegBin = !empty($GLOBALS['V_Y']['record']['ffmpeg_path'])
+                                ? $GLOBALS['V_Y']['record']['ffmpeg_path']
+                                : 'ffmpeg';
+                        }
+                        $audioBitrate = (int) ($GLOBALS['V_Y']['record']['audioBitsPerSecond'] ?? 128000);
+                        if ($audioBitrate < 64000) {
+                            $audioBitrate = 128000;
                         }
 
-                        exec("ffmpeg " . $cmd . " 2>&1", $out, $ret);
+                        if (!strrpos($CurrOS, "Windows")) {
+                            $cmd =
+                                escapeshellarg($ffmpegBin)
+                                . ' -y -fflags +genpts -i '
+                                . escapeshellarg($audioFile)
+                                . ' -fflags +genpts -i '
+                                . escapeshellarg($videoFile)
+                                . ' -map 0:0 -map 1:0 -c:v copy -c:a aac -profile:a aac_low -ar 48000 -ac 2 -b:a '
+                                . $audioBitrate
+                                . ' -movflags +faststart '
+                                . escapeshellarg($mergedFile);
+                        } else {
+                            $cmd =
+                                escapeshellarg($ffmpegBin)
+                                . " -i "
+                                . escapeshellarg($audioFile)
+                                . " -i "
+                                . escapeshellarg($videoFile)
+                                . " -c:v mpeg4 -c:a vorbis -b:v 64k -b:a 12k -strict experimental "
+                                . escapeshellarg($mergedFile);
+                        }
+
+                        exec($cmd . " 2>&1", $out, $ret);
                         if ($ret) {
                             // the record can not be saved remove post,comments and broadcast
                             $this->query_delete(
@@ -1328,6 +1583,12 @@ class LIVE_STREAM extends VY_LIVESTREAM_CORE
                             print_r($out);
                         } else {
                             echo "Ffmpeg successfully merged audi/video files into single WebM container!\n";
+
+                            if (
+                                strtolower((string) $GLOBALS['V_Y']["record"]["record_type"]) === '.mp4'
+                            ) {
+                                $this->vyLvNormalizeRecordedMp4SafariAudio($mergedFile);
+                            }
 
                             // make the post ready
                             $this->query_update(

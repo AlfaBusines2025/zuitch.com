@@ -33,6 +33,7 @@ RewriteRule ^video-call-api/([^\/]+)(\/|)$  index.php?link1=video-call-api&call_
 RewriteRule ^post/([^\/]+)(\/|)$ index.php?link1=post&id=$1 [NC,QSA]
 RewriteRule ^game/([^\/]+)(\/|)$ index.php?link1=game&id=$1 [NC,QSA]
 RewriteRule ^upgraded(/?|)$ index.php?link1=upgraded [NC,QSA]
+# antes era: RewriteRule ^get_news_feed(/?|)$ index.php?link1=terms&type=$1 [QSA]
 RewriteRule ^get_news_feed(/?|)$ index.php?link1=get_news_feed [NC,QSA]
 RewriteRule ^games(/?|)$ index.php?link1=games [NC,QSA]
 RewriteRule ^new-game(/?|)$ index.php?link1=new-game [NC,QSA]
@@ -173,8 +174,12 @@ RewriteRule ^more-status(/?|)$ index.php?link1=more-status [NC,QSA]
 
 # *** REELS ***
 RewriteRule ^reels(/?|)$ index.php?link1=reels [NC,QSA]
+RewriteRule ^reels-editor(/?|)$ index.php?link1=reels-editor [NC,QSA]
 RewriteRule ^reels/([A-Za-z0-9_-]+)$ index.php?link1=reels&id=$1 [NC,QSA]
 RewriteRule ^reels/([A-Za-z0-9_-]+)/([A-Za-z0-9_-]+)$ index.php?link1=reels&id=$1&user=$2 [NC,QSA]
+RewriteRule ^zuitch(/?|)$ index.php?link1=zuitch [NC,QSA]
+RewriteRule ^zuitch/([A-Za-z0-9_-]+)$ index.php?link1=zuitch&id=$1 [NC,QSA]
+RewriteRule ^zuitch/([A-Za-z0-9_-]+)/([A-Za-z0-9_-]+)$ index.php?link1=zuitch&id=$1&user=$2 [NC,QSA]
 
 # *** MONETIZATION ***
 

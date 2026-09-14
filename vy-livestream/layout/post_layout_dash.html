@@ -33,7 +33,19 @@ $broadcast_contain_product = $vy_lv22->ifBroadcastHaveProduct($broadcast_data22[
   , vd_loading_ic = $('#vy_lv_feedloadingvd_'+pid);
   var d_player = {}, _timeout = {};
 
-
+const show_loading = () => {
+    vd_loading_ic.show();
+};
+const hide_loading = () => {
+    vd_loading_ic.hide();
+};
+const tryPlayFeed = () => {
+    if (!video || typeof video.play !== 'function') return;
+    var p = video.play();
+    if (p && typeof p.catch === 'function') {
+        p.catch(function () {});
+    }
+};
 const player_catch_events = (e) => {
 console.log("Event received: " , e);
 if(typeof e != 'object') {console.log('return false event');return false;}
@@ -43,7 +55,7 @@ switch(e.type){
         console.log('bufferStalled',e);
     break;
     case "canPlay":
-        if(video.paused) {video.play();}
+        if(video.paused) {tryPlayFeed();}
         hide_loading();
         console.log('play');
     break;
@@ -55,12 +67,6 @@ switch(e.type){
          console.log('playback ended',e);
     break;
 }
-};
-const show_loading = () => {
-    vd_loading_ic.show();
-};
-const hide_loading = () => {
-    vd_loading_ic.hide();
 };
 const constructVideo = () => {
 d_player[pid] = dashjs.MediaPlayer().create();
@@ -139,6 +145,37 @@ _timeout[post_id] = setTimeout(() => {
 }
 constructVideo();
 startvlf(pid);
+setTimeout(function () {
+    tryPlayFeed();
+}, 300);
+setTimeout(function () {
+    try {
+        var feedRoot = document.getElementById('vylv_feedbroadcast_' + pid);
+        if (feedRoot && typeof IntersectionObserver !== 'undefined') {
+            var io = new IntersectionObserver(function (entries) {
+                entries.forEach(function (en) {
+                    if (en.isIntersecting && en.intersectionRatio > 0.1) {
+                        tryPlayFeed();
+                    }
+                });
+            }, { threshold: [0, 0.1, 0.25] });
+            io.observe(feedRoot);
+        }
+    } catch (ioe) {}
+    var $root = $('#vylv_feedbroadcast_' + pid);
+    if ($root.length) {
+        $root.off('click.vylviosfeed touchstart.vylviosfeed').on('click.vylviosfeed touchstart.vylviosfeed', function () {
+            if (!video['vylv_playing_' + bpid]) tryPlayFeed();
+        });
+        $root
+            .off('click.vylvopenlive')
+            .on('click.vylvopenlive', '.vy-lv-feed-open-live', function (ev) {
+                if (typeof vy_global_openLiveStream === 'function') {
+                    vy_global_openLiveStream(ev, this, parseInt(pid, 10));
+                }
+            });
+    }
+}, 0);
 video_pause_btn.off('click.vylv_pausefeedvideo').on('click.vylv_pausefeedvideo', function(e){
     _estop(e);
     video.pause();
@@ -159,8 +196,11 @@ video.onpause = (e) => {
 video_play_btn.show();      
 video_pause_btn.hide();
 };
-video.canplay = (e) => {
-video.play();
+video.oncanplay = function () {
+    tryPlayFeed();
+};
+video.onplaying = function () {
+    hide_loading();
 };
 video.onended = (e) => {
     alert('ended');
@@ -182,9 +222,6 @@ Object.defineProperty(HTMLMediaElement.prototype, 'vylv_playing_'+bpid, {
         return !!(this.currentTime > 0 && !this.paused && !this.ended && this.readyState > 2);
     },
     configurable: true
-});
-$(document).off('click.fixiosautoplay touchstart.fixiosautoplay').on('click.fixiosautoplay touchstart.fixiosautoplay', () => {
-      if (!video['vylv_playing_'+bpid]) video.play();
 });
 })();
 </script>
@@ -226,7 +263,7 @@ $(document).off('click.fixiosautoplay touchstart.fixiosautoplay').on('click.fixi
           <h5 class="vylvelment-1yuls39-H5SubTitle e9fk534">Something is wrong on our end. We apologize for any inconvenience and should be back soon.</h5>
           <div class="vylvelment-4ffi1Uit1">
           <button type="button" id="vy_lv_feed_retry_btn_<?php echo $current_post['id'];?>" data-id="<?php echo $current_post['id'];?>" class="vylvelment-2ozoao-Button ehk74z00">Retry</button>
-          <button type="button" onclick="vy_global_openLiveStream(event,this,<?php echo $current_post['id'];?>);" class="vylvelment-2ozoao-Button ehk74z00">Open broadcast</button>
+          <button type="button" class="vylvelment-2ozoao-Button ehk74z00 vy-lv-feed-open-live">Open broadcast</button>
             </div>
         </div>
       </div>
@@ -241,7 +278,7 @@ $(document).off('click.fixiosautoplay touchstart.fixiosautoplay').on('click.fixi
                                     <div class="vylv_3xTlds-ring"><div></div><div></div><div></div><div></div></div>
                                 </div>
                                 <div class="vylvelment-j9m7lb-DivFeedPlayerControls erjacs60" id="vyelement_feed_allcontrols_<?php echo $current_post['id'];?>">
-                                    <div class="vylvelment-kw4pr6-DivFeedPlayerClickArea esmutj80" onclick="vy_global_openLiveStream(event,this,<?php echo $current_post['id'];?>);">
+                                    <div class="vylvelment-kw4pr6-DivFeedPlayerClickArea esmutj80 vy-lv-feed-open-live">
                                         <div data-e2e="click-tips-test-id" data-testid="click-tips-test-id" class="vylvelment-u9gd8i-DivClickTips e1vdaz20">
                                             <div class="vylvelment-18xriun-DivLine e1vdaz21"></div>
                                             <div class="vylvelment-1u9wvxs-DivStreamingIcon e1vdaz23">
@@ -254,7 +291,7 @@ $(document).off('click.fixiosautoplay touchstart.fixiosautoplay').on('click.fixi
                                             <div class="vylvelment-18xriun-DivLine e1vdaz21"></div>
                                         </div>
                                     </div>
-                                    <div class="vylvelment-cznx31-DivFeedPlayerDetailsBarContainer esmutj81" onclick="vy_global_openLiveStream(event,this,<?php echo $current_post['id'];?>);">
+                                    <div class="vylvelment-cznx31-DivFeedPlayerDetailsBarContainer esmutj81 vy-lv-feed-open-live">
                                         <div data-e2e="details-bar-test-id" data-testid="details-bar-test-id" class="vylvelment-reynfh-DivDetailsBar eawfp3g0">
                                             <div class="vylvelment-mt74r7-DivLeftContainer eawfp3g6">
                                                 <div class="vylvelment-1wwk0db-DivTagContainer eawfp3g7">
@@ -286,7 +323,7 @@ $(document).off('click.fixiosautoplay touchstart.fixiosautoplay').on('click.fixi
                                                     <div data-e2e="control-icon" data-testid="control-icon" class="vylvelment-c52qon-DivControlIcon e10xci3l3">
 
 
-                                                        <div id="vylv_feedvieocontrol_play_<?php echo $current_post['id'];?>" style=""><?php echo $vy_lv22->svg['live_video_play'];?></div>
+                                                        <div id="vylv_feedvieocontrol_play_<?php echo $current_post['id'];?>"><?php echo $vy_lv22->svg['live_video_play'];?></div>
                                                         <div id="vylv_feedvieocontrol_pause_<?php echo $current_post['id'];?>" style="display:none;"><?php echo $vy_lv22->svg['live_video_pause'];?></div>
 
                                                     </div>
@@ -312,7 +349,7 @@ $(document).off('click.fixiosautoplay touchstart.fixiosautoplay').on('click.fixi
                                                     <div data-e2e="volume-icon-id" data-testid="volume-icon-id" class="vylvelment-c52qon-DivControlIcon e10xci3l3"><span data-testid="volume-mute-icon-id" style="width: 18px; height: 18px;">
 
 
-                                                        <div id="vylv_feedvieocontrol_mute_<?php echo $current_post['id'];?>" style=""><?php echo $vy_lv22->svg['live_video_muted'];?>
+                                                        <div id="vylv_feedvieocontrol_mute_<?php echo $current_post['id'];?>"><?php echo $vy_lv22->svg['live_video_muted'];?>
                                                         </div>
                                                         <div id="vylv_feedvieocontrol_unmute_<?php echo $current_post['id'];?>" style="display:none;"><?php echo $vy_lv22->svg['live_video_unmuted'];?>
                                                         </div>

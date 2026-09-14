@@ -280,7 +280,10 @@ $.extend(VY_LIVE_STREAM.prototype, {
             console.log("%c" + vy_lvst_lang.you_dont_have_ssl_enabled, "color: red; font-size:12px;");
         }
 
-        return io.connect(vy_lvst_socket_url, {
+        var sUrl = vy_lvst_socket_url;
+        var scheme = location.protocol === 'https:' ? 'https://' : 'http://';
+        var ioUrl = scheme + sUrl;
+        var ioOpts = {
             query: {
                 'token': vy_lvst_muid,
                 'user_id': vy_lvst_uid,
@@ -295,7 +298,15 @@ $.extend(VY_LIVE_STREAM.prototype, {
             forceNew: true,
             upgrade: false,
             closeBeforeUnload: false
-        });
+        };
+        if (sUrl.indexOf('/') !== -1) {
+            var hostPart = sUrl.split('/')[0];
+            var pathPrefix = sUrl.split('/').slice(1).join('/').replace(/\/+$/, '');
+            ioUrl = scheme + hostPart;
+            ioOpts.path = '/' + pathPrefix + '/socket.io';
+        }
+
+        return io.connect(ioUrl, ioOpts);
 
 
 
@@ -2525,23 +2536,19 @@ $.extend(VY_LIVE_STREAM.prototype, {
                 constraints.audio = {
                     echoCancellation: false
                 };*/
+                // HD cap: asking 4K on mobile made capture/encode lag badly on rotation
+                // and when flipping cameras; streaming rarely needs more than 720p–1080p.
                 constraints.video = {
-                    width: {
-                        min: 1024,
-                        ideal: 4096,
-                        max: 4096
-                    },
-                    height: {
-                        min: 576,
-                        ideal: 2160,
-                        max: 2160
-                    }
+                    width: { ideal: 1280, max: 1920 },
+                    height: { ideal: 720, max: 1080 },
+                    frameRate: { ideal: 30, max: 30 }
                 };
 
                 if (self._is_smartphone() && self.isIosSafari()) {
                     constraints.video = {
                         width: 640,
-                        height: 480
+                        height: 480,
+                        frameRate: { ideal: 30, max: 30 }
                     };
 
                 }
@@ -4710,19 +4717,17 @@ $.extend(VY_LIVE_STREAM.prototype, {
 
 
 
-        if ('sendBeacon' in navigator) {
-
-            await navigator.sendBeacon(this.ajax_url, self.toFormData(data));
+        if (window_unload && 'sendBeacon' in navigator) {
+            navigator.sendBeacon(this.ajax_url, self.toFormData(data));
             self.stopLiveAfterAjax();
         } else {
-
-            await this.jajax(this.ajax_url, 'post', data).done(function(data) {
-
-
-                if (data == 1) {
+            await this.jajax(this.ajax_url, 'post', data).done(function(resp) {
+                if (resp == 1) {
+                    if (vy_lv_recording && self.post_to_timeline === 'yes') {
+                        self.scheduleSafariLiveMp4Normalize(self.live_id);
+                    }
                     self.stopLiveAfterAjax();
                 }
-
             });
         }
 
@@ -4742,6 +4747,41 @@ $.extend(VY_LIVE_STREAM.prototype, {
 
 
 
+    },
+    /**
+     * Ensamblado WebRTC/Node: el MP4 aparece después de stopLive. Reintenta ffmpeg (AAC Safari) en servidor.
+     */
+    scheduleSafariLiveMp4Normalize: function(postId) {
+        var self = this;
+        var attempts = 0;
+        /* El MP4 final + worker en segundo plano pueden tardar varios minutos (Node/RTMP). */
+        var maxAttempts = 48;
+        var run = function() {
+            if (!postId || attempts++ >= maxAttempts) {
+                return;
+            }
+            $.ajax({
+                url: self.ajax_url,
+                cache: false,
+                type: 'POST',
+                data: { cmd: 'normalize_live_mp4', post_id: postId },
+                success: function(r) {
+                    var j = {};
+                    try {
+                        j = typeof r === 'string' ? JSON.parse(r) : r;
+                    } catch (e) {}
+                    if (!j.ok && attempts < maxAttempts) {
+                        setTimeout(run, 5000);
+                    }
+                },
+                error: function() {
+                    if (attempts < maxAttempts) {
+                        setTimeout(run, 5000);
+                    }
+                }
+            });
+        };
+        setTimeout(run, 5000);
     },
     unbindEvents: function() {
 

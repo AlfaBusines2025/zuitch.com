@@ -43,11 +43,253 @@
 							</div>
 						</div>
 						<div class="col-md-6">
-							<div class="sun_input">
+							  <div class="sun_input">
 								<label><?php echo $wo['lang']['country']; ?></label>
-								<input id="country" name="country" type="text" class="form-control input-md" autocomplete="off" placeholder="<?php echo $wo['lang']['country']; ?>">
+								<select id="country" name="country" class="form-control input-md" autocomplete="country-name" required>
+								  <option value="" disabled selected><?php echo $wo['lang']['country']; ?></option>
+								  <option value="EC">Ecuador</option>
+								  <option value="AF">Afghanistan</option>
+								  <option value="AL">Albania</option>
+								  <option value="DZ">Algeria</option>
+								  <option value="AS">American Samoa</option>
+								  <option value="AD">Andorra</option>
+								  <option value="AO">Angola</option>
+								  <option value="AI">Anguilla</option>
+								  <option value="AQ">Antarctica</option>
+								  <option value="AG">Antigua and Barbuda</option>
+								  <option value="AR">Argentina</option>
+								  <option value="AM">Armenia</option>
+								  <option value="AW">Aruba</option>
+								  <option value="AU">Australia</option>
+								  <option value="AT">Austria</option>
+								  <option value="AZ">Azerbaijan</option>
+								  <option value="BS">Bahamas</option>
+								  <option value="BH">Bahrain</option>
+								  <option value="BD">Bangladesh</option>
+								  <option value="BB">Barbados</option>
+								  <option value="BY">Belarus</option>
+								  <option value="BE">Belgium</option>
+								  <option value="BZ">Belize</option>
+								  <option value="BJ">Benin</option>
+								  <option value="BM">Bermuda</option>
+								  <option value="BT">Bhutan</option>
+								  <option value="BO">Bolivia</option>
+								  <option value="BA">Bosnia and Herzegovina</option>
+								  <option value="BW">Botswana</option>
+								  <option value="BV">Bouvet Island</option>
+								  <option value="BR">Brazil</option>
+								  <option value="IO">British Indian Ocean Territory</option>
+								  <option value="BN">Brunei Darussalam</option>
+								  <option value="BG">Bulgaria</option>
+								  <option value="BF">Burkina Faso</option>
+								  <option value="BI">Burundi</option>
+								  <option value="KH">Cambodia</option>
+								  <option value="CM">Cameroon</option>
+								  <option value="CA">Canada</option>
+								  <option value="CV">Cape Verde</option>
+								  <option value="KY">Cayman Islands</option>
+								  <option value="CF">Central African Republic</option>
+								  <option value="TD">Chad</option>
+								  <option value="CL">Chile</option>
+								  <option value="CN">China</option>
+								  <option value="CX">Christmas Island</option>
+								  <option value="CC">Cocos (Keeling) Islands</option>
+								  <option value="CO">Colombia</option>
+								  <option value="KM">Comoros</option>
+								  <option value="CG">Congo</option>
+								  <option value="CD">Congo, The Democratic Republic of the</option>
+								  <option value="CK">Cook Islands</option>
+								  <option value="CR">Costa Rica</option>
+								  <option value="CI">Côte d'Ivoire</option>
+								  <option value="HR">Croatia</option>
+								  <option value="CU">Cuba</option>
+								  <option value="CY">Cyprus</option>
+								  <option value="CZ">Czech Republic</option>
+								  <option value="DK">Denmark</option>
+								  <option value="DJ">Djibouti</option>
+								  <option value="DM">Dominica</option>
+								  <option value="DO">Dominican Republic</option>
+								  <option value="EG">Egypt</option>
+								  <option value="SV">El Salvador</option>
+								  <option value="GQ">Equatorial Guinea</option>
+								  <option value="ER">Eritrea</option>
+								  <option value="EE">Estonia</option>
+								  <option value="SZ">Eswatini</option>
+								  <option value="ET">Ethiopia</option>
+								  <option value="FK">Falkland Islands (Malvinas)</option>
+								  <option value="FO">Faroe Islands</option>
+								  <option value="FJ">Fiji</option>
+								  <option value="FI">Finland</option>
+								  <option value="FR">France</option>
+								  <option value="GF">French Guiana</option>
+								  <option value="PF">French Polynesia</option>
+								  <option value="TF">French Southern Territories</option>
+								  <option value="GA">Gabon</option>
+								  <option value="GM">Gambia</option>
+								  <option value="GE">Georgia</option>
+								  <option value="DE">Germany</option>
+								  <option value="GH">Ghana</option>
+								  <option value="GI">Gibraltar</option>
+								  <option value="GR">Greece</option>
+								  <option value="GL">Greenland</option>
+								  <option value="GD">Grenada</option>
+								  <option value="GP">Guadeloupe</option>
+								  <option value="GU">Guam</option>
+								  <option value="GT">Guatemala</option>
+								  <option value="GN">Guinea</option>
+								  <option value="GW">Guinea-Bissau</option>
+								  <option value="GY">Guyana</option>
+								  <option value="HT">Haiti</option>
+								  <option value="HM">Heard Island and McDonald Islands</option>
+								  <option value="VA">Holy See (Vatican City State)</option>
+								  <option value="HN">Honduras</option>
+								  <option value="HK">Hong Kong</option>
+								  <option value="HU">Hungary</option>
+								  <option value="IS">Iceland</option>
+								  <option value="IN">India</option>
+								  <option value="ID">Indonesia</option>
+								  <option value="IR">Iran, Islamic Republic of</option>
+								  <option value="IQ">Iraq</option>
+								  <option value="IE">Ireland</option>
+								  <option value="IL">Israel</option>
+								  <option value="IT">Italy</option>
+								  <option value="JM">Jamaica</option>
+								  <option value="JP">Japan</option>
+								  <option value="JO">Jordan</option>
+								  <option value="KZ">Kazakhstan</option>
+								  <option value="KE">Kenya</option>
+								  <option value="KI">Kiribati</option>
+								  <option value="KP">Korea, Democratic People's Republic of</option>
+								  <option value="KR">Korea, Republic of</option>
+								  <option value="KW">Kuwait</option>
+								  <option value="KG">Kyrgyzstan</option>
+								  <option value="LA">Lao People's Democratic Republic</option>
+								  <option value="LV">Latvia</option>
+								  <option value="LB">Lebanon</option>
+								  <option value="LS">Lesotho</option>
+								  <option value="LR">Liberia</option>
+								  <option value="LY">Libya</option>
+								  <option value="LI">Liechtenstein</option>
+								  <option value="LT">Lithuania</option>
+								  <option value="LU">Luxembourg</option>
+								  <option value="MO">Macao</option>
+								  <option value="MG">Madagascar</option>
+								  <option value="MW">Malawi</option>
+								  <option value="MY">Malaysia</option>
+								  <option value="MV">Maldives</option>
+								  <option value="ML">Mali</option>
+								  <option value="MT">Malta</option>
+								  <option value="MH">Marshall Islands</option>
+								  <option value="MQ">Martinique</option>
+								  <option value="MR">Mauritania</option>
+								  <option value="MU">Mauritius</option>
+								  <option value="YT">Mayotte</option>
+								  <option value="MX">Mexico</option>
+								  <option value="FM">Micronesia, Federated States of</option>
+								  <option value="MD">Moldova, Republic of</option>
+								  <option value="MC">Monaco</option>
+								  <option value="MN">Mongolia</option>
+								  <option value="MS">Montserrat</option>
+								  <option value="MA">Morocco</option>
+								  <option value="MZ">Mozambique</option>
+								  <option value="MM">Myanmar</option>
+								  <option value="NA">Namibia</option>
+								  <option value="NR">Nauru</option>
+								  <option value="NP">Nepal</option>
+								  <option value="NL">Netherlands</option>
+								  <option value="NC">New Caledonia</option>
+								  <option value="NZ">New Zealand</option>
+								  <option value="NI">Nicaragua</option>
+								  <option value="NE">Niger</option>
+								  <option value="NG">Nigeria</option>
+								  <option value="NU">Niue</option>
+								  <option value="NF">Norfolk Island</option>
+								  <option value="MK">North Macedonia</option>
+								  <option value="MP">Northern Mariana Islands</option>
+								  <option value="NO">Norway</option>
+								  <option value="OM">Oman</option>
+								  <option value="PK">Pakistan</option>
+								  <option value="PW">Palau</option>
+								  <option value="PS">Palestine, State of</option>
+								  <option value="PA">Panama</option>
+								  <option value="PG">Papua New Guinea</option>
+								  <option value="PY">Paraguay</option>
+								  <option value="PE">Peru</option>
+								  <option value="PH">Philippines</option>
+								  <option value="PN">Pitcairn</option>
+								  <option value="PL">Poland</option>
+								  <option value="PT">Portugal</option>
+								  <option value="PR">Puerto Rico</option>
+								  <option value="QA">Qatar</option>
+								  <option value="RE">Réunion</option>
+								  <option value="RO">Romania</option>
+								  <option value="RU">Russian Federation</option>
+								  <option value="RW">Rwanda</option>
+								  <option value="SH">Saint Helena, Ascension and Tristan da Cunha</option>
+								  <option value="KN">Saint Kitts and Nevis</option>
+								  <option value="LC">Saint Lucia</option>
+								  <option value="PM">Saint Pierre and Miquelon</option>
+								  <option value="VC">Saint Vincent and the Grenadines</option>
+								  <option value="WS">Samoa</option>
+								  <option value="SM">San Marino</option>
+								  <option value="ST">Sao Tome and Principe</option>
+								  <option value="SA">Saudi Arabia</option>
+								  <option value="SN">Senegal</option>
+								  <option value="RS">Serbia</option>
+								  <option value="SC">Seychelles</option>
+								  <option value="SL">Sierra Leone</option>
+								  <option value="SG">Singapore</option>
+								  <option value="SX">Sint Maarten (Dutch part)</option>
+								  <option value="SK">Slovakia</option>
+								  <option value="SI">Slovenia</option>
+								  <option value="SB">Solomon Islands</option>
+								  <option value="SO">Somalia</option>
+								  <option value="ZA">South Africa</option>
+								  <option value="GS">South Georgia and the South Sandwich Islands</option>
+								  <option value="SS">South Sudan</option>
+								  <option value="ES">Spain</option>
+								  <option value="LK">Sri Lanka</option>
+								  <option value="SD">Sudan</option>
+								  <option value="SR">Suriname</option>
+								  <option value="SJ">Svalbard and Jan Mayen</option>
+								  <option value="SE">Sweden</option>
+								  <option value="CH">Switzerland</option>
+								  <option value="SY">Syrian Arab Republic</option>
+								  <option value="TW">Taiwan, Province of China</option>
+								  <option value="TJ">Tajikistan</option>
+								  <option value="TZ">Tanzania, United Republic of</option>
+								  <option value="TH">Thailand</option>
+								  <option value="TL">Timor-Leste</option>
+								  <option value="TG">Togo</option>
+								  <option value="TK">Tokelau</option>
+								  <option value="TO">Tonga</option>
+								  <option value="TT">Trinidad and Tobago</option>
+								  <option value="TN">Tunisia</option>
+								  <option value="TR">Turkey</option>
+								  <option value="TM">Turkmenistan</option>
+								  <option value="TC">Turks and Caicos Islands</option>
+								  <option value="TV">Tuvalu</option>
+								  <option value="UG">Uganda</option>
+								  <option value="UA">Ukraine</option>
+								  <option value="AE">United Arab Emirates</option>
+								  <option value="GB">United Kingdom</option>
+								  <option value="US">United States</option>
+								  <option value="UM">United States Minor Outlying Islands</option>
+								  <option value="UY">Uruguay</option>
+								  <option value="UZ">Uzbekistan</option>
+								  <option value="VU">Vanuatu</option>
+								  <option value="VE">Venezuela, Bolivarian Republic of</option>
+								  <option value="VN">Viet Nam</option>
+								  <option value="VG">Virgin Islands, British</option>
+								  <option value="VI">Virgin Islands, U.S.</option>
+								  <option value="WF">Wallis and Futuna</option>
+								  <option value="EH">Western Sahara</option>
+								  <option value="YE">Yemen</option>
+								  <option value="ZM">Zambia</option>
+								  <option value="ZW">Zimbabwe</option>
+								</select>
+							  </div>
 							</div>
-						</div>
 						<div class="col-md-6">
 							<div class="sun_input">
 								<label><?php echo $wo['lang']['city']; ?></label>
@@ -164,4 +406,477 @@ $(document).ready(function() {
         });
      }, 3000);
     <?php } ?>
+</script>
+
+<!-- JS: cotización DHL por producto + total (suma = subtotal productos + envío DHL) -->
+<script>
+(function () {
+  'use strict';
+
+  const DHL_ENDPOINT   = 'https://zuitch.com/dhl/dhl_rate.php';
+  const UOM            = 'metric';
+  const REQ_FIELDS     = ['originCountryCode','originPostalCode','originCityName','weight','length','width','height'];
+
+  const $q  = (s, r=document) => r.querySelector(s);
+  const $$q = (s, r=document) => Array.from(r.querySelectorAll(s));
+
+  // ---------- Parseo de montos ----------
+  // Soporta "25", "$25", "1,234.56", "1.234,56", "$2.700,00", etc.
+  function parseMoney(str) {
+    if (!str) return 0;
+    let s = String(str).replace(/\s+/g,'').replace(/[^\d,.\-]/g, '');
+    const dots   = (s.match(/\./g) || []).length;
+    const commas = (s.match(/,/g) || []).length;
+
+    if (dots && commas) {
+      const lastSep = [...s].reverse().find(ch => ch === '.' || ch === ',');
+      const other   = lastSep === '.' ? ',' : '.';
+      s = s.replace(new RegExp('\\' + other, 'g'), '');
+      if (lastSep !== '.') s = s.replace(new RegExp('\\' + lastSep, 'g'), '.');
+      return parseFloat(s);
+    }
+
+    const sep = commas ? ',' : (dots ? '.' : null);
+    if (!sep) return parseFloat(s || '0');
+
+    const last = s.lastIndexOf(sep);
+    const digitsAfter = s.length - last - 1;
+    const occurrences = (s.match(new RegExp('\\' + sep, 'g')) || []).length;
+
+    if (digitsAfter === 0) return parseFloat(s.replace(new RegExp('\\' + sep, 'g'), ''));
+    if (digitsAfter === 1 || digitsAfter === 2) {
+      s = s.replace(new RegExp('\\' + sep, 'g'), (m, idx) => idx === last ? '.' : '');
+      return parseFloat(s);
+    }
+    if (digitsAfter === 3 && occurrences > 1) {
+      return parseFloat(s.replace(new RegExp('\\' + sep, 'g'), ''));
+    }
+    if (digitsAfter <= 2) {
+      return parseFloat(s.slice(0, last).replace(new RegExp('\\' + sep, 'g'), '') + '.' + s.slice(last + 1).replace(new RegExp('\\' + sep, 'g'), ''));
+    }
+    return parseFloat(s.replace(new RegExp('\\' + sep, 'g'), ''));
+  }
+
+  // ---------- Destino desde radios ----------
+  function toISO2(s=''){ s=(s||'').trim(); return /^[A-Za-z]{2}$/.test(s) ? s.toUpperCase() : (s ? s.slice(0,2).toUpperCase() : 'XX'); }
+  function getShippingAddress() {
+    if (window.__overrideDest) return {...window.__overrideDest}; // para pruebas rápidas
+    const selected = document.querySelector('input.payment_address[name="choose-address"]:checked');
+    if (!selected) return null;
+    const lab = selected.closest('li')?.querySelector('label') || selected.labels?.[0];
+    const p2  = lab ? lab.querySelector('p:nth-of-type(2)') : null;
+    const line = p2 ? (p2.textContent||'').trim() : '';
+    const m = line.match(/^\s*([^,]+),\s*([^-\n]+?)\s*-\s*([A-Za-z0-9\-]+)\s*$/);
+    if (m) return { countryCode: toISO2(m[1]), cityName: m[2].trim(), postalCode: m[3].trim(), raw: line };
+    const [c1='', rest=''] = line.split(',');
+    const [c2='', zip='']  = (rest||'').split('-');
+    return { countryCode: toISO2(c1.trim()), cityName: (c2||'').trim(), postalCode: (zip||'').trim(), raw: line };
+  }
+
+  // ---------- Productos: leer precios/qty y meta DHL ----------
+  function getCartItems() {
+    const items = [];
+    $$q('.ch_main_items').forEach(item => {
+      const priceEl = item.querySelector('.prod_img > div');
+      const price   = parseMoney(priceEl ? priceEl.textContent : '0');
+
+      // id de cantidad (ej: qty_24) y fallback a hidden quantity
+      const pidInput = item.querySelector('input[name^="dhl_meta["][name$="[product_id]"]');
+      const pidMatch = pidInput?.getAttribute('name')?.match(/^dhl_meta\[(\d+)\]\[product_id\]$/);
+      const pid      = pidMatch ? pidMatch[1] : null;
+
+      let qty = 1;
+      if (pid) {
+        const qtyInput = item.querySelector(`#qty_${pid}`) || item.querySelector('input[type="number"][id^="qty_"]');
+        qty = parseInt(qtyInput?.value || item.querySelector(`input[name="dhl_meta[${pid}][quantity]"]`)?.value || '1', 10);
+        if (!Number.isFinite(qty) || qty < 1) qty = 1;
+      }
+
+      items.push({ el:item, pid, price, qty });
+    });
+    return items;
+  }
+
+  function computeProductsSubtotal() {
+    return getCartItems().reduce((sum, it) => sum + (Number(it.price)||0) * (Number(it.qty)||1), 0);
+  }
+
+  // ---------- DHL: construir payload por producto elegible ----------
+  function missingFieldsFrom(p){ return REQ_FIELDS.filter(k => !p[k] || String(p[k]).trim()===''); }
+  function getEligibleProducts() {
+    const out = [];
+    $$q('.ch_main_items').forEach(item => {
+      const pidInput = item.querySelector('input[name^="dhl_meta["][name$="[product_id]"]');
+      if (!pidInput) return;
+      const m = pidInput.getAttribute('name').match(/^dhl_meta\[(\d+)\]\[product_id\]$/);
+      const pid = m ? m[1] : null; if (!pid) return;
+
+      const getF = (f, fb='') => item.querySelector(`input[name="dhl_meta[${pid}][${f}]"]`)?.value || fb;
+      if (String(getF('dhl_active')||'0') !== '1') return;
+
+      const qty = Math.max(1, parseInt(item.querySelector(`#qty_${pid}`)?.value || getF('quantity','1'),10) || 1);
+      const extraPerUnit = (() => { const v = parseFloat(item.querySelector('.dhl-extra')?.value || '0'); return isNaN(v)?0:v; })();
+
+      const meta = {
+        productId: pid,
+        originCountryCode: getF('originCountryCode'),
+        originPostalCode:  getF('originPostalCode'),
+        originCityName:    getF('originCityName'),
+        weight: getF('weight'), length: getF('length'), width: getF('width'), height: getF('height'),
+        quantity: qty,
+        extraPerUnit
+      };
+
+      if (missingFieldsFrom(meta).length === 0) {
+        out.push({
+          productId: meta.productId, useDhl: true,
+          originCountryCode: meta.originCountryCode, originPostalCode: meta.originPostalCode, originCityName: meta.originCityName,
+          weight: meta.weight, length: meta.length, width: meta.width, height: meta.height,
+          quantity: meta.quantity, extraPerUnit: meta.extraPerUnit
+        });
+      }
+    });
+    return out;
+  }
+
+  // ---------- UI: total y filas auxiliares ----------
+  const totalBox = document.querySelector('.ch_total_price'); // contenedor donde está el total visible
+  function setCartTotal(amount) {
+    if (!totalBox) return;
+    const safe = isNaN(amount) ? 0 : Number(amount);
+    const p = totalBox.querySelector('p'); if (p) p.textContent = '$' + safe.toFixed(2);
+    const btn = totalBox.querySelector('.buy_button'); if (btn) btn.setAttribute('onclick', `BuyProducts('hide','${safe.toFixed(2)}')`);
+  }
+
+  function ensureRow(id, label) {
+    if (!totalBox) return null;
+    let row = document.getElementById(id);
+    if (!row) {
+      row = document.createElement('div');
+      row.id = id;
+      row.style.display = 'flex';
+      row.style.justifyContent = 'space-between';
+      row.style.fontSize = '13px';
+      const h4 = totalBox.querySelector('h4');
+      totalBox.insertBefore(row, h4); // arriba del título de total
+    }
+    row.dataset.label = label;
+    return row;
+  }
+  function setRowValue(id, label, amount, loading=false) {
+    const r = ensureRow(id, label); if (!r) return;
+    r.innerHTML = `<div><strong>${label}</strong></div><div>${loading ? 'calculando…' : ('$' + (Number(amount)||0).toFixed(2))}</div>`;
+  }
+  function removeRow(id){ document.getElementById(id)?.remove(); }
+
+  // ---------- Per-producto: slot para mostrar envío/extra ----------
+  function ensureItemQuoteSlot(itemEl) {
+    let slot = itemEl.querySelector('.dhl-quote');
+    if (!slot) {
+      slot = document.createElement('div');
+      slot.className = 'dhl-quote';
+      slot.style.marginTop = '6px';
+      slot.style.fontSize = '12px';
+      const info = itemEl.querySelector('.prod_info') || itemEl;
+      info.appendChild(slot);
+    }
+    return slot;
+  }
+  function markExtraBadge(slotEl, show) {
+    if (!slotEl) return;
+    slotEl.style.padding = show ? '4px 6px' : '';
+    slotEl.style.borderRadius = show ? '6px' : '';
+    slotEl.style.background = show ? 'rgba(255,165,0,.12)' : '';
+  }
+
+  // ---------- Flujo principal: calcular subtotal + pedir DHL + actualizar total ----------
+  async function logAndSendDhlQuote() {
+    const productsSubtotal = computeProductsSubtotal(); // SIEMPRE recalculado desde el DOM
+    const dest = getShippingAddress();
+
+    // Si no hay destino válido, quita fila DHL y deja solo subtotal de productos
+    if (!dest || !dest.countryCode || !dest.cityName || !dest.postalCode) {
+      console.warn('[DHL] destino incompleto:', dest);
+      removeRow('dhl-total-row');
+      setRowValue('products-subtotal-row', 'Subtotal productos', productsSubtotal);
+      setCartTotal(productsSubtotal);
+      // Limpia mensajes per-producto
+      $$q('.ch_main_items').forEach(item => {
+        const slot = item.querySelector('.dhl-quote');
+        if (slot) { slot.textContent = ''; markExtraBadge(slot, false); }
+      });
+      return;
+    }
+
+    const products = getEligibleProducts();
+
+    // Subtotal visible
+    setRowValue('products-subtotal-row', 'Subtotal productos', productsSubtotal);
+
+    // Si no hay productos con DHL activo, también limpiamos fila DHL
+    if (!products.length) {
+      removeRow('dhl-total-row');
+      setCartTotal(productsSubtotal);
+      // Mensajes por producto (explica por qué quedaron fuera)
+      const why = [];
+      $$q('.ch_main_items').forEach(item => {
+        const pidInput = item.querySelector('input[name^="dhl_meta["][name$="[product_id]"]'); if (!pidInput) return;
+        const m=pidInput.getAttribute('name').match(/^dhl_meta\[(\d+)\]\[product_id\]$/); const pid=m?m[1]:null; if(!pid) return;
+        const getF = (f, fb='') => item.querySelector(`input[name="dhl_meta[${pid}][${f}]"]`)?.value || fb;
+        const dhlActive = String(getF('dhl_active')||'0') === '1';
+        if (dhlActive) {
+          const miss = REQ_FIELDS.filter(k => !(getF(k)||'').trim()).join(', ');
+          const slot = ensureItemQuoteSlot(item);
+          slot.innerHTML = `<span style="color:#c43">DHL: faltan campos (${miss||'?'})</span>`;
+          markExtraBadge(slot, false);
+        }
+      });
+      return;
+    }
+
+    // Mostrar fila de DHL en modo "calculando"
+    setRowValue('dhl-total-row', 'Envío DHL Total', 0, true);
+
+    // Payload
+    const body = {
+      debug: true,
+      destination: { countryCode: dest.countryCode, cityName: dest.cityName, postalCode: dest.postalCode },
+      plannedShippingDate: (() => {
+        const d = new Date();
+        d.setDate(d.getDate() + 14);
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      })(),
+      unitOfMeasurement: UOM,
+      products
+    };
+    console.group('%cDHL · PREVIEW','color:#48B774;font-weight:700');
+    console.log('Destino:', dest);
+    console.table(products.map(p => ({
+      pid: p.productId, origin: `${p.originCountryCode}-${p.originPostalCode}-${p.originCityName}`,
+      size: `${p.weight}/${p.length}x${p.width}x${p.height}`, qty: p.quantity, extraPerUnit: p.extraPerUnit
+    })));
+    console.log('JSON a enviar:', JSON.stringify(body, null, 2));
+    console.groupEnd();
+
+    try {
+      const res  = await fetch(DHL_ENDPOINT, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+      const text = await res.text();
+      let json; try { json = JSON.parse(text); } catch { json = null; }
+
+      console.group('%cDHL · RESPONSE','color:#0aa;font-weight:700');
+      console.log('HTTP:', res.status);
+
+      if (!json) {
+        console.log('raw:', text.slice(0,2000));
+        removeRow('dhl-total-row');
+        setCartTotal(productsSubtotal);
+        console.groupEnd();
+        return;
+      }
+
+      // Tabla con diagnóstico
+      console.table((json.items||[]).map(x => ({
+        pid: x.productId, quoted: x.quoted, reason: x.reason||'',
+        unit: x.unit, qty: x.quantity, extra: x.extraPerUnit, total: x.total,
+        http: x.http || '', url: x.debug?.url || '',
+        dhl_reason: x.debug?.data?.reasons?.[0]?.msg || ''
+      })));
+
+      // Render por producto (muestra valor adicional si aplica)
+      (json.items||[]).forEach(it => {
+        const item = document.querySelector(`input[name="dhl_meta[${it.productId}][product_id]"]`)?.closest('.ch_main_items');
+        if (!item) return;
+        const slot = ensureItemQuoteSlot(item);
+
+        if (it.quoted) {
+          const unit  = Number(it.unit)||0;
+          const qty   = Number(it.quantity)||1;
+          const extra = Number(it.extraPerUnit)||0;
+          const total = Number(it.total)||0;
+          slot.innerHTML = `Envío DHL: <b>$${unit.toFixed(2)}</b> <span style="color:#999">/u</span> × <b>${qty}</b>` +
+                           (extra>0 ? ` + <b>$${extra.toFixed(2)}</b> <span style="color:#999">/u extra</span>` : '') +
+                           ` = <b>$${total.toFixed(2)}</b>`;
+          // Resaltar sólo si hay valor adicional por envío (extraPerUnit > 0)
+          markExtraBadge(slot, extra > 0);
+        } else {
+          const dhlMsg = it.debug?.data?.reasons?.[0]?.msg || '';
+          let msg = 'sin datos';
+          if (/invalid credentials/i.test(dhlMsg) || it.http === 401) msg = 'credenciales DHL inválidas';
+          else if (it.reason === 'missing_fields') msg = 'faltan campos requeridos';
+          else if (it.http === 404) msg = 'sin servicio para esta ruta/ZIP';
+          else if (it.reason === 'dhl_error') msg = `error DHL (HTTP ${it.http||'?'})`;
+          slot.innerHTML = `<span style="color:#c43">DHL: ${msg}</span>`;
+          markExtraBadge(slot, false);
+        }
+      });
+
+      // Mensajes de credenciales/servicio
+      (json.items||[]).forEach(it => {
+        const dhlMsg = it.debug?.data?.reasons?.[0]?.msg || '';
+        if (/invalid credentials/i.test(dhlMsg) || it.http === 401) {
+          console.warn(`PID ${it.productId} → ❌ Credenciales DHL inválidas (entorno/key/secret)`, it.debug?.data);
+        } else if (it.http === 404) {
+          if (body.destination.countryCode === it?.originCountryCode || body.destination.countryCode === 'EC') {
+            console.warn(`PID ${it.productId} → 404 (posible envío doméstico no habilitado).`, it.debug?.data || it);
+          } else {
+            console.warn(`PID ${it.productId} → 404 (no hay producto para esta ruta/ZIP/ciudad).`, it.debug?.data || it);
+          }
+        }
+      });
+
+      // Totales
+      const dhlTotal = Number(json?.totals?.dhlTotal || 0);
+      if (dhlTotal > 0) {
+        setRowValue('dhl-total-row', 'Envío DHL Total', dhlTotal);
+        setCartTotal(productsSubtotal + dhlTotal);
+      } else {
+        removeRow('dhl-total-row');
+        setCartTotal(productsSubtotal);
+      }
+
+      console.groupEnd();
+    } catch (err) {
+      console.error('[DHL] fetch error:', err);
+      removeRow('dhl-total-row');
+      setCartTotal(productsSubtotal);
+    }
+  }
+
+  // ---------- Recalcular al cambiar dirección/cantidades/DOM ----------
+  function wireEvents() {
+    // Cambio de dirección → recalcular (auto-refresca)
+    $$q('input.payment_address[name="choose-address"]').forEach(r => r.addEventListener('change', logAndSendDhlQuote));
+    // Cambio de cantidad (input number)
+    document.addEventListener('change', (e) => { if (e.target?.matches('input[type="number"][id^="qty_"]')) logAndSendDhlQuote(); });
+    // Click en botones +/-
+    document.addEventListener('click', (e) => { if (e.target.closest('.value-button')) setTimeout(logAndSendDhlQuote, 120); });
+    // Cambios en la lista de productos (agregar/quitar)
+    const list = document.querySelector('.ch_prod_items_row');
+    if (list) new MutationObserver(() => logAndSendDhlQuote()).observe(list, { childList:true, subtree:false });
+  }
+
+  // ---------- Utilidades de prueba ----------
+  // Forzar destino desde consola: overrideDest('CZ','Prague','14800') ó overrideDest('EC','Quito','170801')
+  window.overrideDest = function(countryCode, cityName, postalCode){
+    window.__overrideDest = { countryCode, cityName, postalCode };
+    console.log('Destino forzado:', window.__overrideDest);
+    logAndSendDhlQuote();
+  };
+  window.logAndSendDhlQuote = logAndSendDhlQuote;
+
+  // ---------- Bootstrap ----------
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => { wireEvents(); logAndSendDhlQuote(); });
+  } else {
+    wireEvents(); logAndSendDhlQuote();
+  }
+
+})();
+</script>
+
+<script>
+function BuyProducts(type = 'show', price, dhl) {
+  // --- helpers locales ---
+  function parseMoney(str){
+    if (!str) return 0;
+    let s = String(str).replace(/\s+/g,'').replace(/[^\d,.\-]/g,'');
+    const hasComma = s.includes(','), hasDot = s.includes('.');
+    if (hasComma && hasDot) {
+      const last = Math.max(s.lastIndexOf(','), s.lastIndexOf('.'));
+      const dec = s[last], miles = dec === '.' ? ',' : '.';
+      s = s.replace(new RegExp('\\' + miles, 'g'), '');
+      if (dec !== '.') s = s.replace(dec, '.');
+      return parseFloat(s);
+    }
+    if (hasComma && !hasDot) {
+      const last = s.lastIndexOf(','), after = s.length - last - 1;
+      if (after <= 2) s = s.replace(',', '.'); else s = s.replace(/,/g,'');
+      return parseFloat(s);
+    }
+    return parseFloat(s.replace(/[.](?=.*\.)/g,''));
+  }
+  function getDhlFromUI(fallback){
+    if (dhl != null && dhl !== '') return Number(dhl)||0;
+    if (typeof window.__dhlTotal !== 'undefined') return Number(window.__dhlTotal)||0;
+    const row = document.getElementById('dhl-total-row');
+    if (!row) return Number(fallback)||0;
+    const cell = row.querySelector('div:last-child') || row;
+    return parseMoney(cell.textContent);
+  }
+
+  // --- validaciones originales ---
+  if ($('.payment_address').length < 1) {
+    $('.checkout_alert').html("<div class='alert alert-danger bg-danger'><i class='fa fa-info-circle'></i> <?php echo($wo['lang']['please_add_address']); ?></div>");
+    return false;
+  }
+  if ($('input[name=choose-address]:checked').length < 1) {
+    $('.checkout_alert').html("<div class='alert alert-danger bg-danger'><i class='fa fa-info-circle'></i> <?php echo($wo['lang']['please_select_address']); ?></div>");
+    return false;
+  }
+
+  var address_id = $('input[name=choose-address]:checked').val();
+
+  // ---- totales (sumamos DHL al precio) ----
+  var productsSubtotal = Math.max(0, Number(price)||0); // lo que te llega actualmente
+  var dhl_total        = getDhlFromUI(0);
+  var grand_total      = productsSubtotal; // por compatibilidad con tu flujo actual que ya actualiza price
+  // Si quieres forzar suma aquí independientemente de setCartTotal, descomenta:
+  // grand_total = productsSubtotal + dhl_total;
+
+  var subtotal = Math.max(0, grand_total - dhl_total);
+
+  if (type == 'hide') {
+    // Botón del modal con total final
+    $('#buy_product_modal').find('.btn-mat')
+      .html("<?php echo $wo['lang']['pay'].' '.$wo['config']['currency_symbol_array'][$wo['config']['currency']]; ?>" + grand_total.toFixed(2))
+      .attr('onclick', "BuyProducts('show','" + grand_total.toFixed(2) + "','" + dhl_total.toFixed(2) + "')");
+
+    // Desglose visible
+    const $alert = $('#buy_product_modal .modal_product_pay_alert');
+    const htmlBD = `
+      <div class="modal_product_pay_breakdown" style="margin-bottom:8px">
+        <div class="d-flex justify-content-between"><span>Subtotal productos</span><b>$${subtotal.toFixed(2)}</b></div>
+        <div class="d-flex justify-content-between"><span>Envío DHL</span><b>$${dhl_total.toFixed(2)}</b></div>
+        <hr class="my-2">
+        <div class="d-flex justify-content-between"><span>Total</span><b>$${grand_total.toFixed(2)}</b></div>
+      </div>`;
+    const $bd = $('#buy_product_modal .modal_product_pay_breakdown');
+    if ($bd.length) { $bd.replaceWith(htmlBD); } else { $alert.before(htmlBD); }
+
+    $('#buy_product_modal').modal('show');
+    return false;
+  }
+
+  // type == 'show'  → compra real (+ envío + wallet)
+  $('#buy_product_modal').find('.btn-mat').html("<?php echo($wo['lang']['please_wait']) ?>").attr('disabled', "true");
+
+  $.post(
+    Wo_Ajax_Requests_File() + '?f=products&s=buy&hash=' + $('.main_session').val(),
+    {
+      address_id: address_id,
+      // --- NUEVO: mandamos desglose para que el backend descuente wallet por el total ---
+      dhl_total: dhl_total.toFixed(2),
+      subtotal: subtotal.toFixed(2),
+      total_amount: grand_total.toFixed(2)
+    },
+    function(data) {
+      $('#buy_product_modal').find('.btn-mat').removeAttr('disabled')
+        .text("<?php echo $wo['lang']['pay'].' '.$wo['config']['classified_currency_s']; ?>" + grand_total.toFixed(2));
+      if (data.status == 200) {
+        <?php if ($wo['config']['node_socket_flow'] == 1) { ?>
+          socket.emit("checkout_notification", {user_id: _getCookie("user_id"), type: "added", users: data.users });
+        <?php } ?>
+        $('#buy_product_modal').find('.modal_product_pay_alert')
+          .html("<div class='alert alert-success bg-success'><i class='fa fa-check'></i> " + data.message + "</div>");
+        setTimeout(function () {
+          $('#buy_product_modal').find('.modal_product_pay_alert').html("");
+          location.href = "<?php echo $wo['config']['site_url'];?>/purchased";
+        }, 2000);
+      } else {
+        $('#buy_product_modal').find('.modal_product_pay_alert')
+          .html("<div class='alert alert-danger bg-danger'><i class='fa fa-info-circle'></i> " + data.message + "</div>");
+      }
+    }
+  );
+}
 </script>

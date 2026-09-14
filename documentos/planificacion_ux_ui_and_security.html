@@ -1,0 +1,1650 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Planificación — Seguridad+iOS web + UX/UI | Cursor vs tú | Zuitch</title>
+  <meta name="description" content="2 módulos: Seguridad+App iOS web fusionados, y UX/UI. Tiempo tuyo y de Cursor por separado. Costos de plataformas y cobro a USD 20/15 por hora.">
+  <link rel="shortcut icon" type="image/png" href="/themes/wowonder/img/icon.png">
+  <style>
+    :root {
+      --text: #1a2332;
+      --muted: #5c6575;
+      --border: #dce3ec;
+      --card: #ffffff;
+      --bg: #ebf3f5;
+      --accent: #235777;
+      --brand: #72b0be;
+      --brand-dark: #0d3b5c;
+      --ok: #0d6b3d;
+      --warn: #8a5a00;
+      --soft: #e8f0f6;
+      --radius: 12px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;
+      font-size: 15px;
+      line-height: 1.55;
+      color: var(--text);
+      background: var(--bg);
+    }
+    a { color: var(--accent); }
+    code {
+      font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+      font-size: 0.88em;
+      background: var(--soft);
+      padding: 1px 6px;
+      border-radius: 4px;
+    }
+    .wrap {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 28px 20px 56px;
+    }
+    header.doc {
+      background: linear-gradient(135deg, var(--brand-dark) 0%, var(--brand) 48%, var(--accent) 100%);
+      color: #fff;
+      border-radius: var(--radius);
+      padding: 32px 34px;
+      margin-bottom: 20px;
+      box-shadow: 0 8px 28px rgba(13, 59, 92, 0.22);
+    }
+    header.doc .eyebrow {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      opacity: 0.9;
+      background: rgba(255,255,255,0.16);
+      padding: 5px 10px;
+      border-radius: 999px;
+      margin-bottom: 12px;
+    }
+    header.doc h1 {
+      margin: 0 0 10px;
+      font-size: 1.5rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.25;
+    }
+    header.doc .subtitle {
+      margin: 0;
+      opacity: 0.92;
+      font-size: 0.98rem;
+      max-width: 68ch;
+    }
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-top: 22px;
+      padding-top: 18px;
+      border-top: 1px solid rgba(255,255,255,0.22);
+    }
+    @media (max-width: 720px) {
+      .meta-grid { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 420px) {
+      .meta-grid { grid-template-columns: 1fr; }
+    }
+    .meta-grid dt {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      opacity: 0.75;
+      margin: 0 0 4px;
+    }
+    .meta-grid dd {
+      margin: 0;
+      font-weight: 650;
+      font-size: 0.95rem;
+    }
+    section.block {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 22px 26px;
+      margin-bottom: 16px;
+      box-shadow: 0 2px 10px rgba(26, 35, 50, 0.04);
+    }
+    section.block h2 {
+      margin: 0 0 12px;
+      font-size: 1.08rem;
+      color: var(--accent);
+      padding-bottom: 10px;
+      border-bottom: 2px solid var(--soft);
+    }
+    section.block h3 {
+      margin: 20px 0 8px;
+      font-size: 0.98rem;
+      color: var(--text);
+    }
+    section.block h4 {
+      margin: 14px 0 6px;
+      font-size: 0.9rem;
+      color: var(--accent);
+    }
+    p.lead {
+      margin: 0 0 10px;
+      color: var(--muted);
+    }
+    .pill-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .pill {
+      font-size: 12px;
+      font-weight: 600;
+      padding: 5px 10px;
+      border-radius: 999px;
+      background: var(--soft);
+      color: var(--accent);
+      border: 1px solid var(--border);
+    }
+    .pill.ok {
+      background: #e8f8ee;
+      color: #0b6b36;
+      border-color: #b6e6c8;
+    }
+    .pill.warn {
+      background: #fff6e5;
+      color: var(--warn);
+      border-color: #f0d9a8;
+    }
+    .pill.bad {
+      background: #fce8ee;
+      color: #8b2942;
+      border-color: #e8b4c0;
+    }
+    .who {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      padding: 3px 8px;
+      border-radius: 999px;
+      white-space: nowrap;
+    }
+    .who.you {
+      background: #fff6e5;
+      color: var(--warn);
+    }
+    .who.cursor {
+      background: #e8f8ee;
+      color: #0b6b36;
+    }
+    .who.wait {
+      background: #eef0f4;
+      color: var(--muted);
+    }
+    table.steps {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+      margin-top: 8px;
+    }
+    table.steps th,
+    table.steps td {
+      border: 1px solid var(--border);
+      padding: 10px 11px;
+      vertical-align: top;
+      text-align: left;
+    }
+    table.steps th {
+      background: var(--soft);
+      color: var(--accent);
+      font-weight: 700;
+    }
+    table.steps td.time {
+      white-space: nowrap;
+      font-weight: 650;
+      color: var(--brand-dark);
+      width: 7.5rem;
+    }
+    table.steps td.n {
+      width: 2.2rem;
+      font-weight: 700;
+      color: var(--accent);
+      text-align: center;
+    }
+    table.steps .desc {
+      color: var(--muted);
+      margin: 4px 0 0;
+      font-size: 0.86rem;
+    }
+    table.summary {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+      margin-top: 8px;
+    }
+    table.summary th,
+    table.summary td {
+      border: 1px solid var(--border);
+      padding: 10px 12px;
+      vertical-align: top;
+      text-align: left;
+    }
+    table.summary th {
+      background: var(--soft);
+      color: var(--accent);
+      font-weight: 700;
+    }
+    table.summary td.right,
+    table.summary th.right { text-align: right; white-space: nowrap; }
+    table.summary tr.total td {
+      font-weight: 700;
+      background: #f3faf6;
+      color: var(--ok);
+    }
+    .callout {
+      margin-top: 14px;
+      padding: 14px 16px;
+      border-radius: 10px;
+      border-left: 4px solid var(--brand);
+      background: var(--soft);
+    }
+    .callout.warn {
+      border-left-color: #c98a1a;
+      background: #fff8eb;
+    }
+    .callout.ok {
+      border-left-color: var(--ok);
+      background: #f3faf6;
+    }
+    .callout h3 {
+      margin: 0 0 6px;
+      font-size: 0.95rem;
+      color: var(--brand-dark);
+    }
+    .callout p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+    .module-totals {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-top: 14px;
+    }
+    @media (max-width: 720px) {
+      .module-totals { grid-template-columns: 1fr; }
+    }
+    .tot-card {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 16px;
+      background: #fafcfd;
+    }
+    .tot-card .label {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+    .tot-card .value {
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: var(--brand-dark);
+      letter-spacing: -0.02em;
+    }
+    .tot-card .hint {
+      margin: 6px 0 0;
+      font-size: 0.82rem;
+      color: var(--muted);
+    }
+    .tot-card.you .value { color: var(--warn); }
+    .tot-card.cursor .value { color: var(--ok); }
+    .order-list {
+      counter-reset: step;
+      list-style: none;
+      margin: 10px 0 0;
+      padding: 0;
+    }
+    .order-list li {
+      position: relative;
+      padding: 12px 12px 12px 52px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      margin-bottom: 8px;
+      background: #fafcfd;
+    }
+    .order-list li::before {
+      counter-increment: step;
+      content: counter(step);
+      position: absolute;
+      left: 12px;
+      top: 12px;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--brand-dark);
+      color: #fff;
+      font-size: 0.85rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .order-list li strong {
+      display: block;
+      color: var(--accent);
+      margin-bottom: 2px;
+    }
+    .order-list li span {
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+    .toc {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      columns: 2;
+      gap: 24px;
+    }
+    @media (max-width: 640px) {
+      .toc { columns: 1; }
+    }
+    .toc li {
+      padding: 4px 0;
+      break-inside: avoid;
+    }
+    .toc a {
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.92rem;
+    }
+    .toc a:hover { text-decoration: underline; }
+    ul.clean {
+      margin: 8px 0 0;
+      padding: 0;
+      list-style: none;
+    }
+    ul.clean li {
+      position: relative;
+      padding: 7px 0 7px 26px;
+      border-bottom: 1px solid #f0f3f7;
+    }
+    ul.clean li:last-child { border-bottom: none; }
+    ul.clean li::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 14px;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--brand);
+    }
+    .checklist-box {
+      margin-top: 12px;
+      padding: 14px 16px;
+      border-radius: 10px;
+      border: 1px dashed var(--border);
+      background: #fafcfd;
+    }
+    .checklist-box h4 { margin-top: 0; }
+    .checklist-box ul {
+      margin: 8px 0 0;
+      padding-left: 18px;
+      color: var(--text);
+    }
+    .checklist-box li { margin-bottom: 6px; }
+    .links-box a {
+      display: block;
+      margin: 6px 0;
+      font-weight: 600;
+    }
+    footer.doc {
+      margin-top: 8px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+    .print-bar {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 12px;
+    }
+    .print-bar button {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .print-bar button:hover { background: var(--brand-dark); }
+    @media print {
+      body { background: #fff; }
+      .wrap { padding: 0; max-width: 100%; }
+      .print-bar { display: none; }
+      header.doc, section.block { box-shadow: none; break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="print-bar">
+      <button type="button" onclick="window.print()">Imprimir / PDF</button>
+    </div>
+
+    <header class="doc">
+      <div class="eyebrow">Planificación operativa · Primera vez</div>
+      <h1>2 módulos: Seguridad+iOS web y UX/UI — Cursor vs tú</h1>
+      <p class="subtitle">
+        Guía paso a paso. Seguridad anti-bots e iOS web/backend van <strong>fusionados en un solo módulo</strong>;
+        UX/UI queda aparte. En cada módulo el tiempo <strong>tuyo</strong> y el de <strong>Cursor</strong> se cuentan por separado.
+      </p>
+      <dl class="meta-grid">
+        <div>
+          <dt>Cliente</dt>
+          <dd>Zuitch.com</dd>
+        </div>
+        <div>
+          <dt>Alcance</dt>
+          <dd>2 módulos</dd>
+        </div>
+        <div>
+          <dt>Fecha</dt>
+          <dd>04/09/2026</dd>
+        </div>
+        <div>
+          <dt>Tu tiempo activo</dt>
+          <dd>~7–12 h</dd>
+        </div>
+      </dl>
+    </header>
+
+    <section class="block" id="indice">
+      <h2>Índice</h2>
+      <ol class="toc">
+        <li><a href="#como-leer">0. Cómo leer este documento</a></li>
+        <li><a href="#resumen">1. Resumen ejecutivo de tiempos</a></li>
+        <li><a href="#seguridad-ios">2. Módulo Seguridad + App iOS web</a></li>
+        <li><a href="#ux-ui">3. Módulo UX/UI</a></li>
+        <li><a href="#cronograma">4. Cronograma sugerido</a></li>
+        <li><a href="#costos-plataformas">5. Costos de plataformas externas</a></li>
+        <li><a href="#cobro-modulos">6. Cobro sugerido por módulo ($20 / $15)</a></li>
+        <li><a href="#checklist">7. Checklist final</a></li>
+      </ol>
+    </section>
+
+    <section class="block" id="como-leer">
+      <h2>0. Cómo leer este documento</h2>
+      <p class="lead">
+        Cada paso indica <strong>quién</strong> lo hace, en <strong>qué plataforma</strong>, cuánto suele demorar
+        la <strong>primera vez</strong> (con esta guía) y qué debes hacer exactamente.
+      </p>
+      <div class="pill-row">
+        <span class="pill warn">Tú = portales, accesos, pruebas, coordinación</span>
+        <span class="pill ok">Cursor = código, config técnica, Admin, Git</span>
+        <span class="pill">Espera = DNS / App Review (no cuenta como horas activas)</span>
+      </div>
+      <div class="callout" style="margin-top:16px;">
+        <h3>Leyenda de tiempos</h3>
+        <p>
+          Los minutos/horas son <strong>tiempo activo</strong> (estás delante del teclado o en una llamada).
+          La propagación DNS (0,5–24 h) y la revisión de Apple (días) se listan aparte: no las sumes a tu carga de trabajo,
+          pero sí al calendario del proyecto.
+        </p>
+      </div>
+      <div class="callout warn">
+        <h3>Orden fijo (2 módulos)</h3>
+        <p>
+          1) <strong>Seguridad + App iOS web</strong> (primero borde/captcha/Git; luego auth Apple, gate, tracking, FB, Live) →
+          2) <strong>UX/UI</strong> (widget + WhatsApp).
+          Dentro del módulo fusionado, Cursor y tú siguen con filas/tablas separadas: no se mezclan las horas.
+        </p>
+      </div>
+      <p class="lead" style="margin-top:14px;">
+        Propuestas fuente:
+        <a href="/documentos/security/propuesta_simple_security.html">Seguridad (USD 350)</a> ·
+        <a href="/documentos/ux-ui/propuesta_ux_ui.html">UX/UI (USD 180)</a> ·
+        <a href="/documentos/app/propuesta_app_ios.html">App iOS</a>
+      </p>
+    </section>
+
+    <section class="block" id="resumen">
+      <h2>1. Resumen ejecutivo de tiempos (primera vez)</h2>
+      <table class="summary">
+        <thead>
+          <tr>
+            <th>Módulo</th>
+            <th class="right">Tú (activo)</th>
+            <th class="right">Cursor (código)</th>
+            <th class="right">Espera calendario</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <strong>Seguridad + App iOS web</strong> (módulo fusionado)<br>
+              <span style="color:var(--muted);font-size:0.86rem;">Bloque anti-bots: tú 2,5–4 h · Cursor 3–5 h · DNS 0,5–24 h<br>
+              Bloque iOS web: tú 3,5–6,5 h · Cursor 12–20 h · App Review (días)</span>
+            </td>
+            <td class="right">5,5–10 h</td>
+            <td class="right">15–25 h</td>
+            <td class="right">DNS + Review</td>
+          </tr>
+          <tr>
+            <td>UX/UI (widget sugerencias + WhatsApp Páginas)</td>
+            <td class="right">1–1,5 h + 1 h capacitación</td>
+            <td class="right">8–14 h</td>
+            <td class="right">—</td>
+          </tr>
+          <tr class="total">
+            <td>Total 2 módulos</td>
+            <td class="right">~7–12 h</td>
+            <td class="right">~23–39 h</td>
+            <td class="right">DNS + Review</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="callout" style="margin-top:14px;">
+        <h3>Cómo leer el módulo fusionado</h3>
+        <p>
+          Las horas de <strong>tú</strong> y de <strong>Cursor</strong> nunca se suman entre sí para “una sola persona”.
+          El total del módulo fusionado es la suma de los dos bloques (anti-bots + iOS web), pero siempre en columnas separadas.
+        </p>
+      </div>
+      <div class="module-totals">
+        <div class="tot-card you">
+          <div class="label">Tu tiempo activo</div>
+          <div class="value">7–12 h</div>
+          <p class="hint">Portales + pruebas + QA iOS + 1 h capacitación UX</p>
+        </div>
+        <div class="tot-card cursor">
+          <div class="label">Trabajo Cursor</div>
+          <div class="value">23–39 h</div>
+          <p class="hint">Código/config; no son horas tuyas en portales</p>
+        </div>
+        <div class="tot-card">
+          <div class="label">Calendario típico</div>
+          <div class="value">~2 sem</div>
+          <p class="hint">Sin contar cola de App Review</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== SEGURIDAD + iOS (FUSIONADO) ========== -->
+    <section class="block" id="seguridad-ios">
+      <h2>2. Módulo Seguridad + App iOS web — paso a paso</h2>
+      <p class="lead">
+        Un solo módulo comercial con dos bloques internos: <strong>(A) anti-bots / borde</strong>
+        (Cloudflare, reCAPTCHA, Git, hardening) y <strong>(B) App iOS web/backend</strong>
+        (Apple Login, delete, cookies, gate digitales, tracking, FB, Live).
+        Tu tiempo y el de Cursor se listan en tablas distintas y se suman solo dentro de su columna.
+      </p>
+      <div class="pill-row">
+        <span class="pill">Cobrar: USD 420 lista / 315 desc.</span>
+        <span class="pill warn">Tú (módulo): 5,5–10 h</span>
+        <span class="pill ok">Cursor (módulo): 15–25 h</span>
+        <span class="pill">DNS + App Review (espera)</span>
+      </div>
+
+      <table class="summary" style="margin-top:14px;">
+        <thead>
+          <tr>
+            <th>Bloque interno</th>
+            <th class="right">Tú (activo)</th>
+            <th class="right">Cursor (código)</th>
+            <th class="right">Espera</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>A — Anti-bots / borde / Git</td>
+            <td class="right">2,5–4 h</td>
+            <td class="right">3–5 h</td>
+            <td class="right">DNS 0,5–24 h</td>
+          </tr>
+          <tr>
+            <td>B — App iOS web/backend</td>
+            <td class="right">3,5–6,5 h</td>
+            <td class="right">12–20 h</td>
+            <td class="right">App Review (días)</td>
+          </tr>
+          <tr class="total">
+            <td>Total módulo fusionado</td>
+            <td class="right">5,5–10 h</td>
+            <td class="right">15–25 h</td>
+            <td class="right">DNS + Review</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>2.A — Lo que haces tú (plataformas) — todo el módulo</h3>
+      <h4>Bloque A — Anti-bots</h4>
+      <table class="steps">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Quién</th>
+            <th>Plataforma</th>
+            <th>Tiempo</th>
+            <th>Qué hacer (primera vez)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="n">1</td>
+            <td><span class="who you">Tú</span></td>
+            <td>Cloudflare</td>
+            <td class="time">20–30 min</td>
+            <td>
+              <strong>Crear cuenta y añadir la zona</strong>
+              <p class="desc">
+                Entra a <code>dash.cloudflare.com</code>, crea cuenta (o inicia sesión), pulsa “Add a site”,
+                escribe <code>zuitch.com</code>, elige plan Free (u otro que prefieras) y deja que Cloudflare
+                escanee el DNS. No cambies nameservers todavía si no tienes ventana acordada.
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td class="n">2</td>
+            <td><span class="who you">Tú</span></td>
+            <td>Registrador del dominio</td>
+            <td class="time">15–25 min</td>
+            <td>
+              <strong>Cambiar nameservers (ventana acordada)</strong>
+              <p class="desc">
+                Cloudflare te mostrará 2 nameservers. En el panel donde compraste el dominio, sustituye los nameservers
+                por los de Cloudflare. Coordina un horario por si hay un corte breve de DNS.
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td class="n">3</td>
+            <td><span class="who wait">Espera</span></td>
+            <td>DNS internet</td>
+            <td class="time">0,5–24 h</td>
+            <td>
+              <strong>Propagación DNS</strong>
+              <p class="desc">
+                No es trabajo activo. En Cloudflare el estado pasa a “Active” cuando termina.
+                Mientras esperas puedes avanzar Apple/Meta/reCAPTCHA/GitHub.
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td class="n">4</td>
+            <td><span class="who you">Tú</span></td>
+            <td>Cloudflare DNS</td>
+            <td class="time">10 min</td>
+            <td>
+              <strong>Proxy naranja en hosts web</strong>
+              <p class="desc">
+                <code>zuitch.com</code>, <code>www</code> y subdominios web acordados con nube <strong>naranja</strong> (Proxied).
+                No pongas naranja en MX ni en lo que deba quedar DNS only (gris).
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td class="n">5</td>
+            <td><span class="who you">Tú</span></td>
+            <td>Cloudflare</td>
+            <td class="time">15–20 min</td>
+            <td>
+              <strong>Zone ID + API Token (canal seguro)</strong>
+              <p class="desc">
+                Overview → Zone ID. My Profile → API Tokens → Create Token con permisos de zona/firewall según pida Cursor.
+                Envíalos por canal seguro.
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td class="n">6</td>
+            <td><span class="who you">Tú</span></td>
+            <td>Google reCAPTCHA</td>
+            <td class="time">15–20 min</td>
+            <td>
+              <strong>Crear reCAPTCHA v2 y copiar keys</strong>
+              <p class="desc">
+                <code>https://www.google.com/recaptcha/admin</code> → reCAPTCHA v2 → dominios
+                <code>zuitch.com</code> y <code>www.zuitch.com</code>. Envía Site Key + Secret Key por canal seguro.
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td class="n">7</td>
+            <td><span class="who you">Tú</span></td>
+            <td>GitHub</td>
+            <td class="time">10 min</td>
+            <td>
+              <strong>Invitar colaborador al repositorio</strong>
+              <p class="desc">Settings → Collaborators → Invite al usuario que trabaja con Cursor.</p>
+            </td>
+          </tr>
+          <tr>
+            <td class="n">8</td>
+            <td><span class="who you">Tú</span></td>
+            <td>Coordinación</td>
+            <td class="time">15 min</td>
+            <td>
+              <strong>Ventana DNS + smoke test anti-bots</strong>
+              <p class="desc">
+                Tras “Active”: home, login, formulario con captcha y admin. Reporta falsos positivos de bots.
+              </p>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="callout">
+        <h3>Subtotal tú — solo bloque A (anti-bots)</h3>
+        <p><strong>~2,5–4 h</strong> activas + espera DNS. No se suma aquí el tiempo de Cursor.</p>
+      </div>
+
+      <h4>Bloque B — App iOS (portales y QA)</h4>
+      <table class="steps">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Quién</th>
+            <th>Plataforma</th>
+            <th>Tiempo</th>
+            <th>Qué hacer (primera vez)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="n">9</td>
+            <td><span class="who you">Tú</span></td>
+            <td>Apple Developer</td>
+            <td class="time">45–90 min</td>
+            <td>
+              <strong>Credenciales Sign in with Apple para el servidor</strong>
+              <p class="desc">
+                Team ID, Services ID, Key con Sign In with Apple, archivo <code>.p8</code> (una sola descarga).
+                Envía Key ID + Team ID + Services ID + <code>.p8</code> por canal seguro (revoke al borrar cuenta).
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td class="n">10</td>
+            <td><span class="who you">Tú</span></td>
+            <td>Meta / Facebook</td>
+            <td class="time">30–60 min</td>
+            <td>
+              <strong>App ID, secret y usuarios de prueba</strong>
+              <p class="desc">
+                Confirma App ID/Secret; añade usuarios sandbox si hace falta. Cursor integra en el backend.
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td class="n">11</td>
+            <td><span class="who you">Tú</span></td>
+            <td>Coordinación iOS</td>
+            <td class="time">30–60 min</td>
+            <td>
+              <strong>Handoff técnico al equipo de la app</strong>
+              <p class="desc">
+                Header <code>X-Zuitch-Client: ios-webview</code> en <code>set-browser-cookie</code>;
+                identity token Apple al social-login; pruebas en TestFlight/iPhone.
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td class="n">12</td>
+            <td><span class="who you">Tú</span></td>
+            <td>Admin / BD</td>
+            <td class="time">20–40 min</td>
+            <td>
+              <strong>Usuarios de prueba (normal, Apple, Facebook)</strong>
+              <p class="desc">Cuentas documentadas para QA y App Review.</p>
+            </td>
+          </tr>
+          <tr>
+            <td class="n">13</td>
+            <td><span class="who you">Tú</span></td>
+            <td>Live / ops</td>
+            <td class="time">30–60 min</td>
+            <td>
+              <strong>Usuario + transmisión Live de prueba</strong>
+              <p class="desc">
+                Stream HTTPS de prueba. Si falla VM/firewall/RTMP es ops, no solo código.
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td class="n">14</td>
+            <td><span class="who you">Tú</span></td>
+            <td>TestFlight / iPhone</td>
+            <td class="time">60–90 min</td>
+            <td>
+              <strong>QA con checklist de aceptación</strong>
+              <p class="desc">
+                Login Apple sin password extra; delete social; WebView estable; gate digitales;
+                físicos/DHL OK; sin GA; report/block; Facebook; Live.
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td class="n">15</td>
+            <td><span class="who you">Tú</span></td>
+            <td>App Privacy</td>
+            <td class="time">20–30 min</td>
+            <td>
+              <strong>Declaración de contactos</strong>
+              <p class="desc">
+                Match-only (§4.7 de la propuesta App iOS). El equipo iOS completa App Privacy;
+                tú confirmas que el backend no guarda la agenda.
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td class="n">16</td>
+            <td><span class="who wait">Espera</span></td>
+            <td>App Store Review</td>
+            <td class="time">días</td>
+            <td>
+              <strong>Revisión humana de Apple</strong>
+              <p class="desc">No es tiempo activo tuyo ni de Cursor.</p>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="callout">
+        <h3>Subtotal tú — solo bloque B (iOS)</h3>
+        <p><strong>~3,5–6,5 h</strong> activas. App Review aparte (espera).</p>
+      </div>
+      <div class="callout ok">
+        <h3>Subtotal tú — módulo fusionado completo</h3>
+        <p>
+          <strong>~5,5–10 h</strong> = bloque A (2,5–4) + bloque B (3,5–6,5).
+          Esto es solo tu tiempo; Cursor va en la sección siguiente.
+        </p>
+      </div>
+
+      <h3>2.B — Lo que hace Cursor — Bloque A (anti-bots)</h3>
+      <table class="steps">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Quién</th>
+            <th>Ámbito</th>
+            <th>Tiempo</th>
+            <th>Qué implementa</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="n">1</td>
+            <td><span class="who cursor">Cursor</span></td>
+            <td>Cloudflare</td>
+            <td class="time">60–90 min</td>
+            <td>
+              <strong>SSL Full (Strict), bots, WAF, rate limit</strong>
+              <p class="desc">
+                Full Strict; Bot Fight; WAF básico; rate limit en login, registro, <code>/requests.php</code>, <code>/api*</code>.
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td class="n">2</td>
+            <td><span class="who cursor">Cursor</span></td>
+            <td>Admin WoWonder</td>
+            <td class="time">30–45 min</td>
+            <td>
+              <strong>Activar reCAPTCHA y verificar formularios</strong>
+              <p class="desc">Keys en Admin; registro, contacto, recuperación, blogs.</p>
+            </td>
+          </tr>
+          <tr>
+            <td class="n">3</td>
+            <td><span class="who cursor">Cursor</span></td>
+            <td>Git / repo</td>
+            <td class="time">30–45 min</td>
+            <td>
+              <strong>.gitignore + flujo versionado</strong>
+              <p class="desc">Sin secretos/SQL/uploads; rama → merge → deploy Plesk.</p>
+            </td>
+          </tr>
+          <tr>
+            <td class="n">4</td>
+            <td><span class="who cursor">Cursor</span></td>
+            <td>Servidor / webroot</td>
+            <td class="time">45–75 min</td>
+            <td>
+              <strong>Hardening básico</strong>
+              <p class="desc">Headers; sin backups/SQL/zips públicos; revisión login fallidos.</p>
+            </td>
+          </tr>
+          <tr>
+            <td class="n">5</td>
+            <td><span class="who cursor">Cursor</span></td>
+            <td>QA</td>
+            <td class="time">30 min + hasta 2 h</td>
+            <td>
+              <strong>Smoke test + ajuste falsos positivos</strong>
+              <p class="desc">Home, login, captcha, admin. Hasta 2 h de ajuste incluidas.</p>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="callout">
+        <h3>Subtotal Cursor — solo bloque A</h3>
+        <p><strong>~3–5 h</strong> (+ ventana de 2 h anti-bots si hace falta).</p>
+      </div>
+
+      <h3>2.C — Lo que hace Cursor — Bloque B (App iOS web)</h3>
+      <table class="steps">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Quién</th>
+            <th>Ámbito</th>
+            <th>Tiempo</th>
+            <th>Qué implementa</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="n">6</td>
+            <td><span class="who cursor">Cursor</span></td>
+            <td>Auth Apple</td>
+            <td class="time">2–3,5 h</td>
+            <td>
+              <strong>Apple Login en servidor</strong>
+              <p class="desc">JWT; create/link sin password; link por <code>sub</code>; sin modal password en WebView iOS.</p>
+            </td>
+          </tr>
+          <tr>
+            <td class="n">7</td>
+            <td><span class="who cursor">Cursor</span></td>
+            <td>Delete account</td>
+            <td class="time">1,5–2,5 h</td>
+            <td>
+              <strong>Eliminación de cuenta social</strong>
+              <p class="desc">Sin password Apple; cascade; revoke si hay <code>.p8</code>; invalidar sesiones.</p>
+            </td>
+          </tr>
+          <tr>
+            <td class="n">8</td>
+            <td><span class="who cursor">Cursor</span></td>
+            <td>WebView</td>
+            <td class="time">1,5–2,5 h</td>
+            <td>
+              <strong>Sesiones y cookies</strong>
+              <p class="desc">
+                <code>set-browser-cookie</code>; cookie <code>zuitch_ios_app</code>; logout limpio; sin tokens en URL/logs.
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td class="n">9</td>
+            <td><span class="who cursor">Cursor</span></td>
+            <td>Gate compras</td>
+            <td class="time">2–3,5 h</td>
+            <td>
+              <strong>Bloqueo digitales en sesión iOS</strong>
+              <p class="desc">UI + API (PRO, wallet digital, boosts, AI, funding). Físicos/DHL intactos.</p>
+            </td>
+          </tr>
+          <tr>
+            <td class="n">10</td>
+            <td><span class="who cursor">Cursor</span></td>
+            <td>Tracking</td>
+            <td class="time">45–90 min</td>
+            <td>
+              <strong>Sin tracking web en iOS</strong>
+              <p class="desc">Sin GA/píxeles con flag iOS; cookies de auth se mantienen.</p>
+            </td>
+          </tr>
+          <tr>
+            <td class="n">11</td>
+            <td><span class="who cursor">Cursor</span></td>
+            <td>Moderación</td>
+            <td class="time">45–90 min</td>
+            <td>
+              <strong>Report / block / términos</strong>
+              <p class="desc">Visibles tras registro social; reportes al admin.</p>
+            </td>
+          </tr>
+          <tr>
+            <td class="n">12</td>
+            <td><span class="who cursor">Cursor</span></td>
+            <td>Facebook</td>
+            <td class="time">1,5–2,5 h</td>
+            <td>
+              <strong>Facebook Login backend</strong>
+              <p class="desc">Token, create/link, sesión, endpoints; usuarios de prueba en BD.</p>
+            </td>
+          </tr>
+          <tr>
+            <td class="n">13</td>
+            <td><span class="who cursor">Cursor</span></td>
+            <td>Live + docs</td>
+            <td class="time">1–2,5 h</td>
+            <td>
+              <strong>Fixes Live web/API + entregables</strong>
+              <p class="desc">Bugs reproducibles; documentar header/cookie para el equipo iOS.</p>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="callout">
+        <h3>Subtotal Cursor — solo bloque B</h3>
+        <p><strong>~12–20 h</strong> de web/backend (sin binario nativo iOS).</p>
+      </div>
+      <div class="callout ok">
+        <h3>Subtotal Cursor — módulo fusionado completo</h3>
+        <p>
+          <strong>~15–25 h</strong> = bloque A (3–5) + bloque B (12–20).
+          Horas a cobrar del paquete: <strong>21 h</strong> → USD 420 lista / USD 315 descuento.
+        </p>
+      </div>
+
+      <h3>2.D — Qué NO hace Cursor en este módulo</h3>
+      <ul class="clean">
+        <li>Crear cuentas Cloudflare/Google/Apple/Meta ni cambiar nameservers.</li>
+        <li>Código nativo iOS, TestFlight, App Store Connect ni garantizar App Review.</li>
+        <li>StoreKit/IAP, cambios DHL, pentest, PHP upgrade, CI/CD, backups offsite.</li>
+        <li>Arreglar solo con código una caída de infra Live (VM/firewall/RTMP).</li>
+      </ul>
+    </section>
+
+    <!-- ========== UX/UI ========== -->
+    <section class="block" id="ux-ui">
+      <h2>3. Módulo UX/UI — paso a paso</h2>
+      <p class="lead">
+        Widget de sugerencias solo para superadministradores (selector de elementos, captura, adjuntos, historial en Admin)
+        + botón WhatsApp opcional en posts de Páginas.
+      </p>
+      <div class="pill-row">
+        <span class="pill">Cobrar: USD 240 lista / 180 desc.</span>
+        <span class="pill warn">Tú: ~1–1,5 h + 1 h capacitación</span>
+        <span class="pill ok">Cursor: 8–14 h</span>
+      </div>
+
+      <h3>3.A — Lo que haces tú</h3>
+      <table class="steps">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Quién</th>
+            <th>Plataforma</th>
+            <th>Tiempo</th>
+            <th>Qué hacer (primera vez)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="n">1</td>
+            <td><span class="who you">Tú</span></td>
+            <td>zuitch.com</td>
+            <td class="time">5 min</td>
+            <td>
+              <strong>Confirmar cuenta superadmin de prueba</strong>
+              <p class="desc">
+                Inicia sesión con un usuario que sea superadministrador. El widget solo aparece para ese rol.
+                Si no tienes uno, créalo o eleva un usuario de prueba desde Admin.
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td class="n">2</td>
+            <td><span class="who you">Tú</span></td>
+            <td>Web pública</td>
+            <td class="time">30–45 min</td>
+            <td>
+              <strong>Probar el widget de sugerencias</strong>
+              <p class="desc">
+                Abre el botón flotante. Crea un reporte tipo Sugerencia y otro tipo Error.
+                Prueba modo “Abierta” y “Seleccionar elemento” (clic sobre un botón o bloque).
+                Usa captura de pantalla completa, pega una imagen con Ctrl+V y sube un adjunto.
+                Asigna prioridad alta o crítica al menos una vez.
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td class="n">3</td>
+            <td><span class="who you">Tú</span></td>
+            <td>Admin-CP</td>
+            <td class="time">15–20 min</td>
+            <td>
+              <strong>Validar histórico en Admin</strong>
+              <p class="desc">
+                Entra a <code>https://zuitch.com/admin-cp</code>, abre la sección nueva de sugerencias.
+                Filtra por tipo/prioridad/estado; abre el detalle; usa el enlace a la URL reportada;
+                cambia estado a “en progreso” y añade una nota interna de prueba.
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td class="n">4</td>
+            <td><span class="who you">Tú</span></td>
+            <td>Ajustes de Página</td>
+            <td class="time">10–15 min</td>
+            <td>
+              <strong>Configurar WhatsApp en una Página de prueba</strong>
+              <p class="desc">
+                Edita una Página: pon un número de WhatsApp válido e activa el interruptor “mostrar en publicaciones”.
+                Publica un post desde esa Página y comprueba que aparece el botón; desactiva el interruptor y verifica que desaparece.
+                Por defecto debe estar oculto en Páginas sin configurar.
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td class="n">5</td>
+            <td><span class="who you">Tú</span></td>
+            <td>Videollamada</td>
+            <td class="time">60 min</td>
+            <td>
+              <strong>Capacitación incluida (1 hora)</strong>
+              <p class="desc">
+                Sesión remota agendada tras la entrega: crear sugerencias, seleccionar elementos,
+                captura completa, adjuntos, y gestionar prioridad/estado en Admin.
+              </p>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="callout ok">
+        <h3>Subtotal tú — UX/UI</h3>
+        <p><strong>~2–2,5 h</strong> contando la capacitación (o ~1–1,5 h solo de pruebas si la capacitación se agenda aparte).</p>
+      </div>
+
+      <h3>3.B — Lo que hace Cursor</h3>
+      <table class="steps">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Quién</th>
+            <th>Ámbito</th>
+            <th>Tiempo</th>
+            <th>Qué implementa</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="n">1</td>
+            <td><span class="who cursor">Cursor</span></td>
+            <td>Frontend</td>
+            <td class="time">3–5 h</td>
+            <td>
+              <strong>Widget FAB + modal + selector + captura + adjuntos</strong>
+              <p class="desc">
+                Solo visible para superadmin autenticado. Tipos sugerencia/error; modos abierta/seleccionar elemento;
+                metadatos automáticos (URL, navegador, SO, dispositivo, viewport, DPR, selector CSS);
+                captura best-effort de página completa; hasta 5 adjuntos.
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td class="n">2</td>
+            <td><span class="who cursor">Cursor</span></td>
+            <td>Backend / BD</td>
+            <td class="time">2–3 h</td>
+            <td>
+              <strong>Almacenamiento de tickets y archivos</strong>
+              <p class="desc">
+                Tablas/endpoints para sugerencias, prioridades, estados, usuario emisor y adjuntos asociados.
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td class="n">3</td>
+            <td><span class="who cursor">Cursor</span></td>
+            <td>Admin-CP</td>
+            <td class="time">2–3 h</td>
+            <td>
+              <strong>Sección de histórico</strong>
+              <p class="desc">
+                Listado, filtros, detalle, cambio de estado/prioridad, nota interna, link a la página reportada.
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td class="n">4</td>
+            <td><span class="who cursor">Cursor</span></td>
+            <td>Páginas / posts</td>
+            <td class="time">1–2 h</td>
+            <td>
+              <strong>WhatsApp opcional</strong>
+              <p class="desc">
+                Campo número + interruptor en ajustes de Página; botón <code>wa.me</code> solo en posts de esa Página
+                si está activo y el número es válido; oculto por defecto.
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td class="n">5</td>
+            <td><span class="who cursor">Cursor</span></td>
+            <td>Post-entrega</td>
+            <td class="time">0,5–1 h</td>
+            <td>
+              <strong>Ajustes menores dentro del alcance</strong>
+              <p class="desc">Correcciones de UI o bugs reportados en los primeros días tras la entrega.</p>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="callout ok">
+        <h3>Subtotal Cursor — UX/UI</h3>
+        <p><strong>~8–14 h</strong> de desarrollo e integración sobre WoWonder.</p>
+      </div>
+
+      <h3>3.C — Qué NO hace Cursor aquí</h3>
+      <ul class="clean">
+        <li>Rediseño general del sitio ni app nativa iOS/Android.</li>
+        <li>WhatsApp en perfiles de usuario o grupos (solo Páginas).</li>
+        <li>Roles de moderador (solo superadministradores).</li>
+        <li>Notificaciones externas (email/Telegram) ni soporte mensual.</li>
+      </ul>
+    </section>
+
+    <!-- ========== CRONOGRAMA ========== -->
+    <section class="block" id="cronograma">
+      <h2>4. Cronograma sugerido (calendario)</h2>
+      <p class="lead">
+        Plan de ~2 semanas. Primero el módulo fusionado (anti-bots → iOS web); después UX/UI.
+      </p>
+      <ol class="order-list">
+        <li>
+          <strong>Día 1 — Preparación de cuentas (tu tiempo)</strong>
+          <span>Cloudflare, reCAPTCHA, GitHub, Apple <code>.p8</code>, Meta App ID/secret. Tú: ~2–3,5 h. Cursor: 0 h.</span>
+        </li>
+        <li>
+          <strong>Días 2–3 — Bloque A anti-bots</strong>
+          <span>Nameservers + DNS. Cursor: SSL/bots/WAF/captcha/Git/hardening (~3–5 h). Tú: smoke (~1 h) + espera DNS.</span>
+        </li>
+        <li>
+          <strong>Días 4–10 — Bloque B App iOS web</strong>
+          <span>Cursor: auth, delete, cookies, gate, tracking, FB, Live (~12–20 h). Tú: handoff + usuarios + Live + QA iPhone (~3,5–6,5 h).</span>
+        </li>
+        <li>
+          <strong>Días 10–13 — Módulo UX/UI</strong>
+          <span>Cursor: widget + Admin + WhatsApp (~8–14 h). Tú: pruebas (~1–1,5 h) + capacitación 1 h.</span>
+        </li>
+        <li>
+          <strong>Luego — App Review</strong>
+          <span>Espera externa (días). No suma horas activas tuyas ni de Cursor.</span>
+        </li>
+      </ol>
+      <div class="callout warn">
+        <h3>Bloqueadores típicos (alargan el calendario, no las horas de código)</h3>
+        <p>
+          Nameservers sin cambiar; keys reCAPTCHA o <code>.p8</code> no enviadas; Meta app en modo restringido sin usuarios de prueba;
+          equipo iOS sin header <code>X-Zuitch-Client</code>; Live caído por firewall. Mientras falte un acceso, Cursor se queda a medias.
+        </p>
+      </div>
+    </section>
+
+    <!-- ========== COSTOS PLATAFORMAS ========== -->
+    <section class="block" id="costos-plataformas">
+      <h2>5. Costos de plataformas externas</h2>
+      <p class="lead">
+        Dinero que paga el <strong>cliente (Zuitch)</strong> a terceros para poder ejecutar este alcance.
+        No forma parte de tu tarifa de desarrollo. La mayoría del paquete anti-bots y UX se puede hacer en planes gratuitos.
+      </p>
+
+      <h3>6.1 — Obligatorios o muy probables para este trabajo</h3>
+      <table class="summary">
+        <thead>
+          <tr>
+            <th>Plataforma</th>
+            <th>Para qué</th>
+            <th class="right">Costo típico</th>
+            <th>Notas</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Cloudflare (plan Free)</td>
+            <td>Proxy, SSL, bots, WAF básico, rate limit</td>
+            <td class="right">USD 0 / mes</td>
+            <td>Suficiente para el paquete de Seguridad descrito. El cliente ya tiene el dominio.</td>
+          </tr>
+          <tr>
+            <td>Google reCAPTCHA</td>
+            <td>Keys en formularios (registro, contacto, etc.)</td>
+            <td class="right">USD 0 en uso típico</td>
+            <td>
+              Cuenta Google gratuita. Si el sitio cae en reCAPTCHA Enterprise: ~10&nbsp;000 assessments/mes gratis;
+              por encima suele haber cargo bajo (p. ej. ~USD 8 por el siguiente bloque). Para Zuitch en volumen normal suele bastar gratis.
+            </td>
+          </tr>
+          <tr>
+            <td>GitHub</td>
+            <td>Repo + colaborador para versionado</td>
+            <td class="right">USD 0</td>
+            <td>Plan Free alcanza para un repo privado pequeño. Si ya tienen org de pago, no hay costo extra por este trabajo.</td>
+          </tr>
+          <tr>
+            <td>Meta / Facebook Login</td>
+            <td>App ID + secret + usuarios de prueba</td>
+            <td class="right">USD 0</td>
+            <td>Crear/usar app en Meta for Developers no tiene cuota de plataforma para login básico.</td>
+          </tr>
+          <tr>
+            <td>WhatsApp (<code>wa.me</code>)</td>
+            <td>Botón en posts de Páginas</td>
+            <td class="right">USD 0</td>
+            <td>Se abre el enlace público; <strong>no</strong> se usa WhatsApp Business API (esa sí tiene costos por conversación).</td>
+          </tr>
+          <tr>
+            <td>Dominio + hosting Plesk</td>
+            <td>zuitch.com en producción</td>
+            <td class="right">Ya pagado</td>
+            <td>No es un costo nuevo de este proyecto; solo se usa la infra actual.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>6.2 — Asociados a la app iOS (suelen existir si ya publican en App Store)</h3>
+      <table class="summary">
+        <thead>
+          <tr>
+            <th>Plataforma</th>
+            <th>Para qué</th>
+            <th class="right">Costo típico</th>
+            <th>Notas</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Apple Developer Program</td>
+            <td>Sign in with Apple, keys <code>.p8</code>, App Store Connect, TestFlight</td>
+            <td class="right">USD 99 / año</td>
+            <td>
+              Si <strong>ya</strong> tienen la membresía para la app, el costo incremental de este módulo es <strong>USD 0</strong>.
+              Si aún no la tienen, hace falta para publicar y para las keys de revoke/login.
+            </td>
+          </tr>
+          <tr>
+            <td>Dispositivo iPhone / TestFlight</td>
+            <td>QA real de WebView y App Review</td>
+            <td class="right">USD 0 extra</td>
+            <td>Usa hardware/cuenta que ya tenga el equipo iOS. No hay fee de Apple por instalar TestFlight.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>6.3 — Opcionales (no requeridos por el alcance actual)</h3>
+      <table class="summary">
+        <thead>
+          <tr>
+            <th>Plataforma</th>
+            <th>Cuándo tendría sentido</th>
+            <th class="right">Costo orientativo</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Cloudflare Pro (u otro de pago)</td>
+            <td>Necesitan WAF/reglas más avanzadas o soporte prioritario</td>
+            <td class="right">~USD 20 / mes</td>
+          </tr>
+          <tr>
+            <td>WhatsApp Business API / Meta Cloud API</td>
+            <td>Solo si más adelante quieren mensajes automatizados (fuera de alcance)</td>
+            <td class="right">Por conversación (tarifa Meta)</td>
+          </tr>
+          <tr>
+            <td>StoreKit / IAP de Apple</td>
+            <td>Fuera de alcance: esta versión <em>bloquea</em> compras digitales</td>
+            <td class="right">Comisión Apple 15–30% si se vendiera</td>
+          </tr>
+          <tr>
+            <td>Suscripción Cursor (herramienta tuya)</td>
+            <td>Costo operativo tuyo al usar el agente, no del cliente</td>
+            <td class="right">Según tu plan Cursor</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="module-totals" style="margin-top:16px;">
+        <div class="tot-card ok">
+          <div class="label">Costo nuevo mínimo (cliente)</div>
+          <div class="value" style="color:var(--ok);">USD 0</div>
+          <p class="hint">Si Cloudflare Free + reCAPTCHA gratis + ya tienen Apple Developer y hosting</p>
+        </div>
+        <div class="tot-card you">
+          <div class="label">Si falta Apple Developer</div>
+          <div class="value">+99 / año</div>
+          <p class="hint">Único cargo externo recurrente relevante para App iOS</p>
+        </div>
+        <div class="tot-card">
+          <div class="label">Cloudflare Pro (opcional)</div>
+          <div class="value">~20 / mes</div>
+          <p class="hint">Solo si el Free se queda corto; no es parte del paquete base</p>
+        </div>
+      </div>
+
+      <div class="callout ok">
+        <h3>Respuesta corta</h3>
+        <p>
+          En el módulo fusionado (Seguridad + iOS web) y en UX/UI, <strong>casi no hay costos nuevos de plataformas</strong> (Free alcanza).
+          El único cargo externo habitual es el <strong>Apple Developer Program (USD 99/año)</strong> si aún no lo tienen;
+          Meta y WhatsApp vía <code>wa.me</code> no cobran por este alcance.
+        </p>
+      </div>
+    </section>
+
+    <!-- ========== COBRO POR MÓDULO ========== -->
+    <section class="block" id="cobro-modulos">
+      <h2>6. Cobro sugerido por módulo (tu hora USD 20 / descuento USD 15)</h2>
+      <p class="lead">
+        Se cobran las horas de <strong>Cursor/desarrollo</strong>, no tu tiempo en portales.
+        Hay <strong>2 módulos</strong>: el fusionado (Seguridad + iOS web) y UX/UI.
+        Dentro del fusionado, el desglose A/B es solo para transparencia; se cotiza como un paquete.
+      </p>
+      <div class="pill-row">
+        <span class="pill">Tarifa lista: USD 20 / h</span>
+        <span class="pill warn">Descuento: USD 15 / h</span>
+        <span class="pill ok">2 paquetes cerrados</span>
+      </div>
+
+      <h3>6.1 — Desglose horas × tarifa</h3>
+      <table class="summary">
+        <thead>
+          <tr>
+            <th>Módulo</th>
+            <th class="right">Cursor (rango)</th>
+            <th class="right">Horas a cobrar</th>
+            <th class="right">Lista @ USD 20</th>
+            <th class="right">Desc. @ USD 15</th>
+            <th class="right">Tu tiempo (no se cobra)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <strong>Seguridad + App iOS web</strong><br>
+              <span style="color:var(--muted);font-size:0.86rem;">A anti-bots 3–5 h + B iOS web 12–20 h (Cursor)</span>
+            </td>
+            <td class="right">15–25 h</td>
+            <td class="right">21 h</td>
+            <td class="right">USD 420</td>
+            <td class="right">USD 315</td>
+            <td class="right">5,5–10 h</td>
+          </tr>
+          <tr>
+            <td>
+              <strong>UX/UI</strong><br>
+              <span style="color:var(--muted);font-size:0.86rem;">Widget + Admin + WhatsApp + 1 h capacitación</span>
+            </td>
+            <td class="right">8–14 h + 1 h cap.</td>
+            <td class="right">12 h</td>
+            <td class="right">USD 240</td>
+            <td class="right">USD 180</td>
+            <td class="right">1–1,5 h + cap.</td>
+          </tr>
+          <tr class="total">
+            <td>Total 2 módulos</td>
+            <td class="right">~23–39 h</td>
+            <td class="right">33 h</td>
+            <td class="right">USD 660</td>
+            <td class="right">USD 495</td>
+            <td class="right">~7–12 h</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>6.2 — Paquetes cerrados que recomiendo cotizar</h3>
+      <table class="summary">
+        <thead>
+          <tr>
+            <th>Módulo</th>
+            <th class="right">Lista</th>
+            <th class="right">Descuento</th>
+            <th>Cómo presentarlo</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Seguridad + App iOS web</td>
+            <td class="right"><strong>USD 420</strong></td>
+            <td class="right"><strong>USD 315</strong></td>
+            <td>Un paquete: borde anti-bots + correcciones web para Apple Review. No incluye app nativa ni App Review.</td>
+          </tr>
+          <tr>
+            <td>UX/UI</td>
+            <td class="right"><strong>USD 240</strong></td>
+            <td class="right"><strong>USD 180</strong></td>
+            <td>Widget + WhatsApp Páginas + 1 h capacitación.</td>
+          </tr>
+          <tr class="total">
+            <td>Combo 2 módulos</td>
+            <td class="right">USD 660</td>
+            <td class="right">USD 495</td>
+            <td>Hitos: primero fusionado → luego UX/UI.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="callout warn">
+        <h3>Vs. propuestas HTML sueltas</h3>
+        <p>
+          Antes: Seguridad USD 350 + App iOS sin precio + UX USD 180.
+          Ahora el fusionado a tarifa hora queda en <strong>USD 420 / 315</strong> (21 h).
+          Si quieres mantener el “premium” de Seguridad a 350 sumado a iOS, el combo fusionado comercial podría cotizarse más alto;
+          esta tabla es el ancla transparente horas × USD 20/15.
+        </p>
+      </div>
+
+      <div class="callout">
+        <h3>Cómo usar el descuento</h3>
+        <p>
+          Cotiza lista (USD 20/h) y baja a USD 15 si cierran los <strong>2 módulos</strong>, pago anticipado o cliente recurrente.
+          No rebajes horas: rebaja tarifa.
+        </p>
+      </div>
+
+      <div class="module-totals">
+        <div class="tot-card">
+          <div class="label">Lista (USD 20/h)</div>
+          <div class="value">$660</div>
+          <p class="hint">420 + 240 · 33 h paquete</p>
+        </div>
+        <div class="tot-card you">
+          <div class="label">Con descuento (USD 15/h)</div>
+          <div class="value">$495</div>
+          <p class="hint">315 + 180 · mismo alcance</p>
+        </div>
+        <div class="tot-card cursor">
+          <div class="label">Tu tiempo (no facturable)</div>
+          <div class="value">7–12 h</div>
+          <p class="hint">Portales + pruebas; aparte de Cursor</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== CHECKLIST ========== -->
+    <section class="block" id="checklist">
+      <h2>7. Checklist final</h2>
+
+      <div class="checklist-box">
+        <h4>Antes de pedir a Cursor que implemente</h4>
+        <ul>
+          <li>Cloudflare: zona, nameservers (o ventana), Zone ID + API Token</li>
+          <li>reCAPTCHA v2: Site Key + Secret Key</li>
+          <li>GitHub: colaborador</li>
+          <li>Apple: Team ID, Key ID, Services ID, <code>.p8</code></li>
+          <li>Meta: App ID + secret + usuarios de prueba si aplica</li>
+          <li>Superadmin de prueba en zuitch.com</li>
+        </ul>
+      </div>
+
+      <div class="checklist-box">
+        <h4>Módulo fusionado entregado (Seguridad + iOS web)</h4>
+        <ul>
+          <li>Bloque A: SSL Full Strict, anti-bots, WAF, rate limit, captcha, Git limpio, hardening, smoke OK</li>
+          <li>Bloque B: Apple login sin password extra; delete + revoke; cookies WebView; gate digitales; sin GA en iOS; report/block; Facebook; Live de prueba; docs para equipo iOS</li>
+        </ul>
+      </div>
+
+      <div class="checklist-box">
+        <h4>UX/UI entregado</h4>
+        <ul>
+          <li>Widget solo superadmin: sugerencia/error, selector, captura, adjuntos, prioridad</li>
+          <li>Admin: histórico, filtros, estados, link a URL</li>
+          <li>WhatsApp opcional en Páginas (off por defecto)</li>
+          <li>Capacitación 1 h hecha o agendada</li>
+        </ul>
+      </div>
+
+      <h3>Totales (tú vs Cursor, separados)</h3>
+      <table class="summary">
+        <thead>
+          <tr>
+            <th>Concepto</th>
+            <th class="right">Tú</th>
+            <th class="right">Cursor</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Módulo Seguridad + iOS web</td>
+            <td class="right">5,5–10 h</td>
+            <td class="right">15–25 h</td>
+          </tr>
+          <tr>
+            <td>Módulo UX/UI</td>
+            <td class="right">~2–2,5 h (con cap.)</td>
+            <td class="right">8–14 h</td>
+          </tr>
+          <tr class="total">
+            <td>Total 2 módulos</td>
+            <td class="right">~7–12 h</td>
+            <td class="right">~23–39 h</td>
+          </tr>
+          <tr>
+            <td>Cobro sugerido (lista / descuento)</td>
+            <td class="right">—</td>
+            <td class="right">USD 660 / 495</td>
+          </tr>
+          <tr>
+            <td>Plataformas externas (cliente)</td>
+            <td class="right">USD 0–99/año</td>
+            <td class="right">—</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>Enlaces a las propuestas</h3>
+      <div class="links-box">
+        <a href="/documentos/security/propuesta_simple_security.html">Propuesta Seguridad — paquete anti-bots USD 350</a>
+        <a href="/documentos/ux-ui/propuesta_ux_ui.html">Propuesta UX/UI — sugerencias + WhatsApp USD 180</a>
+        <a href="/documentos/app/propuesta_app_ios.html">Propuesta App iOS — correcciones Apple Review</a>
+      </div>
+    </section>
+
+    <footer class="doc">
+      Documento de planificación · Zuitch.com · 2 módulos (Seguridad+iOS · UX/UI) · Tú vs Cursor · 04/09/2026
+    </footer>
+  </div>
+</body>
+</html>

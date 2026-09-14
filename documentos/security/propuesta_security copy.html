@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Propuesta de seguridad — Anti-bots, Cloudflare, reCAPTCHA y Git | Zuitch</title>
+  <meta name="description" content="Propuesta de seguridad para zuitch.com: protección anti-bots (Cloudflare, reCAPTCHA), hardening del servidor y versionamiento en Git. Checklist de servicios externos.">
+  <link rel="shortcut icon" type="image/png" href="/themes/wowonder/img/icon.png">
+  <style>
+    :root {
+      --text: #1a2332;
+      --muted: #5c6575;
+      --border: #dce3ec;
+      --card: #ffffff;
+      --bg: #ebf3f5;
+      --accent: #235777;
+      --brand: #72b0be;
+      --brand-dark: #0d3b5c;
+      --ok: #0d6b3d;
+      --warn: #8a5a00;
+      --soft: #e8f0f6;
+      --radius: 12px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;
+      font-size: 15px;
+      line-height: 1.55;
+      color: var(--text);
+      background: var(--bg);
+    }
+    a { color: var(--accent); }
+    code {
+      font-family: ui-monospace, "Cascadia Code", "Segoe UI Mono", Consolas, monospace;
+      font-size: 0.88em;
+      background: var(--soft);
+      padding: 1px 6px;
+      border-radius: 4px;
+    }
+    .wrap {
+      max-width: 920px;
+      margin: 0 auto;
+      padding: 28px 20px 56px;
+    }
+    header.doc {
+      background: linear-gradient(135deg, var(--brand-dark) 0%, var(--brand) 48%, var(--accent) 100%);
+      color: #fff;
+      border-radius: var(--radius);
+      padding: 32px 34px;
+      margin-bottom: 20px;
+      box-shadow: 0 8px 28px rgba(13, 59, 92, 0.22);
+    }
+    header.doc .eyebrow {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      opacity: 0.9;
+      background: rgba(255,255,255,0.16);
+      padding: 5px 10px;
+      border-radius: 999px;
+      margin-bottom: 12px;
+    }
+    header.doc h1 {
+      margin: 0 0 10px;
+      font-size: 1.5rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.25;
+    }
+    header.doc .subtitle {
+      margin: 0;
+      opacity: 0.92;
+      font-size: 0.98rem;
+      max-width: 62ch;
+    }
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-top: 22px;
+      padding-top: 18px;
+      border-top: 1px solid rgba(255,255,255,0.22);
+    }
+    @media (max-width: 720px) {
+      .meta-grid { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 420px) {
+      .meta-grid { grid-template-columns: 1fr; }
+    }
+    .meta-grid dt {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      opacity: 0.75;
+      margin: 0 0 4px;
+    }
+    .meta-grid dd {
+      margin: 0;
+      font-weight: 650;
+      font-size: 0.95rem;
+    }
+    section.block {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 22px 26px;
+      margin-bottom: 16px;
+      box-shadow: 0 2px 10px rgba(26, 35, 50, 0.04);
+    }
+    section.block h2 {
+      margin: 0 0 12px;
+      font-size: 1.08rem;
+      color: var(--accent);
+      padding-bottom: 10px;
+      border-bottom: 2px solid var(--soft);
+    }
+    section.block h3 {
+      margin: 18px 0 8px;
+      font-size: 0.95rem;
+      color: var(--text);
+    }
+    section.block h4 {
+      margin: 14px 0 6px;
+      font-size: 0.9rem;
+      color: var(--accent);
+    }
+    p.lead {
+      margin: 0 0 10px;
+      color: var(--muted);
+    }
+    ul.clean {
+      margin: 8px 0 0;
+      padding: 0;
+      list-style: none;
+    }
+    ul.clean li {
+      position: relative;
+      padding: 7px 0 7px 26px;
+      border-bottom: 1px solid #f0f3f7;
+    }
+    ul.clean li:last-child { border-bottom: none; }
+    ul.clean li::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 14px;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--brand);
+    }
+    ol.steps {
+      margin: 8px 0 0;
+      padding-left: 22px;
+      color: var(--text);
+    }
+    ol.steps li {
+      margin-bottom: 10px;
+      padding-left: 4px;
+    }
+    ol.steps li strong { color: var(--brand-dark); }
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 8px;
+    }
+    @media (max-width: 720px) {
+      .two-col { grid-template-columns: 1fr; }
+    }
+    .feature-card {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+      background: #fafcfd;
+    }
+    .feature-card .tag {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--accent);
+      background: var(--soft);
+      padding: 3px 8px;
+      border-radius: 999px;
+      margin-bottom: 8px;
+    }
+    .feature-card.ok .tag {
+      color: #0b6b36;
+      background: #e8f8ee;
+    }
+    .feature-card.warn .tag {
+      color: var(--warn);
+      background: #fff6e5;
+    }
+    .feature-card h3 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+    }
+    .feature-card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+    .pill-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .pill {
+      font-size: 12px;
+      font-weight: 600;
+      padding: 5px 10px;
+      border-radius: 999px;
+      background: var(--soft);
+      color: var(--accent);
+      border: 1px solid var(--border);
+    }
+    .pill.ok {
+      background: #e8f8ee;
+      color: #0b6b36;
+      border-color: #b6e6c8;
+    }
+    .pill.warn {
+      background: #fff6e5;
+      color: var(--warn);
+      border-color: #f0d9a8;
+    }
+    table.deliver {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.92rem;
+      margin-top: 6px;
+    }
+    table.deliver th,
+    table.deliver td {
+      border: 1px solid var(--border);
+      padding: 10px 12px;
+      vertical-align: top;
+      text-align: left;
+    }
+    table.deliver th {
+      background: var(--soft);
+      color: var(--accent);
+      font-weight: 700;
+    }
+    .compare {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+      margin-top: 14px;
+    }
+    .compare th,
+    .compare td {
+      border: 1px solid var(--border);
+      padding: 9px 11px;
+      vertical-align: top;
+      text-align: left;
+    }
+    .compare th {
+      background: var(--soft);
+      color: var(--accent);
+      font-weight: 700;
+    }
+    .compare td:first-child { font-weight: 600; width: 28%; }
+    .compare .bad { color: #8b2942; }
+    .compare .good { color: var(--ok); }
+    .arch {
+      margin: 14px 0 4px;
+      padding: 18px 16px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: linear-gradient(180deg, #fafcfd 0%, #f3f8fa 100%);
+      overflow-x: auto;
+    }
+    .arch-flow {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+    .arch-node {
+      background: #fff;
+      border: 1px solid var(--border);
+      color: var(--brand-dark);
+      padding: 10px 14px;
+      border-radius: 8px;
+      text-align: center;
+      min-width: 110px;
+    }
+    .arch-node small {
+      display: block;
+      font-weight: 500;
+      color: var(--muted);
+      font-size: 0.75rem;
+      margin-top: 4px;
+    }
+    .arch-arrow {
+      color: var(--brand);
+      font-size: 1.2rem;
+      font-weight: 700;
+    }
+    .callout {
+      margin-top: 16px;
+      padding: 16px 18px;
+      border-radius: 10px;
+      border-left: 4px solid var(--brand);
+      background: var(--soft);
+    }
+    .callout.warn {
+      border-left-color: #c98a1a;
+      background: #fff8eb;
+    }
+    .callout h3 {
+      margin: 0 0 8px;
+      font-size: 0.98rem;
+      color: var(--brand-dark);
+    }
+    .callout p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+    .checklist-box {
+      margin-top: 12px;
+      padding: 14px 16px;
+      border-radius: 10px;
+      border: 1px dashed var(--border);
+      background: #fafcfd;
+    }
+    .checklist-box h4 { margin-top: 0; }
+    .out {
+      color: var(--muted);
+      font-size: 0.9rem;
+      margin: 0;
+    }
+    .out ul {
+      margin: 8px 0 0;
+      padding-left: 18px;
+      color: var(--muted);
+    }
+    footer.doc {
+      margin-top: 8px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+    .sign {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 28px;
+      margin-top: 22px;
+    }
+    @media (max-width: 640px) {
+      .sign { grid-template-columns: 1fr; }
+    }
+    .sign-box {
+      border-top: 1px solid var(--border);
+      padding-top: 10px;
+      color: var(--muted);
+      font-size: 0.9rem;
+      min-height: 72px;
+    }
+    .print-bar {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 12px;
+    }
+    .print-bar button {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .print-bar button:hover { background: var(--brand-dark); }
+    .order-list {
+      counter-reset: step;
+      list-style: none;
+      margin: 10px 0 0;
+      padding: 0;
+    }
+    .order-list li {
+      position: relative;
+      padding: 12px 12px 12px 52px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      margin-bottom: 8px;
+      background: #fafcfd;
+    }
+    .order-list li::before {
+      counter-increment: step;
+      content: counter(step);
+      position: absolute;
+      left: 12px;
+      top: 12px;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--brand-dark);
+      color: #fff;
+      font-size: 0.85rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .order-list li strong {
+      display: block;
+      color: var(--accent);
+      margin-bottom: 2px;
+    }
+    .order-list li span {
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+    @media print {
+      body { background: #fff; }
+      .wrap { padding: 0; max-width: 100%; }
+      .print-bar { display: none; }
+      header.doc, section.block { box-shadow: none; break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="print-bar">
+      <button type="button" onclick="window.print()">Imprimir / PDF</button>
+    </div>
+
+    <header class="doc">
+      <div class="eyebrow">Propuesta · Seguridad / Infraestructura</div>
+      <h1>Protección anti-bots, WAF en el edge, reCAPTCHA y versionamiento en Git</h1>
+      <p class="subtitle">
+        Plan para endurecer zuitch.com frente a bots, spam, abuso de API y despliegues sin control,
+        combinando Cloudflare, Google reCAPTCHA, hardening del servidor y un flujo formal de Git.
+      </p>
+      <dl class="meta-grid">
+        <div>
+          <dt>Cliente</dt>
+          <dd>Zuitch.com</dd>
+        </div>
+        <div>
+          <dt>Ámbito</dt>
+          <dd>Edge + app + Git</dd>
+        </div>
+        <div>
+          <dt>Fecha</dt>
+          <dd>04/09/2026</dd>
+        </div>
+        <div>
+          <dt>Documento</dt>
+          <dd>Plan de seguridad</dd>
+        </div>
+      </dl>
+    </header>
+
+    <section class="block">
+      <h2>1. Objetivo</h2>
+      <p class="lead">
+        Proteger la plataforma social WoWonder de Zuitch en capas: filtrar tráfico malicioso antes de que llegue al servidor,
+        reforzar formularios y endpoints públicos contra automatismos, y versionar el código de forma segura y trazable.
+      </p>
+      <p class="lead">
+        Este documento define <strong>qué se propone</strong>, <strong>qué debe preparar el cliente</strong> en servicios externos
+        (cuentas, DNS, claves) y <strong>qué implementará el equipo técnico</strong> una vez recibidos esos datos por un canal seguro.
+        No incluye secretos reales: solo placeholders y pasos.
+      </p>
+      <div class="pill-row">
+        <span class="pill">Cloudflare WAF / Bots</span>
+        <span class="pill">Google reCAPTCHA</span>
+        <span class="pill">Rate limiting</span>
+        <span class="pill">Headers + webroot</span>
+        <span class="pill ok">Git / GitHub</span>
+        <span class="pill warn">Checklist cliente → dev</span>
+      </div>
+    </section>
+
+    <section class="block">
+      <h2>2. Diagnóstico breve (estado actual)</h2>
+      <p class="lead">
+        Resumen orientativo del entorno actual (Plesk + nginx + PHP-FPM + Node livestream). Sin listar rutas o archivos sensibles en detalle.
+      </p>
+      <div class="two-col">
+        <article class="feature-card ok">
+          <span class="tag">Ya existe</span>
+          <h3>Controles parciales</h3>
+          <p>
+            reCAPTCHA integrado en formularios públicos (registro, contacto, recuperación, blogs);
+            control de intentos de login fallidos; hash de sesión en peticiones AJAX;
+            HSTS en nginx; Imunify en el vhost; repositorio Git con remoto en GitHub y <code>.gitignore</code> que excluye config/SQL/zips.
+          </p>
+        </article>
+        <article class="feature-card warn">
+          <span class="tag">Huecos</span>
+          <h3>Sin capa de edge / formalización</h3>
+          <p>
+            Sin Cloudflare (sin WAF ni Bot Fight en el borde); headers de seguridad incompletos;
+            PHP 7.4 fuera de soporte (riesgo a medio plazo); posibles artefactos sensibles en el webroot;
+            flujo de versionado y deploy aún no formalizado.
+          </p>
+        </article>
+      </div>
+
+      <table class="compare">
+        <thead>
+          <tr>
+            <th>Capa</th>
+            <th>Hoy</th>
+            <th>Con esta propuesta</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Tráfico / bots</td>
+            <td class="bad">Llega directo al origen</td>
+            <td class="good">Cloudflare filtra, desafía y limita antes del servidor</td>
+          </tr>
+          <tr>
+            <td>Formularios</td>
+            <td class="bad">reCAPTCHA parcial / a verificar</td>
+            <td class="good">Keys vigentes + cobertura revisada en flujos públicos</td>
+          </tr>
+          <tr>
+            <td>API / AJAX</td>
+            <td class="bad">Expuestos sin rate limit en edge</td>
+            <td class="good">Reglas de rate limit y challenge en rutas sensibles</td>
+          </tr>
+          <tr>
+            <td>Código</td>
+            <td class="bad">Git presente, proceso informal</td>
+            <td class="good">Ramas, .gitignore reforzado, deploy trazable</td>
+          </tr>
+          <tr>
+            <td>Servidor</td>
+            <td class="bad">Headers incompletos; PHP EOL</td>
+            <td class="good">Hardening inmediato + roadmap PHP en fase posterior</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="block">
+      <h2>3. Arquitectura propuesta</h2>
+      <p class="lead">
+        El usuario o bot pasa primero por Cloudflare. Solo el tráfico permitido llega a nginx/Plesk y a la aplicación.
+        reCAPTCHA actúa en formularios humanos; Git versiona el código sin secretos.
+      </p>
+      <div class="arch">
+        <div class="arch-flow">
+          <div class="arch-node">Usuario / Bot<small>Web, app, scrapers</small></div>
+          <span class="arch-arrow">→</span>
+          <div class="arch-node">Cloudflare<small>WAF · Bots · Rate limit · SSL</small></div>
+          <span class="arch-arrow">→</span>
+          <div class="arch-node">Nginx / Plesk<small>Origen · HSTS</small></div>
+          <span class="arch-arrow">→</span>
+          <div class="arch-node">WoWonder<small>PHP · APIs · Admin</small></div>
+        </div>
+        <div class="arch-flow" style="margin-top:14px;">
+          <div class="arch-node">reCAPTCHA<small>Registro · contacto · etc.</small></div>
+          <span class="arch-arrow">+</span>
+          <div class="arch-node">Git / GitHub<small>Versionado · sin secretos</small></div>
+        </div>
+      </div>
+      <div class="callout">
+        <h3>Principio</h3>
+        <p>
+          reCAPTCHA no sustituye un WAF. Cloudflare no sustituye buenas prácticas de código ni Git.
+          Las tres capas se complementan: edge (Cloudflare), aplicación (reCAPTCHA + hardening) y proceso (Git).
+        </p>
+      </div>
+    </section>
+
+    <section class="block">
+      <h2>4. Fase A — Cloudflare (anti-bots en el edge)</h2>
+      <p class="lead">
+        Proxy naranja delante de <code>zuitch.com</code> (y subdominios acordados) para ocultar la IP de origen,
+        aplicar WAF, Bot Fight y límites de tasa en rutas sensibles.
+      </p>
+
+      <h3>A.1 — Lo que debe hacer el cliente (paso a paso)</h3>
+      <ol class="steps">
+        <li>
+          <strong>Crear cuenta</strong> en
+          <a href="https://dash.cloudflare.com/sign-up" target="_blank" rel="noopener">Cloudflare</a>
+          (correo corporativo recomendado).
+        </li>
+        <li>
+          <strong>Añadir el sitio</strong>: dominio <code>zuitch.com</code>.
+          Incluir también <code>live.zuitch.com</code> (u otros subdominios críticos) si el tráfico livestream/API pasa por ellos.
+        </li>
+        <li>
+          <strong>Revisar el inventario DNS</strong> que Cloudflare importa (A, CNAME, MX, TXT).
+          Confirmar que correo y registros existentes no se pierden antes de cambiar nameservers.
+        </li>
+        <li>
+          <strong>Cambiar nameservers</strong> en el registrador del dominio a los que indique Cloudflare
+          (ejemplo orientativo: <code>xxx.ns.cloudflare.com</code>). Propagación: minutos a 48 h.
+        </li>
+        <li>
+          <strong>Esperar estado Active</strong> en el dashboard (zona activa y SSL en proceso).
+        </li>
+        <li>
+          <strong>Activar proxy naranja</strong> en los registros A/CNAME web (nube naranja = tráfico vía Cloudflare).
+          No poner en naranja registros que deban ir directo al origen sin proxy (p. ej. algunos MX/servicios mail si aplica).
+        </li>
+        <li>
+          <strong>Copiar y enviar por canal seguro</strong> (no en este HTML ni en chat público):
+          <ul class="clean">
+            <li>Zone ID de la zona <code>zuitch.com</code>.</li>
+            <li>API Token con permisos mínimos: Zone DNS Edit, WAF, Firewall, Cache Purge (sin permisos globales innecesarios).</li>
+            <li>Confirmación de que el proxy naranja está activo en los hosts web.</li>
+            <li>Lista de subdominios que deben quedar protegidos.</li>
+          </ul>
+        </li>
+      </ol>
+
+      <div class="checklist-box">
+        <h4>Plantilla de entrega (placeholders)</h4>
+        <ul class="clean">
+          <li>Zone ID: <code>________________</code></li>
+          <li>API Token: <code>________________</code> (enviar solo por canal seguro)</li>
+          <li>Dominios/subdominios: <code>zuitch.com</code>, <code>www</code>, <code>live</code>, otros: <code>________</code></li>
+          <li>Ventana de mantenimiento DNS acordada: <code>____ / ____</code></li>
+        </ul>
+      </div>
+
+      <h3>A.2 — Lo que implementará el equipo técnico</h3>
+      <ul class="clean">
+        <li>SSL/TLS en modo <strong>Full (Strict)</strong> con certificado válido en el origen.</li>
+        <li><strong>Bot Fight Mode</strong> / Super Bot Fight (según plan) para mitigar scrapers y automatismos.</li>
+        <li>WAF managed rules + reglas personalizadas para admin, login y APIs.</li>
+        <li>Rate limiting en rutas sensibles: <code>/requests.php</code>, <code>/api*</code>, login/registro, recuperación de contraseña.</li>
+        <li>Challenge (JS/Managed) en rutas de alto riesgo; exclusión cuidadosa de callbacks móviles/API legítimos.</li>
+        <li>Ocultación de la IP de origen; revisión de que el servidor solo acepte tráfico esperado vía Cloudflare (cuando sea viable).</li>
+      </ul>
+    </section>
+
+    <section class="block">
+      <h2>5. Fase B — Google reCAPTCHA</h2>
+      <p class="lead">
+        La plataforma ya contempla reCAPTCHA (Admin → General Settings). Se recomienda <strong>reCAPTCHA v2 “No soy un robot”</strong>
+        por compatibilidad con el flujo actual de WoWonder. Las claves deben estar vigentes y asociadas a los dominios correctos.
+      </p>
+
+      <h3>B.1 — Lo que debe hacer el cliente (paso a paso)</h3>
+      <ol class="steps">
+        <li>
+          Entrar a
+          <a href="https://www.google.com/recaptcha/admin" target="_blank" rel="noopener">Google reCAPTCHA Admin</a>
+          con una cuenta Google del proyecto.
+        </li>
+        <li>
+          <strong>Crear o verificar</strong> un sitio tipo <strong>reCAPTCHA v2 → “I’m not a robot” Checkbox</strong>.
+        </li>
+        <li>
+          En dominios autorizados, añadir al menos: <code>zuitch.com</code> y <code>www.zuitch.com</code>
+          (y cualquier host de prueba que se use).
+        </li>
+        <li>
+          Copiar <strong>Site Key</strong> y <strong>Secret Key</strong>.
+        </li>
+        <li>
+          Entregar ambas claves por canal seguro al equipo técnico (no pegarlas en este documento público).
+        </li>
+      </ol>
+
+      <div class="checklist-box">
+        <h4>Plantilla de entrega (placeholders)</h4>
+        <ul class="clean">
+          <li>Site Key: <code>________________</code></li>
+          <li>Secret Key: <code>________________</code> (solo canal seguro)</li>
+          <li>Tipo: reCAPTCHA v2 Checkbox</li>
+          <li>Dominios registrados: <code>zuitch.com</code>, <code>www.zuitch.com</code>, otros: <code>________</code></li>
+        </ul>
+      </div>
+
+      <h3>B.2 — Lo que implementará el equipo técnico</h3>
+      <ul class="clean">
+        <li>Activar/verificar reCAPTCHA en Admin y guardar Site Key + Secret Key.</li>
+        <li>Comprobar widgets en registro, contacto, forgot-password y creación de blogs.</li>
+        <li>Valorar ampliar verificación a login y a endpoints públicos abusables si el tráfico lo justifica.</li>
+        <li>Probar que usuarios reales pasan y que envíos sin token fallan.</li>
+      </ul>
+    </section>
+
+    <section class="block">
+      <h2>6. Fase C — Git y versionamiento</h2>
+      <p class="lead">
+        Ya existe repositorio Git con remoto en GitHub (<code>AlfaBusines2025/zuitch.com</code>).
+        El objetivo es un proceso claro: cada cambio trazable, sin secretos ni dumps en el historial, y deploy controlado en Plesk.
+      </p>
+
+      <h3>C.1 — Lo que debe hacer el cliente (paso a paso)</h3>
+      <ol class="steps">
+        <li>
+          Confirmar acceso de lectura/escritura al repositorio GitHub del proyecto
+          (invitar al desarrollador como colaborador si aún no lo es).
+        </li>
+        <li>
+          Acordar política de ramas: <code>master</code> (o <code>main</code>) estable + ramas <code>feature/…</code> o <code>develop</code>.
+        </li>
+        <li>
+          Comprometerse a <strong>no subir</strong> nunca: <code>config.php</code>, <code>.env</code>, dumps <code>*.sql</code>, zips de backup, carpetas <code>upload/</code> con media de usuarios.
+        </li>
+        <li>
+          Definir quién aprueba merges a la rama de producción (dueño del producto / técnico).
+        </li>
+      </ol>
+
+      <div class="checklist-box">
+        <h4>Plantilla de entrega</h4>
+        <ul class="clean">
+          <li>URL del repo: <code>https://github.com/…/…</code></li>
+          <li>Usuario(s) GitHub invitados: <code>________________</code></li>
+          <li>Rama de producción acordada: <code>master</code> / <code>________</code></li>
+        </ul>
+      </div>
+
+      <h3>C.2 — Lo que implementará el equipo técnico</h3>
+      <ul class="clean">
+        <li>Reforzar <code>.gitignore</code> (config, SQL, zips, uploads, caché, logs, vendor/node_modules).</li>
+        <li>Revisar que no haya secretos en commits recientes; plan de remediación si aparecen.</li>
+        <li>Convención de commits y flujo: branch → cambios → (PR opcional) → merge → deploy en Plesk.</li>
+        <li>Checklist pre-deploy (backup DB, sin archivos basura en webroot, prueba smoke).</li>
+        <li>GitHub Actions solo para checks (lint/smoke) si se acuerda; <strong>sin deploy automático</strong> salvo acuerdo explícito.</li>
+      </ul>
+
+      <h3>C.3 — Cómo pedir un cambio versionado (operativa)</h3>
+      <ol class="steps">
+        <li>Abrir rama desde la rama estable.</li>
+        <li>Implementar y probar en entorno/staging o ventana controlada.</li>
+        <li>Commit con mensaje claro (por qué del cambio).</li>
+        <li>Merge a la rama de producción tras revisión.</li>
+        <li>Desplegar en Plesk y verificar login, home y un formulario clave.</li>
+      </ol>
+    </section>
+
+    <section class="block">
+      <h2>7. Fase D — Hardening servidor y aplicación</h2>
+      <p class="lead">
+        Trabajo principalmente técnico una vez Cloudflare y claves estén disponibles. Reduce la superficie de ataque en el origen.
+      </p>
+      <ul class="clean">
+        <li>Retirar o bloquear por HTTP archivos sensibles del webroot (backups, SQL, zips de instalación).</li>
+        <li>Añadir headers: <code>X-Frame-Options</code>, <code>X-Content-Type-Options</code>, CSP progresiva (sin romper el frontend de golpe).</li>
+        <li>Revisar reglas que desactivan escaneo de POST; reactivar o sustituir con controles equivalentes si es viable.</li>
+        <li>Revisar límites de login fallidos y permisos de carpetas de subida (<code>upload/</code>).</li>
+        <li>Restringir exposición de <code>admin-cp</code>, APIs y Node livestream apoyándose en reglas Cloudflare.</li>
+        <li><strong>Roadmap PHP 7.4 → 8.2/8.3</strong>: fase posterior (alto impacto en WoWonder; requiere pruebas amplias; no bloquea el resto).</li>
+      </ul>
+    </section>
+
+    <section class="block">
+      <h2>8. Matriz de entrega: tú vs. equipo técnico</h2>
+      <p class="lead">Completar esta tabla al avanzar. Los secretos no se escriben en este archivo.</p>
+      <table class="deliver">
+        <thead>
+          <tr>
+            <th>Ítem</th>
+            <th>Tú entregas / haces</th>
+            <th>Equipo técnico configura</th>
+            <th>Estado</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Cloudflare — cuenta y zona</td>
+            <td>Alta del dominio, cambio de NS, proxy naranja</td>
+            <td>—</td>
+            <td>Pendiente</td>
+          </tr>
+          <tr>
+            <td>Cloudflare — Zone ID + API Token</td>
+            <td>Enviar por canal seguro</td>
+            <td>WAF, bots, rate limit, SSL Full Strict</td>
+            <td>Pendiente</td>
+          </tr>
+          <tr>
+            <td>Subdominios</td>
+            <td>Lista confirmada (www, live, etc.)</td>
+            <td>Reglas DNS/proxy y excepciones</td>
+            <td>Pendiente</td>
+          </tr>
+          <tr>
+            <td>reCAPTCHA Site + Secret</td>
+            <td>Crear en Google Admin y enviar</td>
+            <td>Activar en Admin y verificar formularios</td>
+            <td>Pendiente</td>
+          </tr>
+          <tr>
+            <td>GitHub</td>
+            <td>Acceso colaborador + política de ramas</td>
+            <td>.gitignore, flujo, commits, checklist deploy</td>
+            <td>Pendiente</td>
+          </tr>
+          <tr>
+            <td>Ventana DNS</td>
+            <td>Horario acordado para cambio de nameservers</td>
+            <td>Monitoreo post-cambio y ajustes SSL</td>
+            <td>Pendiente</td>
+          </tr>
+          <tr>
+            <td>Hardening origen</td>
+            <td>Aprobación / ventana de cambios</td>
+            <td>Headers, webroot, permisos, reglas admin/API</td>
+            <td>Pendiente</td>
+          </tr>
+          <tr>
+            <td>Migración PHP 8.x</td>
+            <td>Aprobación de fase posterior</td>
+            <td>Plan de pruebas y cutover</td>
+            <td>Posterior</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="block">
+      <h2>9. Orden recomendado de ejecución</h2>
+      <ol class="order-list">
+        <li>
+          <strong>Backup + Git limpio</strong>
+          <span>Copia de seguridad de archivos/BD; asegurar que secretos no entren al repo.</span>
+        </li>
+        <li>
+          <strong>reCAPTCHA keys</strong>
+          <span>Crear/verificar claves y entregarlas; activación rápida en Admin con bajo riesgo de downtime.</span>
+        </li>
+        <li>
+          <strong>Cloudflare DNS</strong>
+          <span>Cambio de nameservers en ventana acordada; validar sitio, correo y SSL.</span>
+        </li>
+        <li>
+          <strong>WAF / bots / rate limit</strong>
+          <span>Activar protecciones; ajustar excepciones para app móvil y APIs legítimas.</span>
+        </li>
+        <li>
+          <strong>Headers y webroot</strong>
+          <span>Endurecer respuestas HTTP y eliminar exposición de artefactos sensibles.</span>
+        </li>
+        <li>
+          <strong>Revisión login / API</strong>
+          <span>Probar abusos básicos, formularios y endpoints AJAX críticos.</span>
+        </li>
+        <li>
+          <strong>Roadmap PHP</strong>
+          <span>Planificar migración 8.x como fase independiente con batería de pruebas.</span>
+        </li>
+      </ol>
+    </section>
+
+    <section class="block">
+      <h2>10. Riesgos y notas</h2>
+      <ul class="clean">
+        <li><strong>Cambio de nameservers:</strong> puede haber minutos de inconsistencia DNS; coordinar ventana y no tocar MX a la ligera.</li>
+        <li><strong>Bot Fight / Challenges:</strong> posibles falsos positivos en apps nativas, webviews o clientes API; requieren allowlist/excepciones.</li>
+        <li><strong>reCAPTCHA:</strong> reduce spam en formularios; no sustituye WAF ni rate limit en APIs.</li>
+        <li><strong>Git:</strong> versiona código; no es backup de media en <code>upload/</code> ni de la base de datos.</li>
+        <li><strong>PHP 7.4 EOL:</strong> riesgo de seguridad creciente; se documenta como fase posterior por impacto en WoWonder.</li>
+        <li><strong>Secretos:</strong> Zone ID, API Token, Site Key y Secret Key nunca deben publicarse en este HTML ni en el repo.</li>
+      </ul>
+      <div class="callout warn">
+        <h3>Canal seguro para claves</h3>
+        <p>
+          Entregar tokens y secret keys por un medio cifrado o privado acordado (gestor de secretos, mensaje cifrado, panel seguro).
+          No usar correo sin cifrar ni issues públicos de GitHub.
+        </p>
+      </div>
+    </section>
+
+    <section class="block">
+      <h2>11. Alcance de esta propuesta / fuera de alcance inmediato</h2>
+      <div class="two-col">
+        <article class="feature-card ok">
+          <span class="tag">Incluido (plan)</span>
+          <h3>Diseño y checklist</h3>
+          <p>
+            Arquitectura de capas, pasos de Cloudflare, reCAPTCHA y Git, matriz de entrega,
+            orden de ejecución, hardening origen y roadmap PHP documentado.
+          </p>
+        </article>
+        <article class="feature-card">
+          <span class="tag">Posterior</span>
+          <h3>Ejecución en producción</h3>
+          <p>
+            Aplicar WAF, cambiar DNS, pegar claves en Admin, migrar PHP y commits/push
+            se realizan en una fase de implementación separada, tras recibir los datos del checklist.
+          </p>
+        </article>
+      </div>
+      <p class="out" style="margin-top:14px;">
+        Fuera de este documento como trabajo automático:
+      </p>
+      <ul class="out">
+        <li>Configurar la cuenta Cloudflare o cambiar nameservers por el proveedor sin el paso del cliente.</li>
+        <li>Crear el proyecto reCAPTCHA en la cuenta Google del cliente.</li>
+        <li>Migración completa a PHP 8.x en el mismo sprint que el edge.</li>
+        <li>Auditoría de seguridad certificada (pentest formal) — se puede cotizar aparte.</li>
+        <li>Backup offsite de media/BD (recomendado, pero es servicio de hosting/ops aparte).</li>
+      </ul>
+    </section>
+
+    <section class="block">
+      <h2>12. Condiciones y siguientes pasos</h2>
+      <ul class="clean">
+        <li>Trabajo sobre la plataforma actual WoWonder de <strong>zuitch.com</strong> en hosting Plesk.</li>
+        <li>El cliente completa el checklist de servicios externos y entrega claves por canal seguro.</li>
+        <li>Tras la entrega de datos, se agenda la implementación (Cloudflare → reglas → hardening → verificación).</li>
+        <li>Pruebas post-cambio: home, login, registro, un formulario con captcha, una ruta API/AJAX y admin.</li>
+      </ul>
+      <div class="sign">
+        <div class="sign-box">
+          <strong>Por el proveedor</strong><br>
+          Nombre / firma<br>
+          Fecha: _______________
+        </div>
+        <div class="sign-box">
+          <strong>Por el cliente (Zuitch)</strong><br>
+          Nombre / firma<br>
+          Fecha: _______________
+        </div>
+      </div>
+    </section>
+
+    <footer class="doc">
+      Documento de propuesta · Zuitch.com · Seguridad anti-bots · Cloudflare · reCAPTCHA · Git · 04/09/2026
+    </footer>
+  </div>
+</body>
+</html>

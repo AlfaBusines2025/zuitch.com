@@ -1,0 +1,3583 @@
+<style>
+<?php
+$wo_reel_archivo_url = (empty($wo['config']['site_url']) ? '' : rtrim($wo['config']['site_url'], '/')) . '/assets/fonts/reel/ArchivoBlack-Regular.ttf';
+?>
+@font-face {
+    font-family: 'Archivo Black';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url('<?php echo htmlspecialchars($wo_reel_archivo_url, ENT_QUOTES, 'UTF-8'); ?>') format('truetype');
+}
+#reel_video_preview::-webkit-media-controls,
+#reel_video_preview::-webkit-media-controls-enclosure,
+#reel_video_preview::-webkit-media-controls-panel {
+    display: none !important;
+    -webkit-appearance: none;
+}
+#reel_video_preview {
+    -webkit-appearance: none;
+}
+/* Área de edición: marco 9:16 centrado (mismo ratio que salida 1080×1920) */
+.wo_reels_video_fullscreen {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+.wo_reels_edit_stage {
+    position: relative;
+    background: #000;
+    overflow: hidden;
+    flex-shrink: 0;
+    box-sizing: border-box;
+    max-width: 100%;
+    max-height: 100%;
+}
+/* Flex: centra el <video> de verdad en WebKit/iOS (object-fit + 100% suele pegarlo arriba). */
+.wo_reels_video_fit {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    pointer-events: none;
+}
+.wo_reels_video_fit #reel_video_preview {
+    display: block;
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    object-position: center center;
+}
+/* Sin contorno heredado del tema: el texto del estudio usa solo el color de relleno (como el canvas). */
+#reel_text_editor {
+    -webkit-text-stroke-width: 0 !important;
+    text-shadow: none !important;
+    filter: none;
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    white-space: nowrap;
+}
+/* Ocupa el ancho útil del panel (nunca más ancho que la pantalla). */
+#reel_text_editor_wrap {
+    display: block;
+    width: 100%;
+    max-width: min(520px, 92vw);
+    margin: 0 auto;
+    vertical-align: middle;
+    box-sizing: border-box;
+}
+/* Panel audio reel — misma línea visual que el reproductor (azul pastel + cian) */
+#reel_audio_panel {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --reel-audio-pastel: #A9C6D9;
+    --reel-audio-cyan: #2E9FFF;
+    --reel-audio-cyan-dim: rgba(46, 159, 255, 0.42);
+    --reel-audio-surface: #0a0f14;
+    --reel-audio-border: #1e2d38;
+}
+.reel-audio-wave-frame {
+    background: var(--reel-audio-pastel);
+    box-shadow: inset 0 0 0 1px rgba(46, 159, 255, 0.35);
+}
+#reel_audio_wave_wrap {
+    position: relative;
+    margin: 0 auto;
+    max-width: 100%;
+    border-radius: 10px;
+    padding: 4px;
+    box-sizing: border-box;
+}
+#reel_audio_wave_inner {
+    background: var(--reel-audio-surface);
+    border-radius: 7px;
+    overflow: hidden;
+    position: relative;
+}
+#reel_audio_wave_canvas {
+    display: block;
+    width: 100%;
+    height: 70px;
+    touch-action: none;
+    cursor: grab;
+    vertical-align: top;
+}
+#reel_audio_wave_canvas:active {
+    cursor: grabbing;
+}
+input[type="range"].reel-audio-range {
+    width: 100%;
+    accent-color: #2E9FFF;
+}
+#reel_audio_panel .reel-audio-top-track {
+    flex: 1;
+    margin: 0 14px;
+    height: 8px;
+    background: var(--reel-audio-pastel);
+    border-radius: 4px;
+    position: relative;
+    box-shadow: inset 0 0 0 1px rgba(30, 45, 56, 0.35);
+}
+#reel_audio_panel #reel_audio_top_prog {
+    border-radius: 3px;
+    background: var(--reel-audio-cyan-dim);
+}
+#reel_audio_panel #reel_audio_top_handle_start {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    transform: translate(-50%, -50%);
+    z-index: 3;
+    width: 32px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: grab;
+    touch-action: none;
+    -webkit-tap-highlight-color: transparent;
+}
+#reel_audio_panel #reel_audio_top_handle_start:active {
+    cursor: grabbing;
+}
+#reel_audio_panel #reel_audio_top_dot_l,
+#reel_audio_panel #reel_audio_top_dot_r {
+    width: 5px;
+    height: 16px;
+    border-radius: 3px;
+    background: var(--reel-audio-cyan);
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.2);
+    flex-shrink: 0;
+}
+#reel_audio_panel #reel_audio_top_dot_r {
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+}
+#reel_audio_panel_video_stage {
+    max-height: 38vh;
+    width: 100%;
+    max-width: min(100%, calc(38vh * 9 / 16));
+    margin: 0 auto;
+    aspect-ratio: 9 / 16;
+    background: #000;
+    border-radius: 12px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: inset 0 0 0 1px var(--reel-audio-border);
+}
+#reel_audio_panel_video {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    vertical-align: middle;
+    background: #000;
+}
+/* Etiquetas (reel): chips en el lienzo */
+#reel_tag_layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 33;
+    pointer-events: none;
+}
+#reel_tag_layer .reel-editor-tag-chip {
+    pointer-events: auto;
+    position: absolute;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.95);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.35);
+    overflow: hidden;
+    cursor: grab;
+    touch-action: none;
+    background: #222;
+}
+#reel_tag_layer .reel-editor-tag-chip img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+#reel_tag_panel {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #fff !important;
+    color: #333;
+}
+#reel_tag_panel .reel-tag-panel-header {
+    border-bottom: 1px solid #e0e0e0;
+    background: #fff;
+}
+#reel_tag_panel .reel-tag-kind-row {
+    border-bottom: 1px solid #e0e0e0;
+    background: #f9f9f9;
+}
+#reel_tag_panel .reel-tag-kind-btn.reel-tag-kind-active {
+    background: linear-gradient(135deg, #42A5F5, #2196F3) !important;
+    border-color: #2196F3 !important;
+    color: #fff !important;
+    box-shadow: 0 2px 8px rgba(33, 150, 243, 0.25);
+}
+#reel_tag_panel .reel-tag-kind-btn.reel-tag-kind-idle {
+    background: #f5f5f5 !important;
+    border: 1px solid #e0e0e0 !important;
+    color: #333 !important;
+}
+#reel_tag_panel .reel-tag-input {
+    border: 1px solid #e0e0e0 !important;
+    background: #f5f5f5 !important;
+    color: #333 !important;
+    border-radius: 25px !important;
+}
+#reel_tag_panel .reel-tag-result-row {
+    background: #f5f5f5 !important;
+    border: 1px solid #e8e8e8 !important;
+}
+#reel_tag_panel .reel-tag-result-row:active {
+    background: #e3f2fd !important;
+}
+#reel_tag_panel .reel-tag-suggestions-label {
+    color: #757575;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 4px 4px 8px;
+}
+</style>
+
+<div class="wo_reels_editor_page" style="position:fixed;top:0;left:0;right:0;bottom:0;background:#fff;z-index:9999;overflow:hidden;">
+                    <!-- Paso 1: Cámara / Cargar video - Pantalla completa -->
+                    <div id="reels-step-1" style="position:fixed;top:0;left:0;right:0;bottom:0;background:#000;z-index:10000;display:flex;flex-direction:column;">
+                        <!-- Barra superior -->
+                        <div style="position:absolute;top:0;left:0;right:0;padding:15px;z-index:100;display:flex;justify-content:space-between;align-items:center;">
+                            <button type="button" id="reels_close_camera_btn" style="width:40px;height:40px;border-radius:50%;background:rgba(0,0,0,0.5);border:none;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:20px;font-weight:bold;">×</button>
+                            <div style="width:40px;height:40px;"></div>
+                        </div>
+
+                        <!-- Video de la cámara: centrado vertical/horizontal con cualquier relación de aspecto -->
+                        <div style="position:absolute;top:0;left:0;right:0;bottom:0;overflow:hidden;display:flex;align-items:center;justify-content:center;background:#000;">
+                            <video id="reel_camera_preview" autoplay muted playsinline style="width:100%;height:100%;max-width:100%;max-height:100%;object-fit:contain;object-position:center center;background:#000;"></video>
+                        </div>
+
+                        <!-- Barra inferior con controles -->
+                        <div style="position:absolute;bottom:0;left:0;right:0;padding:30px 20px;background:linear-gradient(to top, rgba(0,0,0,0.8), transparent);z-index:100;display:flex;justify-content:center;align-items:center;">
+                            <div style="display:flex;align-items:center;gap:48px;">
+                            <!-- Botón cargar video (izquierda) -->
+                            <label for="reel_file_input" style="width:52px;height:52px;border-radius:50%;background:rgba(0,0,0,0.45);border:2px solid rgba(255,255,255,0.7);display:flex;align-items:center;justify-content:center;cursor:pointer;margin:0;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 34 34" style="width:28px;height:28px;">
+                                    <path d="M27.5 1h-21C3.46 1 1 3.47 1 6.5v21C1 30.53 3.46 33 6.5 33h21c3.03 0 5.5-2.47 5.5-5.5v-21C33 3.47 30.53 1 27.5 1zM13 4h1.5c.82 0 1.5.67 1.5 1.5S15.32 7 14.5 7H13c-.83 0-1.5-.67-1.5-1.5S12.17 4 13 4zm8.58 12.19c.26.19.42.49.42.81 0 .33-.16.63-.42.82l-7 5c-.18.12-.38.18-.58.18a.92.92 0 0 1-.46-.11A.997.997 0 0 1 13 22V12c0-.37.21-.71.54-.88s.73-.15 1.04.07zM8 30H6.5c-.83 0-1.5-.67-1.5-1.5S5.67 27 6.5 27H8c.82 0 1.5.67 1.5 1.5S8.82 30 8 30zM8 7H6.5C5.67 7 5 6.33 5 5.5S5.67 4 6.5 4H8c.82 0 1.5.67 1.5 1.5S8.82 7 8 7zm6.5 23H13c-.83 0-1.5-.67-1.5-1.5S12.17 27 13 27h1.5c.82 0 1.5.67 1.5 1.5s-.68 1.5-1.5 1.5zm6.5 0h-1.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5H21c.82 0 1.5.67 1.5 1.5S21.82 30 21 30zm0-23h-1.5c-.83 0-1.5-.67-1.5-1.5S18.67 4 19.5 4H21c.82 0 1.5.67 1.5 1.5S21.82 7 21 7zm6.5 23H26c-.83 0-1.5-.67-1.5-1.5S25.17 27 26 27h1.5c.82 0 1.5.67 1.5 1.5s-.68 1.5-1.5 1.5zm0-23H26c-.83 0-1.5-.67-1.5-1.5S25.17 4 26 4h1.5c.82 0 1.5.67 1.5 1.5S28.32 7 27.5 7z" fill="#ffffff" opacity="1"></path>
+                                </svg>
+                                <input id="reel_file_input" type="file" accept="<?php echo($wo['config']['ffmpeg_system'] == 'on' ? '*/*' : 'video/*') ?>" style="display:none;">
+                            </label>
+
+                            <!-- Botón grabar (centro) -->
+                            <div style="display:flex;flex-direction:column;align-items:center;gap:10px;">
+                                <button type="button" id="reel_start_record" style="width:78px;height:78px;border-radius:50%;padding:0;background:#d50000;border:4px solid rgba(255,255,255,0.45);box-shadow:0 0 0 5px rgba(0,0,0,0.25);cursor:pointer;position:relative;">
+                                    <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:64px;height:64px;border-radius:50%;background:#d50000;"></div>
+                                </button>
+                                <button type="button" id="reel_stop_record" style="width:78px;height:78px;border-radius:50%;padding:0;display:none;background:#fff;border:4px solid rgba(255,255,255,0.45);cursor:pointer;position:relative;">
+                                    <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:40px;height:40px;border-radius:4px;background:#d50000;"></div>
+                                </button>
+                            </div>
+
+                            <!-- Botón girar cámara (derecha, misma altura) -->
+                            <button type="button" id="reel_flip_camera" style="width:52px;height:52px;border-radius:50%;background:rgba(0,0,0,0.45);border:2px solid rgba(255,255,255,0.7);display:flex;align-items:center;justify-content:center;cursor:pointer;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="512px" height="512px" viewBox="0 0 512 512" style="width:28px;height:28px;">
+                                    <path d="M432,144H373c-3,0-6.72-1.94-9.62-5L337.44,98.06a15.52,15.52,0,0,0-1.37-1.85C327.11,85.76,315,80,302,80H210c-13,0-25.11,5.76-34.07,16.21a15.52,15.52,0,0,0-1.37,1.85l-25.94,41c-2.22,2.42-5.34,5-8.62,5v-8a16,16,0,0,0-16-16H100a16,16,0,0,0-16,16v8H80a48.05,48.05,0,0,0-48,48V384a48.05,48.05,0,0,0,48,48H432a48.05,48.05,0,0,0,48-48V192A48.05,48.05,0,0,0,432,144ZM316.84,346.3a96.06,96.06,0,0,1-155.66-59.18,16,16,0,0,1-16.49-26.43l20-20a16,16,0,0,1,22.62,0l20,20A16,16,0,0,1,196,288a17.31,17.31,0,0,1-2-.14,64.07,64.07,0,0,0,102.66,33.63,16,16,0,1,1,20.21,24.81Zm50.47-63-20,20a16,16,0,0,1-22.62,0l-20-20a16,16,0,0,1,13.09-27.2A64,64,0,0,0,215,222.64,16,16,0,1,1,194.61,198a96,96,0,0,1,156,59,16,16,0,0,1,16.72,26.35Z" fill="#ffffff"></path>
+                                </svg>
+                            </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Paso 2: Edición y publicación -->
+                    <div id="reels-step-2" style="display:none;">
+                        <form class="reels-editor-form" method="post" enctype="multipart/form-data">
+                            <!-- Barra superior con iconos - Solo funcionales -->
+                            <div class="wo_reels_top_toolbar" style="position:fixed;top:0;left:0;right:0;display:flex;justify-content:space-between;align-items:center;padding:12px 15px;background:#fff;border-bottom:1px solid #e0e0e0;z-index:100;box-shadow:0 2px 4px rgba(0,0,0,0.05);">
+                                <button type="button" id="reels_close_btn" style="width:40px;height:40px;border-radius:50%;background:#f5f5f5;border:none;color:#333;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:20px;font-weight:bold;">×</button>
+                                <div style="display:flex;gap:10px;">
+                                    <button type="button" id="reel_text_toggle" style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#42A5F5,#2196F3);border:none;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 8px rgba(33,150,243,0.3);">
+                                        <svg viewBox="0 0 24 24" style="width:22px;height:22px;fill:#fff;"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1.003 1.003 0 0 0 0-1.42l-2.34-2.34a1.003 1.003 0 0 0-1.42 0l-1.83 1.83 3.75 3.75 1.84-1.82z"></path></svg>
+                                    </button>
+                                    <button type="button" id="reel_tag_toggle" title="<?php echo htmlspecialchars($wo['lang']['tag'] ?? 'Etiquetar', ENT_QUOTES, 'UTF-8'); ?>" style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#42A5F5,#2196F3);border:none;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 8px rgba(33,150,243,0.3);">
+                                        <i class="fa fa-tag" style="font-size:18px;"></i>
+                                    </button>
+                                    <label id="reel_audio_toolbar_label" for="reel_audio_input" style="width:40px;height:40px;border-radius:50%;background:#f5f5f5;border:none;color:#333;display:flex;align-items:center;justify-content:center;cursor:pointer;margin:0;">
+                                        <svg viewBox="0 0 24 24" style="width:22px;height:22px;fill:#333;"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"></path></svg>
+                                        <input id="reel_audio_input" name="reel_audio" type="file" accept="audio/*" style="display:none;">
+                                    </label>
+                                    <input id="reel_audio_replace_input" type="file" accept="audio/*" style="display:none;" aria-hidden="true" tabindex="-1">
+                                    <button type="button" id="reel_download_btn" title="Descargar video editado" style="width:40px;height:40px;border-radius:50%;background:#f5f5f5;border:none;color:#333;display:flex;align-items:center;justify-content:center;cursor:pointer;">
+                                        <svg viewBox="0 0 24 24" style="width:22px;height:22px;fill:#333;"><path d="M5 20h14v-2H5v2zm7-18v10.17l3.59-3.58L17 10l-5 5-5-5 1.41-1.41L11 12.17V2h1z"></path></svg>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Video en marco 9:16 centrado; texto y exportación alineados a 1080×1920 -->
+                            <div class="wo_reels_video_fullscreen" style="position:relative;width:100%;height:calc(100vh - 200px);min-height:500px;background:#000;overflow:hidden;margin-top:64px;">
+                                <div id="reel_edit_stage" class="wo_reels_edit_stage">
+                                <div class="wo_reels_video_fit">
+                                <video id="reel_video_preview" playsinline webkit-playsinline x5-playsinline disableremoteplayback controlslist="nodownload noplaybackrate noremoteplayback nofullscreen" style="pointer-events:none;"></video>
+                                </div>
+                                <canvas id="reel_text_overlay" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:30;"></canvas>
+                                <!-- Div transparente para capturar eventos de arrastre del texto -->
+                                <div id="reel_text_drag_area" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:31;cursor:move;"></div>
+                                <div id="reel_tag_layer" aria-hidden="true"></div>
+                                <div id="reel_text_trash_zone" title="<?php echo $wo['lang']['delete'] ?? 'Eliminar'; ?>" style="display:none;position:absolute;bottom:58px;right:10px;width:52px;height:52px;border-radius:12px;background:rgba(0,0,0,0.5);border:2px dashed rgba(255,255,255,0.45);z-index:45;align-items:center;justify-content:center;pointer-events:none;box-sizing:border-box;">
+                                    <svg viewBox="0 0 24 24" style="width:28px;height:28px;fill:rgba(255,255,255,0.9);"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"></path></svg>
+                                </div>
+
+                                <!-- Barra de control superpuesta en la parte inferior del video -->
+                                <div class="wo_reels_video_controls_overlay" style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(to top, rgba(0,0,0,0.8), transparent);padding:15px;display:flex;align-items:center;justify-content:space-between;z-index:40;pointer-events:auto;">
+                                    <div style="display:flex;align-items:center;gap:12px;">
+                                        <button type="button" id="reel_play_pause_overlay" style="background:none;border:none;color:#fff;cursor:pointer;padding:5px;">
+                                            <svg id="play_icon_overlay" viewBox="0 0 24 24" style="width:24px;height:24px;fill:#fff;"><path d="M8 5v14l11-7z"></path></svg>
+                                            <svg id="pause_icon_overlay" viewBox="0 0 24 24" style="width:24px;height:24px;fill:#fff;display:none;"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"></path></svg>
+                                        </button>
+                                        <div style="color:#fff;font-size:13px;font-weight:500;">
+                                            <span id="reel_current_time">0:00</span> / <span id="reel_total_time">0:00</span>
+                                        </div>
+                                    </div>
+                                    <div style="display:flex;align-items:center;gap:12px;">
+                                        <button type="button" id="reel_volume_toggle" style="background:none;border:none;color:#fff;cursor:pointer;padding:5px;">
+                                            <svg viewBox="0 0 24 24" style="width:20px;height:20px;fill:#fff;"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"></path></svg>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Estudio de texto pantalla completa (estilo editor móvil) -->
+                                <div id="reel_text_panel" style="display:none;position:fixed;z-index:110;top:64px;left:0;right:0;bottom:0;background:#000;flex-direction:column;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+                                    <div style="flex-shrink:0;display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid #222;">
+                                        <button type="button" id="reel_text_studio_close" style="width:40px;height:40px;border-radius:50%;border:none;background:#1e1e1e;color:#fff;font-size:20px;line-height:1;cursor:pointer;" title="<?php echo $wo['lang']['cancel'] ?? 'Cerrar'; ?>">←</button>
+                                        <button type="button" id="reel_text_add_layer" style="padding:8px 14px;border-radius:20px;border:1px solid #444;background:#1e1e1e;color:#fff;font-size:13px;cursor:pointer;font-weight:600;">+ <?php echo $wo['lang']['reel_add_text'] ?? 'Texto'; ?></button>
+                                        <span style="flex:1;text-align:center;color:#666;font-size:12px;"><?php echo $wo['lang']['text'] ?? 'Texto'; ?></span>
+                                        <button type="button" id="reel_text_apply" style="padding:10px 22px;border-radius:22px;border:none;background:#fff;color:#000;font-weight:700;font-size:15px;cursor:pointer;"><?php echo $wo['lang']['done'] ?? 'Listo'; ?></button>
+                                    </div>
+                                    <div style="flex:1;display:flex;min-height:0;">
+                                        <div id="reel_text_size_col" style="width:48px;flex-shrink:0;display:flex;justify-content:center;align-items:center;padding:12px 0;">
+                                            <div id="reel_text_size_track" style="position:relative;width:6px;height:min(55vh,280px);background:rgba(255,255,255,0.22);border-radius:3px;cursor:pointer;touch-action:none;">
+                                                <div id="reel_text_size_thumb" style="position:absolute;left:50%;top:35%;width:26px;height:26px;background:#fff;border-radius:50%;box-shadow:0 2px 10px rgba(0,0,0,0.4);cursor:grab;transform:translate(-50%,-50%);"></div>
+                                            </div>
+                                        </div>
+                                        <div style="flex:1;display:flex;align-items:center;justify-content:center;padding:16px 12px 24px;">
+                                            <div id="reel_text_editor_wrap">
+                                            <input id="reel_text_editor" type="text" maxlength="200" placeholder="<?php echo $wo['lang']['post_text']; ?>" autocomplete="off" style="min-width:0;width:100%;max-width:100%;padding:0;border:none;background:transparent;color:#fff;text-align:center;outline:none;font-size:28px;font-weight:700;display:block;vertical-align:middle;">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div id="reel_emoji_popover" style="display:none;flex-shrink:0;max-height:180px;overflow-y:auto;margin:0 12px 8px;padding:10px;background:#141414;border:1px solid #333;border-radius:10px;"></div>
+                                    <div id="reel_font_carousel_wrap" style="flex-shrink:0;overflow-x:auto;padding:6px 0 14px;border-top:1px solid #1a1a1a;-webkit-overflow-scrolling:touch;scroll-margin-bottom:12px;">
+                                        <div id="reel_font_carousel" style="display:flex;gap:10px;padding:0 14px;white-space:nowrap;">
+                                            <button type="button" class="reel-font-pill" data-font="mono" style="padding:10px 18px;border-radius:22px;border:1px solid #444;background:#1a1a1a;color:#fff;font-size:14px;cursor:pointer;font-family:ui-monospace,monospace;"><?php echo $wo['lang']['reel_style_typewriter'] ?? 'Máquina'; ?></button>
+                                            <button type="button" class="reel-font-pill" data-font="sans" style="padding:10px 18px;border-radius:22px;border:1px solid #444;background:#1a1a1a;color:#fff;font-size:15px;cursor:pointer;font-weight:800;font-family:Arial,sans-serif;"><?php echo $wo['lang']['reel_style_strong'] ?? 'Negrita'; ?></button>
+                                            <button type="button" class="reel-font-pill" data-font="meme" style="padding:10px 18px;border-radius:22px;border:1px solid #444;background:#1a1a1a;color:#fff;font-size:15px;cursor:pointer;font-weight:700;font-family:'Comic Sans MS','Chalkboard SE',cursive,sans-serif;"><?php echo $wo['lang']['reel_style_meme'] ?? 'Meme'; ?></button>
+                                            <button type="button" class="reel-font-pill" data-font="elegant" style="padding:10px 18px;border-radius:22px;border:1px solid #444;background:#1a1a1a;color:#fff;font-size:15px;cursor:pointer;font-style:italic;font-family:Georgia,serif;"><?php echo $wo['lang']['reel_style_elegant'] ?? 'Elegante'; ?></button>
+                                            <button type="button" class="reel-font-pill" data-font="direction" style="padding:10px 18px;border-radius:22px;border:1px solid #444;background:#1a1a1a;color:#fff;font-size:13px;cursor:pointer;font-weight:900;font-family:Impact,Haettenschweiler,'Archivo Black',sans-serif;letter-spacing:0.04em;"><?php echo $wo['lang']['reel_style_direction'] ?? 'DIRECCIÓN'; ?></button>
+                                        </div>
+                                    </div>
+                                    <div id="reel_text_toolbar" style="flex-shrink:0;display:flex;justify-content:space-around;align-items:center;flex-wrap:wrap;gap:8px;padding:14px 8px calc(18px + env(safe-area-inset-bottom,0));background:#141414;border-top:1px solid #262626;">
+                                        <button type="button" id="reel_tb_a" class="reel-tb-btn is-active" title="<?php echo $wo['lang']['font'] ?? 'Tipografías'; ?>" style="width:44px;height:44px;border-radius:12px;border:none;background:#2a2a2a;color:#fff;font-weight:800;font-size:15px;cursor:pointer;">Aa</button>
+                                        <button type="button" id="reel_tb_color" title="<?php echo $wo['lang']['color'] ?? 'Color'; ?>" style="width:44px;height:44px;border-radius:12px;border:none;background:#2a2a2a;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;">
+                                            <span style="width:26px;height:26px;border-radius:50%;background:conic-gradient(red,orange,yellow,green,cyan,blue,magenta,red);border:2px solid #fff;"></span>
+                                        </button>
+                                        <button type="button" id="reel_tb_italic" title="<?php echo $wo['lang']['italic'] ?? 'Cursiva'; ?>" style="width:44px;height:44px;border-radius:12px;border:none;background:#2a2a2a;color:#fff;font-size:17px;font-style:italic;font-weight:700;cursor:pointer;padding:0;">I</button>
+                                        <button type="button" id="reel_tb_align" title="<?php echo $wo['lang']['alignment'] ?? 'Alinear'; ?>" style="width:44px;height:44px;border-radius:12px;border:none;background:#2a2a2a;color:#fff;cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center;">
+                                            <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M3 17h18v2H3v-2zm0-6h12v2H3v-2zm0-6h18v2H3V5zm0 12h10v2H3v-2z"/></svg>
+                                        </button>
+                                        <button type="button" id="reel_tb_box" title="<?php echo $wo['lang']['reel_text_box'] ?? 'Fondo'; ?>" style="width:44px;height:44px;border-radius:12px;border:none;background:#2a2a2a;color:#fff;cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;border:2px solid #555;">A</button>
+                                        <button type="button" id="reel_emoji_toggle" title="<?php echo $wo['lang']['emoji'] ?? 'Emojis'; ?>" style="width:44px;height:44px;border-radius:12px;border:none;background:#2a2a2a;color:#fff;cursor:pointer;padding:0;font-size:22px;line-height:1;">😊</button>
+                                    </div>
+                                    <input type="color" id="reel_text_color" value="#ffffff" style="position:absolute;opacity:0;width:1px;height:1px;pointer-events:none;left:-100px;top:0;">
+                                    <input type="hidden" id="reel_text_font" value="meme">
+                                    <p style="display:none;" id="reel_trash_hint_store"><?php echo $wo['lang']['reel_trash_hint'] ?? 'Arrastra un texto hasta el icono de basura para eliminarlo.'; ?></p>
+                                </div>
+                                </div>
+                            </div>
+
+                            <!-- Timeline para recortar (único) -->
+                            <div class="wo_reels_trim_timeline" style="background:#fff;padding:12px 15px;border-bottom:1px solid #e0e0e0;">
+                                <div id="reel_timeline_container" style="position:relative;height:45px;background:#f0f0f0;border-radius:8px;overflow:hidden;touch-action:none;margin-bottom:10px;">
+                                    <div id="reel_timeline_track" style="position:absolute;top:0;left:0;right:0;height:100%;background:#e0e0e0;cursor:pointer;"></div>
+                                    <div id="reel_timeline_preview" style="position:absolute;top:0;left:0;height:100%;display:flex;overflow-x:auto;width:100%;"></div>
+                                    <div id="reel_trim_handle_start" style="position:absolute;top:-4px;bottom:-4px;width:20px;background:#2196F3;cursor:ew-resize;z-index:20;left:0%;border-radius:10px;box-shadow:0 2px 6px rgba(33,150,243,0.4);"></div>
+                                    <div id="reel_trim_handle_end" style="position:absolute;top:-4px;bottom:-4px;width:20px;background:#2196F3;cursor:ew-resize;z-index:20;right:0%;border-radius:10px;box-shadow:0 2px 6px rgba(33,150,243,0.4);"></div>
+                                    <div id="reel_trim_selection" style="position:absolute;top:0;bottom:0;background:rgba(33,150,243,0.25);z-index:10;left:0%;right:0%;"></div>
+                                </div>
+                                <div style="margin-top:8px;display:flex;justify-content:space-between;font-size:11px;color:#999;">
+                                    <span>Inicio: <span id="reel_trim_start_display">0.0s</span></span>
+                                    <span>Fin: <span id="reel_trim_end_display">0.0s</span></span>
+                                </div>
+                                <input type="hidden" id="reel_trim_start" name="reel_trim_start" value="0">
+                                <input type="hidden" id="reel_trim_end" name="reel_trim_end" value="0">
+                                <input type="hidden" id="reel_audio_start" name="reel_audio_start" value="0">
+                                <input type="hidden" id="reel_audio_duration" name="reel_audio_duration" value="0">
+                                <input type="hidden" id="reel_music_volume" name="reel_music_volume" value="1">
+                                <input type="hidden" id="reel_video_volume" name="reel_video_volume" value="1">
+                            </div>
+
+                            <!-- Panel pantalla completa: recorte y volumen del audio añadido -->
+                            <div id="reel_audio_panel" style="display:none;position:fixed;inset:0;z-index:120;background:#000;flex-direction:column;box-sizing:border-box;">
+                                <div style="flex-shrink:0;display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid #1e2d38;">
+                                    <button type="button" id="reel_audio_panel_close" style="width:40px;height:40px;border-radius:50%;border:1px solid rgba(169,198,217,0.35);background:#121a22;color:#fff;font-size:18px;cursor:pointer;" title="<?php echo $wo['lang']['cancel'] ?? 'Cerrar'; ?>">←</button>
+                                    <div style="flex:1;text-align:center;">
+                                        <span style="color:#fff;font-weight:700;font-size:16px;"><?php echo $wo['lang']['audio'] ?? 'Audio'; ?></span>
+                                        <button type="button" id="reel_audio_replace_btn" style="display:block;margin:5px auto 0;padding:0;border:none;background:transparent;color:#2E9FFF;font-size:12px;font-weight:600;cursor:pointer;text-decoration:underline;"><?php echo $wo['lang']['reel_audio_replace_file'] ?? 'Reemplazar audio'; ?></button>
+                                    </div>
+                                    <button type="button" id="reel_audio_panel_done" style="padding:10px 20px;border-radius:22px;border:none;cursor:pointer;font-weight:700;font-size:14px;color:#fff;background:#2E9FFF;box-shadow:0 2px 12px rgba(46,159,255,0.35);"><?php echo $wo['lang']['done'] ?? 'Listo'; ?></button>
+                                </div>
+                                <div style="flex-shrink:0;padding:8px 16px 0;">
+                                    <div id="reel_audio_panel_video_stage">
+                                        <video id="reel_audio_panel_video" playsinline webkit-playsinline x5-playsinline disableremoteplayback controlslist="nodownload noplaybackrate noremoteplayback nofullscreen"></video>
+                                    </div>
+                                    <div style="display:flex;align-items:center;justify-content:center;gap:18px;padding:12px 0 4px;">
+                                        <button type="button" id="reel_audio_panel_play" style="width:52px;height:52px;border-radius:50%;border:2px solid #fff;background:transparent;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;">
+                                            <svg id="reel_audio_panel_play_icon" viewBox="0 0 24 24" style="width:28px;height:28px;fill:#fff;margin-left:3px;"><path d="M8 5v14l11-7z"></path></svg>
+                                            <svg id="reel_audio_panel_pause_icon" viewBox="0 0 24 24" style="width:28px;height:28px;fill:#fff;display:none;"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"></path></svg>
+                                        </button>
+                                        <span id="reel_audio_panel_time" style="color:#fff;font-size:15px;font-weight:600;min-width:120px;">0:00 / 0:00</span>
+                                    </div>
+                                </div>
+                                <div style="flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:16px 20px 8px;">
+                                    <div id="reel_audio_seg_badge" style="width:44px;height:44px;border-radius:50%;border:2px solid #A9C6D9;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;">0</div>
+                                    <div class="reel-audio-top-track">
+                                        <div id="reel_audio_top_prog" style="position:absolute;left:0;top:0;bottom:0;width:35%;"></div>
+                                        <div id="reel_audio_top_handle_start" aria-label="<?php echo htmlspecialchars($wo['lang']['reel_audio_start_handle'] ?? 'Inicio del fragmento de audio', ENT_QUOTES, 'UTF-8'); ?>">
+                                            <div id="reel_audio_top_dot_l"></div>
+                                        </div>
+                                        <div id="reel_audio_top_dot_r" style="position:absolute;top:50%;transform:translate(-50%,-50%);left:100%;"></div>
+                                    </div>
+                                    <button type="button" id="reel_audio_preview_restart" style="width:40px;height:40px;border-radius:50%;border:1px solid rgba(169,198,217,0.5);background:#121a22;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;" title="Desde el inicio del recorte">
+                                        <svg viewBox="0 0 24 24" style="width:20px;height:20px;fill:#fff;"><path d="M6 6h12v12H6z"></path></svg>
+                                    </button>
+                                </div>
+                                <div style="flex:1;display:flex;flex-direction:column;justify-content:flex-start;padding:8px 16px 8px;min-height:0;">
+                                    <div id="reel_audio_wave_wrap" class="reel-audio-wave-frame">
+                                        <div id="reel_audio_wave_inner">
+                                            <canvas id="reel_audio_wave_canvas" width="600" height="70"></canvas>
+                                        </div>
+                                    </div>
+                                    <p style="color:#8eb4c9;font-size:12px;margin:8px 0 10px;text-align:center;"><?php echo $wo['lang']['reel_audio_trim_hint'] ?? 'Desliza la onda para elegir qué parte del audio va con el video. La duración es la del recorte del video.'; ?></p>
+                                    <label style="display:block;color:#A9C6D9;font-size:13px;margin-top:4px;"><?php echo $wo['lang']['reel_music_volume_label'] ?? 'Volumen música / audio subido'; ?></label>
+                                    <input type="range" id="reel_audio_music_slider" class="reel-audio-range" min="0" max="200" value="100" step="1">
+                                    <label style="display:block;color:#A9C6D9;font-size:13px;margin-top:14px;"><?php echo $wo['lang']['reel_video_audio_volume_label'] ?? 'Volumen audio original del video (0 = silenciar)'; ?></label>
+                                    <input type="range" id="reel_audio_video_slider" class="reel-audio-range" min="0" max="100" value="100" step="1">
+                                </div>
+                            </div>
+
+                            <!-- Panel etiquetar (amigos, páginas, grupos, productos, enlace externo) -->
+                            <div id="reel_tag_panel" style="display:none;position:fixed;inset:0;z-index:115;flex-direction:column;box-sizing:border-box;">
+                                <div class="reel-tag-panel-header" style="flex-shrink:0;display:flex;align-items:center;gap:10px;padding:12px 15px;">
+                                    <button type="button" id="reel_tag_panel_close" style="width:40px;height:40px;border-radius:50%;border:none;background:#f5f5f5;color:#333;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;">←</button>
+                                    <span style="flex:1;text-align:center;color:#333;font-weight:700;font-size:16px;"><?php echo htmlspecialchars($wo['lang']['tag'] ?? 'Etiquetar', ENT_QUOTES, 'UTF-8'); ?></span>
+                                    <button type="button" id="reel_tag_panel_done" style="padding:10px 22px;border-radius:22px;border:none;cursor:pointer;font-weight:700;font-size:14px;color:#fff;background:linear-gradient(135deg,#42A5F5,#2196F3);box-shadow:0 2px 8px rgba(33,150,243,0.35);"><?php echo $wo['lang']['done'] ?? 'Listo'; ?></button>
+                                </div>
+                                <div class="reel-tag-kind-row" style="flex-shrink:0;display:flex;flex-wrap:wrap;gap:8px;padding:12px 15px;">
+                                    <button type="button" class="reel-tag-kind-btn reel-tag-kind-active" data-kind="user" style="padding:8px 14px;border-radius:20px;font-size:13px;cursor:pointer;"><?php echo htmlspecialchars($wo['lang']['friends'] ?? 'Amigos', ENT_QUOTES, 'UTF-8'); ?></button>
+                                    <button type="button" class="reel-tag-kind-btn reel-tag-kind-idle" data-kind="page" style="padding:8px 14px;border-radius:20px;font-size:13px;cursor:pointer;"><?php echo htmlspecialchars($wo['lang']['pages'] ?? 'Páginas', ENT_QUOTES, 'UTF-8'); ?></button>
+                                    <button type="button" class="reel-tag-kind-btn reel-tag-kind-idle" data-kind="group" style="padding:8px 14px;border-radius:20px;font-size:13px;cursor:pointer;"><?php echo htmlspecialchars($wo['lang']['groups'] ?? 'Grupos', ENT_QUOTES, 'UTF-8'); ?></button>
+                                    <button type="button" class="reel-tag-kind-btn reel-tag-kind-idle" data-kind="product" style="padding:8px 14px;border-radius:20px;font-size:13px;cursor:pointer;"><?php echo htmlspecialchars($wo['lang']['products'] ?? 'Productos', ENT_QUOTES, 'UTF-8'); ?></button>
+                                    <button type="button" class="reel-tag-kind-btn reel-tag-kind-idle" data-kind="external" style="padding:8px 14px;border-radius:20px;font-size:13px;cursor:pointer;"><?php echo htmlspecialchars($wo['lang']['url'] ?? 'Enlace', ENT_QUOTES, 'UTF-8'); ?></button>
+                                </div>
+                                <div id="reel_tag_search_block" style="flex-shrink:0;padding:12px 15px;">
+                                    <input type="search" id="reel_tag_search_input" class="reel-tag-input" autocomplete="off" placeholder="<?php echo htmlspecialchars($wo['lang']['search'] ?? 'Buscar…', ENT_QUOTES, 'UTF-8'); ?>" style="width:100%;box-sizing:border-box;padding:12px 16px;font-size:15px;">
+                                </div>
+                                <div id="reel_tag_external_block" style="display:none;flex-shrink:0;padding:0 15px 12px;flex-direction:column;gap:10px;">
+                                    <input type="url" id="reel_tag_external_url" class="reel-tag-input" placeholder="https://…" style="width:100%;box-sizing:border-box;padding:12px 16px;font-size:14px;border-radius:12px!important;">
+                                    <input type="text" id="reel_tag_external_label" class="reel-tag-input" placeholder="<?php echo htmlspecialchars($wo['lang']['title'] ?? 'Título (opcional)', ENT_QUOTES, 'UTF-8'); ?>" style="width:100%;box-sizing:border-box;padding:12px 16px;font-size:14px;border-radius:12px!important;">
+                                    <input type="url" id="reel_tag_external_img" class="reel-tag-input" placeholder="<?php echo htmlspecialchars($wo['lang']['image'] ?? 'URL imagen (opcional)', ENT_QUOTES, 'UTF-8'); ?>" style="width:100%;box-sizing:border-box;padding:12px 16px;font-size:14px;border-radius:12px!important;">
+                                    <button type="button" id="reel_tag_external_add" style="padding:12px;border-radius:25px;border:none;background:linear-gradient(135deg,#42A5F5,#2196F3);color:#fff;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(33,150,243,0.35);"><?php echo htmlspecialchars($wo['lang']['add'] ?? 'Añadir', ENT_QUOTES, 'UTF-8'); ?></button>
+                                </div>
+                                <div id="reel_tag_results" style="flex:1;overflow-y:auto;padding:8px 15px 24px;min-height:0;background:#fff;"></div>
+                            </div>
+
+                            <!-- Campos ocultos para el servidor -->
+                            <div style="display:none;">
+                                <input id="reel_text" name="reel_text" type="text" maxlength="200">
+                                <input type="hidden" name="reel_tags_json" id="reel_tags_json" value="">
+                                <input type="hidden" name="reel_texts_json" id="reel_texts_json" value="">
+                                <input type="hidden" name="reel_text_x" id="reel_text_x" value="0">
+                                <input type="hidden" name="reel_text_y" id="reel_text_y" value="0">
+                                <input type="hidden" name="reel_stage_w" id="reel_stage_w" value="1080">
+                                <input type="hidden" name="reel_stage_h" id="reel_stage_h" value="1920">
+                            </div>
+
+                            <input type="hidden" name="hash_id" value="<?php echo Wo_CreateSession();?>">
+                            <input type="hidden" name="reels" value="1">
+
+                            <!-- Barra inferior con título y botón enviar -->
+                            <div class="wo_reels_bottom_bar" style="position:fixed;bottom:0;left:0;right:0;display:flex;justify-content:space-between;align-items:center;padding:15px;background:#fff;border-top:1px solid #e0e0e0;z-index:100;box-shadow:0 -2px 8px rgba(0,0,0,0.05);gap:10px;">
+                                <input id="videoTitle" name="videoTitle" type="text" maxlength="150" placeholder="<?php echo $wo['lang']['add_video_title'] ?? 'Agregar título del video'; ?>" required style="flex:1;padding:12px 15px;border:1px solid #e0e0e0;border-radius:25px;background:#f5f5f5;color:#333;font-size:14px;outline:none;">
+                                <button type="submit" class="add_wow_loader" style="width:50px;height:50px;border-radius:50%;background:linear-gradient(135deg,#42A5F5,#2196F3);border:none;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(33,150,243,0.4);flex-shrink:0;">
+                                    <svg viewBox="0 0 24 24" style="width:26px;height:26px;fill:#fff;"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path></svg>
+                                </button>
+                            </div>
+                        </form>
+
+                        <div id="reel-publish-overlay" class="reel-publish-overlay" role="alertdialog" aria-live="polite" aria-hidden="true" aria-labelledby="reel-publish-title" aria-describedby="reel-publish-notice">
+                            <div class="reel-publish-overlay-card">
+                                <div class="reel-publish-spinner" aria-hidden="true"></div>
+                                <p id="reel-publish-title">Subiendo video…</p>
+                                <div class="reel-publish-bar-wrap">
+                                    <div id="reel-publish-bar"></div>
+                                </div>
+                                <p id="reel-publish-pct">0%</p>
+                                <p id="reel-publish-notice">Tu video se está subiendo y procesando. Cuando termine, la versión final puede tardar unos minutos en aparecer en Reels.</p>
+                            </div>
+                        </div>
+
+                        <div id="reels-editor-status" class="app-general-alert setting-update-alert" style="margin:15px;padding:12px;border-radius:8px;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style type="text/css">
+@keyframes reelFontBarPulse {
+    0%, 100% { box-shadow: inset 0 0 0 2px transparent; background: transparent; }
+    50% { box-shadow: inset 0 0 0 2px rgba(66,165,245,0.95); }
+}
+#reel_font_carousel_wrap.reel-font-focus {
+    animation: reelFontBarPulse 0.9s ease 2;
+    border-radius: 12px;
+}
+/* Overlay publicación reel: subida + procesado */
+#reel-publish-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 10050;
+    background: rgba(0, 0, 0, 0.65);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    box-sizing: border-box;
+}
+#reel-publish-overlay.reel-publish-overlay-visible {
+    display: flex;
+}
+.reel-publish-overlay-card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 24px 20px;
+    max-width: 360px;
+    width: 100%;
+    text-align: center;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.22);
+}
+.reel-publish-overlay-card .reel-publish-spinner {
+    width: 44px;
+    height: 44px;
+    margin: 0 auto 14px;
+    border: 3px solid #e3f2fd;
+    border-top-color: #2196f3;
+    border-radius: 50%;
+    animation: reelPublishSpin 0.85s linear infinite;
+}
+@keyframes reelPublishSpin {
+    to { transform: rotate(360deg); }
+}
+#reel-publish-title {
+    margin: 0 0 4px;
+    font-size: 16px;
+    font-weight: 600;
+    color: #1a1a1a;
+}
+.reel-publish-bar-wrap {
+    height: 10px;
+    background: #ececec;
+    border-radius: 6px;
+    overflow: hidden;
+    margin: 14px 0 6px;
+}
+#reel-publish-bar {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #2196f3, #42a5f5);
+    border-radius: 6px;
+    transition: width 0.12s ease-out;
+}
+#reel-publish-bar.reel-publish-bar-indeterminate {
+    width: 100% !important;
+    background: linear-gradient(90deg, #2196f3 0%, #64b5f6 45%, #2196f3 100%);
+    background-size: 220% 100%;
+    animation: reelPublishBarShimmer 1.1s ease infinite;
+}
+@keyframes reelPublishBarShimmer {
+    0% { background-position: 100% 0; }
+    100% { background-position: -100% 0; }
+}
+#reel-publish-pct {
+    margin: 0 0 12px;
+    font-size: 15px;
+    font-weight: 600;
+    color: #2196f3;
+}
+#reel-publish-notice {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.45;
+    color: #555;
+}
+</style>
+
+<?php
+$wo_reel_emoji_picker_candidates = array(
+    '😀', '😃', '😄', '😁', '😅', '😂', '🤣', '😊', '😇', '🙂', '😉', '😍', '🥰', '😘', '😋', '😛', '🤪', '😜', '🤑', '🤗', '🤔', '😏', '😒', '😔', '😢', '😭', '😤', '😠', '🤬', '😱', '😳', '😎', '😲', '😴', '🤢', '🤮', '💀', '👻', '💩', '😺', '👋', '👍', '👎', '👏', '🙌', '🙏', '✌️', '🤞', '💪', '❤️', '🧡', '💛', '💚', '💙', '💜', '🖤', '💔', '💯', '🔥', '✨', '⭐', '🎉', '🎵', '🎶', '📷', '🎥', '💬', '👀', '💡', '🌟', '✅', '❌', '⚡', '🌈', '☀️', '🌙', '⚽', '🏆', '🎂', '🍕', '☕', '✈️', '🚀', '🐶', '🐱', '🎁', '🙈', '🙉', '🙊',
+);
+$wo_reel_emoji_picker_list = function_exists('Wo_ReelFilterEmojiPickerToTwemojiAssets')
+    ? Wo_ReelFilterEmojiPickerToTwemojiAssets($wo_reel_emoji_picker_candidates)
+    : $wo_reel_emoji_picker_candidates;
+$wo_reel_editor_open_tag = !empty($_GET['open_tag']) && (string) $_GET['open_tag'] === '1';
+?>
+<script type="text/javascript">
+window.reelEditorWantOpenTag = <?php echo $wo_reel_editor_open_tag ? 'true' : 'false'; ?>;
+</script>
+<script type="text/javascript">
+$(function () {
+    try {
+        if (window.reelEditorWantOpenTag) {
+            window.reelEditorOpenTagAfterEdit = true;
+            window.reelEditorWantOpenTag = false;
+        } else {
+            var _qre = window.location.search || '';
+            if (_qre.indexOf('open_tag=1') !== -1) {
+                window.reelEditorOpenTagAfterEdit = true;
+            }
+        }
+    } catch (eOpenTag) {}
+    var $step1   = $('#reels-step-1');
+    var $step2   = $('#reels-step-2');
+    var $form    = $('.reels-editor-form');
+    var $status  = $('#reels-editor-status');
+    var $publishOverlay = $('#reel-publish-overlay');
+    var $publishBar = $('#reel-publish-bar');
+    var $publishPct = $('#reel-publish-pct');
+    var $publishTitle = $('#reel-publish-title');
+    var $publishNotice = $('#reel-publish-notice');
+    var reelPublishNoticeDefault = $publishNotice.length ? $publishNotice.html() : '';
+
+    function resetReelPublishOverlay() {
+        if (!$publishOverlay.length) return;
+        $publishBar.removeClass('reel-publish-bar-indeterminate').css('width', '0%');
+        $publishPct.text('0%');
+        $publishTitle.text('Subiendo video…');
+        if (reelPublishNoticeDefault) {
+            $publishNotice.html(reelPublishNoticeDefault);
+        }
+    }
+
+    function showReelPublishOverlay() {
+        if (!$publishOverlay.length) return;
+        resetReelPublishOverlay();
+        $publishOverlay.addClass('reel-publish-overlay-visible').attr('aria-hidden', 'false');
+    }
+
+    function hideReelPublishOverlay() {
+        if (!$publishOverlay.length) return;
+        $publishOverlay.removeClass('reel-publish-overlay-visible').attr('aria-hidden', 'true');
+        resetReelPublishOverlay();
+    }
+
+    var cameraVideo     = document.getElementById('reel_camera_preview');
+    var previewVideo    = document.getElementById('reel_video_preview');
+    var reelAudioPanelVideo = document.getElementById('reel_audio_panel_video');
+    var reelEditStage   = document.getElementById('reel_edit_stage');
+    var textCanvas      = document.getElementById('reel_text_overlay');
+    var textCtx         = textCanvas ? textCanvas.getContext('2d') : null;
+    var textDragArea    = document.getElementById('reel_text_drag_area');
+    var startBtn        = $('#reel_start_record');
+    var stopBtn         = $('#reel_stop_record');
+    var fileInput       = $('#reel_file_input');
+    var goToEditBtn     = $('#reels_go_to_edit');
+    var retryBtn        = $('#reels_retry');
+    var closeBtn        = $('#reels_close_btn');
+    var downloadBtn     = $('#reel_download_btn');
+    var playPauseOverlayBtn = $('#reel_play_pause_overlay');
+    var volumeToggleBtn = $('#reel_volume_toggle');
+    var trimStartHandle = $('#reel_trim_handle_start');
+    var trimEndHandle   = $('#reel_trim_handle_end');
+    var trimSelection   = $('#reel_trim_selection');
+    var trimTrack       = $('#reel_timeline_track');
+    var trimPreview     = $('#reel_timeline_preview');
+    var currentTimeSpan = $('#reel_current_time');
+    var totalTimeSpan   = $('#reel_total_time');
+    var fileSizeSpan    = $('#reel_file_size');
+    var trimStartInput  = $('#reel_trim_start');
+    var trimEndInput    = $('#reel_trim_end');
+    var trimStartDisplay = $('#reel_trim_start_display');
+    var trimEndDisplay   = $('#reel_trim_end_display');
+    // Controles de texto dentro del video
+    var textToggleBtn   = $('#reel_text_toggle');
+    var textPanel       = $('#reel_text_panel');
+    var textEditorInput = $('#reel_text_editor');
+    var textEditorWrap  = $('#reel_text_editor_wrap');
+    var textApplyBtn    = $('#reel_text_apply');
+    var reelTextStudioClose = $('#reel_text_studio_close');
+    var reelTextColor   = $('#reel_text_color');
+    var reelTextFont    = $('#reel_text_font');
+    var reelTextAddLayer = $('#reel_text_add_layer');
+    var reelEmojiToggle  = $('#reel_emoji_toggle');
+    var reelEmojiPopover = $('#reel_emoji_popover');
+    var reelTextSizeTrack = $('#reel_text_size_track');
+    var reelTextSizeThumb = $('#reel_text_size_thumb');
+    var reelTbAa        = $('#reel_tb_a');
+    var reelTbItalic    = $('#reel_tb_italic');
+    var reelTbAlign     = $('#reel_tb_align');
+    var reelTbBox       = $('#reel_tb_box');
+    var reelTbColorBtn  = $('#reel_tb_color');
+    var reelFontCarouselWrap = $('#reel_font_carousel_wrap');
+    // Botón de audio
+    var audioInput      = $('#reel_audio_input');
+    var audioReplaceInput = $('#reel_audio_replace_input');
+    var isMuted          = false;
+    var reelAudioPanel  = $('#reel_audio_panel');
+    var reelAudioCanvas = document.getElementById('reel_audio_wave_canvas');
+    var reelAudioCtx    = reelAudioCanvas ? reelAudioCanvas.getContext('2d') : null;
+    var reelAudioPeaks  = null;
+    var reelAudioFileDurationSec = 0;
+    var reelAudioSegStartSec = 0;
+    var REEL_AUDIO_WAVE_H = 70;
+    var reelMusicVol = 1;
+    var reelVideoVol = 1;
+    var reelAudioDragging = false;
+    var reelAudioTopStartDragging = false;
+    var reelAudioLastPointerX = 0;
+    var reelAudioArrayBuffer = null;
+
+    var mediaStream     = null;
+    var mediaRecorder   = null;
+    var recordedChunks  = [];
+    var recordedBlob    = null;
+    var uploadedFile    = null;
+    var videoDuration   = 0;
+    var isPlaying       = false;
+    var isDraggingStart = false;
+    var isDraggingEnd   = false;
+    var trimStartPercent = 0;
+    var trimEndPercent   = 100;
+    /** @type {{id:string,text:string,x:number,y:number,color:string,font:string,fontScale?:number,italic?:boolean,align?:string,boxMode?:number}[]} */
+    var textOverlays = [];
+    var overlayBoundsList = [];
+    var selectedOverlayId = null;
+    var draggingOverlayId = null;
+    var REEL_FONT_CANVAS = {
+        sans: 'Arial',
+        serif: 'Georgia',
+        mono: 'Courier New, monospace',
+        narrow: 'Arial Narrow, Arial',
+        elegant: '"Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif',
+        meme: '"Comic Sans MS", "Chalkboard SE", "Trebuchet MS", cursive, sans-serif',
+        direction: 'Impact, Haettenschweiler, "Archivo Black", "Arial Narrow", sans-serif'
+    };
+    var REEL_SCALE_MIN = 0.28;
+    var REEL_SCALE_MAX = 1.75;
+    var sizeSliderDragging = false;
+    var REEL_EMOJI_LIST = <?php echo json_encode($wo_reel_emoji_picker_list, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS); ?>;
+
+    var tagToggleBtn = $('#reel_tag_toggle');
+    var tagPanel = $('#reel_tag_panel');
+    var reelTagLayer = document.getElementById('reel_tag_layer');
+    var reelTagSearchInput = $('#reel_tag_search_input');
+    var reelTagResults = $('#reel_tag_results');
+    var reelTagSearchBlock = $('#reel_tag_search_block');
+    var reelTagExternalBlock = $('#reel_tag_external_block');
+    /** @type {'user'|'page'|'group'|'product'|'external'} */
+    var reelTagKind = 'user';
+    /** @type {{_uid:string,type:string,id?:number,url?:string,label:string,img:string,x:number,y:number}[]} */
+    var reelTagItems = [];
+    var reelTagSearchTimer = null;
+    var draggingTagUid = null;
+    var reelTagDragOffset = { dx: 0, dy: 0 };
+    var reelTagPinchState = null;
+    function reelTagTouchDistance(touches) {
+        if (!touches || touches.length < 2) return 0;
+        var a = touches[0], b = touches[1];
+        var dx = a.clientX - b.clientX, dy = a.clientY - b.clientY;
+        return Math.sqrt(dx * dx + dy * dy) || 1;
+    }
+    function getReelTagScaleByUid(uid) {
+        var t = reelTagItems.filter(function (x) { return x._uid === uid; })[0];
+        var s = t && typeof t.scale === 'number' ? t.scale : 1;
+        return Math.max(0.45, Math.min(3.5, s));
+    }
+    function setReelTagChipTransform(chip, scale) {
+        if (!chip) return;
+        var s = Math.max(0.45, Math.min(3.5, scale));
+        chip.style.transform = 'translate(-50%, -50%) scale(' + s + ')';
+    }
+
+    function reelEditorHexToRgb(hex) {
+        hex = String(hex || '#ffffff').replace(/^#/, '');
+        if (hex.length === 3) {
+            hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
+        }
+        if (hex.length !== 6) return { r: 255, g: 255, b: 255 };
+        var r = parseInt(hex.slice(0, 2), 16);
+        var g = parseInt(hex.slice(2, 4), 16);
+        var b = parseInt(hex.slice(4, 6), 16);
+        if (isNaN(r) || isNaN(g) || isNaN(b)) return { r: 255, g: 255, b: 255 };
+        return { r: r, g: g, b: b };
+    }
+
+    function reelHexToRgbaString(hex, alpha) {
+        var rgb = reelEditorHexToRgb(hex);
+        return 'rgba(' + rgb.r + ',' + rgb.g + ',' + rgb.b + ',' + alpha + ')';
+    }
+
+    function reelCanvasStyleForBoxMode(mode, userHex) {
+        var u = userHex || '#ffffff';
+        mode = mode == null ? 0 : parseInt(mode, 10);
+        if (isNaN(mode)) mode = 0;
+        switch (mode) {
+            case 1:
+                return { drawBg: true, bg: 'rgba(0,0,0,0.78)', fill: u, stroke: '#000000', lwMul: 1, boxBorder: 'rgba(255,255,255,0.45)' };
+            case 2:
+                return { drawBg: true, bg: reelHexToRgbaString(u, 0.88), fill: '#000000', stroke: '#333333', lwMul: 0.65, boxBorder: 'rgba(0,0,0,0.42)' };
+            case 3:
+                return { drawBg: true, bg: 'rgba(255,255,255,0.92)', fill: u, stroke: '#000000', lwMul: 1, boxBorder: 'rgba(0,0,0,0.28)' };
+            case 4:
+                return { drawBg: true, bg: reelHexToRgbaString(u, 0.88), fill: '#ffffff', stroke: 'rgba(255,255,255,0.35)', lwMul: 0.55, boxBorder: 'rgba(255,255,255,0.58)' };
+            default:
+                return { drawBg: false, bg: null, fill: u, stroke: '#000000', lwMul: 1, boxBorder: null };
+        }
+    }
+
+    function insertTextIntoReelEditor(chunk) {
+        if (!textEditorInput.length || chunk === undefined || chunk === null) return;
+        chunk = String(chunk);
+        if (!chunk) return;
+        var el = textEditorInput[0];
+        var maxLen = parseInt(el.getAttribute('maxlength'), 10) || 200;
+        var val = textEditorInput.val();
+        var start = typeof el.selectionStart === 'number' ? el.selectionStart : val.length;
+        var end = typeof el.selectionEnd === 'number' ? el.selectionEnd : val.length;
+        var before = val.slice(0, start);
+        var after = val.slice(end);
+        var room = maxLen - before.length - after.length;
+        if (room <= 0) return;
+        if (chunk.length > room) chunk = chunk.slice(0, room);
+        var combined = before + chunk + after;
+        textEditorInput.val(combined);
+        var newPos = start + chunk.length;
+        try {
+            el.setSelectionRange(newPos, newPos);
+        } catch (err) {}
+        el.focus();
+        sizeReelTextEditorToContent();
+    }
+
+    function buildReelEmojiGridOnce() {
+        if (!reelEmojiPopover.length || reelEmojiPopover.data('reelEmojiBuilt')) return;
+        var grid = $('<div>').css({
+            display: 'grid',
+            gridTemplateColumns: 'repeat(8, minmax(0, 1fr))',
+            gap: '4px'
+        });
+        if (!REEL_EMOJI_LIST || !REEL_EMOJI_LIST.length) {
+            grid.append($('<div>').css({ gridColumn: '1 / -1', color: '#aaa', fontSize: '13px', padding: '6px 4px' }).text('<?php echo htmlspecialchars($wo['lang']['no_emojis_available'] ?? 'No hay emojis disponibles para exportar.', ENT_QUOTES, 'UTF-8'); ?>'));
+            reelEmojiPopover.append(grid);
+            reelEmojiPopover.data('reelEmojiBuilt', 1);
+            return;
+        }
+        REEL_EMOJI_LIST.forEach(function (emo) {
+            $('<button type="button">')
+                .attr('aria-label', 'emoji')
+                .text(emo)
+                .css({
+                    fontSize: '22px',
+                    lineHeight: '1.2',
+                    padding: '6px 4px',
+                    border: 'none',
+                    borderRadius: '6px',
+                    background: 'transparent',
+                    cursor: 'pointer',
+                    color: '#fff'
+                })
+                .on('mouseenter', function () {
+                    $(this).css('background', 'rgba(255,255,255,0.12)');
+                })
+                .on('mouseleave', function () {
+                    $(this).css('background', 'transparent');
+                })
+                .on('click', function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    insertTextIntoReelEditor(emo);
+                })
+                .appendTo(grid);
+        });
+        reelEmojiPopover.append(grid);
+        reelEmojiPopover.data('reelEmojiBuilt', 1);
+    }
+
+    /** Misma base que drawTextOverlay: max(24, min(sw/15, sh/10)). */
+    function reelCanvasBaseFontPx() {
+        var sw = 0;
+        var sh = 0;
+        if (textCanvas && textCanvas.width > 0 && textCanvas.height > 0) {
+            sw = textCanvas.width;
+            sh = textCanvas.height;
+        } else if (reelEditStage && reelEditStage.clientWidth > 0 && reelEditStage.clientHeight > 0) {
+            sw = reelEditStage.clientWidth;
+            sh = reelEditStage.clientHeight;
+        }
+        if (sw <= 0 || sh <= 0) {
+            return 46;
+        }
+        return Math.max(24, Math.min(sw / 15, sh / 10));
+    }
+
+    function reelEditStageWidthPx() {
+        if (textCanvas && textCanvas.width > 0) {
+            return textCanvas.width;
+        }
+        if (reelEditStage && reelEditStage.clientWidth > 0) {
+            return reelEditStage.clientWidth;
+        }
+        return 360;
+    }
+
+    /**
+     * Tamaño en px del input del estudio, proporcional al canvas del reel (mismo ratio texto/marco que la previsualización).
+     */
+    function getReelTextStudioPreviewFontPx(scale) {
+        var baseFs = reelCanvasBaseFontPx();
+        var stageW = reelEditStageWidthPx();
+        var host = (textEditorWrap.length && textEditorWrap[0].parentElement) ? textEditorWrap[0].parentElement : null;
+        var studioW = (host && host.clientWidth > 0) ? host.clientWidth : Math.min(Math.floor(window.innerWidth * 0.92), 520);
+        var ratio = studioW / stageW;
+        ratio = Math.max(0.5, Math.min(2.5, ratio));
+        var px = baseFs * scale * ratio;
+        return Math.max(10, Math.round(px));
+    }
+
+    /** Misma apariencia que el canvas: color de relleno según boxMode, fondo/caja y sin contorno. */
+    function applyReelTextEditorPreview() {
+        if (!textEditorInput.length) return;
+        var ov = getSelectedOverlay();
+        var scale = 1;
+        var ta = 'center';
+        var italicCss = 'normal';
+        var userHex = (reelTextColor.length && reelTextColor.val()) ? reelTextColor.val() : '#ffffff';
+        if (userHex.charAt(0) !== '#') userHex = '#ffffff';
+        var bm = 0;
+        if (ov) {
+            ensureOverlayFields(ov);
+            scale = ov.fontScale;
+            ta = ov.align === 'left' ? 'left' : (ov.align === 'right' ? 'right' : 'center');
+            italicCss = ov.italic ? 'italic' : 'normal';
+            bm = ov.boxMode;
+            if (ov.color && String(ov.color).charAt(0) === '#') {
+                userHex = ov.color;
+            }
+        }
+        var st = reelCanvasStyleForBoxMode(bm, userHex);
+        var fontKey = (reelTextFont.length && reelTextFont.val()) ? reelTextFont.val() : 'meme';
+        var family = REEL_FONT_CANVAS[fontKey] || REEL_FONT_CANVAS.meme;
+        var px = getReelTextStudioPreviewFontPx(scale);
+        var phRgb = reelEditorHexToRgb(st.fill);
+        var ph = 'rgba(' + phRgb.r + ',' + phRgb.g + ',' + phRgb.b + ',0.45)';
+        if (textEditorWrap.length) {
+            if (st.drawBg && st.boxBorder) {
+                textEditorWrap.css({
+                    backgroundColor: st.bg,
+                    borderRadius: '12px',
+                    padding: '8px 12px',
+                    border: '1px solid ' + st.boxBorder,
+                    boxSizing: 'border-box',
+                    textAlign: ta
+                });
+            } else {
+                textEditorWrap.css({
+                    backgroundColor: 'transparent',
+                    borderRadius: '0',
+                    padding: '0',
+                    border: 'none',
+                    textAlign: ta
+                });
+            }
+        }
+        textEditorInput.css({
+            color: st.fill,
+            backgroundColor: 'transparent',
+            borderRadius: '0',
+            padding: '0',
+            fontFamily: family,
+            fontWeight: '700',
+            fontStyle: italicCss,
+            fontSize: px + 'px',
+            textAlign: ta,
+            textShadow: 'none',
+            WebkitTextStroke: '0 transparent',
+            filter: 'none',
+            display: 'block',
+            verticalAlign: 'middle',
+            boxSizing: 'border-box',
+            width: '100%',
+            maxWidth: '100%',
+            minWidth: '0',
+            overflowX: 'auto',
+            overflowY: 'hidden',
+            whiteSpace: 'nowrap'
+        });
+        var sid = 'reel-text-editor-placeholder-dyn';
+        $('#' + sid).remove();
+        $('head').append(
+            '<style id="' + sid + '">#reel_text_editor::placeholder{color:' + ph + ';opacity:1;}#reel_text_editor::-webkit-input-placeholder{color:' + ph + ';opacity:1;}#reel_text_editor::-moz-placeholder{color:' + ph + ';opacity:1;}</style>'
+        );
+        requestAnimationFrame(function () {
+            sizeReelTextEditorToContent();
+        });
+    }
+
+    function sizeReelTextEditorToContent() {
+        if (!textEditorInput.length) return;
+        var el = textEditorInput[0];
+        el.style.width = '100%';
+        el.style.maxWidth = '100%';
+        el.style.minWidth = '0';
+        el.style.boxSizing = 'border-box';
+        el.style.overflowX = 'auto';
+        el.style.overflowY = 'hidden';
+        el.style.whiteSpace = 'nowrap';
+    }
+
+    function genReelTextId() {
+        return 'rt_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
+    }
+
+    function ensureOverlayFields(o) {
+        if (!o) return o;
+        if (o.fontScale == null || isNaN(o.fontScale)) o.fontScale = 1;
+        o.fontScale = Math.max(REEL_SCALE_MIN, Math.min(REEL_SCALE_MAX, Number(o.fontScale)));
+        o.italic = !!o.italic;
+        if (!o.align || ['left', 'center', 'right'].indexOf(o.align) < 0) o.align = 'center';
+        if (o.boxMode == null || isNaN(o.boxMode)) {
+            if (o.box === false) o.boxMode = 0;
+            else if (o.box === true) o.boxMode = 1;
+            else o.boxMode = 0;
+        }
+        o.boxMode = Math.max(0, Math.min(4, parseInt(o.boxMode, 10)));
+        if (!o.font) o.font = 'meme';
+        return o;
+    }
+
+    function updateFontCarouselUI() {
+        var cur = reelTextFont.val() || 'meme';
+        $('.reel-font-pill').each(function () {
+            var f = $(this).attr('data-font');
+            var on = f === cur;
+            $(this).css({
+                background: on ? '#ffffff' : '#1a1a1a',
+                color: on ? '#000000' : '#ffffff',
+                borderColor: on ? '#ffffff' : '#444444'
+            });
+        });
+    }
+
+    function updateToolbarForSelection() {
+        var ov = getSelectedOverlay();
+        if (!ov) return;
+        ensureOverlayFields(ov);
+        if (reelTbItalic.length) reelTbItalic.css('background', ov.italic ? '#3949ab' : '#2a2a2a');
+        if (reelTbBox.length) {
+            var bm = ov.boxMode;
+            reelTbBox.css({
+                background: bm > 0 ? '#3949ab' : '#2a2a2a',
+                borderColor: bm > 0 ? '#7986cb' : '#555555'
+            });
+        }
+    }
+
+    function updateSizeThumbFromOverlay() {
+        var ov = getSelectedOverlay();
+        if (!reelTextSizeThumb.length || !reelTextSizeTrack.length || !ov) return;
+        ensureOverlayFields(ov);
+        var s = ov.fontScale;
+        var pct = (REEL_SCALE_MAX - s) / (REEL_SCALE_MAX - REEL_SCALE_MIN);
+        pct = Math.max(0, Math.min(1, pct));
+        reelTextSizeThumb.css({
+            top: (pct * 100) + '%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)'
+        });
+    }
+
+    function setFontScaleFromClientY(clientY) {
+        var track = reelTextSizeTrack[0];
+        if (!track) return;
+        var r = track.getBoundingClientRect();
+        var p = (clientY - r.top) / r.height;
+        p = Math.max(0, Math.min(1, p));
+        var scale = REEL_SCALE_MAX - p * (REEL_SCALE_MAX - REEL_SCALE_MIN);
+        var ov = getSelectedOverlay();
+        if (!ov) return;
+        ov.fontScale = scale;
+        updateSizeThumbFromOverlay();
+        applyReelTextEditorPreview();
+    }
+
+    function hasReelTextLayers() {
+        return textOverlays.some(function (o) { return o.text && String(o.text).trim() !== ''; });
+    }
+
+    function getSelectedOverlay() {
+        if (!selectedOverlayId) return null;
+        for (var i = 0; i < textOverlays.length; i++) {
+            if (textOverlays[i].id === selectedOverlayId) return textOverlays[i];
+        }
+        return null;
+    }
+
+    function syncPanelFromSelection() {
+        var ov = getSelectedOverlay();
+        if (!ov) return;
+        ensureOverlayFields(ov);
+        textEditorInput.val(ov.text || '');
+        if (reelTextColor.length) reelTextColor.val(ov.color || '#ffffff');
+        if (reelTextFont.length) reelTextFont.val(ov.font || 'meme');
+        updateFontCarouselUI();
+        updateToolbarForSelection();
+        updateSizeThumbFromOverlay();
+        applyReelTextEditorPreview();
+    }
+
+    function syncReelTextHiddenFields() {
+        var stageW = parseInt($('#reel_stage_w').val(), 10) || 1080;
+        var stageH = parseInt($('#reel_stage_h').val(), 10) || 1920;
+        var items = [];
+        textOverlays.forEach(function (o) {
+            if (!o.text || String(o.text).trim() === '') return;
+            ensureOverlayFields(o);
+            items.push({
+                t: String(o.text).trim(),
+                x: Math.round((o.x / 100) * stageW),
+                y: Math.round((o.y / 100) * stageH),
+                c: o.color || '#ffffff',
+                f: o.font || 'meme',
+                z: Number(o.fontScale),
+                i: o.italic ? 1 : 0,
+                a: o.align === 'left' ? 'l' : (o.align === 'right' ? 'r' : 'c'),
+                m: o.boxMode,
+                b: o.boxMode > 0 ? 1 : 0
+            });
+        });
+        $('#reel_texts_json').val(items.length ? JSON.stringify(items) : '');
+        if (items.length) {
+            $('#reel_text').val(items[0].t);
+            $('#reel_text_x').val(String(items[0].x));
+            $('#reel_text_y').val(String(items[0].y));
+        } else {
+            $('#reel_text').val('');
+            $('#reel_text_x').val('0');
+            $('#reel_text_y').val('0');
+        }
+    }
+
+    function genReelTagUid() {
+        return 'rt_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+    }
+
+    function syncReelTagsHidden() {
+        var payload = reelTagItems.map(function (t) {
+            var o = { type: t.type, x: t.x, y: t.y };
+            var sc = typeof t.scale === 'number' ? t.scale : 1;
+            sc = Math.max(0.45, Math.min(3.5, sc));
+            if (Math.abs(sc - 1) > 0.02) o.s = Math.round(sc * 1000) / 1000;
+            if (t.type === 'external') {
+                o.url = t.url;
+                if (t.label) o.label = t.label;
+                if (t.img) o.img = t.img;
+            } else {
+                o.id = t.id;
+            }
+            return o;
+        });
+        $('#reel_tags_json').val(payload.length ? JSON.stringify(payload) : '');
+    }
+
+    function defaultTagPosition() {
+        var n = reelTagItems.length;
+        return { x: 0.28 + (n % 6) * 0.09, y: 0.78 + Math.floor(n / 6) * 0.06 };
+    }
+
+    function reelTagAlreadyExists(type, key) {
+        return reelTagItems.some(function (t) {
+            if (t.type !== type) return false;
+            if (type === 'external') return t.url === key;
+            return String(t.id) === String(key);
+        });
+    }
+
+    function renderReelTagLayer() {
+        if (!reelTagLayer) return;
+        reelTagLayer.innerHTML = '';
+        reelTagItems.forEach(function (t) {
+            var wrap = document.createElement('div');
+            wrap.className = 'reel-editor-tag-chip';
+            wrap.setAttribute('data-uid', t._uid);
+            wrap.style.left = (t.x * 100) + '%';
+            wrap.style.top = (t.y * 100) + '%';
+            setReelTagChipTransform(wrap, typeof t.scale === 'number' ? t.scale : 1);
+            var im = document.createElement('img');
+            im.src = t.img || '<?php echo addslashes($wo['userDefaultAvatar']); ?>';
+            im.alt = '';
+            im.draggable = false;
+            wrap.appendChild(im);
+            reelTagLayer.appendChild(wrap);
+        });
+        updateTrashZoneVisibility();
+    }
+
+    function openReelTagPanel() {
+        if (!tagPanel.length) return;
+        tagPanel.css({ display: 'flex', flexDirection: 'column' });
+        setReelTagKind(reelTagKind, true);
+    }
+
+    function closeReelTagPanel() {
+        tagPanel.hide();
+        reelTagResults.empty();
+    }
+
+    function setReelTagKind(kind, fetchList) {
+        reelTagKind = kind;
+        $('.reel-tag-kind-btn').each(function () {
+            var k = $(this).attr('data-kind');
+            if (k === kind) {
+                $(this).removeClass('reel-tag-kind-idle').addClass('reel-tag-kind-active');
+            } else {
+                $(this).removeClass('reel-tag-kind-active').addClass('reel-tag-kind-idle');
+            }
+        });
+        if (kind === 'external') {
+            reelTagSearchBlock.hide();
+            reelTagExternalBlock.css({ display: 'flex', flexDirection: 'column' });
+            reelTagResults.empty();
+        } else {
+            reelTagSearchBlock.show();
+            reelTagExternalBlock.hide();
+            reelTagSearchInput.val('');
+            if (fetchList) {
+                runReelTagSearch(true);
+            } else {
+                reelTagResults.empty();
+            }
+        }
+    }
+
+    function runReelTagSearch(immediate) {
+        if (reelTagKind === 'external') return;
+        var q = (reelTagSearchInput.val() || '').trim();
+        if (!immediate) {
+            clearTimeout(reelTagSearchTimer);
+            reelTagSearchTimer = setTimeout(function () { runReelTagSearch(true); }, q.length < 1 ? 0 : 280);
+            return;
+        }
+        $.post(Wo_Ajax_Requests_File() + '?f=posts&s=reel_tag_search', {
+            kind: reelTagKind,
+            q: q
+        }).done(function (res) {
+            reelTagResults.empty();
+            if (!res || res.status !== 200) {
+                reelTagResults.append($('<p style="color:#757575;padding:12px;"><?php echo addslashes($wo['lang']['error_please_try_again'] ?? 'Error'); ?></p>'));
+                return;
+            }
+            if (res.suggestions) {
+                reelTagResults.append($('<div class="reel-tag-suggestions-label"></div>').text('<?php echo addslashes($wo['lang']['frequent'] ?? 'Frecuentes'); ?>'));
+            }
+            if (!res.results || !res.results.length) {
+                reelTagResults.append($('<p style="color:#757575;padding:12px;"><?php echo addslashes($wo['lang']['no_result'] ?? 'Sin resultados'); ?></p>'));
+                return;
+            }
+            res.results.forEach(function (row) {
+                var rowEl = $('<div class="reel-tag-result-row" style="display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:12px;margin-bottom:8px;cursor:pointer;"></div>');
+                var av = $('<img style="width:40px;height:40px;border-radius:50%;object-fit:cover;flex-shrink:0;">').attr('src', row.img || '<?php echo addslashes($wo['userDefaultAvatar']); ?>');
+                var tx = $('<div style="flex:1;min-width:0;"></div>');
+                tx.append($('<div style="color:#333;font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>').text(row.label || ''));
+                rowEl.append(av, tx);
+                rowEl.on('click', function () {
+                    var key = row.type === 'external' ? row.url : row.id;
+                    if (reelTagAlreadyExists(row.type, key)) return;
+                    var pos = defaultTagPosition();
+                    reelTagItems.push({
+                        _uid: genReelTagUid(),
+                        type: row.type,
+                        id: row.id,
+                        label: row.label || '',
+                        img: row.img || '',
+                        x: pos.x,
+                        y: pos.y,
+                        scale: 1
+                    });
+                    syncReelTagsHidden();
+                    renderReelTagLayer();
+                    closeReelTagPanel();
+                });
+                reelTagResults.append(rowEl);
+            });
+        });
+    }
+
+    function addReelExternalTag() {
+        var url = ($('#reel_tag_external_url').val() || '').trim();
+        if (!/^https?:\/\//i.test(url)) {
+            alert('<?php echo addslashes($wo['lang']['please_enter_valid_url'] ?? 'Introduce una URL válida (http/https)'); ?>');
+            return;
+        }
+        if (reelTagAlreadyExists('external', url)) return;
+        var label = ($('#reel_tag_external_label').val() || '').trim();
+        var img = ($('#reel_tag_external_img').val() || '').trim();
+        var pos = defaultTagPosition();
+        reelTagItems.push({
+            _uid: genReelTagUid(),
+            type: 'external',
+            url: url,
+            label: label,
+            img: img,
+            x: pos.x,
+            y: pos.y,
+            scale: 1
+        });
+        $('#reel_tag_external_url').val('');
+        $('#reel_tag_external_label').val('');
+        $('#reel_tag_external_img').val('');
+        syncReelTagsHidden();
+        renderReelTagLayer();
+        closeReelTagPanel();
+    }
+
+    tagToggleBtn.on('click', function () {
+        openReelTagPanel();
+    });
+    $('#reel_tag_panel_close, #reel_tag_panel_done').on('click', function () {
+        closeReelTagPanel();
+    });
+    $('.reel-tag-kind-btn').on('click', function () {
+        var k = $(this).attr('data-kind');
+        if (k) setReelTagKind(k, true);
+    });
+    reelTagSearchInput.on('input', function () {
+        runReelTagSearch(false);
+    });
+    $('#reel_tag_external_add').on('click', function () {
+        addReelExternalTag();
+    });
+
+    $(document).on('mousedown touchstart', '#reel_tag_layer .reel-editor-tag-chip', function (e) {
+        var uid = $(this).attr('data-uid');
+        var t = reelTagItems.filter(function (x) { return x._uid === uid; })[0];
+        if (!t) return;
+        var oev = e.originalEvent;
+        if (oev && oev.touches && oev.touches.length >= 2) {
+            draggingTagUid = null;
+            reelTagPinchState = {
+                uid: uid,
+                startDist: reelTagTouchDistance(oev.touches),
+                startScale: getReelTagScaleByUid(uid)
+            };
+            e.preventDefault();
+            return;
+        }
+        draggingTagUid = uid;
+        var st = document.getElementById('reel_edit_stage');
+        if (!st) return;
+        var r = st.getBoundingClientRect();
+        var cx = oev && oev.touches && oev.touches[0] ? oev.touches[0].clientX : e.clientX;
+        var cy = oev && oev.touches && oev.touches[0] ? oev.touches[0].clientY : e.clientY;
+        var cxN = (cx - r.left) / r.width;
+        var cyN = (cy - r.top) / r.height;
+        reelTagDragOffset.dx = cxN - t.x;
+        reelTagDragOffset.dy = cyN - t.y;
+        e.preventDefault();
+    });
+    $(document).on('mousemove touchmove', function (e) {
+        var oev = e.originalEvent;
+        var touches = oev && oev.touches ? oev.touches : null;
+        if (reelTagPinchState && touches && touches.length >= 2) {
+            e.preventDefault();
+            var d = reelTagTouchDistance(touches);
+            if (d < 8) return;
+            var ns = reelTagPinchState.startScale * (d / reelTagPinchState.startDist);
+            ns = Math.max(0.45, Math.min(3.5, ns));
+            reelTagItems.forEach(function (t) {
+                if (t._uid === reelTagPinchState.uid) t.scale = ns;
+            });
+            var chip = reelTagLayer && reelTagLayer.querySelector('[data-uid="' + reelTagPinchState.uid + '"]');
+            setReelTagChipTransform(chip, ns);
+            syncReelTagsHidden();
+            return;
+        }
+        if (!draggingTagUid) return;
+        if (touches && touches.length >= 2) {
+            var d2 = reelTagTouchDistance(touches);
+            if (d2 >= 8) {
+                reelTagPinchState = {
+                    uid: draggingTagUid,
+                    startDist: d2,
+                    startScale: getReelTagScaleByUid(draggingTagUid)
+                };
+                draggingTagUid = null;
+            }
+            e.preventDefault();
+            return;
+        }
+        var cx = touches && touches[0] ? touches[0].clientX : e.clientX;
+        var cy = touches && touches[0] ? touches[0].clientY : e.clientY;
+        var st = document.getElementById('reel_edit_stage');
+        if (!st) return;
+        var r = st.getBoundingClientRect();
+        var nx = (cx - r.left) / r.width - reelTagDragOffset.dx;
+        var ny = (cy - r.top) / r.height - reelTagDragOffset.dy;
+        nx = Math.max(0.02, Math.min(0.98, nx));
+        ny = Math.max(0.02, Math.min(0.98, ny));
+        reelTagItems.forEach(function (t) {
+            if (t._uid === draggingTagUid) {
+                t.x = nx;
+                t.y = ny;
+            }
+        });
+        var chip = reelTagLayer.querySelector('[data-uid="' + draggingTagUid + '"]');
+        if (chip) {
+            chip.style.left = (nx * 100) + '%';
+            chip.style.top = (ny * 100) + '%';
+        }
+        if (!touches || touches.length < 2) {
+            setTrashZoneHighlight(isPointOverTrash(cx, cy));
+        }
+        syncReelTagsHidden();
+    });
+    $(document).on('mouseup touchend touchcancel', function (e) {
+        var oev = e.originalEvent;
+        if (reelTagPinchState && (!oev || !oev.touches || oev.touches.length < 2)) {
+            reelTagPinchState = null;
+        }
+        var tagDragEndUid = draggingTagUid;
+        var endCx = e.clientX;
+        var endCy = e.clientY;
+        if ((e.type === 'touchend' || e.type === 'touchcancel') && oev && oev.changedTouches && oev.changedTouches[0]) {
+            endCx = oev.changedTouches[0].clientX;
+            endCy = oev.changedTouches[0].clientY;
+        }
+        if (tagDragEndUid && !reelTagPinchState) {
+            var touchesLeft = oev && oev.touches ? oev.touches.length : 0;
+            if (e.type === 'mouseup' || touchesLeft === 0) {
+                if (isPointOverTrash(endCx, endCy)) {
+                    reelTagItems = reelTagItems.filter(function (x) { return x._uid !== tagDragEndUid; });
+                    syncReelTagsHidden();
+                    renderReelTagLayer();
+                }
+                setTrashZoneHighlight(false);
+            }
+        }
+        if (!oev || !oev.touches || oev.touches.length === 0) {
+            draggingTagUid = null;
+        }
+    });
+    if (reelTagLayer) {
+        reelTagLayer.addEventListener('wheel', function (ev) {
+            if (!ev.ctrlKey && !ev.metaKey) return;
+            var chip = ev.target && ev.target.closest ? ev.target.closest('.reel-editor-tag-chip') : null;
+            if (!chip || !reelTagLayer.contains(chip)) return;
+            ev.preventDefault();
+            var uid = chip.getAttribute('data-uid');
+            var t = reelTagItems.filter(function (x) { return x._uid === uid; })[0];
+            if (!t) return;
+            var base = typeof t.scale === 'number' ? t.scale : 1;
+            var factor = ev.deltaY < 0 ? 1.06 : 0.94;
+            t.scale = Math.max(0.45, Math.min(3.5, base * factor));
+            setReelTagChipTransform(chip, t.scale);
+            syncReelTagsHidden();
+        }, { passive: false });
+    }
+
+    function hasReelTagLayers() {
+        return reelTagItems.length > 0;
+    }
+
+    function updateTrashZoneVisibility() {
+        var tz = document.getElementById('reel_text_trash_zone');
+        if (!tz) return;
+        tz.style.display = (hasReelTextLayers() || hasReelTagLayers()) ? 'flex' : 'none';
+    }
+
+    /** Paso 2: el lienzo sigue recibiendo eventos (doble clic en vacío, paso de clic al vídeo). */
+    function applyReelTextDragAreaPointerState() {
+        if (!textDragArea) return;
+        if (!$step2.length || !$step2.is(':visible')) {
+            textDragArea.style.pointerEvents = 'none';
+            return;
+        }
+        textDragArea.style.pointerEvents = 'auto';
+        textDragArea.style.cursor = hasReelTextLayers()
+            ? (draggingOverlayId ? 'grabbing' : 'move')
+            : 'default';
+        textDragArea.style.touchAction = hasReelTextLayers() ? 'none' : 'auto';
+    }
+
+    function ensureOverlayWhenOpeningFromPencil() {
+        if (textOverlays.length === 0) {
+            var nid = genReelTextId();
+            textOverlays.push(ensureOverlayFields({
+                id: nid,
+                text: '',
+                x: 50,
+                y: 50,
+                color: '#ffffff',
+                font: 'meme',
+                fontScale: 1,
+                italic: false,
+                align: 'center',
+                boxMode: 0
+            }));
+            selectedOverlayId = nid;
+        } else if (!getSelectedOverlay()) {
+            selectedOverlayId = textOverlays[0].id;
+        }
+    }
+
+    function openReelTextStudioPanel() {
+        if (!textPanel.length) return;
+        reelEmojiPopover.hide();
+        syncPanelFromSelection();
+        textPanel.css({ display: 'flex', flexDirection: 'column' });
+        requestAnimationFrame(function () {
+            requestAnimationFrame(function () {
+                applyReelTextEditorPreview();
+            });
+        });
+        setTimeout(function () {
+            textEditorInput.focus();
+        }, 50);
+    }
+
+    var _reelStageDblActivateAt = 0;
+
+    /** Doble clic / doble toque: capa bajo el punto → abre estudio; vacío → nueva capa y estudio. */
+    function handleReelStageDoubleActivate(clientX, clientY) {
+        if (!textPanel.length || !textDragArea || !textCanvas || !$step2.length || !$step2.is(':visible')) return;
+        var now = Date.now();
+        if (now - _reelStageDblActivateAt < 350) return;
+        _reelStageDblActivateAt = now;
+        var rect = textDragArea.getBoundingClientRect();
+        if (rect.width <= 0 || rect.height <= 0) return;
+        isDraggingText = false;
+        draggingOverlayId = null;
+        drawTextOverlay();
+        var pos = {
+            x: ((clientX - rect.left) / rect.width) * 100,
+            y: ((clientY - rect.top) / rect.height) * 100,
+            clientX: clientX,
+            clientY: clientY
+        };
+        var oid = getOverlayIdAtPercent(pos);
+        reelEmojiPopover.hide();
+        if (oid) {
+            selectedOverlayId = oid;
+        } else {
+            var nid = genReelTextId();
+            textOverlays.push(ensureOverlayFields({
+                id: nid,
+                text: '',
+                x: Math.max(5, Math.min(95, pos.x)),
+                y: Math.max(5, Math.min(95, pos.y)),
+                color: '#ffffff',
+                font: 'meme',
+                fontScale: 1,
+                italic: false,
+                align: 'center',
+                boxMode: 0
+            }));
+            selectedOverlayId = nid;
+        }
+        openReelTextStudioPanel();
+    }
+
+    function setTrashZoneHighlight(on) {
+        var tz = document.getElementById('reel_text_trash_zone');
+        if (!tz) return;
+        tz.style.borderColor = on ? 'rgba(244,67,54,0.95)' : 'rgba(255,255,255,0.45)';
+        tz.style.background = on ? 'rgba(244,67,54,0.35)' : 'rgba(0,0,0,0.5)';
+    }
+
+    function isPointOverTrash(clientX, clientY) {
+        var tz = document.getElementById('reel_text_trash_zone');
+        if (!tz || tz.style.display === 'none') return false;
+        var r = tz.getBoundingClientRect();
+        return clientX >= r.left && clientX <= r.right && clientY >= r.top && clientY <= r.bottom;
+    }
+
+    // Evitar controles nativos duplicados del navegador.
+    if (previewVideo) {
+        previewVideo.controls = false;
+        previewVideo.removeAttribute('controls');
+        previewVideo.disablePictureInPicture = true;
+        previewVideo.setAttribute('playsinline', 'playsinline');
+        previewVideo.setAttribute('webkit-playsinline', 'webkit-playsinline');
+        previewVideo.setAttribute('x5-playsinline', 'x5-playsinline');
+        previewVideo.setAttribute('disableremoteplayback', 'disableremoteplayback');
+        previewVideo.setAttribute('controlsList', 'nodownload noplaybackrate noremoteplayback nofullscreen');
+    }
+    if (reelAudioPanelVideo) {
+        reelAudioPanelVideo.controls = false;
+        reelAudioPanelVideo.removeAttribute('controls');
+        reelAudioPanelVideo.disablePictureInPicture = true;
+        reelAudioPanelVideo.setAttribute('playsinline', 'playsinline');
+        reelAudioPanelVideo.setAttribute('webkit-playsinline', 'webkit-playsinline');
+        reelAudioPanelVideo.setAttribute('x5-playsinline', 'x5-playsinline');
+        reelAudioPanelVideo.setAttribute('disableremoteplayback', 'disableremoteplayback');
+        reelAudioPanelVideo.setAttribute('controlsList', 'nodownload noplaybackrate noremoteplayback nofullscreen');
+    }
+
+    function formatTime(seconds) {
+        var mins = Math.floor(seconds / 60);
+        var secs = Math.floor(seconds % 60);
+        return mins + ':' + (secs < 10 ? '0' : '') + secs;
+    }
+
+    /** Marco 9:16 centrado en el área negra (misma proporción que 1080×1920). */
+    function layoutReelEditStage() {
+        var wrap = document.querySelector('.wo_reels_video_fullscreen');
+        if (!wrap || !reelEditStage) return;
+        var W = wrap.clientWidth;
+        var H = wrap.clientHeight;
+        if (W <= 0 || H <= 0) return;
+        var ar = 9 / 16;
+        var h = H;
+        var w = Math.round(h * ar);
+        if (w > W) {
+            w = W;
+            h = Math.round(w / ar);
+        }
+        reelEditStage.style.width = w + 'px';
+        reelEditStage.style.height = h + 'px';
+        $('#reel_stage_w').val(String(w));
+        $('#reel_stage_h').val(String(h));
+    }
+
+    function onReelEditResize() {
+        layoutReelEditStage();
+        updateCanvasSize();
+        if (textPanel.length && textPanel.is(':visible')) {
+            applyReelTextEditorPreview();
+        }
+        if (reelAudioPeaks && reelAudioPanel.length && reelAudioPanel.is(':visible')) {
+            drawReelAudioWaveform();
+        }
+    }
+
+    function updateCanvasSize() {
+        if (textCanvas && reelEditStage) {
+            textCanvas.width = reelEditStage.clientWidth;
+            textCanvas.height = reelEditStage.clientHeight;
+            drawTextOverlay();
+        }
+    }
+
+    /** Rectángulo redondeado (fondo / borde alineado con la previsualización del estudio). */
+    function reelCanvasRoundRectPath(ctx, x, y, w, h, r) {
+        if (w <= 0 || h <= 0) return;
+        r = Math.min(Math.max(0, r), w / 2, h / 2);
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.arcTo(x + w, y, x + w, y + h, r);
+        ctx.arcTo(x + w, y + h, x, y + h, r);
+        ctx.arcTo(x, y + h, x, y, r);
+        ctx.arcTo(x, y, x + w, y, r);
+        ctx.closePath();
+    }
+
+    function drawTextOverlay() {
+        if (!textCtx || !textCanvas) return;
+        textCtx.clearRect(0, 0, textCanvas.width, textCanvas.height);
+        overlayBoundsList = [];
+        if (!hasReelTextLayers() || textCanvas.width <= 0 || textCanvas.height <= 0) {
+            syncReelTextHiddenFields();
+            updateTrashZoneVisibility();
+            applyReelTextDragAreaPointerState();
+            return;
+        }
+        var sw = textCanvas.width;
+        var sh = textCanvas.height;
+        var baseFs = Math.max(24, Math.min(sw / 15, sh / 10));
+        textCtx.textBaseline = 'middle';
+        textOverlays.forEach(function (ov) {
+            if (!ov.text || String(ov.text).trim() === '') return;
+            ensureOverlayFields(ov);
+            var fontSize = baseFs * ov.fontScale;
+            var face = REEL_FONT_CANVAS[ov.font] || REEL_FONT_CANVAS.meme;
+            var italicPart = ov.italic ? 'italic ' : '';
+            var weightPart = ov.font === 'direction' ? '900 ' : 'bold ';
+            textCtx.font = italicPart + weightPart + fontSize + 'px ' + face;
+            var align = ov.align || 'center';
+            textCtx.textAlign = align === 'left' ? 'left' : (align === 'right' ? 'right' : 'center');
+            var x = (ov.x / 100) * sw;
+            var y = (ov.y / 100) * sh;
+            var txt = String(ov.text).trim();
+            if (ov.font === 'direction') {
+                txt = txt.toUpperCase();
+            }
+            var textW = textCtx.measureText(txt).width;
+            var pad = Math.max(8, fontSize * 0.18);
+            var halfH = fontSize / 2 + pad * 0.35;
+            var bx0 = align === 'left' ? x - pad : (align === 'right' ? x - textW - pad : x - textW / 2 - pad);
+            var bx1 = bx0 + textW + pad * 2;
+            var by0 = y - halfH;
+            var by1 = y + halfH;
+            var boxW = bx1 - bx0;
+            var boxH = by1 - by0;
+            var boxR = Math.min(Math.max(6, fontSize * 0.28), boxW * 0.22, boxH * 0.45, 18);
+            var st = reelCanvasStyleForBoxMode(ov.boxMode, ov.color || '#ffffff');
+            if (st.drawBg && st.bg) {
+                textCtx.save();
+                textCtx.fillStyle = st.bg;
+                reelCanvasRoundRectPath(textCtx, bx0, by0, boxW, boxH, boxR);
+                textCtx.fill();
+                textCtx.restore();
+                if (st.boxBorder) {
+                    textCtx.save();
+                    textCtx.strokeStyle = st.boxBorder;
+                    var bLw = Math.max(1, fontSize / 24);
+                    textCtx.lineWidth = bLw;
+                    var inset = bLw / 2;
+                    var ir = Math.max(2, boxR - inset * 0.85);
+                    reelCanvasRoundRectPath(textCtx, bx0 + inset, by0 + inset, boxW - bLw, boxH - bLw, ir);
+                    textCtx.stroke();
+                    textCtx.restore();
+                }
+            }
+            textCtx.fillStyle = st.fill;
+            textCtx.fillText(txt, x, y);
+            overlayBoundsList.push({
+                id: ov.id,
+                left: bx0,
+                right: bx1,
+                top: by0,
+                bottom: by1
+            });
+            if (selectedOverlayId === ov.id) {
+                textCtx.save();
+                textCtx.strokeStyle = 'rgba(66,165,245,0.95)';
+                textCtx.lineWidth = 2;
+                var selPad = 4;
+                var sW = boxW + selPad * 2;
+                var sH = boxH + selPad * 2;
+                var sR = Math.min(boxR + selPad * 0.5, sW / 2, sH / 2);
+                reelCanvasRoundRectPath(textCtx, bx0 - selPad, by0 - selPad, sW, sH, sR);
+                textCtx.stroke();
+                textCtx.restore();
+            }
+        });
+        syncReelTextHiddenFields();
+        updateTrashZoneVisibility();
+        applyReelTextDragAreaPointerState();
+    }
+
+    function enableGoToEdit() {
+        goToEditBtn.prop('disabled', false);
+    }
+
+    function disableGoToEdit() {
+        goToEditBtn.prop('disabled', true);
+    }
+
+    function goToEdit() {
+        $step1.hide();
+        $step2.show();
+        if (previewVideo) {
+            previewVideo.controls = false;
+            previewVideo.removeAttribute('controls');
+            previewVideo.disablePictureInPicture = true;
+            previewVideo.setAttribute('disableremoteplayback', 'disableremoteplayback');
+            previewVideo.setAttribute('controlsList', 'nodownload noplaybackrate noremoteplayback nofullscreen');
+            previewVideo.load();
+        }
+        setTimeout(function() {
+            layoutReelEditStage();
+            updateCanvasSize();
+            if (videoDuration > 0) {
+                updateTimeline();
+            }
+            drawTextOverlay();
+            if (window.reelEditorOpenTagAfterEdit) {
+                window.reelEditorOpenTagAfterEdit = false;
+                setTimeout(function () {
+                    openReelTagPanel();
+                }, 250);
+            }
+        }, 300);
+        $(window).off('resize', onReelEditResize).on('resize', onReelEditResize);
+    }
+
+    function updateTimeline() {
+        if (!trimTrack || !trimSelection || !trimStartHandle || !trimEndHandle || videoDuration <= 0) return;
+        var trackWidth = trimTrack[0] ? trimTrack[0].offsetWidth : 0;
+        if (trackWidth <= 0) {
+            setTimeout(updateTimeline, 100);
+            return;
+        }
+        var startPos = (trimStartPercent / 100) * trackWidth;
+        var endPos = (trimEndPercent / 100) * trackWidth;
+        trimStartHandle.css('left', (startPos - 10) + 'px');
+        trimEndHandle.css('right', (100 - trimEndPercent) + '%');
+        trimSelection.css({
+            left: startPos + 'px',
+            width: (endPos - startPos) + 'px'
+        });
+        var startTime = (trimStartPercent / 100) * videoDuration;
+        var endTime = (trimEndPercent / 100) * videoDuration;
+        trimStartInput.val(startTime.toFixed(3));
+        trimEndInput.val(endTime.toFixed(3));
+        trimStartDisplay.text(startTime.toFixed(1) + 's');
+        trimEndDisplay.text(endTime.toFixed(1) + 's');
+
+        if (reelAudioPeaks && reelAudioPeaks.length) {
+            reelClampAudioSegmentToTrim();
+        }
+        
+        // Limitar el video al rango seleccionado (principal y panel de audio si está abierto)
+        if (previewVideo) {
+            if (previewVideo.currentTime < startTime) {
+                previewVideo.currentTime = startTime;
+            } else if (previewVideo.currentTime > endTime) {
+                previewVideo.currentTime = endTime;
+            }
+        }
+        if (reelAudioPanelVideo && reelAudioPanel.length && reelAudioPanel.is(':visible') && (reelAudioPanelVideo.src || reelAudioPanelVideo.currentSrc)) {
+            if (reelAudioPanelVideo.currentTime < startTime) {
+                reelAudioPanelVideo.currentTime = startTime;
+            } else if (reelAudioPanelVideo.currentTime > endTime) {
+                reelAudioPanelVideo.currentTime = endTime;
+            }
+        }
+    }
+
+    function generateTimelineThumbs() {
+        if (!trimPreview || !previewVideo || videoDuration <= 0) return;
+        trimPreview.empty();
+        var thumbCount = Math.min(20, Math.floor(videoDuration));
+        if (thumbCount <= 0) return;
+        var thumbWidth = 100 / thumbCount;
+        for (var i = 0; i < thumbCount; i++) {
+            var thumb = $('<div>').css({
+                width: thumbWidth + '%',
+                height: '100%',
+                display: 'inline-block',
+                background: '#ccc',
+                border: '1px solid #999',
+                position: 'relative'
+            });
+            trimPreview.append(thumb);
+        }
+    }
+
+    var currentFacingMode = 'user'; // 'user' = frontal, 'environment' = posterior
+    var audioElement = null;
+
+    // Función para iniciar la cámara
+    function startCamera(facingMode) {
+        if (mediaStream) {
+            mediaStream.getTracks().forEach(function(track) {
+                track.stop();
+            });
+        }
+        
+        var constraints = {
+            video: { facingMode: facingMode },
+            audio: true
+        };
+        
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            navigator.mediaDevices.getUserMedia(constraints).then(function (stream) {
+                mediaStream = stream;
+                if ('srcObject' in cameraVideo) {
+                    cameraVideo.srcObject = stream;
+                } else {
+                    cameraVideo.src = window.URL.createObjectURL(stream);
+                }
+                cameraVideo.play();
+            }).catch(function (err) {
+                console.log('No se pudo acceder a la cámara:', err);
+                // Intentar con la otra cámara si falla
+                if (facingMode === 'user') {
+                    startCamera('environment');
+                } else {
+                    startCamera('user');
+                }
+            });
+        }
+    }
+
+    // Iniciar cámara automáticamente cuando se muestra el paso 1
+    $step1.on('shown', function() {
+        if (!mediaStream) {
+            startCamera(currentFacingMode);
+        }
+    });
+
+    // Iniciar cámara inmediatamente si el paso 1 está visible
+    if ($step1.is(':visible')) {
+        startCamera(currentFacingMode);
+    }
+
+    // Botón para voltear cámara
+    $('#reel_flip_camera').on('click', function() {
+        currentFacingMode = currentFacingMode === 'user' ? 'environment' : 'user';
+        startCamera(currentFacingMode);
+    });
+
+    // Botón cerrar cámara
+    $('#reels_close_camera_btn').on('click', function() {
+        if (mediaStream) {
+            mediaStream.getTracks().forEach(function(track) {
+                track.stop();
+            });
+            mediaStream = null;
+        }
+        if (confirm('<?php echo $wo['lang']['are_you_sure'] ?? '¿Estás seguro?'; ?>')) {
+            window.history.back();
+        }
+    });
+
+    // Grabar
+    startBtn.on('click', function () {
+        if (!mediaStream || !window.MediaRecorder) {
+            return;
+        }
+        recordedChunks = [];
+        recordedBlob   = null;
+        uploadedFile   = null;
+        disableGoToEdit();
+
+        mediaRecorder = new MediaRecorder(mediaStream, { mimeType: 'video/webm;codecs=vp9,opus' });
+        mediaRecorder.ondataavailable = function (e) {
+            if (e.data && e.data.size > 0) {
+                recordedChunks.push(e.data);
+            }
+        };
+        mediaRecorder.onstop = function () {
+            recordedBlob = new Blob(recordedChunks, { type: 'video/webm' });
+            var url = URL.createObjectURL(recordedBlob);
+            previewVideo.src = url;
+            previewVideo.load();
+            // Detener la cámara
+            if (mediaStream) {
+                mediaStream.getTracks().forEach(function(track) {
+                    track.stop();
+                });
+            }
+            enableGoToEdit();
+            goToEdit();
+        };
+        mediaRecorder.start();
+        startBtn.hide();
+        stopBtn.show();
+    });
+
+    stopBtn.on('click', function () {
+        if (mediaRecorder && mediaRecorder.state === 'recording') {
+            mediaRecorder.stop();
+        }
+        startBtn.show();
+        stopBtn.hide();
+    });
+
+    // Cargar archivo de video
+    fileInput.on('change', function (e) {
+        if (e.target.files && e.target.files[0]) {
+            uploadedFile = e.target.files[0];
+            recordedBlob = null;
+            // Detener la cámara
+            if (mediaStream) {
+                mediaStream.getTracks().forEach(function(track) {
+                    track.stop();
+                });
+                mediaStream = null;
+            }
+            var url = URL.createObjectURL(uploadedFile);
+            previewVideo.src = url;
+            previewVideo.load();
+            enableGoToEdit();
+            goToEdit();
+        }
+    });
+
+    function resetEditorToCamera() {
+        recordedBlob = null;
+        uploadedFile = null;
+        previewVideo.pause();
+        previewVideo.removeAttribute('src');
+        previewVideo.load();
+        if (audioElement) {
+            audioElement.pause();
+            audioElement = null;
+        }
+        $form[0].reset();
+        disableGoToEdit();
+        textOverlays = [];
+        overlayBoundsList = [];
+        selectedOverlayId = null;
+        draggingOverlayId = null;
+        reelTagItems = [];
+        syncReelTagsHidden();
+        renderReelTagLayer();
+        if (tagPanel.length) {
+            tagPanel.hide();
+        }
+        $('#reel_texts_json').val('');
+        if (textCtx) {
+            textCtx.clearRect(0, 0, textCanvas.width, textCanvas.height);
+        }
+        if (textDragArea) {
+            textDragArea.style.pointerEvents = 'none';
+        }
+        updateTrashZoneVisibility();
+        if (textPanel.length) textPanel.hide();
+        if (reelEmojiPopover.length) reelEmojiPopover.hide();
+        trimStartPercent = 0;
+        trimEndPercent = 100;
+        reelAudioPeaks = null;
+        reelAudioFileDurationSec = 0;
+        reelAudioSegStartSec = 0;
+        reelAudioArrayBuffer = null;
+        reelMusicVol = 1;
+        reelVideoVol = 1;
+        $('#reel_audio_start').val('0');
+        $('#reel_audio_duration').val('0');
+        $('#reel_music_volume').val('1');
+        $('#reel_video_volume').val('1');
+        $('#reel_audio_music_slider').val('100');
+        $('#reel_audio_video_slider').val('100');
+        closeReelAudioPanel();
+        if (reelAudioPanelVideo) {
+            try {
+                reelAudioPanelVideo.pause();
+                reelAudioPanelVideo.removeAttribute('src');
+                reelAudioPanelVideo.load();
+            } catch (e) {}
+        }
+        $(window).off('resize', onReelEditResize);
+        $step2.hide();
+        $step1.show();
+        if (!mediaStream) {
+            startCamera(currentFacingMode);
+        }
+    }
+
+    // Botón cerrar
+    closeBtn.on('click', function() {
+        if (confirm('<?php echo $wo['lang']['are_you_sure'] ?? '¿Estás seguro?'; ?>')) {
+            // Salir del editor (no volver a cámara interna del flujo)
+            if (audioElement) {
+                audioElement.pause();
+                audioElement = null;
+            }
+            if (mediaStream) {
+                mediaStream.getTracks().forEach(function(track) {
+                    track.stop();
+                });
+                mediaStream = null;
+            }
+            window.location.href = "<?php echo Wo_SeoLink('index.php?link1=home'); ?>";
+        }
+    });
+
+    // Descargar preview del video editado (recorte + texto + audio)
+    downloadBtn.on('click', function() {
+        if (!recordedBlob && !uploadedFile) {
+            $status.removeClass('alert-success').addClass('alert alert-danger').html('Primero graba o sube un video.');
+            return;
+        }
+
+        if (videoDuration > 0) {
+            updateTimeline();
+            var ts = parseFloat(trimStartInput.val());
+            var te = parseFloat(trimEndInput.val());
+            if (!(te > ts)) {
+                trimEndInput.val(Number(videoDuration).toFixed(3));
+                updateTimeline();
+            }
+        }
+
+        syncReelTextHiddenFields();
+        syncReelTagsHidden();
+        var formData = new FormData($form[0]);
+        if (recordedBlob) {
+            formData.delete('postVideo');
+            formData.append('postVideo', recordedBlob, 'reel-recorded.webm');
+        } else if (uploadedFile) {
+            formData.delete('postVideo');
+            formData.append('postVideo', uploadedFile, uploadedFile.name);
+        }
+        if (audioInput && audioInput[0] && audioInput[0].files && audioInput[0].files[0]) {
+            formData.delete('reel_audio');
+            formData.append('reel_audio', audioInput[0].files[0], audioInput[0].files[0].name);
+        }
+        // Activar modo debug del endpoint para identificar el punto exacto de falla.
+        formData.append('reel_debug', '1');
+
+        var $btn = $(this);
+        var originalHtml = $btn.html();
+        $btn.prop('disabled', true).html('<span style="font-size:12px;">...</span>');
+        $status.removeClass('alert-success alert-danger').addClass('alert alert-success').html('Generando video...');
+
+        $.ajax({
+            url: Wo_Ajax_Requests_File() + '?f=posts&s=download_reel_preview',
+            type: 'POST',
+            data: formData,
+            contentType: false,
+            processData: false,
+            dataType: 'json',
+            timeout: 120000
+        }).done(function(data) {
+            $btn.prop('disabled', false).html(originalHtml);
+            if (data && data.debug) {
+                console.log('[REEL DOWNLOAD DEBUG]', data.debug);
+                if (data.debug.render) {
+                    var r = data.debug.render;
+                    console.log('[REEL EMOJI EXPORT]', {
+                        uses_filter_complex: r.uses_filter_complex,
+                        vf_has_filter_complex_string: r.reel_vf_has_filter_complex,
+                        twemoji_dir: r.twemoji_dir,
+                        twemoji_ready: r.twemoji_ready,
+                        gd_for_reel_png: r.gd_for_reel_png,
+                        emoji_path_diag: r.reel_emoji_path || null,
+                        items_count: r.reel_items_count,
+                        texts_json_bytes: r.reel_texts_json_bytes,
+                        json_decode_error: r.reel_json_decode_error || null,
+                        ffmpeg_cmd_head: r.cmd ? String(r.cmd).slice(0, 400) : ''
+                    });
+                    if (r.reel_emoji_path && r.reel_emoji_path.has_emoji_only_layer && !r.uses_filter_complex) {
+                        console.warn('[REEL EMOJI] Capa solo-emoji detectada pero NO se usó filter_complex+Twemoji; revisa first_is_emoji_only y ffmpeg.');
+                    }
+                    if (r.reel_emoji_path && !r.reel_emoji_path.has_emoji_only_layer && r.reel_emoji_path.first_contains_emoji) {
+                        console.warn('[REEL EMOJI] Hay emoji mezclado con texto u otro carácter: el export usa ASS/subtitles (Noto vía libass), no Twemoji PNG.');
+                    }
+                }
+            }
+            if (data.status == 200 && data.url) {
+                // Descargar como blob para forzar download en navegadores móviles/desktop.
+                fetch(data.url, { credentials: 'same-origin' }).then(function(resp) {
+                    if (!resp.ok) throw new Error('No se pudo obtener el archivo generado.');
+                    return resp.blob();
+                }).then(function(blob) {
+                    var blobUrl = window.URL.createObjectURL(blob);
+                    var link = document.createElement('a');
+                    link.href = blobUrl;
+                    link.download = data.filename || 'reel-preview.mp4';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    setTimeout(function() {
+                        window.URL.revokeObjectURL(blobUrl);
+                    }, 1500);
+                    $status.removeClass('alert-danger').addClass('alert alert-success').html('Video generado. Descarga iniciada.');
+                }).catch(function(err) {
+                    // Fallback final: navegación directa al archivo.
+                    window.location.href = data.url;
+                    $status.removeClass('alert-success').addClass('alert alert-danger').html('No se pudo forzar la descarga automática, abriendo archivo directo...');
+                    console.log(err);
+                });
+            } else {
+                var errMsg = (data.errors || '<?php echo $wo['lang']['error_please_try_again']; ?>');
+                if (data && data.debug && data.debug.stage) {
+                    errMsg += '<br><small>Debug stage: ' + data.debug.stage + '</small>';
+                }
+                $status.removeClass('alert-success').addClass('alert alert-danger').html(errMsg);
+            }
+        }).fail(function(xhr) {
+            $btn.prop('disabled', false).html(originalHtml);
+            var err = '<?php echo $wo['lang']['error_please_try_again']; ?>';
+            if (xhr && xhr.responseJSON && xhr.responseJSON.errors) {
+                err = xhr.responseJSON.errors;
+                if (xhr.responseJSON.debug) {
+                    console.log('[REEL DOWNLOAD DEBUG FAIL]', xhr.responseJSON.debug);
+                    if (xhr.responseJSON.debug.stage) {
+                        err += '<br><small>Debug stage: ' + xhr.responseJSON.debug.stage + '</small>';
+                    }
+                }
+            } else if (xhr && xhr.responseText) {
+                err = xhr.responseText.substring(0, 250);
+            }
+            $status.removeClass('alert-success').addClass('alert alert-danger').html(err);
+        });
+    });
+
+    function getReelPlaybackVideo() {
+        if (reelAudioPanel.length && reelAudioPanel.is(':visible') && reelAudioPanelVideo && previewVideo && (previewVideo.src || previewVideo.currentSrc)) {
+            return reelAudioPanelVideo;
+        }
+        return previewVideo;
+    }
+
+    function updateReelPlayIconsAll(playing) {
+        if (playing) {
+            $('#play_icon_overlay').hide();
+            $('#pause_icon_overlay').show();
+            $('#reel_audio_panel_play_icon').hide();
+            $('#reel_audio_panel_pause_icon').show();
+        } else {
+            $('#play_icon_overlay').show();
+            $('#pause_icon_overlay').hide();
+            $('#reel_audio_panel_play_icon').show();
+            $('#reel_audio_panel_pause_icon').hide();
+        }
+    }
+
+    function pauseReelPlaybackFully() {
+        if (previewVideo) previewVideo.pause();
+        if (reelAudioPanelVideo) reelAudioPanelVideo.pause();
+        if (audioElement) audioElement.pause();
+        isPlaying = false;
+        updateReelPlayIconsAll(false);
+    }
+
+    function setupReelAudioPanelVideo() {
+        if (!reelAudioPanelVideo || !previewVideo) return;
+        var url = previewVideo.currentSrc || previewVideo.src || '';
+        if (!url) return;
+        previewVideo.pause();
+        var syncTime = previewVideo.currentTime;
+        var applySync = function () {
+            try {
+                reelAudioPanelVideo.currentTime = syncTime;
+            } catch (e) {}
+            reelAudioPanelVideo.muted = isMuted;
+            reelAudioPanelVideo.volume = Math.min(1, Math.max(0, reelVideoVol));
+        };
+        var curPanel = reelAudioPanelVideo.currentSrc || reelAudioPanelVideo.src || '';
+        if (curPanel !== url) {
+            var onMeta = function () {
+                reelAudioPanelVideo.removeEventListener('loadedmetadata', onMeta);
+                applySync();
+            };
+            reelAudioPanelVideo.addEventListener('loadedmetadata', onMeta);
+            reelAudioPanelVideo.src = url;
+            reelAudioPanelVideo.load();
+        } else {
+            applySync();
+        }
+    }
+
+    function toggleReelPlayback() {
+        var v = getReelPlaybackVideo();
+        if (!v) return;
+        if (isPlaying) {
+            pauseReelPlaybackFully();
+            return;
+        }
+        syncAudioWithVideo(v.currentTime <= (getTrimStartTime() + 0.05));
+        v.play().catch(function () {});
+        if (audioElement) {
+            audioElement.play().catch(function (err) {
+                console.log('Error al reproducir audio:', err);
+            });
+        }
+        isPlaying = true;
+        updateReelPlayIconsAll(true);
+    }
+
+    function updateReelAudioPanelTimeLabel(activeVideo) {
+        if (!activeVideo || videoDuration <= 0) return;
+        var endTrim = (trimEndPercent / 100) * videoDuration;
+        $('#reel_audio_panel_time').text(formatTime(activeVideo.currentTime) + ' / ' + formatTime(endTrim));
+    }
+
+    function processReelVideoTimeupdate(activeVideo) {
+        if (!activeVideo || activeVideo !== getReelPlaybackVideo()) return;
+        if (!isDraggingStart && !isDraggingEnd && videoDuration > 0) {
+            var startTime = (trimStartPercent / 100) * videoDuration;
+            var endTime = (trimEndPercent / 100) * videoDuration;
+            if (activeVideo.currentTime < startTime) {
+                activeVideo.currentTime = startTime;
+            } else if (activeVideo.currentTime > endTime) {
+                activeVideo.currentTime = endTime;
+                if (isPlaying) {
+                    pauseReelPlaybackFully();
+                }
+            }
+            if (audioElement && isPlaying) {
+                syncAudioWithVideo(false);
+            }
+            currentTimeSpan.text(formatTime(activeVideo.currentTime));
+            updateReelAudioPanelTimeLabel(activeVideo);
+        }
+        if (hasReelTextLayers()) {
+            drawTextOverlay();
+        }
+    }
+
+    // Controles de reproducción en la barra superpuesta
+    playPauseOverlayBtn.on('click', function () {
+        toggleReelPlayback();
+    });
+    $('#reel_audio_panel_play').on('click', function () {
+        toggleReelPlayback();
+    });
+
+    function reelHasAudioFileInForm() {
+        return !!(audioInput[0] && audioInput[0].files && audioInput[0].files[0]);
+    }
+
+    function reelCanResumeAudioEditor() {
+        return reelHasAudioFileInForm() && !!audioElement;
+    }
+
+    /** Clic en icono música: si ya hay audio, reabre el panel conservando edición; si no, el label abre el selector de archivo. */
+    $('#reel_audio_toolbar_label').on('click', function (e) {
+        if (!reelCanResumeAudioEditor()) {
+            return;
+        }
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        if (reelAudioPeaks && reelAudioPeaks.length && reelAudioFileDurationSec > 0) {
+            openReelAudioPanel();
+            return false;
+        }
+        var f = audioInput[0].files[0];
+        var reader = new FileReader();
+        reader.onload = function (ev) {
+            if (ev.target && ev.target.result) {
+                decodeReelAudioArrayBuffer(ev.target.result, function () {
+                    openReelAudioPanel();
+                });
+            }
+        };
+        reader.readAsArrayBuffer(f);
+        return false;
+    });
+
+    $('#reel_audio_replace_btn').on('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        if (audioReplaceInput.length) {
+            audioReplaceInput.val('');
+            audioReplaceInput[0].click();
+        }
+    });
+
+    audioReplaceInput.on('change', function (e) {
+        var f = e.target.files && e.target.files[0];
+        if (!f) return;
+        try {
+            var dt = new DataTransfer();
+            dt.items.add(f);
+            audioInput[0].files = dt.files;
+        } catch (err) {
+            console.log('No se pudo asignar el archivo al campo del formulario:', err);
+        }
+        audioInput.trigger('change');
+        audioReplaceInput.val('');
+    });
+
+    // Manejo del input de audio (panel onda + recorte + volúmenes)
+    audioInput.on('change', function(e) {
+        if (e.target.files && e.target.files[0]) {
+            var fileName = e.target.files[0].name;
+            var audioFile = e.target.files[0];
+            if (audioElement) {
+                audioElement.pause();
+                try {
+                    if (audioElement.src && audioElement.src.indexOf('blob:') === 0) {
+                        URL.revokeObjectURL(audioElement.src);
+                    }
+                } catch (rev) {}
+                audioElement = null;
+            }
+            reelMusicVol = parseInt($('#reel_audio_music_slider').val(), 10) / 100;
+            reelVideoVol = parseInt($('#reel_audio_video_slider').val(), 10) / 100;
+            var audioUrl = URL.createObjectURL(audioFile);
+            audioElement = new Audio(audioUrl);
+            audioElement.loop = true;
+            audioElement.muted = isMuted;
+            applyReelVolumeSlidersToPlayers();
+            syncAudioWithVideo(true);
+            var reader = new FileReader();
+            reader.onload = function (ev) {
+                if (ev.target && ev.target.result) {
+                    decodeReelAudioArrayBuffer(ev.target.result, function () {
+                        openReelAudioPanel();
+                    });
+                }
+            };
+            reader.readAsArrayBuffer(audioFile);
+            $status.removeClass('alert-danger').addClass('alert alert-success').html('Audio: ' + fileName + '. Ajusta el fragmento y los volúmenes.');
+            setTimeout(function() {
+                $status.removeClass('alert-success').html('');
+            }, 2800);
+        }
+    });
+
+    $('#reel_audio_panel_done, #reel_audio_panel_close').on('click', function () {
+        closeReelAudioPanel();
+    });
+    $('#reel_audio_preview_restart').on('click', function () {
+        var v = getReelPlaybackVideo();
+        if (v && videoDuration > 0) {
+            v.currentTime = getTrimStartTime();
+        }
+        syncAudioWithVideo(true);
+    });
+    $('#reel_audio_music_slider').on('input change', function () {
+        reelMusicVol = parseInt($(this).val(), 10) / 100;
+        syncReelAudioHiddenFields();
+        applyReelVolumeSlidersToPlayers();
+    });
+    $('#reel_audio_video_slider').on('input change', function () {
+        reelVideoVol = parseInt($(this).val(), 10) / 100;
+        syncReelAudioHiddenFields();
+        applyReelVolumeSlidersToPlayers();
+    });
+
+    function reelAudioPointerX(ev) {
+        if (ev.touches && ev.touches[0]) return ev.touches[0].clientX;
+        if (ev.changedTouches && ev.changedTouches[0]) return ev.changedTouches[0].clientX;
+        return ev.clientX;
+    }
+    if (reelAudioCanvas) {
+        reelAudioCanvas.addEventListener('mousedown', function (e) {
+            if (!reelAudioPeaks) return;
+            e.preventDefault();
+            reelAudioDragging = true;
+            reelAudioLastPointerX = reelAudioPointerX(e);
+        });
+        reelAudioCanvas.addEventListener('touchstart', function (e) {
+            if (!reelAudioPeaks) return;
+            e.preventDefault();
+            reelAudioDragging = true;
+            reelAudioLastPointerX = reelAudioPointerX(e);
+        }, { passive: false });
+    }
+    function applyReelAudioStartFromTopTrackClientX(clientX) {
+        if (!reelAudioPeaks || reelAudioFileDurationSec <= 0) return;
+        var track = document.querySelector('#reel_audio_panel .reel-audio-top-track');
+        if (!track) return;
+        var r = track.getBoundingClientRect();
+        if (r.width <= 0) return;
+        var ratio = (clientX - r.left) / r.width;
+        ratio = Math.max(0, Math.min(1, ratio));
+        var segLen = getReelEffectiveAudioSegLen();
+        var maxStart = Math.max(0, reelAudioFileDurationSec - segLen);
+        reelAudioSegStartSec = Math.max(0, Math.min(maxStart, ratio * reelAudioFileDurationSec));
+        syncReelAudioHiddenFields();
+        drawReelAudioWaveform();
+        updateReelAudioPanelChrome();
+    }
+
+    var reelAudioTopHandleStart = document.getElementById('reel_audio_top_handle_start');
+    if (reelAudioTopHandleStart) {
+        reelAudioTopHandleStart.addEventListener('mousedown', function (e) {
+            if (!reelAudioPeaks || reelAudioFileDurationSec <= 0) return;
+            e.preventDefault();
+            e.stopPropagation();
+            reelAudioTopStartDragging = true;
+            applyReelAudioStartFromTopTrackClientX(reelAudioPointerX(e));
+        });
+        reelAudioTopHandleStart.addEventListener('touchstart', function (e) {
+            if (!reelAudioPeaks || reelAudioFileDurationSec <= 0) return;
+            e.preventDefault();
+            reelAudioTopStartDragging = true;
+            applyReelAudioStartFromTopTrackClientX(reelAudioPointerX(e));
+        }, { passive: false });
+    }
+
+    $(document).on('mousemove.reelAud touchmove.reelAud', function (e) {
+        var ox = e.originalEvent || e;
+        if (reelAudioTopStartDragging && reelAudioPeaks && reelAudioFileDurationSec > 0) {
+            if (ox.preventDefault) ox.preventDefault();
+            applyReelAudioStartFromTopTrackClientX(reelAudioPointerX(ox));
+            return;
+        }
+        if (!reelAudioDragging || !reelAudioPeaks || reelAudioFileDurationSec <= 0) return;
+        var cx = reelAudioPointerX(ox);
+        var dx = cx - reelAudioLastPointerX;
+        reelAudioLastPointerX = cx;
+        var r = reelAudioCanvas.getBoundingClientRect();
+        if (r.width <= 0) return;
+        var deltaSec = (dx / r.width) * reelAudioFileDurationSec;
+        reelAudioSegStartSec -= deltaSec;
+        var segLen = getReelEffectiveAudioSegLen();
+        var maxStart = Math.max(0, reelAudioFileDurationSec - segLen);
+        reelAudioSegStartSec = Math.max(0, Math.min(maxStart, reelAudioSegStartSec));
+        syncReelAudioHiddenFields();
+        drawReelAudioWaveform();
+        updateReelAudioPanelChrome();
+    });
+    $(document).on('mouseup.reelAud touchend.reelAud touchcancel.reelAud', function () {
+        reelAudioDragging = false;
+        reelAudioTopStartDragging = false;
+    });
+
+    // Control de volumen
+    volumeToggleBtn.on('click', function() {
+        isMuted = !isMuted;
+        previewVideo.muted = isMuted;
+        if (reelAudioPanelVideo) {
+            reelAudioPanelVideo.muted = isMuted;
+        }
+        if (audioElement) {
+            audioElement.muted = isMuted;
+        }
+        var icon = volumeToggleBtn.find('svg');
+        if (isMuted) {
+            icon.html('<path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"></path>');
+        } else {
+            icon.html('<path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"></path>');
+        }
+    });
+
+    function formatFileSize(bytes) {
+        if (!bytes) return '0 MB';
+        var mb = (bytes / (1024 * 1024)).toFixed(1);
+        return mb + ' MB';
+    }
+
+    function getTrimStartTime() {
+        if (videoDuration <= 0) return 0;
+        return (trimStartPercent / 100) * videoDuration;
+    }
+
+    function getReelVideoTrimDurationSec() {
+        if (videoDuration <= 0) return 60;
+        return Math.max(0.05, ((trimEndPercent - trimStartPercent) / 100) * videoDuration);
+    }
+
+    /** Duración del fragmento que se usa en el reel: siempre la del recorte del video (o el audio completo si es más corto). */
+    function getReelEffectiveAudioSegLen() {
+        var trimLen = getReelVideoTrimDurationSec();
+        if (!reelAudioFileDurationSec || reelAudioFileDurationSec < 0.001) {
+            return Math.max(0.05, trimLen);
+        }
+        return Math.max(0.05, Math.min(trimLen, reelAudioFileDurationSec));
+    }
+
+    function syncReelAudioHiddenFields() {
+        $('#reel_audio_start').val(String(reelAudioSegStartSec.toFixed(4)));
+        $('#reel_audio_duration').val(String(getReelEffectiveAudioSegLen().toFixed(4)));
+        $('#reel_music_volume').val(String(Math.min(4, Math.max(0, reelMusicVol))));
+        $('#reel_video_volume').val(String(Math.min(1, Math.max(0, reelVideoVol))));
+    }
+
+    function reelClampAudioSegmentToTrim() {
+        if (!reelAudioPeaks || !reelAudioPeaks.length) return;
+        var seg = getReelEffectiveAudioSegLen();
+        var maxStart = Math.max(0, reelAudioFileDurationSec - seg);
+        if (reelAudioSegStartSec > maxStart) {
+            reelAudioSegStartSec = maxStart;
+        }
+        syncReelAudioHiddenFields();
+        drawReelAudioWaveform();
+        updateReelAudioPanelChrome();
+    }
+
+    function updateReelAudioPanelChrome() {
+        var seg = getReelEffectiveAudioSegLen();
+        $('#reel_audio_seg_badge').text(Math.round(seg));
+        if (!reelAudioFileDurationSec) return;
+        var p0 = (reelAudioSegStartSec / reelAudioFileDurationSec) * 100;
+        var p1 = ((reelAudioSegStartSec + seg) / reelAudioFileDurationSec) * 100;
+        p0 = Math.max(0, Math.min(100, p0));
+        p1 = Math.max(0, Math.min(100, p1));
+        $('#reel_audio_top_handle_start').css('left', p0 + '%');
+        $('#reel_audio_top_dot_r').css('left', p1 + '%');
+        $('#reel_audio_top_prog').css({ left: p0 + '%', width: Math.max(0, p1 - p0) + '%' });
+    }
+
+    function buildReelAudioPeaks(audioBuffer) {
+        var ch = audioBuffer.numberOfChannels > 0 ? audioBuffer.getChannelData(0) : null;
+        if (!ch || !ch.length) {
+            reelAudioPeaks = null;
+            return;
+        }
+        var n = 140;
+        var peaks = [];
+        var block = Math.floor(ch.length / n) || 1;
+        for (var i = 0; i < n; i++) {
+            var start = i * block;
+            var end = Math.min(ch.length, start + block);
+            var max = 0;
+            for (var j = start; j < end; j++) {
+                var v = Math.abs(ch[j]);
+                if (v > max) max = v;
+            }
+            peaks.push(max);
+        }
+        reelAudioPeaks = peaks;
+    }
+
+    function resizeReelAudioCanvas() {
+        if (!reelAudioCanvas || !reelAudioCtx) return;
+        var wrap = document.getElementById('reel_audio_wave_inner');
+        if (!wrap) return;
+        var w = Math.min(720, Math.max(280, wrap.clientWidth || 600));
+        var dpr = window.devicePixelRatio || 1;
+        reelAudioCanvas.width = Math.floor(w * dpr);
+        reelAudioCanvas.height = Math.floor(REEL_AUDIO_WAVE_H * dpr);
+        reelAudioCanvas.style.height = REEL_AUDIO_WAVE_H + 'px';
+        reelAudioCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    function drawReelAudioWaveform() {
+        if (!reelAudioCtx || !reelAudioCanvas || !reelAudioPeaks || !reelAudioPeaks.length || reelAudioFileDurationSec <= 0) return;
+        resizeReelAudioCanvas();
+        var w = reelAudioCanvas.width / (window.devicePixelRatio || 1);
+        var h = REEL_AUDIO_WAVE_H;
+        var ctx = reelAudioCtx;
+        var n = reelAudioPeaks.length;
+        var barW = w / n;
+        var segLen = getReelEffectiveAudioSegLen();
+        var i0 = Math.floor((reelAudioSegStartSec / reelAudioFileDurationSec) * n);
+        var i1 = Math.ceil(((reelAudioSegStartSec + segLen) / reelAudioFileDurationSec) * n);
+        i0 = Math.max(0, Math.min(n - 1, i0));
+        i1 = Math.max(i0 + 1, Math.min(n, i1));
+        var colBg = '#0a1118';
+        var colBarOut = '#3a5366';
+        var colBarIn = '#8eb4c9';
+        var colPlayhead = '#2E9FFF';
+        var colStroke = '#2E9FFF';
+        var colHandle = '#2E9FFF';
+        ctx.fillStyle = colBg;
+        ctx.fillRect(0, 0, w, h);
+        var gridN = 5;
+        ctx.strokeStyle = 'rgba(46, 159, 255, 0.14)';
+        ctx.lineWidth = 1;
+        for (var gi = 1; gi < gridN; gi++) {
+            var gx = (gi / gridN) * w;
+            ctx.beginPath();
+            ctx.moveTo(Math.floor(gx) + 0.5, 0);
+            ctx.lineTo(Math.floor(gx) + 0.5, h);
+            ctx.stroke();
+        }
+        var selL = (reelAudioSegStartSec / reelAudioFileDurationSec) * w;
+        var selR = ((reelAudioSegStartSec + segLen) / reelAudioFileDurationSec) * w;
+        ctx.fillStyle = 'rgba(169, 198, 217, 0.22)';
+        ctx.fillRect(selL, 0, Math.max(1, selR - selL), h);
+        for (var i = 0; i < n; i++) {
+            var amp = reelAudioPeaks[i];
+            var bh = Math.max(2, amp * h * 0.85);
+            var x = i * barW + barW * 0.2;
+            var bw = Math.max(2, barW * 0.65);
+            var y = (h - bh) / 2;
+            var inside = i >= i0 && i < i1;
+            ctx.fillStyle = inside ? colBarIn : colBarOut;
+            if (inside && i === Math.floor((i0 + i1) / 2)) {
+                ctx.fillStyle = colPlayhead;
+            }
+            var r = Math.min(bw / 2, bh / 2, 3);
+            ctx.beginPath();
+            ctx.moveTo(x + r, y);
+            ctx.lineTo(x + bw - r, y);
+            ctx.quadraticCurveTo(x + bw, y, x + bw, y + r);
+            ctx.lineTo(x + bw, y + bh - r);
+            ctx.quadraticCurveTo(x + bw, y + bh, x + bw - r, y + bh);
+            ctx.lineTo(x + r, y + bh);
+            ctx.quadraticCurveTo(x, y + bh, x, y + bh - r);
+            ctx.lineTo(x, y + r);
+            ctx.quadraticCurveTo(x, y, x + r, y);
+            ctx.closePath();
+            ctx.fill();
+        }
+        ctx.save();
+        ctx.strokeStyle = colStroke;
+        ctx.lineWidth = Math.max(2, Math.round(h / 24));
+        ctx.strokeRect(selL + 1, 2, Math.max(3, selR - selL - 2), h - 4);
+        ctx.fillStyle = colHandle;
+        var hw = Math.max(4, Math.round(h / 14));
+        var hr = 3;
+        ctx.beginPath();
+        ctx.moveTo(selL + hr, 3);
+        ctx.lineTo(selL + hw - hr, 3);
+        ctx.quadraticCurveTo(selL + hw, 3, selL + hw, 3 + hr);
+        ctx.lineTo(selL + hw, h - 3 - hr);
+        ctx.quadraticCurveTo(selL + hw, h - 3, selL + hw - hr, h - 3);
+        ctx.lineTo(selL + hr, h - 3);
+        ctx.quadraticCurveTo(selL, h - 3, selL, h - 3 - hr);
+        ctx.lineTo(selL, 3 + hr);
+        ctx.quadraticCurveTo(selL, 3, selL + hr, 3);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+    }
+
+    function initReelAudioSegmentAfterDecode() {
+        reelAudioSegStartSec = 0;
+        syncReelAudioHiddenFields();
+        updateReelAudioPanelChrome();
+        drawReelAudioWaveform();
+    }
+
+    function decodeReelAudioArrayBuffer(ab, onDecoded) {
+        reelAudioArrayBuffer = ab;
+        var AC = window.AudioContext || window.webkitAudioContext;
+        if (!AC || !ab) {
+            reelAudioPeaks = null;
+            if (typeof onDecoded === 'function') {
+                onDecoded();
+            }
+            return;
+        }
+        var actx = new AC();
+        actx.decodeAudioData(ab.slice(0), function (buf) {
+            try {
+                actx.close();
+            } catch (e1) {}
+            reelAudioFileDurationSec = buf.duration;
+            buildReelAudioPeaks(buf);
+            initReelAudioSegmentAfterDecode();
+            if (typeof onDecoded === 'function') {
+                onDecoded();
+            }
+        }, function () {
+            try {
+                actx.close();
+            } catch (e2) {}
+            reelAudioPeaks = null;
+            reelAudioFileDurationSec = 0;
+            if (typeof onDecoded === 'function') {
+                onDecoded();
+            }
+        });
+    }
+
+    function applyReelVolumeSlidersToPlayers() {
+        if (previewVideo) {
+            previewVideo.volume = Math.min(1, Math.max(0, reelVideoVol));
+        }
+        if (reelAudioPanelVideo) {
+            reelAudioPanelVideo.volume = Math.min(1, Math.max(0, reelVideoVol));
+        }
+        if (audioElement) {
+            audioElement.volume = Math.min(1, Math.max(0, reelMusicVol));
+        }
+    }
+
+    function openReelAudioPanel() {
+        if (!reelAudioPanel.length) return;
+        pauseReelPlaybackFully();
+        setupReelAudioPanelVideo();
+        reelAudioPanel.css({ display: 'flex', flexDirection: 'column' });
+        var av = getReelPlaybackVideo();
+        if (av && videoDuration > 0) {
+            updateReelAudioPanelTimeLabel(av);
+        }
+        setTimeout(function () {
+            resizeReelAudioCanvas();
+            drawReelAudioWaveform();
+        }, 80);
+    }
+
+    function closeReelAudioPanel() {
+        if (reelAudioPanelVideo && previewVideo && (previewVideo.src || previewVideo.currentSrc)) {
+            try {
+                previewVideo.currentTime = reelAudioPanelVideo.currentTime;
+            } catch (e) {}
+            reelAudioPanelVideo.pause();
+        }
+        pauseReelPlaybackFully();
+        reelAudioPanel.hide();
+    }
+
+    function syncAudioWithVideo(forceFromStart) {
+        if (!audioElement) return;
+        var v = getReelPlaybackVideo();
+        if (!v) return;
+        var trimStart = getTrimStartTime();
+        var rel = v.currentTime - trimStart;
+        if (rel < 0) rel = 0;
+        var segLen = getReelEffectiveAudioSegLen();
+        if (segLen < 0.05) segLen = 0.05;
+        var posInSeg = rel % segLen;
+        var target = reelAudioSegStartSec + (forceFromStart ? 0 : posInSeg);
+        if (target > reelAudioSegStartSec + segLen - 0.04) {
+            target = reelAudioSegStartSec;
+        }
+        if (Math.abs((audioElement.currentTime || 0) - target) > 0.18) {
+            try {
+                audioElement.currentTime = target;
+            } catch (e) {}
+        }
+    }
+
+    previewVideo.addEventListener('timeupdate', function() {
+        processReelVideoTimeupdate(previewVideo);
+    });
+
+    if (reelAudioPanelVideo) {
+        reelAudioPanelVideo.addEventListener('timeupdate', function() {
+            processReelVideoTimeupdate(reelAudioPanelVideo);
+        });
+    }
+
+    function handleReelVideoEnded(ev) {
+        var v = ev.target;
+        if (v !== getReelPlaybackVideo()) return;
+        pauseReelPlaybackFully();
+        if (audioElement) {
+            syncAudioWithVideo(true);
+        }
+        if (videoDuration > 0) {
+            v.currentTime = (trimStartPercent / 100) * videoDuration;
+        }
+    }
+
+    previewVideo.addEventListener('ended', handleReelVideoEnded);
+    if (reelAudioPanelVideo) {
+        reelAudioPanelVideo.addEventListener('ended', handleReelVideoEnded);
+    }
+
+    function handleReelVideoSeeking(ev) {
+        if (ev.target !== getReelPlaybackVideo()) return;
+        if (audioElement) {
+            syncAudioWithVideo(false);
+        }
+    }
+
+    previewVideo.addEventListener('seeking', handleReelVideoSeeking);
+    if (reelAudioPanelVideo) {
+        reelAudioPanelVideo.addEventListener('seeking', handleReelVideoSeeking);
+    }
+
+    previewVideo.addEventListener('loadedmetadata', function() {
+        layoutReelEditStage();
+        updateCanvasSize();
+        videoDuration = previewVideo.duration;
+        if (videoDuration > 0) {
+            var timeStr = formatTime(videoDuration);
+            totalTimeSpan.text(timeStr);
+            
+            // Calcular tamaño del archivo
+            var fileSize = 0;
+            if (recordedBlob) {
+                fileSize = recordedBlob.size;
+            } else if (uploadedFile) {
+                fileSize = uploadedFile.size;
+            }
+            if (fileSizeSpan && fileSizeSpan.length) {
+                fileSizeSpan.text(formatFileSize(fileSize));
+            }
+            
+            trimStartPercent = 0;
+            trimEndPercent = 100;
+            trimStartInput.val('0');
+            trimEndInput.val(Number(videoDuration).toFixed(3));
+            trimStartDisplay.text('0.0s');
+            trimEndDisplay.text(videoDuration.toFixed(1) + 's');
+            previewVideo.currentTime = 0;
+            setTimeout(function() {
+                updateTimeline();
+                generateTimelineThumbs();
+            }, 100);
+        }
+    });
+
+    function findOverlayById(id) {
+        for (var j = 0; j < textOverlays.length; j++) {
+            if (textOverlays[j].id === id) return textOverlays[j];
+        }
+        return null;
+    }
+
+    function getOverlayIdAtPercent(pos) {
+        var px = (pos.x / 100) * textCanvas.width;
+        var py = (pos.y / 100) * textCanvas.height;
+        for (var i = overlayBoundsList.length - 1; i >= 0; i--) {
+            var b = overlayBoundsList[i];
+            if (px >= b.left && px <= b.right && py >= b.top && py <= b.bottom) return b.id;
+        }
+        return null;
+    }
+
+    reelEmojiToggle.on('mousedown touchstart', function (e) {
+        e.stopPropagation();
+    });
+    reelEmojiToggle.on('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        buildReelEmojiGridOnce();
+        if (reelEmojiPopover.is(':visible')) {
+            reelEmojiPopover.hide();
+        } else {
+            reelEmojiPopover.css('display', 'block');
+        }
+    });
+    reelEmojiPopover.on('mousedown touchstart', function (e) {
+        e.stopPropagation();
+    });
+    $(document).on('click.reelEmojiClose', function (e) {
+        if (!reelEmojiPopover.length || !reelEmojiPopover.is(':visible')) return;
+        if ($(e.target).closest('#reel_emoji_toggle, #reel_emoji_popover').length) return;
+        reelEmojiPopover.hide();
+    });
+
+    // Panel de texto dentro del video
+    textEditorInput.on('input.reelWFit', sizeReelTextEditorToContent);
+
+    textToggleBtn.on('click', function () {
+        if (!textPanel.length) return;
+        ensureOverlayWhenOpeningFromPencil();
+        openReelTextStudioPanel();
+    });
+
+    function closeReelTextStudioDiscardDrafts() {
+        reelEmojiPopover.hide();
+        textOverlays = textOverlays.filter(function (o) {
+            return o.text && String(o.text).trim() !== '';
+        });
+        if (!getSelectedOverlay()) {
+            selectedOverlayId = textOverlays.length ? textOverlays[textOverlays.length - 1].id : null;
+        }
+        drawTextOverlay();
+        textPanel.hide();
+    }
+
+    reelTextStudioClose.on('click', function () {
+        closeReelTextStudioDiscardDrafts();
+    });
+
+    reelTextColor.on('input change', function () {
+        var ov = getSelectedOverlay();
+        if (ov) {
+            ov.color = reelTextColor.val() || '#ffffff';
+        }
+        applyReelTextEditorPreview();
+    });
+
+    reelTbColorBtn.on('click', function (e) {
+        e.preventDefault();
+        if (reelTextColor.length) reelTextColor.trigger('click');
+    });
+
+    $(document).on('click', '#reel_font_carousel .reel-font-pill', function () {
+        var f = $(this).attr('data-font');
+        if (!f) return;
+        reelTextFont.val(f);
+        var ov = getSelectedOverlay();
+        if (ov) ov.font = f;
+        updateFontCarouselUI();
+        applyReelTextEditorPreview();
+    });
+
+    reelTbAa.on('click', function (e) {
+        e.preventDefault();
+        var el = document.getElementById('reel_font_carousel_wrap');
+        if (el && reelFontCarouselWrap.length) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            reelFontCarouselWrap.removeClass('reel-font-focus');
+            void el.offsetWidth;
+            reelFontCarouselWrap.addClass('reel-font-focus');
+            setTimeout(function () {
+                reelFontCarouselWrap.removeClass('reel-font-focus');
+            }, 2000);
+        }
+    });
+
+    reelTbItalic.on('click', function () {
+        var ov = getSelectedOverlay();
+        if (!ov) return;
+        ov.italic = !ov.italic;
+        updateToolbarForSelection();
+        applyReelTextEditorPreview();
+    });
+
+    reelTbBox.on('click', function () {
+        var ov = getSelectedOverlay();
+        if (!ov) return;
+        ensureOverlayFields(ov);
+        ov.boxMode = ((parseInt(ov.boxMode, 10) || 0) + 1) % 5;
+        updateToolbarForSelection();
+        applyReelTextEditorPreview();
+        drawTextOverlay();
+    });
+
+    var alignCycle = ['center', 'left', 'right'];
+    reelTbAlign.on('click', function () {
+        var ov = getSelectedOverlay();
+        if (!ov) return;
+        var i = alignCycle.indexOf(ov.align || 'center');
+        ov.align = alignCycle[(i + 1) % alignCycle.length];
+        updateToolbarForSelection();
+        applyReelTextEditorPreview();
+        drawTextOverlay();
+    });
+
+    reelTextSizeTrack.on('mousedown touchstart', function (e) {
+        sizeSliderDragging = true;
+        var ev = e.originalEvent;
+        var cy = ev.touches && ev.touches[0] ? ev.touches[0].clientY : e.clientY;
+        setFontScaleFromClientY(cy);
+        e.preventDefault();
+    });
+    $(document).on('mousemove.reelTxtSz touchmove.reelTxtSz', function (e) {
+        if (!sizeSliderDragging) return;
+        var ev = e.originalEvent;
+        var cy = ev.touches && ev.touches[0] ? ev.touches[0].clientY : e.clientY;
+        setFontScaleFromClientY(cy);
+        e.preventDefault();
+    });
+    $(document).on('mouseup.reelTxtSz touchend.reelTxtSz', function () {
+        sizeSliderDragging = false;
+    });
+
+    reelTextAddLayer.on('click', function () {
+        var cur = getSelectedOverlay();
+        var nid = genReelTextId();
+        var baseX = cur ? cur.x : 50;
+        var baseY = cur ? cur.y : 50;
+        textOverlays.push(ensureOverlayFields({
+            id: nid,
+            text: <?php echo json_encode($wo['lang']['text'] ?? 'Texto'); ?>,
+            x: Math.max(8, Math.min(92, baseX + 6)),
+            y: Math.max(8, Math.min(92, baseY + 5)),
+            color: (cur && cur.color) ? cur.color : '#ffffff',
+            font: (cur && cur.font) ? cur.font : 'meme',
+            fontScale: (cur && cur.fontScale != null) ? cur.fontScale : 1,
+            italic: !!(cur && cur.italic),
+            align: (cur && cur.align) ? cur.align : 'center',
+            boxMode: (cur && cur.boxMode != null) ? cur.boxMode : 0
+        }));
+        selectedOverlayId = nid;
+        syncPanelFromSelection();
+        drawTextOverlay();
+        setTimeout(function () { textEditorInput.focus().select(); }, 50);
+    });
+
+    textApplyBtn.on('click', function () {
+        reelEmojiPopover.hide();
+        var ov = getSelectedOverlay();
+        if (!ov) {
+            var nid = genReelTextId();
+            ov = ensureOverlayFields({
+                id: nid,
+                text: '',
+                x: 50,
+                y: 50,
+                color: '#ffffff',
+                font: 'meme',
+                fontScale: 1,
+                italic: false,
+                align: 'center',
+                boxMode: 0
+            });
+            textOverlays.push(ov);
+            selectedOverlayId = nid;
+        }
+        ensureOverlayFields(ov);
+        ov.text = $.trim(textEditorInput.val() || '');
+        ov.color = reelTextColor.val() || '#ffffff';
+        ov.font = reelTextFont.val() || 'meme';
+
+        textOverlays = textOverlays.filter(function (o) {
+            return o.text && String(o.text).trim() !== '';
+        });
+        if (!textOverlays.length) {
+            selectedOverlayId = null;
+        } else if (!textOverlays.some(function (o) { return o.id === selectedOverlayId; })) {
+            selectedOverlayId = textOverlays[textOverlays.length - 1].id;
+        }
+
+        if (textCanvas) {
+            setTimeout(function () {
+                layoutReelEditStage();
+                updateCanvasSize();
+                drawTextOverlay();
+            }, 100);
+        }
+        drawTextOverlay();
+        textPanel.css('display', 'none');
+    });
+
+    // Arrastrar capas de texto; soltar sobre la basura elimina la capa.
+    var isDraggingText = false;
+    var reelTextPinchState = null;
+    if (textDragArea && textCanvas) {
+        textDragArea.style.pointerEvents = 'none';
+        textDragArea.style.touchAction = 'none';
+
+        function getDragAreaEventPos(e) {
+            var rect = textDragArea.getBoundingClientRect();
+            var clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            var clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            return {
+                x: ((clientX - rect.left) / rect.width) * 100,
+                y: ((clientY - rect.top) / rect.height) * 100,
+                clientX: clientX,
+                clientY: clientY
+            };
+        }
+
+        function getOverlayIdAtClientXY(clientX, clientY) {
+            var rect = textDragArea.getBoundingClientRect();
+            if (rect.width <= 0 || rect.height <= 0) return null;
+            var pos = {
+                x: ((clientX - rect.left) / rect.width) * 100,
+                y: ((clientY - rect.top) / rect.height) * 100
+            };
+            return getOverlayIdAtPercent(pos);
+        }
+
+        function passEventToUnderlying(clientX, clientY) {
+            textDragArea.style.pointerEvents = 'none';
+            var underlying = document.elementFromPoint(clientX, clientY);
+            if (underlying && typeof underlying.click === 'function') {
+                underlying.click();
+            }
+            setTimeout(function () {
+                if (textDragArea && $step2.length && $step2.is(':visible')) {
+                    textDragArea.style.pointerEvents = 'auto';
+                }
+            }, 0);
+        }
+
+        function finishTextDrag(clientX, clientY) {
+            if (isDraggingText && draggingOverlayId && isPointOverTrash(clientX, clientY)) {
+                var delId = draggingOverlayId;
+                textOverlays = textOverlays.filter(function (o) { return o.id !== delId; });
+                if (selectedOverlayId === delId) {
+                    selectedOverlayId = textOverlays.length ? textOverlays[textOverlays.length - 1].id : null;
+                }
+            }
+            setTrashZoneHighlight(false);
+            isDraggingText = false;
+            draggingOverlayId = null;
+            drawTextOverlay();
+        }
+
+        var reelEmptyMouseDownTime = 0;
+        var reelPrevTouchStart = 0;
+        var reelPrevTouchOid = null;
+        var reelPrevTouchX = 0;
+        var reelPrevTouchY = 0;
+
+        textDragArea.addEventListener('mousedown', function (e) {
+            if (!$step2.length || !$step2.is(':visible')) return;
+            var pos = getDragAreaEventPos(e);
+            var oid = getOverlayIdAtPercent(pos);
+            if (!oid) {
+                var now = Date.now();
+                if (now - reelEmptyMouseDownTime < 420) {
+                    reelEmptyMouseDownTime = 0;
+                } else {
+                    reelEmptyMouseDownTime = now;
+                    passEventToUnderlying(e.clientX, e.clientY);
+                }
+                return;
+            }
+            reelEmptyMouseDownTime = 0;
+            if (!hasReelTextLayers()) return;
+            e.preventDefault();
+            e.stopPropagation();
+            selectedOverlayId = oid;
+            isDraggingText = true;
+            draggingOverlayId = oid;
+            textDragArea.style.cursor = 'grabbing';
+            drawTextOverlay();
+        });
+
+        textDragArea.addEventListener('click', function (e) {
+            if (e.detail !== 2) return;
+            if (!$step2.length || !$step2.is(':visible')) return;
+            e.preventDefault();
+            e.stopPropagation();
+            reelEmptyMouseDownTime = 0;
+            handleReelStageDoubleActivate(e.clientX, e.clientY);
+        });
+
+        textDragArea.addEventListener('dblclick', function (e) {
+            if (!$step2.length || !$step2.is(':visible')) return;
+            e.preventDefault();
+            e.stopPropagation();
+            reelEmptyMouseDownTime = 0;
+            handleReelStageDoubleActivate(e.clientX, e.clientY);
+        });
+
+        textDragArea.addEventListener('touchstart', function (e) {
+            if (!$step2.length || !$step2.is(':visible')) return;
+            if (e.touches && e.touches.length >= 2) {
+                drawTextOverlay();
+                var t0 = e.touches[0], t1 = e.touches[1];
+                var oidA = getOverlayIdAtClientXY(t0.clientX, t0.clientY);
+                var oidB = getOverlayIdAtClientXY(t1.clientX, t1.clientY);
+                var oidPinch = (oidA && oidA === oidB) ? oidA : getOverlayIdAtClientXY((t0.clientX + t1.clientX) / 2, (t0.clientY + t1.clientY) / 2);
+                if (oidPinch && hasReelTextLayers()) {
+                    var ovP = findOverlayById(oidPinch);
+                    if (ovP) {
+                        ensureOverlayFields(ovP);
+                        reelTextPinchState = {
+                            overlayId: oidPinch,
+                            startDist: reelTagTouchDistance(e.touches),
+                            startScale: ovP.fontScale
+                        };
+                        isDraggingText = false;
+                        draggingOverlayId = null;
+                        selectedOverlayId = oidPinch;
+                        e.preventDefault();
+                        e.stopPropagation();
+                        drawTextOverlay();
+                        return;
+                    }
+                }
+                return;
+            }
+            if (!e.touches || e.touches.length !== 1) return;
+            var t = e.touches[0];
+            var pos = getDragAreaEventPos(e);
+            drawTextOverlay();
+            var oid = getOverlayIdAtPercent(pos);
+            var tnow = Date.now();
+            if (
+                tnow - reelPrevTouchStart < 340 &&
+                oid === reelPrevTouchOid &&
+                Math.hypot(t.clientX - reelPrevTouchX, t.clientY - reelPrevTouchY) < 48
+            ) {
+                e.preventDefault();
+                e.stopPropagation();
+                isDraggingText = false;
+                draggingOverlayId = null;
+                reelPrevTouchStart = 0;
+                handleReelStageDoubleActivate(t.clientX, t.clientY);
+                return;
+            }
+            reelPrevTouchStart = tnow;
+            reelPrevTouchOid = oid;
+            reelPrevTouchX = t.clientX;
+            reelPrevTouchY = t.clientY;
+            if (!hasReelTextLayers()) return;
+            if (!oid) return;
+            e.preventDefault();
+            e.stopPropagation();
+            selectedOverlayId = oid;
+            isDraggingText = true;
+            draggingOverlayId = oid;
+            drawTextOverlay();
+        }, { passive: false });
+
+        textDragArea.addEventListener('mousemove', function (e) {
+            if (!isDraggingText || !draggingOverlayId || !hasReelTextLayers()) return;
+            e.preventDefault();
+            e.stopPropagation();
+            var pos = getDragAreaEventPos(e);
+            var ov = findOverlayById(draggingOverlayId);
+            if (ov) {
+                ov.x = Math.max(0, Math.min(100, pos.x));
+                ov.y = Math.max(0, Math.min(100, pos.y));
+            }
+            setTrashZoneHighlight(isPointOverTrash(pos.clientX, pos.clientY));
+            drawTextOverlay();
+        });
+
+        textDragArea.addEventListener('touchmove', function (e) {
+            if (!$step2.length || !$step2.is(':visible')) return;
+            var touches = e.touches;
+            if (reelTextPinchState) {
+                if (touches && touches.length >= 2) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    var dPin = reelTagTouchDistance(touches);
+                    if (dPin < 8) return;
+                    var ovPin = findOverlayById(reelTextPinchState.overlayId);
+                    if (ovPin) {
+                        ensureOverlayFields(ovPin);
+                        var nsPin = reelTextPinchState.startScale * (dPin / reelTextPinchState.startDist);
+                        ovPin.fontScale = Math.max(REEL_SCALE_MIN, Math.min(REEL_SCALE_MAX, nsPin));
+                    }
+                    drawTextOverlay();
+                    return;
+                }
+                reelTextPinchState = null;
+            }
+            if (isDraggingText && draggingOverlayId && touches && touches.length >= 2) {
+                var d2 = reelTagTouchDistance(touches);
+                if (d2 >= 8) {
+                    var ovt = findOverlayById(draggingOverlayId);
+                    if (ovt) {
+                        ensureOverlayFields(ovt);
+                        reelTextPinchState = {
+                            overlayId: draggingOverlayId,
+                            startDist: d2,
+                            startScale: ovt.fontScale
+                        };
+                        isDraggingText = false;
+                        draggingOverlayId = null;
+                        setTrashZoneHighlight(false);
+                    }
+                    e.preventDefault();
+                    e.stopPropagation();
+                    return;
+                }
+            }
+            if (!isDraggingText || !draggingOverlayId || !hasReelTextLayers()) return;
+            e.preventDefault();
+            e.stopPropagation();
+            var pos = getDragAreaEventPos(e);
+            var ov = findOverlayById(draggingOverlayId);
+            if (ov) {
+                ov.x = Math.max(0, Math.min(100, pos.x));
+                ov.y = Math.max(0, Math.min(100, pos.y));
+            }
+            setTrashZoneHighlight(isPointOverTrash(pos.clientX, pos.clientY));
+            drawTextOverlay();
+        }, { passive: false });
+
+        textDragArea.addEventListener('mouseup', function (e) {
+            if (isDraggingText) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            finishTextDrag(e.clientX, e.clientY);
+        });
+
+        textDragArea.addEventListener('touchend', function (e) {
+            if (reelTextPinchState && (!e.touches || e.touches.length < 2)) {
+                reelTextPinchState = null;
+            }
+            var t = e.changedTouches && e.changedTouches[0];
+            var cx = t ? t.clientX : 0;
+            var cy = t ? t.clientY : 0;
+            if (isDraggingText) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            finishTextDrag(cx, cy);
+        });
+
+        textDragArea.addEventListener('mouseleave', function () {
+            if (isDraggingText) {
+                setTrashZoneHighlight(false);
+            }
+            isDraggingText = false;
+            draggingOverlayId = null;
+            drawTextOverlay();
+        });
+
+        textDragArea.addEventListener('touchcancel', function () {
+            reelTextPinchState = null;
+            setTrashZoneHighlight(false);
+            isDraggingText = false;
+            draggingOverlayId = null;
+            drawTextOverlay();
+        });
+
+        textDragArea.addEventListener('wheel', function (ev) {
+            if (!ev.ctrlKey && !ev.metaKey) return;
+            if (!$step2.length || !$step2.is(':visible')) return;
+            if (!hasReelTextLayers()) return;
+            drawTextOverlay();
+            var oidW = getOverlayIdAtClientXY(ev.clientX, ev.clientY);
+            if (!oidW) return;
+            ev.preventDefault();
+            var ovW = findOverlayById(oidW);
+            if (!ovW) return;
+            ensureOverlayFields(ovW);
+            var factor = ev.deltaY < 0 ? 1.045 : 0.956;
+            ovW.fontScale = Math.max(REEL_SCALE_MIN, Math.min(REEL_SCALE_MAX, ovW.fontScale * factor));
+            selectedOverlayId = oidW;
+            drawTextOverlay();
+        }, { passive: false });
+    }
+
+    // Timeline drag - Soporte para mouse y touch
+    function getEventX(e) {
+        return e.touches ? e.touches[0].clientX : e.clientX;
+    }
+
+    function handleTimelineDrag(e, handleType) {
+        e.preventDefault();
+        e.stopPropagation();
+        if (handleType === 'start') {
+            isDraggingStart = true;
+        } else if (handleType === 'end') {
+            isDraggingEnd = true;
+        }
+    }
+
+    trimStartHandle.on('mousedown touchstart', function(e) {
+        handleTimelineDrag(e, 'start');
+    });
+    trimEndHandle.on('mousedown touchstart', function(e) {
+        handleTimelineDrag(e, 'end');
+    });
+
+    trimTrack.on('mousedown touchstart', function(e) {
+        if (isDraggingStart || isDraggingEnd) return;
+        var rect = trimTrack[0].getBoundingClientRect();
+        var clickX = getEventX(e) - rect.left;
+        var clickPercent = Math.max(0, Math.min(100, (clickX / rect.width) * 100));
+        var newTime = (clickPercent / 100) * videoDuration;
+        var seekV = getReelPlaybackVideo();
+        if (seekV) {
+            seekV.currentTime = Math.max(trimStartPercent / 100 * videoDuration, Math.min(trimEndPercent / 100 * videoDuration, newTime));
+        }
+    });
+
+    function updateTimelineFromEvent(e) {
+        if (!isDraggingStart && !isDraggingEnd) return;
+        if (!trimTrack[0] || videoDuration <= 0) return;
+        var rect = trimTrack[0].getBoundingClientRect();
+        var mouseX = getEventX(e) - rect.left;
+        var percent = Math.max(0, Math.min(100, (mouseX / rect.width) * 100));
+        
+        if (isDraggingStart) {
+            var maxPercent = trimEndPercent - 1;
+            trimStartPercent = Math.min(percent, maxPercent);
+            updateTimeline();
+        } else if (isDraggingEnd) {
+            var minPercent = trimStartPercent + 1;
+            trimEndPercent = Math.max(percent, minPercent);
+            updateTimeline();
+        }
+    }
+
+    $(document).on('mousemove touchmove', function(e) {
+        updateTimelineFromEvent(e);
+    });
+
+    $(document).on('mouseup touchend', function() {
+        isDraggingStart = false;
+        isDraggingEnd = false;
+    });
+
+    // Ir al paso de edición
+    goToEditBtn.on('click', function () {
+        if (!recordedBlob && !uploadedFile) {
+            return;
+        }
+        goToEdit();
+    });
+
+    if (retryBtn.length) {
+        retryBtn.on('click', function () {
+            resetEditorToCamera();
+        });
+    }
+
+    // Envío manual con FormData (para soportar blob grabado)
+    $form.on('submit', function (e) {
+        e.preventDefault();
+
+        if (videoDuration > 0) {
+            updateTimeline();
+            var ts = parseFloat(trimStartInput.val());
+            var te = parseFloat(trimEndInput.val());
+            if (!(te > ts)) {
+                trimEndInput.val(Number(videoDuration).toFixed(3));
+                updateTimeline();
+            }
+        }
+
+        syncReelTextHiddenFields();
+        syncReelTagsHidden();
+        var formData = new FormData($form[0]);
+        // Forzar que el backend trate esto como reel (por si el input oculto no llega).
+        formData.set('reels', '1');
+
+        if (recordedBlob) {
+            formData.delete('postVideo');
+            formData.append('postVideo', recordedBlob, 'reel-recorded.webm');
+        } else if (uploadedFile) {
+            formData.delete('postVideo');
+            formData.append('postVideo', uploadedFile, uploadedFile.name);
+        }
+
+        // Asegurar envío explícito del audio seleccionado.
+        // (Borramos primero lo que venga en el FormData para evitar duplicados o entradas vacías.)
+        formData.delete('reel_audio');
+        if (audioInput && audioInput[0] && audioInput[0].files && audioInput[0].files[0]) {
+            formData.append('reel_audio', audioInput[0].files[0], audioInput[0].files[0].name);
+        }
+
+        $status.removeClass('alert-success alert-danger').html('');
+        $form.find('.add_wow_loader').addClass('btn-loading');
+        $form.find('button[type="submit"]').prop('disabled', true);
+        showReelPublishOverlay();
+
+        var uploadFinished = false;
+
+        $.ajax({
+            url: Wo_Ajax_Requests_File() + '?f=posts&s=insert_new_post',
+            type: 'POST',
+            data: formData,
+            contentType: false,
+            processData: false,
+            dataType: 'json',
+            xhr: function () {
+                var xhr = $.ajaxSettings.xhr();
+                if (xhr.upload) {
+                    xhr.upload.addEventListener('progress', function (e) {
+                        if (uploadFinished) return;
+                        if (e.lengthComputable && e.total > 0) {
+                            var pct = Math.min(100, Math.round((e.loaded / e.total) * 100));
+                            $publishBar.removeClass('reel-publish-bar-indeterminate').css('width', pct + '%');
+                            $publishPct.text(pct + '%');
+                            $publishTitle.text('Subiendo video…');
+                        } else {
+                            $publishBar.addClass('reel-publish-bar-indeterminate').css('width', '100%');
+                            $publishPct.text('Subiendo…');
+                        }
+                    }, false);
+                    xhr.upload.addEventListener('loadend', function () {
+                        if (uploadFinished) return;
+                        uploadFinished = true;
+                        $publishTitle.text('Generando y publicando tu reel…');
+                        $publishBar.addClass('reel-publish-bar-indeterminate').css('width', '100%');
+                        $publishPct.text('Procesando en el servidor…');
+                        $publishNotice.html('El servidor está generando la versión final del video. En unos minutos podrás verlo en Reels con todos los cambios aplicados.');
+                    }, false);
+                }
+                return xhr;
+            }
+        }).done(function (data) {
+            $form.find('.add_wow_loader').removeClass('btn-loading');
+            if (data.status == 200) {
+                $publishTitle.text('¡Listo! Publicando…');
+                $publishBar.removeClass('reel-publish-bar-indeterminate').css('width', '100%');
+                $publishPct.text('100%');
+                $publishNotice.html('Tu reel ya está publicado. Si el video aún se procesa en segundo plano, la versión definitiva puede tardar unos minutos en mostrarse en Reels.');
+                $status.addClass('alert alert-success').html('<?php echo $wo['lang']['post_published']; ?>');
+                if (data.post_id) {
+                    window.location.href = "<?php echo $wo['config']['site_url']; ?>/reels/" + data.post_id;
+                }
+            } else if (data.status == 300) {
+                // FFmpeg en proceso: el post/reel se registra, pero el video final puede tardar.
+                $publishTitle.text('Reel registrado');
+                $publishBar.removeClass('reel-publish-bar-indeterminate').css('width', '100%');
+                $publishPct.text('100%');
+                $publishNotice.html('Tu video está en cola de procesado: pronto se actualizará con la versión final. En unos minutos lo verás en Reels.');
+                $status.addClass('alert alert-success').html('Publicando reel... El render final puede tardar unos momentos.');
+                setTimeout(function () {
+                    window.location.href = "<?php echo $wo['config']['site_url']; ?>/reels";
+                }, 12000);
+            } else {
+                hideReelPublishOverlay();
+                $form.find('button[type="submit"]').prop('disabled', false);
+                var err = (data.errors) ? data.errors : '<?php echo $wo['lang']['error_please_try_again']; ?>';
+                $status.addClass('alert alert-danger').html(err);
+            }
+        }).fail(function () {
+            $form.find('.add_wow_loader').removeClass('btn-loading');
+            hideReelPublishOverlay();
+            $form.find('button[type="submit"]').prop('disabled', false);
+            $status.addClass('alert alert-danger').html('<?php echo $wo['lang']['error_please_try_again']; ?>');
+        });
+    });
+});
+</script>
+

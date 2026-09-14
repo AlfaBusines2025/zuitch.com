@@ -192,6 +192,12 @@ if ((!$wo['loggedin'] || ($wo['loggedin'] && $wo['user']['banned'] != 1))) {
                     case 'reels':
                         include('sources/reels.php');
                         break;
+                    case 'zuitch':
+                        include('sources/zuitch.php');
+                        break;
+                    case 'reels-editor':
+                        include('sources/reels-editor.php');
+                        break;
                     case 'album':
                         include('sources/album.php');
                         break;
@@ -808,6 +814,12 @@ if ((!$wo['loggedin'] || ($wo['loggedin'] && $wo['user']['banned'] != 1))) {
                 break;
             case 'reels':
                 include('sources/reels.php');
+                break;
+            case 'zuitch':
+                include('sources/zuitch.php');
+                break;
+            case 'reels-editor':
+                include('sources/reels-editor.php');
                 break;
             case 'album':
                 include('sources/album.php');

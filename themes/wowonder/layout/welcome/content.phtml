@@ -1,9 +1,8 @@
 <div class="wrapper">
    <div class="login">
       <div class="login_left_combo_parent">
-		 
          <div class="login_left_combo">
-             <a href="<?php echo $wo['config']['site_url'];?>" class="logo"><img src="<?php echo $wo['config']['theme_url'];?>/img/logo.<?php echo $wo['config']['logo_extension'];?>" alt="Logo" width="100%" > </a>
+            <a href="<?php echo $wo['config']['site_url'];?>" class="logo"><img src="<?php echo $wo['config']['theme_url'];?>/img/logo.<?php echo $wo['config']['logo_extension'];?>" alt="Logo"> </a>
             <h1><?php echo $wo['lang']['connect_with_friends']?></h1>
             <p><?php echo $wo['lang']['welcome_share_text']?></p>
             <div class="fadeInUp animated animated_6 img"><img src="<?php echo $wo['config']['theme_url'];?>/img/backgrounds/welcome.jpg"></div>
@@ -14,27 +13,6 @@
          <div class="login_innre">
          <form id="login" method="post">
             <p class="title main"><?php echo $wo['lang']['welcome_back']?></p>
-			 <!-- Asegúrate de tener Font Awesome cargado en tu proyecto -->
-
-
-				<a href="javascript:void(0);" class="btn btn-main btn-mat add_wow_loader py-3"
-				   data-toggle="modal"
-				   data-target="#select-language"
-				   id="language_select">
-				  <!-- Icono de idioma (globo) -->
-				  <i class="fa fa-globe" aria-hidden="true"></i>
-				  <!-- Texto dinámico -->
-				  <?php echo $wo['lang']['select']." ".$wo['lang']['language']; ?>
-				  <!-- SVG indicativo -->
-				  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 -960 960 960">
-					<circle cx="12" cy="12" r="10"></circle>
-					<line x1="2" y1="12" x2="22" y2="12"></line>
-					<path fill="currentColor" d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
-				  </svg>
-				</a>
-			 <br>
-			 <br>
-			 
             <p class="desc"><?php echo str_replace(array('{site_name}', '{Site_Name}', '{sito_name}'), array($wo['config']['siteName'], $wo['config']['siteName'], $wo['config']['siteName']), $wo['lang']['register_create_account'])?></p>
             <div class="alert alert-danger errors"></div>
             <div class="wow_form_fields">
@@ -57,7 +35,6 @@
                   </label>
                   <div class="clear"></div>
                </div>
-				
                <?php } ?>
                <a href="<?php echo Wo_SeoLink('index.php?link1=forgot-password');?>" class="main"><?php echo $wo['lang']['forget_password']?></a>
             </div>
@@ -85,12 +62,72 @@
                <div class="social_btns">
                   <p><?php echo $wo['lang']['or_login_with']?></p>
                   <?php if($wo['config']['facebookLogin'] != 0): ?>
-                     <a href="<?php echo $wo['facebookLoginUrl']?>" class="btn no_padd">
-                        <svg height="512" viewBox="0 0 152 152" width="512" xmlns="http://www.w3.org/2000/svg"><g data-name="Layer 2"><g id="_01.facebook" data-name="01.facebook"><circle id="background" cx="76" cy="76" fill="#334c8c" r="76"/><path id="icon" d="m95.26 68.81-1.26 10.58a2 2 0 0 1 -2 1.78h-11v31.4a1.42 1.42 0 0 1 -1.4 1.43h-11.21a1.42 1.42 0 0 1 -1.4-1.44l.06-31.39h-8.33a2 2 0 0 1 -2-2v-10.58a2 2 0 0 1 2-2h8.28v-10.26c0-11.87 7.06-18.33 17.4-18.33h8.47a2 2 0 0 1 2 2v8.91a2 2 0 0 1 -2 2h-5.19c-5.62.09-6.68 2.78-6.68 6.8v8.85h12.31a2 2 0 0 1 1.95 2.25z" fill="#fff"/></g></g></svg>
-                     </a>
+                     
+				   
+				   <style>
+					/* Centrar el grupo de botones */
+					.social-login{
+					  display: flex;
+					  justify-content: center;   /* centra horizontalmente todo el bloque */
+					  align-items: center;        /* alinea verticalmente al centro */
+					  gap: 12px;
+					}
+
+					/* Botón Facebook centrado */
+					.btn-fb{
+					  width: 48px;
+					  height: 48px;
+					  border-radius: 50%;
+					  padding: 0 !important;
+					  display: inline-flex;
+					  justify-content: center;    /* centra el contenido horizontalmente */
+					  align-items: center;        /* centra el contenido verticalmente */
+					  overflow: hidden;
+					  line-height: 0 !important;
+					  text-decoration: none;
+					}
+					.btn-fb svg{
+					  width: 48px;                /* el SVG ocupa el botón */
+					  height: 48px;
+					  display: block;
+					}
+
+					/* Ejemplo botón Google centrado (si lo usas) */
+					.btn-google{
+					  width: 48px;
+					  height: 48px;
+					  border-radius: 50%;
+					  background: #fff;
+					  display: inline-flex;
+					  justify-content: center;
+					  align-items: center;
+					  font-weight: 700;
+					  color: #000;
+					  line-height: 1;
+					}
+					.btn-google span{
+					  font-size: 22px;
+					}
+					</style>
+
+					<div class="social-login">
+					  <a href="<?php echo $wo['facebookLoginUrl']?>" class="btn no_padd btn-fb" aria-label="Continuar con Facebook" title="Continuar con Facebook">
+						<svg viewBox="0 0 152 152" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+						  <g data-name="Layer 2">
+							<g id="_01.facebook" data-name="01.facebook">
+							  <circle id="background" cx="76" cy="76" fill="#334c8c" r="76"/>
+							  <path id="icon" d="m95.26 68.81-1.26 10.58a2 2 0 0 1 -2 1.78h-11v31.4a1.42 1.42 0 0 1 -1.4 1.43h-11.21a1.42 1.42 0 0 1 -1.4-1.44l.06-31.39h-8.33a2 2 0 0 1 -2-2v-10.58a2 2 0 0 1 2-2h8.28v-10.26c0-11.87 7.06-18.33 17.4-18.33h8.47a2 2 0 0 1 2 2v8.91a2 2 0 0 1 -2 2h-5.19c-5.62.09-6.68 2.78-6.68 6.8v8.85h12.31a2 2 0 0 1 1.95 2.25z" fill="#fff"/>
+							</g>
+						  </g>
+						</svg>
+					  </a>
+				   
+				   
                   <?php endif; ?>
                   <?php if($wo['config']['googleLogin'] != 0): ?>
                      <!-- <a href="<?php echo $wo['googleLoginUrl']?>" class="btn btn-google"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="currentColor" d="M23,11H21V9H19V11H17V13H19V15H21V13H23M8,11V13.4H12C11.8,14.4 10.8,16.4 8,16.4C5.6,16.4 3.7,14.4 3.7,12C3.7,9.6 5.6,7.6 8,7.6C9.4,7.6 10.3,8.2 10.8,8.7L12.7,6.9C11.5,5.7 9.9,5 8,5C4.1,5 1,8.1 1,12C1,15.9 4.1,19 8,19C12,19 14.7,16.2 14.7,12.2C14.7,11.7 14.7,11.4 14.6,11H8Z"></path></svg></a> -->
+				   
+				   	<div  id="buttonDiv"></div>
                   <?php endif; ?>
                   <?php if($wo['config']['twitterLogin'] != 0): ?>
                      <a href="<?php echo $wo['twitterLoginUrl']?>" class="btn no_padd">
@@ -224,70 +261,65 @@
       display: none;
    }
 </style>
+
 <script>
-var working = false;
-var $this = $('#login');
-var $state = $this.find('.errors');
+$(function () {
+  $('#login').on('submit', function (e) {
+    e.preventDefault();
 
-<?php if($wo['config']['googleLogin'] != 0): ?>
-function handleCredentialResponse(response) {
-   var id_token = response.credential;
-   $.post(Wo_Ajax_Requests_File() + '?f=google_login', {id_token: id_token}, function(data, textStatus, xhr) {
-      if (data.status == 200) {
-         $state.addClass('success');
-           $state.html('<?php echo $wo['lang']['welcome_back'] ?>');
-         $this.find('.loading').addClass('hidden');
-           setTimeout(function () {
-            window.location.href = data.location;
-           }, 1000);
+    var $form  = $(this);
+    var $state = $form.find('.errors');
+
+    $state.removeClass('alert-success').addClass('alert-danger').html('');
+    $form.find('button').prop('disabled', true);
+    $form.find('.add_wow_loader').addClass('btn-loading');
+
+    $.ajax({
+      url: Wo_Ajax_Requests_File() + '?f=login',
+      type: 'POST',
+      data: $form.serialize(),
+      dataType: 'json',
+      success: function (data) {
+        if (data && (data.status === 200 || data.status === 600)) {
+          $state.removeClass('alert-danger').addClass('alert-success')
+                .html('<?php echo $wo['lang']['welcome_back'] ?>');
+          setTimeout(function () { window.location.href = data.location; }, 800);
+        } else {
+          var msg = Array.isArray(data?.errors) ? data.errors.join('<br>')
+                    : (data?.message || 'Usuario o contraseña inválidos.');
+          $state.html(msg);
+        }
+      },
+      error: function () {
+        $state.html('Error de red o respuesta inválida del servidor.');
+      },
+      complete: function () {
+        $form.find('button').prop('disabled', false);
+        $form.find('.add_wow_loader').removeClass('btn-loading');
       }
-      else{
-         $this.find('button').attr("disabled", false);
-         $this.find('.loading').addClass('hidden');
-           $state.html(data.message);
-      }
-   });
-}
-window.onload = function () {
-  google.accounts.id.initialize({
-    client_id: "<?php echo $wo['config']['googleAppId']?>",
-    callback: handleCredentialResponse
+    });
   });
-  google.accounts.id.renderButton(
-    document.getElementById("buttonDiv"),
-    { theme: "outline", size: "large" }  // customization attributes
-  );
-  google.accounts.id.prompt(); // also display the One Tap dialog
-}
-<?php endif; ?>
 
-$(function() {
-  $('#login').ajaxForm({
-    url: Wo_Ajax_Requests_File() + '?f=login',
-    beforeSend: function() {
-      working = true;
-      $this.find('button').attr("disabled", true);
-      $this.find('.add_wow_loader').addClass('btn-loading');
-    },
-    success: function(data) {
-        console.log(data)
-      if (data.status == 200 || data.status == 600) {
-            $state.removeClass('alert-danger');
-         $state.addClass('alert-success');
-
-        $state.html('<?php echo $wo['lang']['welcome_back'] ?>');
-      $this.find('.add_wow_loader').removeClass('btn-loading');
-        setTimeout(function () {
-         window.location.href = data.location;
-        }, 1000);
-      } else {
-        var errors = data.errors.join("<br>");
-      $this.find('button').attr("disabled", false);
-      $this.find('.add_wow_loader').removeClass('btn-loading');
-        $state.html(errors);
+  // No rompas si no está cargado el SDK de Google
+  if (typeof google !== 'undefined' && google?.accounts?.id) {
+    google.accounts.id.initialize({
+      client_id: "<?php echo $wo['config']['googleAppId']?>",
+      callback: function (response) {
+        $.post(Wo_Ajax_Requests_File() + '?f=google_login', { id_token: response.credential }, function (data) {
+          if (data.status == 200) window.location.href = data.location;
+          else alert(data.message || 'No se pudo iniciar sesión con Google.');
+        }, 'json');
       }
-      working = false;
-    }
-  });
+    });
+    google.accounts.id.renderButton(document.getElementById("buttonDiv"), {
+      type: "icon", shape: "circle", size: "large", theme: "outline"
+    });
+  }
 });
 </script>
+
+
+<style>
+/* Opcional: por si quieres ajustar alineación */
+#buttonDiv { display: inline-block; }
+</style>

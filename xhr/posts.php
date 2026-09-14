@@ -193,6 +193,159 @@ if ($f == 'posts') {
         echo json_encode($data);
         exit();
     }
+    if ($s == 'reel_tag_search') {
+        header("Content-type: application/json; charset=utf-8");
+        $resp = array('status' => 400, 'results' => array());
+        if ($wo['loggedin'] == false) {
+            echo json_encode($resp);
+            exit();
+        }
+        $kind = isset($_POST['kind']) ? strtolower(trim((string) $_POST['kind'])) : '';
+        $q    = isset($_POST['q']) ? trim((string) $_POST['q']) : '';
+        $uid  = (int) $wo['user']['user_id'];
+        global $sqlConnect;
+        $results     = array();
+        $suggestions = ($q === '');
+        $like        = $q !== '' ? Wo_Secure($q) : '';
+        if ($kind === 'user') {
+            if ($suggestions) {
+                $seen = array();
+                $sqlm = mysqli_query($sqlConnect, "SELECT f1.`following_id` AS uid FROM " . T_FOLLOWERS . " f1 INNER JOIN " . T_FOLLOWERS . " f2 ON f2.`follower_id` = f1.`following_id` AND f2.`following_id` = {$uid} AND f2.`active` = '1' WHERE f1.`follower_id` = {$uid} AND f1.`active` = '1' ORDER BY f1.`time` DESC LIMIT 24");
+                if ($sqlm && mysqli_num_rows($sqlm)) {
+                    while ($r = mysqli_fetch_assoc($sqlm)) {
+                        $oid = (int) $r['uid'];
+                        if ($oid < 1 || isset($seen[$oid])) {
+                            continue;
+                        }
+                        $seen[$oid] = true;
+                        $u = Wo_UserData($oid);
+                        if (!empty($u['user_id'])) {
+                            $results[] = array(
+                                'type'  => 'user',
+                                'id'    => $oid,
+                                'label' => $u['name'],
+                                'img'   => $u['avatar'],
+                            );
+                        }
+                        if (count($results) >= 18) {
+                            break;
+                        }
+                    }
+                }
+                if (count($results) < 18) {
+                    $sqlf = mysqli_query($sqlConnect, "SELECT `following_id` FROM " . T_FOLLOWERS . " WHERE `follower_id` = {$uid} AND `active` = '1' ORDER BY `time` DESC LIMIT 30");
+                    if ($sqlf && mysqli_num_rows($sqlf)) {
+                        while ($r = mysqli_fetch_assoc($sqlf)) {
+                            $oid = (int) $r['following_id'];
+                            if ($oid < 1 || $oid === $uid || isset($seen[$oid])) {
+                                continue;
+                            }
+                            $seen[$oid] = true;
+                            $u = Wo_UserData($oid);
+                            if (!empty($u['user_id'])) {
+                                $results[] = array(
+                                    'type'  => 'user',
+                                    'id'    => $oid,
+                                    'label' => $u['name'],
+                                    'img'   => $u['avatar'],
+                                );
+                            }
+                            if (count($results) >= 18) {
+                                break;
+                            }
+                        }
+                    }
+                }
+            } else {
+                $sug = Wo_GetFollowingSug(18, $q);
+                if (is_array($sug)) {
+                    foreach ($sug as $it) {
+                        $uid_item = !empty($it['id']) ? (int) $it['id'] : 0;
+                        if ($uid_item < 1 && !empty($it['username'])) {
+                            $uid_item = (int) Wo_UserIdFromUsername($it['username']);
+                        }
+                        if ($uid_item < 1) {
+                            continue;
+                        }
+                        $results[] = array(
+                            'type'  => 'user',
+                            'id'    => $uid_item,
+                            'label' => isset($it['label']) ? $it['label'] : '',
+                            'img'   => isset($it['img']) ? $it['img'] : '',
+                        );
+                    }
+                }
+            }
+        } elseif ($kind === 'page') {
+            if ($suggestions) {
+                $sql = mysqli_query($sqlConnect, "SELECT `page_id` FROM " . T_PAGES . " WHERE `user_id` = {$uid} AND `active` = '1' ORDER BY `page_id` DESC LIMIT 18");
+            } else {
+                $sql = mysqli_query($sqlConnect, "SELECT `page_id` FROM " . T_PAGES . " WHERE `user_id` = {$uid} AND `active` = '1' AND (`page_title` LIKE '%{$like}%' OR `page_name` LIKE '%{$like}%') ORDER BY `page_id` DESC LIMIT 18");
+            }
+            if ($sql && mysqli_num_rows($sql)) {
+                while ($r = mysqli_fetch_assoc($sql)) {
+                    $pd = Wo_PageData($r['page_id']);
+                    if (!empty($pd['page_id'])) {
+                        $results[] = array(
+                            'type'  => 'page',
+                            'id'    => (int) $pd['page_id'],
+                            'label' => $pd['name'],
+                            'img'   => $pd['avatar'],
+                        );
+                    }
+                }
+            }
+        } elseif ($kind === 'group') {
+            if ($suggestions) {
+                $sql = mysqli_query($sqlConnect, "SELECT g.`id` FROM " . T_GROUPS . " g INNER JOIN " . T_GROUP_MEMBERS . " gm ON g.`id` = gm.`group_id` WHERE gm.`user_id` = {$uid} AND gm.`active` = '1' AND g.`active` = '1' ORDER BY gm.`time` DESC LIMIT 18");
+            } else {
+                $sql = mysqli_query($sqlConnect, "SELECT g.`id` FROM " . T_GROUPS . " g INNER JOIN " . T_GROUP_MEMBERS . " gm ON g.`id` = gm.`group_id` WHERE gm.`user_id` = {$uid} AND gm.`active` = '1' AND g.`active` = '1' AND (g.`group_title` LIKE '%{$like}%' OR g.`group_name` LIKE '%{$like}%') ORDER BY g.`id` DESC LIMIT 18");
+            }
+            if ($sql && mysqli_num_rows($sql)) {
+                while ($r = mysqli_fetch_assoc($sql)) {
+                    $gd = Wo_GroupData($r['id']);
+                    if (!empty($gd['id'])) {
+                        $results[] = array(
+                            'type'  => 'group',
+                            'id'    => (int) $gd['id'],
+                            'label' => $gd['name'],
+                            'img'   => $gd['avatar'],
+                        );
+                    }
+                }
+            }
+        } elseif ($kind === 'product') {
+            $pf = array('user_id' => $uid, 'limit' => 18);
+            if (!$suggestions) {
+                $pf['keyword'] = $q;
+            }
+            $prods = Wo_GetProducts($pf);
+            if (is_array($prods)) {
+                foreach ($prods as $pr) {
+                    if (empty($pr['id'])) {
+                        continue;
+                    }
+                    $img = '';
+                    if (!empty($pr['images']) && is_array($pr['images']) && !empty($pr['images'][0]['image'])) {
+                        $img = Wo_GetMedia($pr['images'][0]['image']);
+                    }
+                    $results[] = array(
+                        'type'  => 'product',
+                        'id'    => (int) $pr['id'],
+                        'label' => isset($pr['name']) ? $pr['name'] : '',
+                        'img'   => $img,
+                    );
+                }
+            }
+        }
+        $resp['status']  = 200;
+        $resp['results'] = $results;
+        if ($suggestions && $kind !== 'external') {
+            $resp['suggestions'] = true;
+        }
+        echo json_encode($resp, JSON_UNESCAPED_UNICODE);
+        exit();
+    }
     if ($s == 'get_new_hashtag_posts') {
         $html = '';
         if (!empty($_GET['before_post_id']) && !empty($_GET['hashtagName'])) {
@@ -205,6 +358,166 @@ if ($f == 'posts') {
                 }
             }
         }
+        exit();
+    }
+    if ($s == 'download_reel_preview') {
+        $data = array(
+            'status' => 400,
+            'errors' => $wo['lang']['error_please_try_again']
+        );
+        $debug = array(
+            'stage' => 'start',
+            'has_postVideo' => isset($_FILES['postVideo']['tmp_name']) ? !empty($_FILES['postVideo']['tmp_name']) : false,
+            'postVideo_name' => isset($_FILES['postVideo']['name']) ? $_FILES['postVideo']['name'] : '',
+            'postVideo_type' => isset($_FILES['postVideo']['type']) ? $_FILES['postVideo']['type'] : '',
+            'postVideo_size' => isset($_FILES['postVideo']['size']) ? (int)$_FILES['postVideo']['size'] : 0
+        );
+        $want_debug = !empty($_POST['reel_debug']);
+        if (Wo_CheckSession($hash_id) === false) {
+            $debug['stage'] = 'session_failed';
+            header("Content-type: application/json");
+            if ($want_debug) { $data['debug'] = $debug; }
+            echo json_encode($data);
+            exit();
+        }
+        if ($wo['config']['ffmpeg_system'] != 'on') {
+            $data['errors'] = 'FFMPEG no está habilitado.';
+            $debug['stage'] = 'ffmpeg_off';
+            header("Content-type: application/json");
+            if ($want_debug) { $data['debug'] = $debug; }
+            echo json_encode($data);
+            exit();
+        }
+        if (empty($_FILES['postVideo']['tmp_name'])) {
+            $data['errors'] = 'No se recibió el video.';
+            $debug['stage'] = 'missing_postVideo';
+            header("Content-type: application/json");
+            if ($want_debug) { $data['debug'] = $debug; }
+            echo json_encode($data);
+            exit();
+        }
+
+        $video_file = '';
+        $audio_file = '';
+        $trim_start = (isset($_POST['reel_trim_start']) && is_numeric($_POST['reel_trim_start'])) ? (float) $_POST['reel_trim_start'] : 0.0;
+        $trim_end   = (isset($_POST['reel_trim_end']) && is_numeric($_POST['reel_trim_end'])) ? (float) $_POST['reel_trim_end'] : 0.0;
+        $overlay_text = Wo_ReelReelOverlayTextFromPost(isset($_POST['reel_text']) ? $_POST['reel_text'] : '');
+        $texts_json = '';
+        if (isset($_POST['reel_texts_json']) && is_string($_POST['reel_texts_json']) && strlen($_POST['reel_texts_json']) <= 65536) {
+            $texts_json = $_POST['reel_texts_json'];
+        }
+        $text_x = (isset($_POST['reel_text_x']) && is_numeric($_POST['reel_text_x'])) ? (int) $_POST['reel_text_x'] : 0;
+        $text_y = (isset($_POST['reel_text_y']) && is_numeric($_POST['reel_text_y'])) ? (int) $_POST['reel_text_y'] : 0;
+        $stage_w = (isset($_POST['reel_stage_w']) && is_numeric($_POST['reel_stage_w'])) ? (int) $_POST['reel_stage_w'] : 1080;
+        $stage_h = (isset($_POST['reel_stage_h']) && is_numeric($_POST['reel_stage_h'])) ? (int) $_POST['reel_stage_h'] : 1920;
+
+        $mimeType = mime_content_type($_FILES['postVideo']['tmp_name']);
+        $fileType = !empty($mimeType) ? explode('/', $mimeType)[0] : '';
+        $uploadType = !empty($_FILES['postVideo']['type']) ? explode('/', $_FILES['postVideo']['type'])[0] : '';
+        $ext = strtolower(pathinfo($_FILES['postVideo']['name'], PATHINFO_EXTENSION));
+        $allowedVideoExt = array('mp4', 'mov', 'm4v', 'webm', 'mkv', 'avi', 'mpeg', 'mpg');
+        // Para preview permitimos videos por MIME/tipo/extensión (incluye webm de MediaRecorder).
+        if (($fileType !== 'video' && $uploadType !== 'video' && !in_array($ext, $allowedVideoExt)) || Wo_IsVideoNotAllowedMime($_FILES["postVideo"]["type"])) {
+            $data['errors'] = $wo['lang']['file_not_supported'];
+            $debug['stage'] = 'video_validation_failed';
+            $debug['mimeType'] = $mimeType;
+            $debug['fileType'] = $fileType;
+            $debug['uploadType'] = $uploadType;
+            $debug['ext'] = $ext;
+            header("Content-type: application/json");
+            if ($want_debug) { $data['debug'] = $debug; }
+            echo json_encode($data);
+            exit();
+        }
+
+        $fileInfo = array(
+            'file' => $_FILES["postVideo"]["tmp_name"],
+            'name' => $_FILES['postVideo']['name'],
+            'size' => $_FILES["postVideo"]["size"],
+            'type' => $_FILES["postVideo"]["type"],
+            'is_video' => 1
+        );
+        $amazone_s3 = $wo['config']['amazone_s3'];
+        $wasabi_storage = $wo['config']['wasabi_storage'];
+        $backblaze_storage = $wo['config']['backblaze_storage'];
+        $ftp_upload = $wo['config']['ftp_upload'];
+        $spaces = $wo['config']['spaces'];
+        $cloud_upload = $wo['config']['cloud_upload'];
+        $wo['config']['amazone_s3'] = 0;
+        $wo['config']['wasabi_storage'] = 0;
+        $wo['config']['backblaze_storage'] = 0;
+        $wo['config']['ftp_upload'] = 0;
+        $wo['config']['spaces'] = 0;
+        $wo['config']['cloud_upload'] = 0;
+        $media = Wo_ShareFile($fileInfo);
+        $wo['config']['amazone_s3'] = $amazone_s3;
+        $wo['config']['wasabi_storage'] = $wasabi_storage;
+        $wo['config']['backblaze_storage'] = $backblaze_storage;
+        $wo['config']['ftp_upload'] = $ftp_upload;
+        $wo['config']['spaces'] = $spaces;
+        $wo['config']['cloud_upload'] = $cloud_upload;
+        if (!empty($media['filename'])) {
+            $video_file = $media['filename'];
+        }
+        $debug['video_temp_file'] = $video_file;
+
+        if (isset($_FILES['reel_audio']['name']) && !empty($_FILES['reel_audio']['name'])) {
+            $fileInfo = array(
+                'file'  => $_FILES["reel_audio"]["tmp_name"],
+                'name'  => $_FILES['reel_audio']['name'],
+                'size'  => $_FILES["reel_audio"]["size"],
+                'type'  => $_FILES["reel_audio"]["type"],
+                'types' => 'mp3,wav,m4a'
+            );
+            $media = Wo_ShareFile($fileInfo);
+            if (!empty($media['filename'])) {
+                $audio_file = $media['filename'];
+            }
+        }
+
+        if (empty($video_file)) {
+            $data['errors'] = $wo['lang']['error_please_try_again'];
+            $debug['stage'] = 'video_upload_temp_failed';
+            header("Content-type: application/json");
+            if ($want_debug) { $data['debug'] = $debug; }
+            echo json_encode($data);
+            exit();
+        }
+
+        $render_debug = array();
+        $preview_file = Wo_RenderReelPreview(array(
+            'filename'      => $video_file,
+            'trim_start'    => $trim_start,
+            'trim_end'      => $trim_end,
+            'overlay_text'  => $overlay_text,
+            'texts_json'    => $texts_json,
+            'overlay_audio' => $audio_file,
+            'text_x'        => $text_x,
+            'text_y'        => $text_y,
+            'stage_w'       => $stage_w,
+            'stage_h'       => $stage_h,
+            'reel_audio_start' => (isset($_POST['reel_audio_start']) && is_numeric($_POST['reel_audio_start'])) ? (float) $_POST['reel_audio_start'] : 0,
+            'reel_audio_duration' => (isset($_POST['reel_audio_duration']) && is_numeric($_POST['reel_audio_duration'])) ? (float) $_POST['reel_audio_duration'] : 0,
+            'reel_music_volume' => (isset($_POST['reel_music_volume']) && is_numeric($_POST['reel_music_volume'])) ? (float) $_POST['reel_music_volume'] : 1,
+            'reel_video_volume' => (isset($_POST['reel_video_volume']) && is_numeric($_POST['reel_video_volume'])) ? (float) $_POST['reel_video_volume'] : 1,
+        ), $render_debug);
+        $debug['render'] = $render_debug;
+
+        if (!empty($preview_file)) {
+            $data = array(
+                'status' => 200,
+                'url' => Wo_GetMedia($preview_file),
+                'filename' => basename($preview_file)
+            );
+            $debug['stage'] = 'ok';
+        } else {
+            $data['errors'] = 'No se pudo generar el video preview.';
+            $debug['stage'] = 'render_failed';
+        }
+
+        header("Content-type: application/json");
+        if ($want_debug) { $data['debug'] = $debug; }
+        echo json_encode($data);
         exit();
     }
     if ($s == 'insert_new_post') {
@@ -220,14 +533,25 @@ if ($f == 'posts') {
         $event_id             = 0;
         $invalid_file         = false;
         $errors               = false;
-        $ffmpeg_convert_video = '';
-        $image_array          = array();
-        $blur                 = 0;
-        $post_privacy         = 0;
-        $wo['add_watermark']  = true;
-        $videoTitle           = null;
-        $is_reel              = 0;
+        $ffmpeg_convert_video  = '';
+        $image_array           = array();
+        $blur                  = 0;
+        $post_privacy          = 0;
+        $wo['add_watermark']   = true;
+        $videoTitle            = null;
+        $is_reel               = 0;
         $wo['removeFromLocal'] = 0;
+
+        // Opciones adicionales para el editor de Reels
+        $reel_trim_start = 0;
+        $reel_trim_end   = 0;
+        $reel_text       = '';
+        $reel_texts_json = '';
+        $reel_text_x     = 0;
+        $reel_text_y     = 0;
+        $reel_stage_w    = 1080;
+        $reel_stage_h    = 1920;
+        $reel_audio_path = '';
 
         if (Wo_CheckSession($hash_id) === false) {
             return false;
@@ -271,6 +595,32 @@ if ($f == 'posts') {
 
         if (isset($_POST['videoTitle']) && !empty($_POST['videoTitle'])) {
             $videoTitle = Wo_Secure($_POST['videoTitle']);
+        }
+
+        // Datos opcionales desde el editor de Reels
+        if (isset($_POST['reel_trim_start']) && is_numeric($_POST['reel_trim_start']) && (float) $_POST['reel_trim_start'] >= 0) {
+            $reel_trim_start = (float) $_POST['reel_trim_start'];
+        }
+        if (isset($_POST['reel_trim_end']) && is_numeric($_POST['reel_trim_end']) && (float) $_POST['reel_trim_end'] >= 0) {
+            $reel_trim_end = (float) $_POST['reel_trim_end'];
+        }
+        if (isset($_POST['reel_text']) && $_POST['reel_text'] !== '') {
+            $reel_text = Wo_ReelReelOverlayTextFromPost($_POST['reel_text']);
+        }
+        if (isset($_POST['reel_texts_json']) && is_string($_POST['reel_texts_json']) && strlen($_POST['reel_texts_json']) <= 65536) {
+            $reel_texts_json = $_POST['reel_texts_json'];
+        }
+        if (isset($_POST['reel_text_x']) && is_numeric($_POST['reel_text_x'])) {
+            $reel_text_x = (int) $_POST['reel_text_x'];
+        }
+        if (isset($_POST['reel_text_y']) && is_numeric($_POST['reel_text_y'])) {
+            $reel_text_y = (int) $_POST['reel_text_y'];
+        }
+        if (isset($_POST['reel_stage_w']) && is_numeric($_POST['reel_stage_w']) && (int)$_POST['reel_stage_w'] > 0) {
+            $reel_stage_w = (int) $_POST['reel_stage_w'];
+        }
+        if (isset($_POST['reel_stage_h']) && is_numeric($_POST['reel_stage_h']) && (int)$_POST['reel_stage_h'] > 0) {
+            $reel_stage_h = (int) $_POST['reel_stage_h'];
         }
         if (isset($_FILES['postFile']['name'])) {
             if ($_FILES['postFile']['size'] > $wo['config']['maxUpload']) {
@@ -416,6 +766,27 @@ if ($f == 'posts') {
                 $is_reel = 1;
             }
         }
+        // Audio de fondo exclusivo del editor de Reels
+        if (isset($_FILES['reel_audio']['name']) && !empty($_FILES['reel_audio']['name'])) {
+            if ($_FILES['reel_audio']['size'] > $wo['config']['maxUpload']) {
+                $errors = str_replace('{file_size}', Wo_SizeUnits($wo['config']['maxUpload']), $wo['lang']['file_too_big']);
+            } else if (Wo_IsFileAllowed($_FILES['reel_audio']['name']) == false) {
+                $errors = $wo['lang']['file_not_supported'];
+            } else {
+                $fileInfo = array(
+                    'file'  => $_FILES["reel_audio"]["tmp_name"],
+                    'name'  => $_FILES['reel_audio']['name'],
+                    'size'  => $_FILES["reel_audio"]["size"],
+                    'type'  => $_FILES["reel_audio"]["type"],
+                    'types' => 'mp3,wav,m4a'
+                );
+                $media = Wo_ShareFile($fileInfo);
+                if (!empty($media)) {
+                    $reel_audio_path = $media['filename'];
+                }
+            }
+        }
+
         if (isset($_FILES['postMusic']['name']) && empty($mediaFilename)) {
             if ($_FILES['postMusic']['size'] > $wo['config']['maxUpload']) {
                 $errors = str_replace('{file_size}', Wo_SizeUnits($wo['config']['maxUpload']), $wo['lang']['file_too_big']);
@@ -706,6 +1077,12 @@ if ($f == 'posts') {
                     $post_data['postPhoto'] = @Wo_ImportImageFromUrl($matches[0][0]);
                 }
             }
+            if ($is_reel == 1 && empty($errors) && !empty($_POST['reel_tags_json']) && is_string($_POST['reel_tags_json']) && strlen($_POST['reel_tags_json']) <= 32000) {
+                $reel_tags_norm = Wo_ReelNormalizeTagsFromClientJson($_POST['reel_tags_json'], $wo['user']['user_id']);
+                if (!empty($reel_tags_norm)) {
+                    $post_data['postSticker'] = Wo_ReelStickerSqlValueForTags($reel_tags_norm);
+                }
+            }
             if (!empty($is_option)) {
                 $post_data['poll_id'] = 1;
             }
@@ -755,9 +1132,23 @@ if ($f == 'posts') {
                     litespeed_finish_request();
                 }
                 $id = FFMPEGUpload(array(
-                    'filename' => $ffmpeg_convert_video,
-                    'video_thumb' => $video_thumb,
-                    'post_data' => $post_data
+                    'filename'      => $ffmpeg_convert_video,
+                    'video_thumb'   => $video_thumb,
+                    'post_data'     => $post_data,
+                    'trim_start'    => $reel_trim_start,
+                    'trim_end'      => $reel_trim_end,
+                    'overlay_text'  => $reel_text,
+                    'texts_json'    => $reel_texts_json,
+                    'overlay_audio' => $reel_audio_path,
+                    'is_reel'       => $is_reel,
+                    'text_x'        => $reel_text_x,
+                    'text_y'        => $reel_text_y,
+                    'stage_w'       => $reel_stage_w,
+                    'stage_h'       => $reel_stage_h,
+                    'reel_audio_start' => (isset($_POST['reel_audio_start']) && is_numeric($_POST['reel_audio_start'])) ? (float) $_POST['reel_audio_start'] : 0,
+                    'reel_audio_duration' => (isset($_POST['reel_audio_duration']) && is_numeric($_POST['reel_audio_duration'])) ? (float) $_POST['reel_audio_duration'] : 0,
+                    'reel_music_volume' => (isset($_POST['reel_music_volume']) && is_numeric($_POST['reel_music_volume'])) ? (float) $_POST['reel_music_volume'] : 1,
+                    'reel_video_volume' => (isset($_POST['reel_video_volume']) && is_numeric($_POST['reel_video_volume'])) ? (float) $_POST['reel_video_volume'] : 1,
                 ));
             } else {
                 $id = Wo_RegisterPost($post_data);
@@ -1149,7 +1540,7 @@ if ($f == 'posts') {
             }
             $postsData = array(
                 'filter_by' => Wo_Secure($_GET['filter_by_more']),
-                'limit' => 6,
+                'limit' => 10,
                 'publisher_id' => $user_id,
                 'group_id' => $group_id,
                 'page_id' => $page_id,
@@ -1160,7 +1551,7 @@ if ($f == 'posts') {
                 'placement' => 'multi_image_post'
             );
             if (!$wo['loggedin']) {
-                $postsData = array('filter_by' => 'all','publisher_id' => $user_id,'placement' => 'multi_image_post','after_post_id' => Wo_Secure($_GET['after_post_id']));
+                $postsData = array('filter_by' => 'all','publisher_id' => $user_id,'placement' => 'multi_image_post','after_post_id' => Wo_Secure($_GET['after_post_id']),'limit' => 10);
             }
             $get_posts = Wo_GetPosts($postsData);
             $is_api    = false;

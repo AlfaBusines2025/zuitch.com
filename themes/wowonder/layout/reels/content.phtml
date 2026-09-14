@@ -1,4 +1,217 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-touch-events/2.0.0/jquery.mobile-events.min.js"></script>
+<script>
+(function () {
+    var T = '[zuitch-feed-2026-04-11c]';
+    window.ZuitchReelsDebug = function (level, msg, data) {
+        if (window.__ZUITCH_REELS_DEBUG_OFF) {
+            return;
+        }
+        var fn = console.log;
+        if (level === 'warn') {
+            fn = console.warn;
+        }
+        if (level === 'error') {
+            fn = console.error;
+        }
+        if (data !== undefined) {
+            fn.call(console, T, msg, data);
+        } else {
+            fn.call(console, T, msg);
+        }
+    };
+    window.ZuitchReelsDebug.tag = T;
+    window.ZuitchReelsDebug.log = function (msg, data) {
+        window.ZuitchReelsDebug('log', msg, data);
+    };
+    window.ZuitchReelsDebug.warn = function (msg, data) {
+        window.ZuitchReelsDebug('warn', msg, data);
+    };
+    window.ZuitchReelsDebug.error = function (msg, data) {
+        window.ZuitchReelsDebug('error', msg, data);
+    };
+})();
+(function () {
+    /* WebView Android: el UA suele llevar "; wv)". Si la app personaliza el UA, definir antes de cargar:
+       window.__ZUITCH_ANDROID_WEBVIEW = true; */
+    function woReelsComputeAndroidWebview() {
+        if (typeof window.__ZUITCH_ANDROID_WEBVIEW !== 'undefined') {
+            return !!window.__ZUITCH_ANDROID_WEBVIEW;
+        }
+        var ua = navigator.userAgent || '';
+        if (/Android/i.test(ua) && /\bwv\b/i.test(ua)) {
+            return true;
+        }
+        /* Apps que quitan "wv" del UA pero inyectan bridge nativo */
+        if (/Android/i.test(ua) && typeof window.ZuitchAppBridge !== 'undefined' && window.ZuitchAppBridge) {
+            return true;
+        }
+        return false;
+    }
+    function woReelsApplyAndroidWebviewClass() {
+        window.__woReelsAndroidWebview = woReelsComputeAndroidWebview();
+        if (window.__woReelsAndroidWebview) {
+            document.documentElement.classList.add('wo-reels-android-webview');
+        } else {
+            document.documentElement.classList.remove('wo-reels-android-webview');
+        }
+    }
+    woReelsApplyAndroidWebviewClass();
+    window.__woReelsRefreshAndroidWebview = woReelsApplyAndroidWebviewClass;
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', woReelsApplyAndroidWebviewClass);
+    }
+    window.addEventListener('load', woReelsApplyAndroidWebviewClass);
+    setTimeout(woReelsApplyAndroidWebviewClass, 600);
+})();
+window.woReelsHardPauseAll = function (exceptVideoElement) {
+    try {
+        document.querySelectorAll('.hidden_reels video, .reels_list video').forEach(function (vid) {
+            if (exceptVideoElement && vid === exceptVideoElement) {
+                return;
+            }
+            try {
+                if (vid._woPlyr && typeof vid._woPlyr.pause === 'function') {
+                    vid._woPlyr.pause();
+                }
+            } catch (e) {}
+            try {
+                vid.pause();
+            } catch (e2) {}
+        });
+    } catch (e) {}
+};
+/** Pide preload agresivo en todos los reels del DOM (visible + ocultos) para aliviar saltos al deslizar. */
+window.woReelsWarmNeighbourBuffers = function () {
+    try {
+        document.querySelectorAll('.reels_list video').forEach(function (vid) {
+            try {
+                vid.setAttribute('preload', 'auto');
+            } catch (e1) {}
+        });
+    } catch (e2) {}
+};
+</script>
+<script>
+(function () {
+    window.__ZUITCH_REELS_LOG_ENABLED = <?php echo !empty($wo['loggedin']) ? 'true' : 'false'; ?>;
+    window.__ZUITCH_REELS_LOG_OWNER = <?php echo json_encode(isset($wo['reelOwnerName']) ? (string) $wo['reelOwnerName'] : '', JSON_UNESCAPED_UNICODE); ?>;
+
+    if (!window.__ZUITCH_REELS_LOG_ENABLED) {
+        window.ZuitchReelsServerLog = function () {};
+        window.ZuitchReelsServerLog.flush = function () {};
+        return;
+    }
+
+    var queue = [];
+    var flushTimer = null;
+    var MAX_BATCH = 20;
+
+    function getHash() {
+        try {
+            var el = document.querySelector('input.main_session');
+            return el && el.value ? el.value : '';
+        } catch (e) {
+            return '';
+        }
+    }
+
+    function collectClientMeta() {
+        var ua = navigator.userAgent || '';
+        var isIOS = /iPad|iPhone|iPod/i.test(ua) || (navigator.platform === 'MacIntel' && (navigator.maxTouchPoints || 0) > 1);
+        var isAndroid = /Android/i.test(ua);
+        var isWv = /\bwv\b/i.test(ua);
+        var isApp = (typeof window.__ZUITCH_ANDROID_WEBVIEW !== 'undefined' && !!window.__ZUITCH_ANDROID_WEBVIEW)
+            || isWv
+            || !!window.ZuitchAppBridge
+            || (!!window.webkit && !!window.webkit.messageHandlers);
+        return {
+            ua: ua,
+            platform: navigator.platform || '',
+            language: navigator.language || '',
+            screen: typeof screen !== 'undefined' ? { w: screen.width, h: screen.height } : {},
+            viewport: { w: window.innerWidth, h: window.innerHeight },
+            dpr: typeof window.devicePixelRatio !== 'undefined' ? window.devicePixelRatio : 1,
+            touch: 'ontouchstart' in window,
+            maxTouchPoints: typeof navigator.maxTouchPoints !== 'undefined' ? navigator.maxTouchPoints : 0,
+            isIOS: isIOS,
+            isAndroid: isAndroid,
+            isAndroidWebview: !!window.__woReelsAndroidWebview,
+            clientWebViewFlag: typeof window.__ZUITCH_ANDROID_WEBVIEW !== 'undefined' ? !!window.__ZUITCH_ANDROID_WEBVIEW : null,
+            isAppLikely: !!isApp,
+            connection: (navigator.connection && navigator.connection.effectiveType) ? String(navigator.connection.effectiveType) : '',
+            url: location.href,
+            reelOwnerFilter: window.__ZUITCH_REELS_LOG_OWNER || null
+        };
+    }
+
+    function flush() {
+        clearTimeout(flushTimer);
+        flushTimer = null;
+        if (!queue.length) {
+            return;
+        }
+        if (typeof jQuery === 'undefined' || typeof Wo_Ajax_Requests_File !== 'function') {
+            queue = [];
+            return;
+        }
+        var hash = getHash();
+        if (!hash) {
+            flushTimer = setTimeout(flush, 2000);
+            return;
+        }
+        var batch = queue.splice(0, MAX_BATCH);
+        jQuery.ajax({
+            url: Wo_Ajax_Requests_File() + '?f=reels_client_log&hash=' + encodeURIComponent(hash),
+            type: 'POST',
+            data: JSON.stringify({ events: batch }),
+            contentType: 'application/json; charset=UTF-8',
+            processData: false,
+            timeout: 15000
+        });
+    }
+
+    window.ZuitchReelsServerLog = function (level, type, message, postId, extraContext) {
+        var ev = {
+            type: type || 'event',
+            level: level || 'info',
+            message: String(message || ''),
+            postId: postId ? parseInt(postId, 10) || 0 : 0,
+            client: collectClientMeta(),
+            context: extraContext != null ? extraContext : null
+        };
+        queue.push(ev);
+        if (queue.length >= 8) {
+            flush();
+        } else {
+            clearTimeout(flushTimer);
+            flushTimer = setTimeout(flush, 4000);
+        }
+    };
+    window.ZuitchReelsServerLog.flush = flush;
+
+    window.addEventListener('beforeunload', function () {
+        if (!queue.length || typeof Wo_Ajax_Requests_File !== 'function') {
+            return;
+        }
+        var hash = getHash();
+        if (!hash || !navigator.sendBeacon) {
+            return;
+        }
+        try {
+            var url = Wo_Ajax_Requests_File() + '?f=reels_client_log&hash=' + encodeURIComponent(hash);
+            var blob = new Blob([JSON.stringify({ events: queue })], { type: 'application/json' });
+            navigator.sendBeacon(url, blob);
+            queue = [];
+        } catch (e) {}
+    });
+
+    document.addEventListener('visibilitychange', function () {
+        if (document.visibilityState === 'hidden' && queue.length) {
+            flush();
+        }
+    });
+})();
+</script>
 <div class="loading_reel"></div>
 <div class="hidden_reels">
     {{html}}
@@ -31,93 +244,465 @@
         Wo_DeletePost(post_id);
     }
 	$(document).ready(function() {
+        if (typeof window.__woReelsRefreshAndroidWebview === 'function') {
+            window.__woReelsRefreshAndroidWebview();
+        }
+        if (typeof window.woReelsWarmNeighbourBuffers === 'function') {
+            window.woReelsWarmNeighbourBuffers();
+        }
 		window.history.pushState({}, "", "<?php echo $wo['page_url']; ?>");
-        $($('video')[0]).get(0).play();
+        /* El play lo gestiona Plyr solo en el reel visible; evitar play() duplicado → AbortError */
+        if (window.ZuitchReelsDebug) {
+            window.ZuitchReelsDebug.log(
+                'reels listo. Filtra por esta etiqueta. Opcional: __ZUITCH_REELS_DEBUG_VERBOSE=1 (más detalle), __ZUITCH_REELS_DEBUG_OFF=1 (silenciar)'
+            );
+        }
+
+        try {
+            var vis = document.querySelector('.reels_list:not(.hidden)');
+            var startPid = vis && vis.getAttribute('data-id') ? parseInt(vis.getAttribute('data-id'), 10) : 0;
+            if (typeof window.ZuitchReelsServerLog === 'function') {
+                window.ZuitchReelsServerLog('info', 'reels_session_start', 'Página reels lista (cliente)', startPid, {
+                    reelCount: document.querySelectorAll('.reels_list').length
+                });
+            }
+        } catch (eS) {}
+
+        if (!window.__woReelsServerErrorHooks) {
+            window.__woReelsServerErrorHooks = true;
+            window.addEventListener('error', function (ev) {
+                try {
+                    if (typeof window.ZuitchReelsServerLog !== 'function') {
+                        return;
+                    }
+                    window.ZuitchReelsServerLog('error', 'window_onerror', String(ev.message || 'error'), 0, {
+                        filename: ev.filename,
+                        lineno: ev.lineno,
+                        colno: ev.colno
+                    });
+                } catch (e2) {}
+            });
+            window.addEventListener('unhandledrejection', function (ev) {
+                try {
+                    if (typeof window.ZuitchReelsServerLog !== 'function') {
+                        return;
+                    }
+                    var r = ev.reason;
+                    window.ZuitchReelsServerLog('error', 'unhandledrejection', r && r.message ? String(r.message) : String(r), 0, {
+                        name: r && r.name ? r.name : null
+                    });
+                } catch (e3) {}
+            });
+        }
+
+        if (!window.__woReelsTouchProbeBound) {
+            window.__woReelsTouchProbeBound = true;
+            var lastTouchLog = 0;
+            document.addEventListener('touchstart', function (e) {
+                try {
+                    if (!e.target || !e.target.closest) {
+                        return;
+                    }
+                    if (!e.target.closest('.wo_reels_cont .story-img')) {
+                        return;
+                    }
+                    var now = Date.now();
+                    if (now - lastTouchLog < 12000) {
+                        return;
+                    }
+                    lastTouchLog = now;
+                    var vis = document.querySelector('.reels_list:not(.hidden)');
+                    var pid = vis && vis.getAttribute('data-id') ? parseInt(vis.getAttribute('data-id'), 10) : 0;
+                    if (typeof window.ZuitchReelsServerLog === 'function') {
+                        window.ZuitchReelsServerLog('info', 'reels_touch_story_area', 'touchstart en zona video reel', pid, {
+                            targetTag: e.target.tagName,
+                            animating: !!window.__woReelsAnimating
+                        });
+                    }
+                } catch (e4) {}
+            }, { passive: true, capture: true });
+        }
+
+        // Un solo desbloqueo de audio para toda la página /reels/ (evita N listeners y usa el reel visible).
+        if (!window.__woReelsAudioUnlockBound) {
+            window.__woReelsAudioUnlockBound = true;
+            function woUnlockVisibleReelAudio() {
+                try {
+                    var vis = document.querySelector('.reels_list:not(.hidden)');
+                    if (!vis) {
+                        return;
+                    }
+                    var vid = vis.querySelector('video');
+                    if (!vid || !vid._woPlyr) {
+                        return;
+                    }
+                    var p = vid._woPlyr;
+                    var media = p.media;
+                    if (media) {
+                        media.muted = false;
+                        media.defaultMuted = false;
+                        media.volume = 1;
+                    }
+                    if (typeof p.unmute === 'function') {
+                        p.unmute();
+                    }
+                    if (typeof p.setVolume === 'function') {
+                        p.setVolume(1);
+                    }
+                    if (typeof p.play === 'function') {
+                        p.play().catch(function (err) {
+                            if (err && err.name === 'AbortError') {
+                                return;
+                            }
+                            if (window.ZuitchReelsDebug) {
+                                window.ZuitchReelsDebug.warn('unlock audio: play() falló', err);
+                            }
+                        });
+                    }
+                } catch (e) {}
+            }
+            document.addEventListener('click', woUnlockVisibleReelAudio, { once: true, capture: true });
+            document.addEventListener('touchstart', woUnlockVisibleReelAudio, { once: true, capture: true, passive: true });
+            document.addEventListener('pointerdown', woUnlockVisibleReelAudio, { once: true, capture: true, passive: true });
+        }
+
+        // Rueda del ratón / trackpad: siguiente/anterior reel (antes solo funcionaba swipe táctil).
+        if (!window.__woReelsWheelBound) {
+            window.__woReelsWheelBound = true;
+            var woReelsWheelLock = 0;
+            document.addEventListener('wheel', function (e) {
+                if (!e.target || !e.target.closest || !e.target.closest('.wo_reels_cont .story-img')) {
+                    return;
+                }
+                var dy = e.deltaY;
+                if (dy > -12 && dy < 12) {
+                    return;
+                }
+                var now = Date.now();
+                if (now - woReelsWheelLock < 420) {
+                    return;
+                }
+                if (window.__woReelsAnimating) {
+                    return;
+                }
+                woReelsWheelLock = now;
+                e.preventDefault();
+                if (dy > 0) {
+                    Wo_NextReelVideo();
+                } else {
+                    Wo_PreviousReelVideo();
+                }
+            }, { passive: false });
+        }
+
+        /* WebView Android: swipe vertical nativo (el video nativo intercepta toques al reproducir; jQuery Mobile no ve el gesto). */
+        if (window.__woReelsAndroidWebview && !window.__woReelsAndroidSwipeBound) {
+            window.__woReelsAndroidSwipeBound = true;
+            var woReelsSwipeSx = 0;
+            var woReelsSwipeSy = 0;
+            var woReelsSwipeActive = false;
+            document.addEventListener('touchstart', function (e) {
+                if (!e.touches || !e.touches.length) {
+                    return;
+                }
+                if (!e.target || !e.target.closest) {
+                    return;
+                }
+                if (!e.target.closest('.wo_reels_cont .story-img')) {
+                    woReelsSwipeActive = false;
+                    return;
+                }
+                if (e.target.closest('.reels-share-btn')) {
+                    woReelsSwipeActive = false;
+                    return;
+                }
+                var t0 = e.touches[0];
+                woReelsSwipeSx = t0.clientX;
+                woReelsSwipeSy = t0.clientY;
+                woReelsSwipeActive = true;
+            }, { passive: true, capture: true });
+            document.addEventListener('touchcancel', function () {
+                woReelsSwipeActive = false;
+            }, { passive: true, capture: true });
+            document.addEventListener('touchend', function (e) {
+                if (!woReelsSwipeActive) {
+                    return;
+                }
+                woReelsSwipeActive = false;
+                if (!e.changedTouches || !e.changedTouches.length) {
+                    return;
+                }
+                if (!e.target || !e.target.closest) {
+                    return;
+                }
+                if (!e.target.closest('.wo_reels_cont .story-img')) {
+                    return;
+                }
+                var t1 = e.changedTouches[0];
+                var dx = t1.clientX - woReelsSwipeSx;
+                var dy = t1.clientY - woReelsSwipeSy;
+                if (Math.abs(dy) < 56) {
+                    return;
+                }
+                if (Math.abs(dy) < Math.abs(dx) * 1.15) {
+                    return;
+                }
+                if (window.__woReelsAnimating) {
+                    return;
+                }
+                var navNow = Date.now();
+                if (navNow - (window.__woReelsTouchNavAt || 0) < 480) {
+                    return;
+                }
+                window.__woReelsTouchNavAt = navNow;
+                if (dy < 0) {
+                    Wo_NextReelVideo();
+                } else {
+                    Wo_PreviousReelVideo();
+                }
+            }, { passive: true, capture: true });
+        }
+
 	});
 
     function playPauseVideos(nextElement) {
-        $('video').each(function(index) {
-            $(this).get(0).pause();
-        });
-        if ($(nextElement).find('video').length > 0) {
-            $(nextElement).find('video').get(0).play();
+        if (typeof window.woReelsWarmNeighbourBuffers === 'function') {
+            window.woReelsWarmNeighbourBuffers();
         }
+        var v = $(nextElement).find('video')[0];
+        window.woReelsHardPauseAll(v);
+        if (!v) {
+            return;
+        }
+        var p = v._woPlyr;
+        window.requestAnimationFrame(function () {
+            window.requestAnimationFrame(function () {
+                var runPlay = p && typeof p.play === 'function' ? function () {
+                    return p.play();
+                } : function () {
+                    return v.play();
+                };
+                runPlay().catch(function (err) {
+                    if (err && err.name === 'AbortError') {
+                        return;
+                    }
+                    if (window.ZuitchReelsDebug) {
+                        window.ZuitchReelsDebug.warn('playPauseVideos: play() en reel activo', err);
+                    }
+                    try {
+                        var pe = v && v.getAttribute && v.getAttribute('data-post-video');
+                        var pid = pe ? parseInt(pe, 10) : 0;
+                        if (typeof window.ZuitchReelsServerLog === 'function') {
+                            window.ZuitchReelsServerLog('warn', 'play_after_reel_change', String(err && err.message || err), pid, {
+                                name: err && err.name
+                            });
+                        }
+                    } catch (eL) {}
+                });
+            });
+        });
+    }
+
+    function woReelsPrefetchNext() {
+        $.get(Wo_Ajax_Requests_File(), {f:'get_next_reel_video','reels_user': "<?php echo($wo['reelOwnerName']) ?>"}, function(data) {
+            if (data.status == 200) {
+                if (!window.__woReelsAndroidWebview) {
+                    $('.story-img').unbind('swipeup', handler);
+                    $('.story-img').unbind('swipedown', handler2);
+                }
+                $(".hidden_reels").append(data.html);
+                if (typeof window.woReelsWarmNeighbourBuffers === 'function') {
+                    window.woReelsWarmNeighbourBuffers();
+                }
+                if (!window.__woReelsAndroidWebview) {
+                    $('.story-img').bind('swipeup', handler);
+                    $('.story-img').bind('swipedown', handler2);
+                }
+                if (window.ZuitchReelsDebug) {
+                    window.ZuitchReelsDebug.log('prefetch get_next_reel_video OK (HTML añadido)');
+                }
+            }
+        }).fail(function (xhr, status, err) {
+            if (window.ZuitchReelsDebug) {
+                window.ZuitchReelsDebug.error('prefetch get_next_reel_video falló', {
+                    status: xhr.status,
+                    statusText: status,
+                    err: String(err || '')
+                });
+            }
+            try {
+                var vis = document.querySelector('.reels_list:not(.hidden)');
+                var pid = vis && vis.getAttribute('data-id') ? parseInt(vis.getAttribute('data-id'), 10) : 0;
+                if (typeof window.ZuitchReelsServerLog === 'function') {
+                    window.ZuitchReelsServerLog('error', 'prefetch_next_reel_failed', 'get_next_reel_video AJAX falló', pid, {
+                        httpStatus: xhr.status,
+                        statusText: status,
+                        err: String(err || '')
+                    });
+                }
+            } catch (eP) {}
+        });
+    }
+
+    /** dir: 'next' | 'prev' — animación tipo TikTok (vertical). */
+    function woReelsRunSlideTransition(dir, $out, $in, onDone) {
+        /* En WebView Android: sin animación (más fluido y evita fallos con transitionend). */
+        if (window.__woReelsAndroidWebview) {
+            $out.removeClass('reels-anim-next-exit reels-anim-prev-exit');
+            $in.removeClass(
+                'reels-anim-next-enter-prep reels-anim-next-enter-go reels-anim-prev-enter-prep reels-anim-prev-enter-go'
+            );
+            $in.removeClass('hidden');
+            $out.addClass('hidden');
+            if (typeof onDone === 'function') {
+                onDone();
+            }
+            return;
+        }
+        var prep = dir === 'next' ? 'reels-anim-next-enter-prep' : 'reels-anim-prev-enter-prep';
+        var go = dir === 'next' ? 'reels-anim-next-enter-go' : 'reels-anim-prev-enter-go';
+        var exit = dir === 'next' ? 'reels-anim-next-exit' : 'reels-anim-prev-exit';
+
+        $in.removeClass('hidden').addClass(prep);
+        if ($in[0]) {
+            void $in[0].offsetHeight;
+        }
+        $out.addClass(exit);
+        $in.addClass(go);
+
+        var done = false;
+        var elIn = $in[0];
+        function finish() {
+            if (done) {
+                return;
+            }
+            done = true;
+            $out.addClass('hidden').removeClass('reels-anim-next-exit reels-anim-prev-exit');
+            $in.removeClass(
+                'reels-anim-next-enter-prep reels-anim-next-enter-go reels-anim-prev-enter-prep reels-anim-prev-enter-go'
+            );
+            if (typeof onDone === 'function') {
+                onDone();
+            }
+        }
+
+        function onEnd(e) {
+            if (!e || e.target !== elIn) {
+                return;
+            }
+            if (e.propertyName !== 'transform' && e.propertyName !== '-webkit-transform') {
+                return;
+            }
+            elIn.removeEventListener('transitionend', onEnd);
+            finish();
+        }
+        if (elIn) {
+            elIn.addEventListener('transitionend', onEnd);
+        }
+        setTimeout(function () {
+            if (elIn) {
+                elIn.removeEventListener('transitionend', onEnd);
+            }
+            finish();
+        }, 480);
     }
 
     function Wo_NextReelVideo() {
-    
-        let currentId = parseInt($('.reels_list:not(.hidden)').data('id'));
+        var currentId = parseInt($('.reels_list:not(.hidden)').data('id'), 10);
+        if (window.__woReelsAnimating) {
+            try {
+                if (typeof window.ZuitchReelsServerLog === 'function') {
+                    window.ZuitchReelsServerLog('warn', 'reel_next_blocked_animating', 'Siguiente ignorado: transición en curso', currentId || 0, { dir: 'next' });
+                }
+            } catch (eA) {}
+            return;
+        }
+        var $current = $(".reels_list[data-id='" + currentId + "']");
+        var currentIndex = $current.index();
+        var $next = $(".reels_list").eq(currentIndex + 1);
+        var skipPrefetch = ($(".reels_list[data-id='" + currentId + "']").length > 2);
 
-        $(".reels_list[data-id='" + currentId + "']").addClass('hidden');
-    
-        var currentIndex = $(".reels_list[data-id='" + currentId + "']").index();
-    
-        var nextIndex = currentIndex + 1;
-        var nextElement = $(".reels_list").eq(nextIndex);
-    
-        if (nextElement.length) {
-            playPauseVideos(nextElement);
+        try {
+            if (typeof window.ZuitchReelsServerLog === 'function') {
+                window.ZuitchReelsServerLog('info', 'reel_nav_next', $next.length ? 'Ir a siguiente reel' : 'Sin siguiente; disparar prefetch', currentId || 0, {
+                    hasNext: $next.length > 0,
+                    skipPrefetch: !!skipPrefetch,
+                    androidWebview: !!window.__woReelsAndroidWebview
+                });
+            }
+        } catch (eN) {}
+
+        if ($next.length) {
+            window.__woReelsAnimating = true;
+            window.woReelsHardPauseAll(null);
             $('.loading_reel').html('');
-            nextElement.removeClass('hidden');
-            window.history.pushState({}, "", $(nextElement).attr('data-reel-url'));
-            if ($(".reels_list[data-id='" + currentId + "']").length > 2) {
-            	return false;
+
+            woReelsRunSlideTransition('next', $current, $next, function () {
+                window.__woReelsAnimating = false;
+                playPauseVideos($next);
+                window.history.pushState({}, "", $next.attr('data-reel-url'));
+                if (!skipPrefetch) {
+                    woReelsPrefetchNext();
+                }
+            });
+        } else {
+            $('.loading_reel').html('');
+            if (!skipPrefetch) {
+                woReelsPrefetchNext();
             }
         }
-        else{
-            $('.loading_reel').html('');
-            $(".reels_list[data-id='" + currentId + "']").removeClass('hidden');
-        }
-
-	    $.get(Wo_Ajax_Requests_File(), {f:'get_next_reel_video','reels_user': "<?php echo($wo['reelOwnerName']) ?>"}, function(data) {
-		    if (data.status == 200) {
-                $('.story-img').unbind('swipeup', handler);
-                $('.story-img').unbind('swipedown', handler2);
-		    	$(".hidden_reels").append(data.html);
-                $('.story-img').bind('swipeup', handler);
-                $('.story-img').bind('swipedown', handler2);
-		    }
-	    });
     }
 
     function Wo_PreviousReelVideo() {
-    
-        let currentId = parseInt($('.reels_list:not(.hidden)').data('id'));
-
-        $(".reels_list[data-id='" + currentId + "']").addClass('hidden');
-    
-        var currentIndex = $(".reels_list[data-id='" + currentId + "']").index();
-        
-        var nextIndex = currentIndex;
-        if (currentIndex > 0) {
-            nextIndex = currentIndex - 1;
+        var currentId = parseInt($('.reels_list:not(.hidden)').data('id'), 10);
+        if (window.__woReelsAnimating) {
+            try {
+                if (typeof window.ZuitchReelsServerLog === 'function') {
+                    window.ZuitchReelsServerLog('warn', 'reel_prev_blocked_animating', 'Anterior ignorado: transición en curso', currentId || 0, { dir: 'prev' });
+                }
+            } catch (eB) {}
+            return;
         }
-        
-        var nextElement = $(".reels_list").eq(nextIndex);
-    
-        if (nextElement.length) {
-        	playPauseVideos(nextElement);
+        var $current = $(".reels_list[data-id='" + currentId + "']");
+        var currentIndex = $current.index();
+        var prevIndex = currentIndex > 0 ? currentIndex - 1 : 0;
+        var $prev = $(".reels_list").eq(prevIndex);
 
+        try {
+            if (typeof window.ZuitchReelsServerLog === 'function') {
+                window.ZuitchReelsServerLog('info', 'reel_nav_prev', (currentIndex > 0 && $prev.length) ? 'Ir a reel anterior' : 'Sin anterior', currentId || 0, {
+                    currentIndex: currentIndex,
+                    androidWebview: !!window.__woReelsAndroidWebview
+                });
+            }
+        } catch (eP2) {}
+
+        if (currentIndex > 0 && $prev.length) {
+            window.__woReelsAnimating = true;
+            window.woReelsHardPauseAll(null);
             $('.loading_reel').html('');
-        	nextElement.removeClass('hidden');
-            window.history.pushState({}, "", $(nextElement).attr('data-reel-url'));
-        }
-        else{
-        	$('.loading_reel').html('');
-            $(".reels_list[data-id='" + currentId + "']").removeClass('hidden');
+
+            woReelsRunSlideTransition('prev', $current, $prev, function () {
+                window.__woReelsAnimating = false;
+                playPauseVideos($prev);
+                window.history.pushState({}, "", $prev.attr('data-reel-url'));
+            });
+        } else {
+            $('.loading_reel').html('');
         }
     }
-    
-    $('.story-img').bind('swipeup', handler);
-    function handler(event) { 
+
+    function handler(event) {
     	Wo_NextReelVideo();
     }
-    
-    $('.story-img').bind('swipedown', handler2);
-    function handler2(event) { 
+    function handler2(event) {
     	Wo_PreviousReelVideo();
     }
-    
+    if (!window.__woReelsAndroidWebview) {
+        $('.story-img').bind('swipeup', handler);
+        $('.story-img').bind('swipedown', handler2);
+    }
+
     function load_ajax_lightbox_emojii(path){
        var emojjii = "😀*😁*😂*🤣*😃*😄*😅*😆*😉*😊*😋*😎*😍*😘*😗*😙*😚*🙂*🤗*🤩*🤔*🤨*😐*😑*😶*🙄*😏*😣*😥*😮*🤐*😯*😪*😫*😴*😌*😛*😜*😝*🤤*😒*😓*😔*😕*🙃*🤑*😲*☹️*🙁*😖*😞*😟*😤*😢*😭*😦*😧*😨*😩*🤯*😬*😰*😱*😳*🤪*😵*😡*😠*🤬*😷*🤒*🤕*🤢*🤮*🤧*😇*🤠*🤡*🤥*🤫*🤭*🧐*🤓*😈*👿*👹*👺*💀*👻*👽*🤖*💩*😺*😸*😹*😻*😼*😽*🙀*😿*😾*👶*👧*🧒*👦*👩*🧑*👨*👵*🧓*👴*👲*💅*🤳*💃*🕺*🕴*👫*👭*👬*💑*🤲*👐*🙌*👏*🤝*👍*👎*👊*✊*🤛*🤜*🤞*✌️*🤟*🤘*👌*👈*👉*👆*👇*☝️*✋*🤚*🖐*🖖*👋*🤙*💪*🖕*✍️*🙏*💍*💄*💋*👄*👅*👂*👃*👣*👁*👀*🧠*🗣*👤*👥";
     
@@ -135,3 +720,213 @@
         	});
       });
 </script>
+<?php
+/* Dock F1–F6: desactivado en producción. Depuración: ?reels_debug_share=1 en la URL (solo si estás logueado). */
+$zuitch_reels_share_test_dock = false;
+if (!empty($wo['loggedin']) && isset($_GET['reels_debug_share']) && (string) $_GET['reels_debug_share'] === '1') {
+    $zuitch_reels_share_test_dock = true;
+}
+?>
+<?php if ($zuitch_reels_share_test_dock) { ?>
+<div id="zuitch-reel-share-test-dock" class="zuitch-reel-share-test-dock" role="region" aria-label="Prueba compartir reels">
+    <div class="zuitch-reel-share-test-dock-inner">
+        <button type="button" id="zuitch-reel-share-test-btn" class="zuitch-reel-share-test-btn" title="Ejecuta la fase y avanza (1→6)">
+            <i class="fa fa-share fa-solid fa-share" aria-hidden="true"></i>
+            <span id="zuitch-reel-share-test-lbl" class="zuitch-reel-share-test-lbl">F1/6</span>
+        </button>
+        <pre id="zuitch-reel-share-test-out" class="zuitch-reel-share-test-out" aria-live="polite"></pre>
+    </div>
+</div>
+<script>
+(function () {
+    var maxPhase = 6;
+    var phase = 1;
+    var lastAct = 0;
+    function out(msg) {
+        var el = document.getElementById('zuitch-reel-share-test-out');
+        var line = '[' + new Date().toISOString().slice(11, 19) + '] ' + msg;
+        if (el) {
+            el.textContent = (el.textContent ? el.textContent + '\n' : '') + line;
+            el.scrollTop = el.scrollHeight;
+        }
+        try {
+            if (window.ZuitchReelsDebug) {
+                window.ZuitchReelsDebug.log('reelShareTest', line);
+            }
+        } catch (e0) {}
+    }
+    function updateLbl() {
+        var lbl = document.getElementById('zuitch-reel-share-test-lbl');
+        if (lbl) {
+            lbl.textContent = 'F' + phase + '/' + maxPhase;
+        }
+    }
+    function findVisibleShareBtn() {
+        var b = document.querySelector('.reels_list:not(.hidden) .reels-share-btn');
+        return b || document.querySelector('.wo_reels_cont .reels-share-btn') || document.querySelector('.reels-share-btn');
+    }
+    /** Fase 1: el toque/click llega al botón */
+    function zuitchReelShareTestPhase1() {
+        try {
+            if (navigator.vibrate) {
+                navigator.vibrate(35);
+            }
+        } catch (v) {}
+        out('F1 OK: el botón de prueba recibe el evento.');
+        out('jQuery=' + (typeof window.jQuery !== 'undefined') + ' Wo_Ajax=' + (typeof window.Wo_Ajax_Requests_File === 'function'));
+    }
+    /** Fase 2: entorno WebView / APIs */
+    function zuitchReelShareTestPhase2() {
+        var ua = String(navigator.userAgent || '');
+        out('F2 UA (80): ' + ua.slice(0, 80));
+        out('F2 navigator.share=' + typeof navigator.share);
+        out('F2 ZuitchOpenReelShareSheet=' + typeof window.ZuitchOpenReelShareSheet + ' SearchFor=' + typeof window.SearchFor);
+        out('F2 __woReelsAndroidWebview=' + !!window.__woReelsAndroidWebview + ' __ZUITCH_ANDROID_WEBVIEW=' + (typeof window.__ZUITCH_ANDROID_WEBVIEW !== 'undefined' ? window.__ZUITCH_ANDROID_WEBVIEW : 'undef'));
+        out('F2 ZuitchAppBridge=' + (typeof window.ZuitchAppBridge !== 'undefined' ? 'sí' : 'no'));
+    }
+    /** Fase 3: encontrar el mismo botón real Compartir del reel visible */
+    function zuitchReelShareTestPhase3() {
+        var b = findVisibleShareBtn();
+        if (!b) {
+            out('F3 ERROR: no hay .reels-share-btn en el DOM (¿aún no cargó el reel?)');
+            return;
+        }
+        out('F3 OK: botón real encontrado. post-id=' + (b.getAttribute('data-post-id') || '?'));
+        out('F3 data-share-url=' + String(b.getAttribute('data-share-url') || '').slice(0, 72));
+    }
+    /** Fase 4: Web Share API (menú nativo), sin modal web */
+    function zuitchReelShareTestPhase4() {
+        var b = findVisibleShareBtn();
+        var u = (b && b.getAttribute('data-share-url')) ? String(b.getAttribute('data-share-url')) : (window.location.origin || '') + '/';
+        if (typeof navigator.share !== 'function') {
+            out('F4 SKIP: navigator.share no existe (normal en muchas apps). En WebView (; wv) F6/Intent está desactivado; usa Copiar o WhatsApp.');
+            return;
+        }
+        out('F4 llamando navigator.share… url=' + u.slice(0, 60));
+        navigator.share({ title: 'Prueba Zuitch reels', text: 'Prueba compartir', url: u })
+            .then(function () {
+                out('F4 OK: navigator.share terminó bien.');
+            })
+            .catch(function (err) {
+                out('F4 catch: ' + (err && err.name) + ' — ' + (err && err.message));
+            });
+    }
+    /** Fase 5: misma función que el botón real del rail */
+    function zuitchReelShareTestPhase5() {
+        var b = findVisibleShareBtn();
+        if (!b) {
+            out('F5 ERROR: no hay .reels-share-btn');
+            return;
+        }
+        if (typeof window.ZuitchOpenReelShareSheet !== 'function') {
+            out('F5 ERROR: ZuitchOpenReelShareSheet no es función (¿script.js no cargó?)');
+            return;
+        }
+        try {
+            window.ZuitchOpenReelShareSheet(b);
+            out('F5 OK: ZuitchOpenReelShareSheet(btn) ejecutado sin throw.');
+            setTimeout(function () {
+                var m = document.getElementById('zuitch-reel-share-sheet');
+                var fb = document.getElementById('zuitch-reel-share-fallback-ui');
+                if (m) {
+                    var r = m.getBoundingClientRect();
+                    var cs = window.getComputedStyle(m);
+                    out('F5+800ms: modal #zuitch-reel-share-sheet h=' + Math.round(r.height) + ' y=' + Math.round(r.top) + ' disp=' + cs.display + ' opac=' + cs.opacity + ' z=' + cs.zIndex);
+                    return;
+                }
+                if (fb) {
+                    var rf = fb.getBoundingClientRect();
+                    out('F5+800ms: hoja fallback #zuitch-reel-share-fallback-ui h=' + Math.round(rf.height) + ' (script principal no definió la hoja Bootstrap).');
+                    return;
+                }
+                out('F5+800ms: ni #zuitch-reel-share-sheet ni #zuitch-reel-share-fallback-ui en el DOM.');
+            }, 800);
+        } catch (err) {
+            out('F5 THROW: ' + (err && err.message ? err.message : String(err)));
+        }
+    }
+    /** Fase 6: Intent ACTION_SEND (mismo que botón Apps en la hoja) */
+    function zuitchReelShareTestPhase6() {
+        var b = findVisibleShareBtn();
+        var u = (b && b.getAttribute('data-share-url')) ? String(b.getAttribute('data-share-url')) : location.href;
+        var t = (b && b.getAttribute('data-share-title')) ? String(b.getAttribute('data-share-title')) : '';
+        if (typeof window.zuitchTryAndroidSendPlainText !== 'function') {
+            out('F6 ERROR: zuitchTryAndroidSendPlainText no existe (script.js).');
+            return;
+        }
+        var ua6 = navigator.userAgent || '';
+        if (/\bwv\b/i.test(ua6) || window.__woReelsAndroidWebview) {
+            out('F6 SKIP: WebView (; wv) — no se usa intent: vía location (evita cuelgues). Copiar / WhatsApp sí.');
+            return;
+        }
+        out('F6 intentando Intent SEND con texto…');
+        var ok = window.zuitchTryAndroidSendPlainText((t ? t + '\n' : '') + u);
+        out(ok ? 'F6 location.href=intent… (si no abre nada, el sistema bloquea intents).' : 'F6 no ejecutado (no Android o bloqueado).');
+    }
+    function runCurrentPhase() {
+        out('——— Ejecutando fase ' + phase + ' ———');
+        if (phase === 1) {
+            zuitchReelShareTestPhase1();
+        } else if (phase === 2) {
+            zuitchReelShareTestPhase2();
+        } else if (phase === 3) {
+            zuitchReelShareTestPhase3();
+        } else if (phase === 4) {
+            zuitchReelShareTestPhase4();
+        } else if (phase === 5) {
+            zuitchReelShareTestPhase5();
+        } else {
+            zuitchReelShareTestPhase6();
+        }
+        phase = phase >= maxPhase ? 1 : phase + 1;
+        updateLbl();
+    }
+    function onActivate(ev) {
+        var now = Date.now();
+        if (now - lastAct < 450) {
+            return;
+        }
+        lastAct = now;
+        if (ev && ev.type === 'touchend') {
+            try {
+                ev.preventDefault();
+            } catch (pe) {}
+        }
+        runCurrentPhase();
+    }
+    function bind() {
+        var btn = document.getElementById('zuitch-reel-share-test-btn');
+        if (!btn) {
+            return;
+        }
+        var touchConsumed = false;
+        btn.addEventListener('touchend', function (e) {
+            touchConsumed = true;
+            onActivate(e);
+            setTimeout(function () {
+                touchConsumed = false;
+            }, 480);
+        }, { passive: false });
+        btn.addEventListener('click', function (e) {
+            if (touchConsumed) {
+                return;
+            }
+            onActivate(e);
+        });
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', bind);
+    } else {
+        bind();
+    }
+    window.zuitchReelShareTestRunPhase = function (n) {
+        var x = parseInt(n, 10);
+        if (x >= 1 && x <= maxPhase) {
+            phase = x;
+            updateLbl();
+            runCurrentPhase();
+        }
+    };
+})();
+</script>
+<?php } ?>

@@ -1,0 +1,1359 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Zuitch IA + WhatsApp — Propuesta comercial</title>
+  <meta name="description" content="Propuesta comercial: evolución de Zuitch hacia monetización por IA, WhatsApp Business y marketplace.">
+  <link rel="shortcut icon" type="image/png" href="/themes/wowonder/img/icon.png">
+  <link rel="stylesheet" href="/themes/wowonder/stylesheet/general-style-plugins.css">
+  <link rel="stylesheet" href="/themes/wowonder/stylesheet/welcome.css">
+  <link rel="stylesheet" href="/themes/wowonder/stylesheet/font-awesome-4.7.0/css/font-awesome.min.css">
+  <style>
+    /* Paleta alineada al login / personalización Zuitch en producción */
+    :root {
+      --z-text: #393d4a;
+      --z-muted: rgba(57, 61, 74, 0.72);
+      --z-white: #ffffff;
+      --z-dark: #1e2322;
+      --z-border: rgba(60, 66, 87, 0.16);
+      --z-shadow: rgba(60, 66, 87, 0.12);
+      --z-brand: #72b0be;
+      --z-brand-hover: #5a95a4;
+      --z-nav: #235777;
+      --z-page-bg: #ebf3f5;
+      --z-accent-a: #8bc4cf;
+      --z-accent-b: #72b0be;
+      --z-accent-c: #235777;
+      --z-green: #4caf50;
+      --z-radius: 12px;
+      --z-radius-sm: 8px;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    /* Misma base que la pantalla de bienvenida / login */
+    body.z-proposal-doc {
+      margin: 0;
+      font-family: 'Poppins', sans-serif;
+      color: var(--z-text);
+      background: var(--z-brand) !important;
+      line-height: 1.55;
+      font-size: 15px;
+    }
+    a { color: var(--z-accent-b); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* Barra superior — alineada al #welcomeheader */
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: var(--z-white);
+      box-shadow: -1px 4px 20px -8px rgba(0,0,0,0.22);
+      padding: 10px 0;
+    }
+    .topbar .inner {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+      font-size: 1.35rem;
+      letter-spacing: -0.02em;
+      color: var(--z-dark);
+    }
+    .brand span { color: var(--z-accent-b); }
+    .brand__logo {
+      height: 40px;
+      width: auto;
+      display: block;
+      object-fit: contain;
+    }
+    .brand__name {
+      font-size: 1rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      color: var(--z-dark);
+      line-height: 1.2;
+    }
+    a.brand.alfa-brand { text-decoration: none; color: inherit; gap: 10px; }
+    a.brand.alfa-brand:hover { text-decoration: none; }
+    a.brand.alfa-brand:hover .brand__name { color: var(--z-accent-b); }
+    .topbar-brands {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+    .topbar-brands .brand-sep {
+      color: var(--z-border);
+      font-weight: 300;
+      font-size: 1.25rem;
+      user-select: none;
+    }
+    .topbar-brands .colab-tag {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--z-muted);
+      margin-right: 4px;
+    }
+    .topbar nav a {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--z-dark);
+      padding: 8px 14px;
+      border: 2px solid var(--z-dark);
+      border-radius: 3px;
+      text-decoration: none;
+      transition: background 0.2s;
+    }
+    .topbar nav a:hover {
+      background: rgba(0,0,0,0.06);
+      text-decoration: none;
+    }
+
+    /* Hero — espíritu login_left_combo + gradiente wowonder */
+    .hero {
+      background: linear-gradient(135deg, #0d3b5c 0%, var(--z-accent-b) 42%, var(--z-accent-c) 100%);
+      color: var(--z-white);
+      padding: 48px 20px 56px;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.06'%3E%3Cpath d='M50 50c0-5.523 4.477-10 10-10s10 4.477 10 10-4.477 10-10 10c0 5.523-4.477 10-10 10s-10-4.477-10-10 4.477-10 10-10zM10 10c0-5.523 4.477-10 10-10s10 4.477 10 10-4.477 10-10 10c0 5.523-4.477 10-10 10S0 25.523 0 20s4.477-10 10-10z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E") center;
+      pointer-events: none;
+    }
+    .hero .wrap {
+      max-width: 1100px;
+      margin: 0 auto;
+      position: relative;
+    }
+    .hero .badge {
+      display: inline-block;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.35);
+      padding: 6px 12px;
+      border-radius: 999px;
+      margin-bottom: 16px;
+    }
+    .hero h1 {
+      margin: 0 0 12px;
+      font-size: clamp(1.75rem, 4vw, 2.35rem);
+      font-weight: 700;
+      line-height: 1.2;
+      max-width: 720px;
+    }
+    .hero .lead {
+      margin: 0 0 8px;
+      font-size: 1.05rem;
+      opacity: 0.95;
+      max-width: 640px;
+    }
+    .hero .dest {
+      margin-top: 20px;
+      font-size: 14px;
+      opacity: 0.9;
+    }
+    .hero .dest strong { font-weight: 600; }
+
+    .layout {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 20px 48px;
+      position: relative;
+      z-index: 2;
+    }
+    .card {
+      background: var(--z-white);
+      border-radius: var(--z-radius);
+      box-shadow: 0 1px 2px var(--z-shadow), 0 4px 24px rgba(0,0,0,0.06);
+      padding: 28px 32px;
+      margin-bottom: 22px;
+    }
+    .card h2 {
+      margin: 0 0 14px;
+      font-size: 1.35rem;
+      font-weight: 600;
+      color: var(--z-dark);
+    }
+    .card h3 {
+      margin: 22px 0 10px;
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: var(--z-dark);
+    }
+    .card p { margin: 0 0 12px; color: var(--z-muted); }
+    .card ul { margin: 0 0 12px; padding-left: 1.2rem; color: var(--z-muted); }
+    .card li { margin-bottom: 8px; }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+    }
+    @media (max-width: 820px) {
+      .grid-2 { grid-template-columns: 1fr; }
+    }
+
+    .pill-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 14px 0 6px;
+    }
+    .pill {
+      font-size: 12px;
+      font-weight: 500;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: #eef6fc;
+      color: #1565c0;
+      border: 1px solid rgba(33, 150, 243, 0.25);
+    }
+
+    .revenue {
+      border-left: 4px solid var(--z-accent-b);
+      padding-left: 16px;
+      margin: 16px 0;
+    }
+    .revenue strong { color: var(--z-dark); }
+
+    table.rev {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+      margin-top: 12px;
+    }
+    table.rev th, table.rev td {
+      text-align: left;
+      padding: 12px 14px;
+      border-bottom: 1px solid #e8ecf1;
+    }
+    table.rev th {
+      background: #f8fafc;
+      font-weight: 600;
+      color: var(--z-dark);
+    }
+
+    .cta-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 20px;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 48px;
+      padding: 0 22px;
+      border-radius: var(--z-radius);
+      font-family: inherit;
+      font-size: 15px;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      text-decoration: none;
+      transition: transform 0.15s, box-shadow 0.2s;
+    }
+    .btn:hover { text-decoration: none; transform: translateY(-1px); }
+    .btn-primary {
+      background: linear-gradient(90deg, var(--z-accent-a) 0%, var(--z-accent-b) 45%, var(--z-accent-c) 100%);
+      color: var(--z-white);
+      box-shadow: 0 3px 12px rgba(33, 150, 243, 0.35);
+    }
+    .btn-outline {
+      background: var(--z-white);
+      color: var(--z-dark);
+      border: 2px solid var(--z-border);
+      box-shadow: 0 1px 2px var(--z-shadow);
+    }
+
+    footer {
+      text-align: center;
+      padding: 24px 20px 36px;
+      font-size: 13px;
+      color: var(--z-muted);
+    }
+    footer a { margin: 0 8px; color: var(--z-muted); }
+    footer a:hover { color: var(--z-accent-b); }
+
+    /* —— Iconografía y bloques visuales —— */
+    .svg-ic { display: block; flex-shrink: 0; }
+    .svg-ic path, .svg-ic circle, .svg-ic ellipse, .svg-ic line, .svg-ic polyline {
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.75;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .svg-ic rect {
+      fill: currentColor;
+      stroke: none;
+      opacity: 0.92;
+    }
+    .svg-ic.fill path { fill: currentColor; stroke: none; }
+    .ic-box .svg-ic, .exec-tile .svg-ic, .rev-tile .svg-ic, .benefit-item .svg-ic, .compare-box .svg-ic { color: inherit; }
+    .hero .ic .svg-stroked path,
+    .hero .ic .svg-stroked circle {
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.75;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .hero .ic .svg-filled path { fill: currentColor; stroke: none; }
+
+    .hero .wrap { display: flex; align-items: flex-start; justify-content: space-between; gap: 32px; flex-wrap: wrap; }
+    .hero-visual {
+      flex: 0 1 320px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 8px;
+    }
+    .hero-mock {
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.28);
+      border-radius: 14px;
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      backdrop-filter: blur(6px);
+    }
+    .hero-mock .ic {
+      width: 44px; height: 44px; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(255,255,255,0.18);
+      color: #fff;
+    }
+    .hero-mock strong { display: block; font-size: 14px; font-weight: 600; }
+    .hero-mock span { font-size: 12px; opacity: 0.85; }
+
+    .exec-icons {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin: 22px 0 8px;
+    }
+    @media (max-width: 720px) {
+      .exec-icons { grid-template-columns: repeat(2, 1fr); }
+    }
+    .exec-tile {
+      background: linear-gradient(145deg, #f0f7ff 0%, #fff 100%);
+      border: 1px solid #dbe7f5;
+      border-radius: var(--z-radius-sm);
+      padding: 16px 14px;
+      text-align: center;
+    }
+    .exec-tile .ic-circle {
+      width: 48px; height: 48px; margin: 0 auto 10px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      background: linear-gradient(135deg, var(--z-accent-a), var(--z-accent-c));
+      color: #fff;
+    }
+    .exec-tile b { font-size: 13px; color: var(--z-dark); display: block; line-height: 1.3; }
+    .exec-tile span { font-size: 11px; color: var(--z-muted); }
+
+    .card-head-icon {
+      display: flex; align-items: center; gap: 12px; margin-bottom: 14px;
+    }
+    .card-head-icon .ic-box {
+      width: 48px; height: 48px; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      background: #eef6fc;
+      color: var(--z-accent-b);
+    }
+    .card-head-icon h2 { margin: 0; }
+
+    .flow-card {
+      background: linear-gradient(180deg, #fafcff 0%, #fff 40%);
+      border: 1px solid #e4edf7;
+      border-radius: var(--z-radius);
+      padding: 24px 20px 28px;
+      margin-bottom: 22px;
+      overflow-x: auto;
+    }
+    .flow-card h2 { margin: 0 0 6px; font-size: 1.25rem; color: var(--z-dark); }
+    .flow-card > p { margin: 0 0 18px; font-size: 14px; color: var(--z-muted); max-width: 720px; }
+    .flow-svg-wrap { min-width: 640px; }
+    .flow-svg-wrap svg { width: 100%; height: auto; display: block; }
+
+    .rev-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
+      margin: 20px 0 24px;
+    }
+    @media (max-width: 960px) {
+      .rev-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 480px) {
+      .rev-grid { grid-template-columns: 1fr; }
+    }
+    .rev-tile {
+      border-radius: var(--z-radius-sm);
+      padding: 16px 12px;
+      text-align: center;
+      border: 1px solid #e8ecf1;
+      background: #fff;
+      position: relative;
+      overflow: hidden;
+    }
+    .rev-tile::before {
+      content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      background: linear-gradient(90deg, var(--z-accent-a), var(--z-accent-b));
+    }
+    .rev-tile:nth-child(2)::before { background: linear-gradient(90deg, #7c4dff, #536dfe); }
+    .rev-tile:nth-child(3)::before { background: linear-gradient(90deg, var(--z-green), #2e7d32); }
+    .rev-tile:nth-child(4)::before { background: linear-gradient(90deg, #ff9800, #f57c00); }
+    .rev-tile:nth-child(5)::before { background: linear-gradient(90deg, #607d8b, #455a64); }
+    .rev-tile .ic { width: 40px; height: 40px; margin: 0 auto 10px; color: var(--z-accent-b); }
+    .rev-tile:nth-child(2) .ic { color: #5c6bc0; }
+    .rev-tile:nth-child(3) .ic { color: var(--z-green); }
+    .rev-tile:nth-child(4) .ic { color: #ef6c00; }
+    .rev-tile:nth-child(5) .ic { color: #546e7a; }
+    .rev-tile h4 { margin: 0 0 6px; font-size: 13px; font-weight: 600; color: var(--z-dark); line-height: 1.25; }
+    .rev-tile p { margin: 0; font-size: 12px; color: var(--z-muted); line-height: 1.4; }
+
+    .benefit-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-top: 8px;
+    }
+    @media (max-width: 820px) {
+      .benefit-grid { grid-template-columns: 1fr; }
+    }
+    .benefit-item {
+      display: flex; gap: 14px;
+      padding: 16px;
+      border-radius: var(--z-radius-sm);
+      background: #f8fafc;
+      border: 1px solid #edf1f6;
+    }
+    .benefit-item .ic {
+      flex-shrink: 0;
+      width: 44px; height: 44px;
+      border-radius: 10px;
+      background: #fff;
+      color: var(--z-accent-b);
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+    .benefit-item strong { display: block; font-size: 14px; color: var(--z-dark); margin-bottom: 4px; }
+    .benefit-item span { font-size: 13px; color: var(--z-muted); line-height: 1.45; }
+
+    .timeline {
+      display: flex;
+      align-items: stretch;
+      gap: 0;
+      margin-top: 18px;
+      flex-wrap: wrap;
+    }
+    .tl-step {
+      flex: 1 1 200px;
+      position: relative;
+      padding: 16px 18px 16px 56px;
+      border-left: 3px solid #e3ecf7;
+      margin-left: 12px;
+    }
+    .tl-step:first-child { border-left-color: var(--z-accent-b); }
+    .tl-step:nth-child(2) { border-left-color: #7e57c2; }
+    .tl-step:nth-child(3) { border-left-color: var(--z-green); }
+    .tl-step:nth-child(4) { border-left-color: #ff7043; }
+    .tl-num {
+      position: absolute;
+      left: -14px;
+      top: 18px;
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--z-accent-a), var(--z-accent-b));
+      color: #fff;
+      font-size: 14px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 8px rgba(33,150,243,0.35);
+    }
+    .tl-step:nth-child(2) .tl-num { background: linear-gradient(135deg, #7c4dff, #5c6bc0); }
+    .tl-step:nth-child(3) .tl-num { background: linear-gradient(135deg, #66bb6a, var(--z-green)); }
+    .tl-step:nth-child(4) .tl-num { background: linear-gradient(135deg, #ff8a65, #ff7043); }
+    .tl-step h4 { margin: 0 0 6px; font-size: 14px; color: var(--z-dark); }
+    .tl-step p { margin: 0; font-size: 13px; color: var(--z-muted); }
+
+    table.rev td:first-child { font-weight: 500; color: var(--z-dark); }
+    .rev-cell-ic { display: inline-flex; align-items: center; gap: 8px; vertical-align: middle; }
+    .rev-cell-ic .svg-ic { flex-shrink: 0; color: var(--z-accent-b); }
+
+    .compare-row {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 12px;
+      align-items: center;
+      margin-top: 16px;
+    }
+    @media (max-width: 700px) {
+      .compare-row { grid-template-columns: 1fr; }
+      .compare-arrow { transform: rotate(90deg); margin: 8px auto; }
+    }
+    .compare-box {
+      border-radius: var(--z-radius-sm);
+      padding: 20px;
+      text-align: center;
+      border: 2px dashed #cfd8e3;
+      background: #fafbfc;
+    }
+    .compare-box .big-ic { width: 56px; height: 56px; margin: 0 auto 12px; color: #546e7a; }
+    .compare-box h3 { margin: 0 0 8px; font-size: 15px; color: var(--z-dark); }
+    .compare-box p { margin: 0; font-size: 13px; color: var(--z-muted); }
+    .compare-box.future {
+      border-style: solid;
+      border-color: #b3d7ff;
+      background: linear-gradient(180deg, #f5faff, #fff);
+    }
+    .compare-box.future .big-ic { color: var(--z-accent-b); }
+    .compare-arrow {
+      font-size: 28px;
+      color: var(--z-accent-b);
+      font-weight: 300;
+      user-select: none;
+    }
+
+    /* Ejemplos reales WhatsApp (Alfa Business AI) */
+    .live-examples {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 8px;
+    }
+    @media (max-width: 720px) {
+      .live-examples { grid-template-columns: 1fr; }
+    }
+    .live-example {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      padding: 18px 20px;
+      border-radius: var(--z-radius-sm);
+      border: 1px solid #e4edf7;
+      background: linear-gradient(165deg, #fafcff 0%, #fff 55%);
+      transition: box-shadow 0.2s, border-color 0.2s;
+    }
+    .live-example:hover {
+      border-color: rgba(33, 150, 243, 0.35);
+      box-shadow: 0 4px 20px rgba(33, 150, 243, 0.08);
+    }
+    .live-example__logo {
+      flex-shrink: 0;
+      width: 56px;
+      height: 56px;
+      border-radius: 14px;
+      background: #fff;
+      border: 1px solid var(--z-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 8px;
+      box-shadow: 0 1px 4px var(--z-shadow);
+    }
+    .live-example__logo img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+    .live-example__body { min-width: 0; flex: 1; }
+    .live-example__body h3 {
+      margin: 0 0 6px;
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--z-dark);
+    }
+    .live-example__body p {
+      margin: 0 0 10px;
+      font-size: 13px;
+      color: var(--z-muted);
+      line-height: 1.45;
+    }
+    .wa-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #128c7e;
+      text-decoration: none;
+      padding: 8px 14px;
+      border-radius: 999px;
+      background: #e8f5e9;
+      border: 1px solid rgba(37, 211, 102, 0.35);
+    }
+    .wa-link:hover {
+      text-decoration: none;
+      background: #dcf4e0;
+      color: #075e54;
+    }
+    .wa-link svg { flex-shrink: 0; }
+
+    /* —— Layout tipo welcome / login Zuitch —— */
+    .z-proposal-doc .welcome-container { padding-top: 0; }
+    /* Cabecera fija del tema: reservar altura */
+    .z-proposal-doc .wrapper {
+      padding-top: 48px;
+      align-items: flex-start;
+    }
+    .z-proposal-doc #welcomeheader .logo img {
+      max-width: 160px;
+      width: auto;
+      height: auto;
+      display: block;
+    }
+    .z-proposal-doc #welcomeheader.navbar-default {
+      background: var(--z-nav);
+      border: none;
+      height: 48px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+    }
+    .z-proposal-doc #welcomeheader .mdbtn:hover {
+      background-color: #fff;
+      color: var(--z-nav);
+      border-color: #fff;
+    }
+    .z-proposal-doc .login_left_combo {
+      color: #fff;
+    }
+    /* Portada Zuitch AI: banda completa arriba; documento debajo (.z-ai-stacked) */
+    /* welcome.css fuerza .login{min-height:100%} y combo/parent{height:100%} → rompe altura tipo banner */
+    .z-proposal-doc .login.z-ai-stacked {
+      flex-direction: column;
+      align-items: stretch;
+      width: 100%;
+      min-height: 0 !important;
+      height: auto;
+    }
+    .z-proposal-doc .login.z-ai-stacked .login_left_combo_parent.z-ai-banner {
+      width: 100% !important;
+      max-width: none !important;
+      flex: 0 0 auto;
+      align-self: stretch;
+      height: auto !important;
+      min-height: 0 !important;
+      max-height: none;
+      overflow: hidden;
+      box-shadow: 0 6px 24px rgba(0, 0, 0, 0.14);
+    }
+    .z-proposal-doc .login.z-ai-stacked .login_left_combo.z-ai-portada {
+      height: auto !important;
+      min-height: 0 !important;
+    }
+    .z-proposal-doc .login.z-ai-stacked .col-md-6 {
+      width: 100% !important;
+      flex: 0 0 auto;
+      min-width: 0;
+    }
+    .z-proposal-doc .login.z-ai-stacked .login_innre {
+      min-height: 0 !important;
+    }
+    .z-proposal-doc .login.z-ai-stacked .z-proposal-scroll {
+      max-height: none;
+      overflow: visible;
+      padding-right: 0;
+    }
+    .z-proposal-doc .login_left_combo.z-ai-portada {
+      justify-content: flex-start;
+      align-items: flex-start;
+      max-width: 1120px;
+      min-width: 0;
+      width: 100%;
+      margin: 0 auto;
+      padding: 22px 24px 26px;
+      box-sizing: border-box;
+      min-height: 0;
+    }
+    .z-proposal-doc .login_left_combo.z-ai-portada .logo {
+      margin: 0 0 12px;
+    }
+    .z-proposal-doc .login_left_combo.z-ai-portada .logo img {
+      max-width: 176px;
+      width: auto;
+      height: auto;
+      filter: drop-shadow(0 4px 20px rgba(0, 0, 0, 0.25));
+    }
+    .z-proposal-doc .login_left_combo.z-ai-portada h1,
+    .z-proposal-doc .login_left_combo.z-ai-portada > p {
+      margin: 0;
+    }
+    .z-ai-portada__eyebrow {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.78);
+      margin: 0 0 8px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    .z-ai-portada__product {
+      font-size: clamp(1.85rem, 3.5vw, 2.45rem);
+      font-weight: 700;
+      line-height: 1.08;
+      letter-spacing: -0.03em;
+      margin: 0 0 10px !important;
+      text-shadow: 0 2px 24px rgba(0, 0, 0, 0.2);
+    }
+    .z-ai-portada__product-z {
+      color: #fff;
+      font-weight: 700;
+    }
+    .z-ai-portada__product-ai {
+      color: #b8e4ec;
+      font-weight: 700;
+    }
+    .z-ai-portada__tagline {
+      font-size: clamp(14px, 1.25vw, 16px);
+      line-height: 1.45;
+      color: rgba(255, 255, 255, 0.92);
+      max-width: 36em;
+      margin: 0 0 14px !important;
+      letter-spacing: 0.02em;
+    }
+    .z-ai-portada__chips {
+      list-style: none;
+      margin: 0 0 0;
+      padding: 0;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .z-ai-portada__chips li {
+      font-size: 12px;
+      font-weight: 600;
+      padding: 8px 14px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      color: #fff;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    .z-ai-portada__divider {
+      height: 1px;
+      width: 100%;
+      max-width: 200px;
+      background: linear-gradient(90deg, rgba(184, 228, 236, 0.9), transparent);
+      margin: 0 0 12px;
+      border: 0;
+    }
+    .z-ai-portada__partner {
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.72);
+      margin: 14px 0 0;
+      padding: 0;
+    }
+    .z-ai-portada__partner strong {
+      color: #fff;
+      font-weight: 600;
+    }
+    @media (min-width: 768px) {
+      .z-proposal-doc .login_left_combo.z-ai-portada {
+        padding: 26px 32px 30px;
+      }
+    }
+    .z-proposal-doc .login_left_combo_parent.z-ai-banner {
+      position: relative;
+    }
+    .z-proposal-doc .login_left_combo_parent.z-ai-banner::before {
+      content: '';
+      display: block;
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(165deg, rgba(26, 55, 75, 0.94) 0%, rgba(35, 87, 119, 0.72) 38%, rgba(114, 176, 190, 0.28) 100%),
+        url(https://zuitch.com/themes/wowonder/img/backgrounds/login.jpg);
+      background-repeat: no-repeat;
+      background-size: cover;
+      background-position: center;
+      opacity: 1;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .z-proposal-doc .login_left_combo {
+      position: relative;
+      z-index: 1;
+    }
+    .z-proposal-doc .login_innre {
+      display: block;
+      min-height: calc(100vh - 48px);
+      padding: 32px 28px 28px;
+    }
+    .z-proposal-doc .login_innre:before,
+    .z-proposal-doc .login_innre:after {
+      display: none !important;
+    }
+    .z-proposal-scroll {
+      max-height: calc(100vh - 48px - 100px);
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      padding-right: 6px;
+    }
+    .z-proposal-inner {
+      max-width: 720px;
+      margin: 0 auto;
+    }
+    .z-proposal-doc .login.z-ai-stacked .z-proposal-inner {
+      max-width: 900px;
+    }
+    .z-proposal-doc .login .title.main {
+      font-size: clamp(28px, 4vw, 40px);
+      color: var(--z-brand) !important;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+      margin-top: 0;
+    }
+    .z-proposal-doc .login .desc {
+      margin-bottom: 16px;
+      color: #5c6370;
+      font-size: 16px;
+      opacity: 1;
+      letter-spacing: 0.02em;
+    }
+    .z-proposal-doc .login_innre .layout {
+      margin: 0 auto;
+      max-width: 100%;
+      padding: 0 12px 36px;
+    }
+    .z-proposal-doc .footer .welcome-footer {
+      font-size: 13px;
+    }
+    .z-proposal-doc .footer .welcome-footer a.main,
+    .z-proposal-doc .footer .welcome-footer a { color: var(--z-brand); }
+    .z-proposal-doc .btn-primary {
+      background: var(--z-brand) !important;
+      border-color: var(--z-brand) !important;
+      color: #fff !important;
+    }
+    .z-proposal-doc .btn-primary:hover {
+      background: var(--z-brand-hover) !important;
+      border-color: var(--z-brand-hover) !important;
+    }
+    .z-proposal-doc .ic-box,
+    .z-proposal-doc .exec-tile .ic-circle {
+      background: rgba(114, 176, 190, 0.12);
+      color: var(--z-brand);
+    }
+    .z-proposal-doc .exec-tile .ic-circle {
+      background: linear-gradient(135deg, var(--z-brand), var(--z-accent-c));
+      color: #fff;
+    }
+    @media (max-width: 992px) {
+      .z-proposal-scroll { max-height: none; overflow: visible; }
+      .z-proposal-doc .login_left_combo.z-ai-portada {
+        padding: 18px 18px 22px;
+      }
+      .z-proposal-doc .login_innre {
+        padding: 24px 16px 20px;
+      }
+    }
+  </style>
+</head>
+<body class="z-proposal-doc">
+
+  <div class="content-container welcome-container">
+  <header id="welcomeheader" class="navbar-default">
+    <div class="container">
+      <ul class="nav navbar-nav navbar-right pull-right">
+        <li class="absul-right"><a class="mdbtn" href="https://zuitch.com/welcome">Inicio</a></li>
+      </ul>
+    </div>
+  </header>
+  <div class="wrapper">
+  <div class="login z-ai-stacked">
+    <div class="login_left_combo_parent z-ai-banner">
+      <div class="login_left_combo z-ai-portada">
+        <div class="z-ai-portada__top">
+          <a href="https://zuitch.com" class="logo"><img src="https://zuitch.com/themes/wowonder/img/logo.png?cache=980" alt="Zuitch"></a>
+          <p class="z-ai-portada__eyebrow">Portada del proyecto</p>
+          <h1 class="z-ai-portada__product"><span class="z-ai-portada__product-z">Zuitch</span> <span class="z-ai-portada__product-ai">AI</span></h1>
+          <p class="z-ai-portada__tagline">Asistentes con inteligencia artificial y WhatsApp Business enlazados a tu marketplace: catálogo, conversación y cobro en un solo ecosistema.</p>
+          <hr class="z-ai-portada__divider" />
+          <ul class="z-ai-portada__chips" aria-label="Pilares del producto">
+            <li>Marketplace</li>
+            <li>WhatsApp</li>
+            <li>IA por marca</li>
+            <li>Créditos</li>
+          </ul>
+          <p class="z-ai-portada__partner">Propuesta en colaboración con <strong>Alfa Business AI</strong></p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="login_innre">
+
+        <div class="z-proposal-scroll"><div class="z-proposal-inner">
+
+  <main class="layout">
+
+    <article class="card">
+      <div class="card-head-icon">
+        <h2 class="title main">Propuesta para Aldo Intriago</h2>
+        <p class="desc">Marketplace + inteligencia artificial + WhatsApp Business · documento interno</p>
+        <div class="ic-box" aria-hidden="true">
+          <svg class="svg-ic" width="26" height="26" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8M16 17H8M10 9H8"/></svg>
+        </div>
+        <h2>Resumen ejecutivo</h2>
+      </div>
+      <div class="exec-icons" aria-label="Pilares de la propuesta">
+        <div class="exec-tile">
+          <div class="ic-circle" aria-hidden="true">
+            <svg class="svg-ic" width="22" height="22" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          </div>
+          <b>Red + páginas</b>
+          <span>Identidad y negocios ya en Zuitch</span>
+        </div>
+        <div class="exec-tile">
+          <div class="ic-circle" aria-hidden="true">
+            <svg class="svg-ic" width="22" height="22" viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+          </div>
+          <b>Mercado</b>
+          <span>Checkout y comisiones integradas</span>
+        </div>
+        <div class="exec-tile">
+          <div class="ic-circle" aria-hidden="true">
+            <svg class="svg-ic" width="22" height="22" viewBox="0 0 24 24"><path d="M12 3v2M12 19v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M3 12h2M19 12h2"/><circle cx="12" cy="12" r="4"/></svg>
+          </div>
+          <b>IA + WhatsApp</b>
+          <span>Hub, N8N, prompts por marca</span>
+        </div>
+        <div class="exec-tile">
+          <div class="ic-circle" aria-hidden="true">
+            <svg class="svg-ic" width="22" height="22" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M18 9l-5 5-4-4-3 3"/></svg>
+          </div>
+          <b>Ingresos múltiples</b>
+          <span>Uso, leads, plan, GMV, envío</span>
+        </div>
+      </div>
+      <p>
+        Zuitch ya reúne piezas difíciles de replicar: identidad de usuarios, páginas de negocio, publicaciones, mercado de productos, billetera, pagos y comisiones sobre ventas. La propuesta es añadir un <strong>producto de IA conversacional</strong> (por empresa, con prompt personalizado) integrado con <strong>WhatsApp Business</strong> vía un hub técnico (por ejemplo <strong>hub.alfabusiness.app</strong> y automatización con <strong>N8N</strong>), más un <strong>asistente global de marca Zuitch</strong> en WhatsApp para adquisición de usuarios y compradores desde redes sociales. <strong>Alfa Business AI</strong> aporta la capa de implementación y operación que ya usa con clientes en producción; abajo puedes probar dos asistentes vivos creados por ellos.
+      </p>
+      <p>
+        El modelo monetiza por <strong>créditos de consumo de IA</strong>, por <strong>leads atribuidos</strong> desde el canal Zuitch, por <strong>suscripción al plan que habilita el bot</strong>, y por <strong>comisión sobre ventas en la plataforma</strong> (incluido el margen asociado al envío con integración DHL donde aplique). Así se alinea ingreso directo (IA) con ingreso indirecto (GMV y envíos).
+      </p>
+      <div class="cta-row">
+        <a class="btn btn-primary" href="https://zuitch.com/welcome">Acceder a Zuitch</a>
+        <a class="btn btn-outline" href="https://zuitch.com">Ir al sitio</a>
+      </div>
+
+      <h3 style="margin-top:28px;">Referencias en vivo (IA + WhatsApp por Alfa Business AI)</h3>
+      <p style="font-size:14px;">
+        Los siguientes números son <strong>ejemplos reales</strong> de asistentes con inteligencia artificial conectados a WhatsApp, implementados por <strong>Alfa Business AI</strong>. Sirven como referencia de tono, disponibilidad 24/7 y experiencia de usuario que Zuitch puede ofrecer a sus páginas y vendedores dentro del mismo modelo de hub, créditos y catálogo enlazado a <strong>zuitch.com</strong>.
+      </p>
+      <div class="live-examples" role="list">
+        <article class="live-example" role="listitem">
+          <div class="live-example__logo">
+            <img src="https://dttech-ec.com/wp-content/uploads/2024/11/favicon-dttechnology.svg" alt="Logo Viajes del Cano" width="48" height="48" loading="lazy" referrerpolicy="no-referrer">
+          </div>
+          <div class="live-example__body">
+            <h3>Viajes del Cano</h3>
+            <p>Asistente de viajes y atención por WhatsApp. Mismo tipo de solución que se integraría con páginas y ofertas en Zuitch.</p>
+            <a class="wa-link" href="https://wa.me/593999673562" target="_blank" rel="noopener noreferrer" aria-label="Abrir WhatsApp con Viajes del Cano">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.435 9.884-9.883 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+              WhatsApp +593 99 967 3562
+            </a>
+          </div>
+        </article>
+        <article class="live-example" role="listitem">
+          <div class="live-example__logo">
+            <img src="https://laboratoriodedexter.com/wp-content/uploads/2025/06/logo-laboratorio-de-dexter-_1_.webp" alt="Logo Laboratorio de Dexter" width="48" height="48" loading="lazy" referrerpolicy="no-referrer">
+          </div>
+          <div class="live-example__body">
+            <h3>Laboratorio de Dexter</h3>
+            <p>Asistente para laboratorio clínico: citas, información y conversación guiada — patrón aplicable a servicios y marketplace en Zuitch.</p>
+            <a class="wa-link" href="https://wa.me/593981954053" target="_blank" rel="noopener noreferrer" aria-label="Abrir WhatsApp con Laboratorio de Dexter">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.435 9.884-9.883 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+              WhatsApp +593 98 195 4053
+            </a>
+          </div>
+        </article>
+      </div>
+    </article>
+
+    <div class="grid-2">
+      <article class="card">
+        <div class="card-head-icon">
+          <div class="ic-box" aria-hidden="true">
+            <svg class="svg-ic" width="24" height="24" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg>
+          </div>
+          <h2>Qué es Zuitch hoy</h2>
+        </div>
+        <div class="compare-row" style="margin-top:0;margin-bottom:18px;">
+          <div class="compare-box" style="border-style:solid;border-color:#e0e4e8;">
+            <svg class="svg-ic big-ic" width="40" height="40" viewBox="0 0 24 24" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            <h3>Social + contenido</h3>
+            <p>Conexión, perfiles, páginas y línea de tiempo</p>
+          </div>
+          <span class="compare-arrow" aria-hidden="true">→</span>
+          <div class="compare-box" style="border-style:solid;border-color:#e0e4e8;">
+            <svg class="svg-ic big-ic" width="40" height="40" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+            <h3>Mercado integrado</h3>
+            <p>Wallet, pedidos y comisiones de tienda</p>
+          </div>
+        </div>
+        <p>Una red social orientada a conectar personas y contenidos (<a href="https://zuitch.com/welcome">zuitch.com/welcome</a>).</p>
+        <ul>
+          <li>Cuentas, páginas, línea de tiempo y descubrimiento de perfiles.</li>
+          <li>Membresías <strong>Pro</strong> y funciones por plan (incluidas extensiones de IA en el núcleo).</li>
+          <li>Monetización de creadores y transacciones en el sistema de pagos.</li>
+        </ul>
+        <p><strong>Ya existe</strong> la infraestructura de confianza y cobro para montar el nuevo producto.</p>
+      </article>
+      <article class="card">
+        <div class="card-head-icon">
+          <div class="ic-box" aria-hidden="true">
+            <svg class="svg-ic" width="24" height="24" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 10h.01M12 10h.01M16 10h.01"/></svg>
+          </div>
+          <h2>Hacia qué evoluciona</h2>
+        </div>
+        <div class="compare-row" style="margin-top:0;margin-bottom:18px;">
+          <div class="compare-box future">
+            <svg class="svg-ic big-ic" width="40" height="40" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 1 0 10 10"/><circle cx="12" cy="12" r="3"/><path d="M12 6v2M12 16v2M6 12h2M16 12h2"/></svg>
+            <h3>IA por negocio</h3>
+            <p>Prompt propio, catálogo real, WhatsApp de la marca</p>
+          </div>
+          <span class="compare-arrow" aria-hidden="true">+</span>
+          <div class="compare-box future">
+            <svg class="svg-ic big-ic" width="40" height="40" viewBox="0 0 24 24" aria-hidden="true"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+            <h3>IA Zuitch global</h3>
+            <p>Captación RRSS → recomienda empresas del ecosistema</p>
+          </div>
+        </div>
+        <p>Capa de <strong>comercio conversacional</strong>: enlaces y checkout <strong>siempre en zuitch.com</strong>.</p>
+        <div class="pill-row">
+          <span class="pill">WhatsApp Business API</span>
+          <span class="pill">Créditos IA</span>
+          <span class="pill">Atribución de ventas</span>
+          <span class="pill">DHL / envío</span>
+        </div>
+      </article>
+    </div>
+
+    <section class="flow-card" aria-labelledby="flow-title">
+      <h2 id="flow-title">Flujo del ecosistema (vista gráfica)</h2>
+      <p>Del anuncio en redes al ingreso para Zuitch: una sola cadena legible para presentar a inversores o partners.</p>
+      <div class="flow-svg-wrap">
+        <svg viewBox="0 0 920 200" role="img" aria-label="Flujo: RRSS y pauta hacia WhatsApp, hub con IA, API Zuitch, catálogo y compra con comisión">
+          <defs>
+            <linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" style="stop-color:#03a9f4"/><stop offset="100%" style="stop-color:#3f51b5"/>
+            </linearGradient>
+            <marker id="arrow" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+              <polygon points="0 0, 10 3.5, 0 7" fill="#90a4ae"/>
+            </marker>
+          </defs>
+          <!-- Fila principal -->
+          <rect x="20" y="70" width="100" height="64" rx="10" fill="#fff" stroke="#cfd8dc" stroke-width="2"/>
+          <text x="70" y="98" text-anchor="middle" fill="#37474f" font-size="11" font-family="Poppins,sans-serif" font-weight="600">RRSS</text>
+          <text x="70" y="114" text-anchor="middle" fill="#78909c" font-size="9" font-family="Poppins,sans-serif">Pauta</text>
+          <line x1="120" y1="102" x2="148" y2="102" stroke="#90a4ae" stroke-width="2" marker-end="url(#arrow)"/>
+
+          <rect x="150" y="70" width="112" height="64" rx="10" fill="#e8f5e9" stroke="#66bb6a" stroke-width="2"/>
+          <text x="206" y="98" text-anchor="middle" fill="#2e7d32" font-size="11" font-family="Poppins,sans-serif" font-weight="600">WhatsApp</text>
+          <text x="206" y="114" text-anchor="middle" fill="#558b2f" font-size="9" font-family="Poppins,sans-serif">Cliente</text>
+          <line x1="262" y1="102" x2="288" y2="102" stroke="#90a4ae" stroke-width="2" marker-end="url(#arrow)"/>
+
+          <rect x="290" y="58" width="130" height="88" rx="10" fill="url(#g1)" stroke="none"/>
+          <text x="355" y="88" text-anchor="middle" fill="#fff" font-size="12" font-family="Poppins,sans-serif" font-weight="600">Hub + N8N</text>
+          <text x="355" y="108" text-anchor="middle" fill="rgba(255,255,255,.9)" font-size="9" font-family="Poppins,sans-serif">IA · prompts</text>
+          <text x="355" y="124" text-anchor="middle" fill="rgba(255,255,255,.85)" font-size="9" font-family="Poppins,sans-serif">orquestación</text>
+          <line x1="420" y1="102" x2="448" y2="102" stroke="#90a4ae" stroke-width="2" marker-end="url(#arrow)"/>
+
+          <rect x="450" y="70" width="124" height="64" rx="10" fill="#fff8e1" stroke="#ffb300" stroke-width="2"/>
+          <text x="512" y="98" text-anchor="middle" fill="#f57f17" font-size="11" font-family="Poppins,sans-serif" font-weight="600">API Zuitch</text>
+          <text x="512" y="114" text-anchor="middle" fill="#ef6c00" font-size="9" font-family="Poppins,sans-serif">Catálogo</text>
+          <line x1="574" y1="102" x2="602" y2="102" stroke="#90a4ae" stroke-width="2" marker-end="url(#arrow)"/>
+
+          <rect x="604" y="70" width="130" height="64" rx="10" fill="#fce4ec" stroke="#ec407a" stroke-width="2"/>
+          <text x="669" y="98" text-anchor="middle" fill="#c2185b" font-size="11" font-family="Poppins,sans-serif" font-weight="600">zuitch.com</text>
+          <text x="669" y="114" text-anchor="middle" fill="#ad1457" font-size="9" font-family="Poppins,sans-serif">Checkout</text>
+          <line x1="734" y1="102" x2="762" y2="102" stroke="#90a4ae" stroke-width="2" marker-end="url(#arrow)"/>
+
+          <rect x="764" y="62" width="136" height="80" rx="10" fill="#263238" stroke="#37474f" stroke-width="2"/>
+          <text x="832" y="95" text-anchor="middle" fill="#fff" font-size="11" font-family="Poppins,sans-serif" font-weight="600">Ingreso</text>
+          <text x="832" y="112" text-anchor="middle" fill="#b0bec5" font-size="9" font-family="Poppins,sans-serif">Créditos · % · envío</text>
+
+          <!-- Icon row hints -->
+          <text x="70" y="48" text-anchor="middle" fill="#546e7a" font-size="10" font-family="Poppins,sans-serif">Tráfico</text>
+          <text x="355" y="40" text-anchor="middle" fill="#607d8b" font-size="10" font-family="Poppins,sans-serif">Capa inteligencia</text>
+          <text x="832" y="48" text-anchor="middle" fill="#546e7a" font-size="10" font-family="Poppins,sans-serif">Zuitch</text>
+        </svg>
+      </div>
+    </section>
+
+    <article class="card">
+      <div class="card-head-icon">
+        <div class="ic-box" aria-hidden="true">
+          <svg class="svg-ic" width="24" height="24" viewBox="0 0 24 24"><path d="M12 1v22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        </div>
+        <h2>Cómo genera dinero Zuitch</h2>
+      </div>
+      <p>Los ingresos se superponen: más conversaciones implican más créditos, más leads y más compras cerradas <strong>dentro</strong> de la plataforma.</p>
+
+      <div class="rev-grid" aria-label="Cinco fuentes de ingreso">
+        <div class="rev-tile">
+          <div class="ic" aria-hidden="true">
+            <svg class="svg-ic" width="22" height="22" viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v6c0 1.7 3.6 3 8 3s8-1.3 8-3V6"/><path d="M4 12v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/></svg>
+          </div>
+          <h4>Créditos IA</h4>
+          <p>~USD 0,05 por crédito: texto, imagen, audio, respuesta.</p>
+        </div>
+        <div class="rev-tile">
+          <div class="ic" aria-hidden="true">
+            <svg class="svg-ic" width="22" height="22" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+          </div>
+          <h4>Lead Zuitch</h4>
+          <p>Ej.: +5 créditos si el bot global te envía cliente.</p>
+        </div>
+        <div class="rev-tile">
+          <div class="ic" aria-hidden="true">
+            <svg class="svg-ic" width="22" height="22" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 10h18"/><path d="M8 2v4M16 2v4"/></svg>
+          </div>
+          <h4>Plan suscripción</h4>
+          <p>Membresía mensual que habilita el chatbot en la página.</p>
+        </div>
+        <div class="rev-tile">
+          <div class="ic" aria-hidden="true">
+            <svg class="svg-ic" width="22" height="22" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M8 12h8M12 8v8"/></svg>
+          </div>
+          <h4>% sobre venta</h4>
+          <p>Comisión marketplace (atribuida al canal IA si aplica).</p>
+        </div>
+        <div class="rev-tile">
+          <div class="ic" aria-hidden="true">
+            <svg class="svg-ic" width="22" height="22" viewBox="0 0 24 24"><path d="M1 3h15v13H1zM16 8h4l3 3v5h-7"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+          </div>
+          <h4>Envío (DHL)</h4>
+          <p>Margen o fee logístico por pedido con envío.</p>
+        </div>
+      </div>
+
+      <p style="font-size:14px;">El margen en créditos es la diferencia entre lo cobrado al vendedor y el costo de modelos + hub. Los leads desde el asistente <em>oficial</em> Zuitch monetizan la pauta en RRSS aunque la venta tarde. La comisión de producto puede reutilizar el esquema actual de tienda (<code>store_commission</code>) y enriquecerse con <strong>atribución</strong> por token o cookie.</p>
+
+      <h3>Tabla resumen</h3>
+      <table class="rev" aria-label="Fuentes de ingreso">
+        <thead>
+          <tr>
+            <th>Fuente</th>
+            <th>Naturaleza</th>
+            <th>Efecto para Zuitch</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <span class="rev-cell-ic">
+                <svg class="svg-ic" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v6c0 1.7 3.6 3 8 3s8-1.3 8-3V6"/></svg>
+                Créditos IA
+              </span>
+            </td>
+            <td>Uso por conversación / multimodal</td>
+            <td>Ingreso recurrente y escalable con el tráfico de WhatsApp</td>
+          </tr>
+          <tr>
+            <td>
+              <span class="rev-cell-ic">
+                <svg class="svg-ic" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                Lead bot Zuitch
+              </span>
+            </td>
+            <td>Cargo fijo en créditos</td>
+            <td>Monetiza el tráfico pautado sin depender solo del GMV</td>
+          </tr>
+          <tr>
+            <td>
+              <span class="rev-cell-ic">
+                <svg class="svg-ic" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 10h18"/></svg>
+                Plan suscrito
+              </span>
+            </td>
+            <td>Mensual / anual</td>
+            <td>Previsibilidad y calidad del índice de negocios</td>
+          </tr>
+          <tr>
+            <td>
+              <span class="rev-cell-ic">
+                <svg class="svg-ic" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2M9 9h.01M15 9h.01"/></svg>
+                Comisión venta
+              </span>
+            </td>
+            <td>% sobre producto</td>
+            <td>Mayor GMV capturado dentro del sitio</td>
+          </tr>
+          <tr>
+            <td>
+              <span class="rev-cell-ic">
+                <svg class="svg-ic" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M1 3h15v13H1zM16 8h4l3 3v5h-7"/></svg>
+                Envío
+              </span>
+            </td>
+            <td>Margen o fee logístico</td>
+            <td>Ticket medio y margen por pedido</td>
+          </tr>
+        </tbody>
+      </table>
+    </article>
+
+    <article class="card">
+      <div class="card-head-icon">
+        <div class="ic-box" aria-hidden="true">
+          <svg class="svg-ic" width="24" height="24" viewBox="0 0 24 24"><path d="M12 2l2.4 7.4h7.6l-6 4.6 2.3 7-6.3-4.6-6.3 4.6 2.3-7-6-4.6h7.6L12 2z"/></svg>
+        </div>
+        <h2>Beneficios estratégicos</h2>
+      </div>
+      <p style="margin-bottom:18px;">Más allá del ingreso inmediato, el proyecto refuerza la posición de Zuitch en el mercado.</p>
+      <div class="benefit-grid">
+        <div class="benefit-item">
+          <div class="ic" aria-hidden="true"><svg class="svg-ic" width="22" height="22" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5M2 12l10 5 10-5"/></svg></div>
+          <div>
+            <strong>Diferenciación</strong>
+            <span>WhatsApp + catálogo + checkout con IA acotada al negocio: poco común en redes regionales.</span>
+          </div>
+        </div>
+        <div class="benefit-item">
+          <div class="ic" aria-hidden="true"><svg class="svg-ic" width="22" height="22" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div>
+          <div>
+            <strong>Retención de vendedores</strong>
+            <span>Asistente 24/7 en el canal donde ya conversa el cliente en Latinoamérica.</span>
+          </div>
+        </div>
+        <div class="benefit-item">
+          <div class="ic" aria-hidden="true"><svg class="svg-ic" width="22" height="22" viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></div>
+          <div>
+            <strong>Adquisición (RRSS)</strong>
+            <span>El bot global convierte pauta en conversaciones, registros y compras enlazadas.</span>
+          </div>
+        </div>
+        <div class="benefit-item">
+          <div class="ic" aria-hidden="true"><svg class="svg-ic" width="22" height="22" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.27 6.96L12 12.01l8.73-5.05M12 22.08V12"/></svg></div>
+          <div>
+            <strong>Datos de intención</strong>
+            <span>Preguntas y búsquedas alimentan ranking, recomendaciones y producto futuro.</span>
+          </div>
+        </div>
+        <div class="benefit-item">
+          <div class="ic" aria-hidden="true"><svg class="svg-ic" width="22" height="22" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+          <div>
+            <strong>Menor riesgo legal</strong>
+            <span>Respuestas ancladas a datos de la plataforma y políticas claras del marketplace.</span>
+          </div>
+        </div>
+        <div class="benefit-item">
+          <div class="ic" aria-hidden="true"><svg class="svg-ic" width="22" height="22" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.59 13.51l6.83 3.98M15.41 6.51l-6.82 3.98"/></svg></div>
+          <div>
+            <strong>Partner técnico probado</strong>
+            <span><strong>Alfa Business AI</strong> ya opera bots en WhatsApp para sectores distintos (turismo, salud); el mismo stack alimenta la integración con Zuitch.</span>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <article class="card">
+      <div class="card-head-icon">
+        <div class="ic-box" aria-hidden="true">
+          <svg class="svg-ic" width="24" height="24" viewBox="0 0 24 24"><path d="M3 21h18"/><rect x="4" y="14" width="4" height="5" rx="1"/><rect x="10" y="9" width="4" height="10" rx="1"/><rect x="16" y="4" width="4" height="15" rx="1"/></svg>
+        </div>
+        <h2>Ruta sugerida (fases)</h2>
+      </div>
+      <div class="timeline" role="list">
+        <div class="tl-step" role="listitem">
+          <span class="tl-num">1</span>
+          <h4>MVP técnico y comercial</h4>
+          <p>Página piloto, API de catálogo, WhatsApp en hub, créditos y consumo mínimo medible.</p>
+        </div>
+        <div class="tl-step" role="listitem">
+          <span class="tl-num">2</span>
+          <h4>Atribución y reporting</h4>
+          <p>Tokens en URL, comisiones y leads Zuitch visibles en el panel del vendedor.</p>
+        </div>
+        <div class="tl-step" role="listitem">
+          <span class="tl-num">3</span>
+          <h4>Bot global y pauta</h4>
+          <p>Número oficial, índice de negocios, campañas RRSS con métricas hasta registro o compra.</p>
+        </div>
+        <div class="tl-step" role="listitem">
+          <span class="tl-num">4</span>
+          <h4>Escala y optimización</h4>
+          <p>Precios por modalidad, carriers, bundles Pro + IA y refinamiento de prompts.</p>
+        </div>
+      </div>
+    </article>
+
+    <article class="card">
+      <div class="card-head-icon">
+        <div class="ic-box" aria-hidden="true">
+          <svg class="svg-ic" width="24" height="24" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        </div>
+        <h2>Cierre</h2>
+      </div>
+      <div style="display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap;">
+        <div style="flex:1;min-width:240px;">
+          <p>
+            Este proyecto convierte lo que Zuitch ya tiene (usuarios, páginas, mercado, pagos, comisiones) en un <strong>motor de ingresos multiparte</strong>, alineado con cómo se compra hoy en la región. Con <strong>Alfa Business AI</strong> como aliado de implementación, la curva de riesgo baja: ya hay asistentes en producción (como los ejemplos de esta página). La inversión se concentra en integración con la API de Zuitch, producto y operación con Meta; el retorno se reparte entre <strong>créditos de IA</strong>, <strong>leads</strong> y <strong>comercio con envío</strong>.
+          </p>
+          <p style="margin-bottom:0;">Documento para decisión de inversión y priorización en el roadmap.</p>
+        </div>
+        <div style="flex:0 0 200px;text-align:center;padding:20px;background:linear-gradient(160deg,#e3f2fd,#fff);border-radius:12px;border:1px solid #bbdefb;" aria-hidden="true">
+          <svg class="svg-ic" width="56" height="56" viewBox="0 0 24 24" style="margin:0 auto 10px;color:var(--z-accent-b);"><path d="M3 3v18h18"/><path d="M18 9l-5 5-4-4-3 3"/><path d="M18 15v3h-3"/></svg>
+          <strong style="font-size:14px;color:var(--z-dark);display:block;">Visión en una imagen</strong>
+          <span style="font-size:12px;color:var(--z-muted);">Social → conversación → compra → ingresos recurrentes</span>
+        </div>
+      </div>
+    </article>
+
+  </main>
+
+        </div>
+        </div>
+
+      </div>
+      <div class="footer">
+        <div class="welcome-footer">
+          © 2026 zuitch &nbsp;•&nbsp;
+          <a href="https://zuitch.com/terms/terms">Condiciones</a> &nbsp;•&nbsp;
+          <a href="https://zuitch.com/terms/privacy-policy">Política</a> &nbsp;•&nbsp;
+          <a href="https://zuitch.com/contact-us">Contacto</a> &nbsp;•&nbsp;
+          <a href="https://zuitch.com/welcome">Inicio</a> &nbsp;•&nbsp;
+          <span>Propuesta Zuitch IA / WhatsApp · Alfa Business AI</span>
+        </div>
+        <div class="clearfix"></div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+</body>
+</html>

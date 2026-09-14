@@ -34,6 +34,19 @@ $vy_lv22->ifBroadcastHaveProduct($broadcast_data22['id']); ?>
     var d_player = {},
       _timeout = {};
 
+    const show_loading = () => {
+      vd_loading_ic.show();
+    };
+    const hide_loading = () => {
+      vd_loading_ic.hide();
+    };
+    const tryPlayFeed = () => {
+      if (!video || typeof video.play !== 'function') return;
+      var p = video.play();
+      if (p && typeof p.catch === 'function') {
+        p.catch(function () {});
+      }
+    };
     const player_catch_events = e => {
       console.log('Event received: ', e);
       if (typeof e != 'object') {
@@ -48,7 +61,7 @@ $vy_lv22->ifBroadcastHaveProduct($broadcast_data22['id']); ?>
           break;
         case 'canPlay':
           if (video.paused) {
-            video.play();
+            tryPlayFeed();
           }
           hide_loading();
           console.log('play');
@@ -61,12 +74,6 @@ $vy_lv22->ifBroadcastHaveProduct($broadcast_data22['id']); ?>
           console.log('playback ended', e);
           break;
       }
-    };
-    const show_loading = () => {
-      vd_loading_ic.show();
-    };
-    const hide_loading = () => {
-      vd_loading_ic.hide();
     };
     const constructVideo = () => {
       d_player[pid] = dashjs.MediaPlayer().create();
@@ -171,6 +178,43 @@ $vy_lv22->ifBroadcastHaveProduct($broadcast_data22['id']); ?>
     };
     constructVideo();
     startvlf(pid);
+    setTimeout(function () {
+      tryPlayFeed();
+    }, 300);
+    setTimeout(function () {
+      try {
+        var feedRoot = document.getElementById('vylv_feedbroadcast_' + pid);
+        if (feedRoot && typeof IntersectionObserver !== 'undefined') {
+          var io = new IntersectionObserver(
+            function (entries) {
+              entries.forEach(function (en) {
+                if (en.isIntersecting && en.intersectionRatio > 0.1) {
+                  tryPlayFeed();
+                }
+              });
+            },
+            { threshold: [0, 0.1, 0.25] }
+          );
+          io.observe(feedRoot);
+        }
+      } catch (ioe) {}
+      var $root = $('#vylv_feedbroadcast_' + pid);
+      if ($root.length) {
+        $root
+          .off('click.vylviosfeed touchstart.vylviosfeed')
+          .on('click.vylviosfeed touchstart.vylviosfeed', function (e) {
+            if ($(e.target).closest('.vy-lv-feed-open-live').length) return;
+            if (!video['vylv_playing_' + bpid]) tryPlayFeed();
+          });
+        $root
+          .off('click.vylvopenlive')
+          .on('click.vylvopenlive', '.vy-lv-feed-open-live', function (ev) {
+            if (typeof vy_global_openLiveStream === 'function') {
+              vy_global_openLiveStream(ev, this, parseInt(pid, 10));
+            }
+          });
+      }
+    }, 0);
     video_pause_btn.off('click.vylv_pausefeedvideo').on('click.vylv_pausefeedvideo', function (e) {
       _estop(e);
       video.pause();
@@ -193,8 +237,11 @@ $vy_lv22->ifBroadcastHaveProduct($broadcast_data22['id']); ?>
       video_play_btn.show();
       video_pause_btn.hide();
     };
-    video.canplay = e => {
-      video.play();
+    video.oncanplay = function () {
+      tryPlayFeed();
+    };
+    video.onplaying = function () {
+      hide_loading();
     };
     video.onended = e => {
       alert('ended');
@@ -215,11 +262,6 @@ $vy_lv22->ifBroadcastHaveProduct($broadcast_data22['id']); ?>
       },
       configurable: true,
     });
-    $(document)
-      .off('click.fixiosautoplay touchstart.fixiosautoplay')
-      .on('click.fixiosautoplay touchstart.fixiosautoplay', () => {
-        if (!video['vylv_playing_' + bpid]) video.play();
-      });
   })();
 </script>
 <div class="vylv_feedbroadcast" id="vylv_feedbroadcast_<?php echo $current_post['id'];?>">
@@ -302,8 +344,7 @@ $vy_lv22->ifBroadcastHaveProduct($broadcast_data22['id']); ?>
                               </button>
                               <button
                                 type="button"
-                                onclick="vy_global_openLiveStream(event,this,<?php echo $current_post['id'];?>);"
-                                class="vylvelment-2ozoao-Button ehk74z00"
+                                class="vylvelment-2ozoao-Button ehk74z00 vy-lv-feed-open-live"
                               >
                                 Open broadcast
                               </button>
@@ -331,8 +372,7 @@ $vy_lv22->ifBroadcastHaveProduct($broadcast_data22['id']); ?>
                     id="vyelement_feed_allcontrols_<?php echo $current_post['id'];?>"
                   >
                     <div
-                      class="vylvelment-kw4pr6-DivFeedPlayerClickArea esmutj80"
-                      onclick="vy_global_openLiveStream(event,this,<?php echo $current_post['id'];?>);"
+                      class="vylvelment-kw4pr6-DivFeedPlayerClickArea esmutj80 vy-lv-feed-open-live"
                     >
                       <div
                         data-e2e="click-tips-test-id"
@@ -350,8 +390,7 @@ $vy_lv22->ifBroadcastHaveProduct($broadcast_data22['id']); ?>
                       </div>
                     </div>
                     <div
-                      class="vylvelment-cznx31-DivFeedPlayerDetailsBarContainer esmutj81"
-                      onclick="vy_global_openLiveStream(event,this,<?php echo $current_post['id'];?>);"
+                      class="vylvelment-cznx31-DivFeedPlayerDetailsBarContainer esmutj81 vy-lv-feed-open-live"
                     >
                       <div
                         data-e2e="details-bar-test-id"
@@ -410,10 +449,7 @@ $vy_lv22->ifBroadcastHaveProduct($broadcast_data22['id']); ?>
                               data-testid="control-icon"
                               class="vylvelment-c52qon-DivControlIcon e10xci3l3"
                             >
-                              <div
-                                id="vylv_feedvieocontrol_play_<?php echo $current_post['id'];?>"
-                                style=""
-                              >
+                              <div id="vylv_feedvieocontrol_play_<?php echo $current_post['id'];?>">
                                 <?php echo $vy_lv22->svg['live_video_play'];?>
                               </div>
                               <div
@@ -475,10 +511,7 @@ $vy_lv22->ifBroadcastHaveProduct($broadcast_data22['id']); ?>
                                 data-testid="volume-mute-icon-id"
                                 style="width: 18px; height: 18px"
                               >
-                                <div
-                                  id="vylv_feedvieocontrol_mute_<?php echo $current_post['id'];?>"
-                                  style=""
-                                >
+                                <div id="vylv_feedvieocontrol_mute_<?php echo $current_post['id'];?>">
                                   <?php echo $vy_lv22->svg['live_video_muted'];?>
                                 </div>
                                 <div

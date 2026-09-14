@@ -1908,11 +1908,9 @@ function Wo_GetAllUsers($limit = '', $type = '', $filter = array(), $after = '')
     if (!empty($after) && is_numeric($after) && $after > 0) {
         $query_one .= " AND `user_id` < " . Wo_Secure($after);
     }
-    if ($type == 'sidebar') {
-        $query_one .= " ORDER BY RAND()";
-    } else {
-        $query_one .= " ORDER BY `user_id` DESC";
-    }
+    // Evitar ORDER BY RAND() porque es muy costoso en tablas grandes.
+    // Para sidebar también usamos un orden determinista por id descendente.
+    $query_one .= " ORDER BY `user_id` DESC";
     if (isset($limit) and !empty($limit)) {
         $query_one .= " LIMIT {$limit}";
     }
@@ -2067,7 +2065,9 @@ function Wo_WelcomeUsers($limit = '', $type = '')
         $limit = 12;
     }
     $data = array();
-    $query_one = " SELECT `user_id` FROM " . T_USERS . " WHERE `active` = '1' AND `avatar` <> '" . Wo_Secure($wo['userDefaultAvatar']) . "' ORDER BY RAND() LIMIT {$limit}";
+    // Evitar ORDER BY RAND() en listas grandes de usuarios (muy caro para MySQL).
+    // Mostramos los usuarios activos más recientes.
+    $query_one = " SELECT `user_id` FROM " . T_USERS . " WHERE `active` = '1' AND `avatar` <> '" . Wo_Secure($wo['userDefaultAvatar']) . "' ORDER BY `user_id` DESC LIMIT {$limit}";
     $sql = mysqli_query($sqlConnect, $query_one);
     if (mysqli_num_rows($sql)) {
         while ($fetched_data = mysqli_fetch_assoc($sql)) {
@@ -2132,11 +2132,12 @@ function Wo_FeaturedUsers($limit = '', $type = '')
     }
     $data = array();
     $logged_user_id = $wo['user']['user_id'];
-    $query_one = " SELECT `user_id` FROM " . T_USERS . " WHERE `active` = '1' AND `user_id` NOT IN (SELECT `blocked` FROM " . T_BLOCKS . " WHERE `blocker` = '{$logged_user_id}') AND `user_id` NOT IN (SELECT `blocker` FROM " . T_BLOCKS . " WHERE `blocked` = '{$logged_user_id}') AND `is_pro` = '1' {$type_text} ORDER BY RAND() LIMIT {$limit}";
+    // Evitar ORDER BY RAND() en usuarios destacados; usar orden por user_id descendente.
+    $query_one = " SELECT `user_id` FROM " . T_USERS . " WHERE `active` = '1' AND `user_id` NOT IN (SELECT `blocked` FROM " . T_BLOCKS . " WHERE `blocker` = '{$logged_user_id}') AND `user_id` NOT IN (SELECT `blocker` FROM " . T_BLOCKS . " WHERE `blocked` = '{$logged_user_id}') AND `is_pro` = '1' {$type_text} ORDER BY `user_id` DESC LIMIT {$limit}";
     $sql = mysqli_query($sqlConnect, $query_one);
     $mysql_count = mysqli_num_rows($sql);
     if ($mysql_count > 7) {
-        $query_one = " SELECT `user_id` FROM " . T_USERS . " WHERE `active` = '1' AND `user_id` NOT IN (SELECT `blocked` FROM " . T_BLOCKS . " WHERE `blocker` = '{$logged_user_id}') AND `user_id` NOT IN (SELECT `blocker` FROM " . T_BLOCKS . " WHERE `blocked` = '{$logged_user_id}') AND `is_pro` = '1' {$type_text} ORDER BY RAND() LIMIT {$limit}";
+        $query_one = " SELECT `user_id` FROM " . T_USERS . " WHERE `active` = '1' AND `user_id` NOT IN (SELECT `blocked` FROM " . T_BLOCKS . " WHERE `blocker` = '{$logged_user_id}') AND `user_id` NOT IN (SELECT `blocker` FROM " . T_BLOCKS . " WHERE `blocked` = '{$logged_user_id}') AND `is_pro` = '1' {$type_text} ORDER BY `user_id` DESC LIMIT {$limit}";
         $sql = mysqli_query($sqlConnect, $query_one);
         if (mysqli_num_rows($sql)) {
             while ($fetched_data = mysqli_fetch_assoc($sql)) {
@@ -2163,7 +2164,8 @@ function Wo_UserSug($limit = 20)
     $user_id = Wo_Secure($wo['user']['user_id']);
     $query_one = " SELECT `user_id` FROM " . T_USERS . " WHERE `active` = '1' AND `user_id` NOT IN (SELECT `blocked` FROM " . T_BLOCKS . " WHERE `blocker` = '{$user_id}') AND `user_id` NOT IN (SELECT `blocker` FROM " . T_BLOCKS . " WHERE `blocked` = '{$user_id}') AND `user_id` NOT IN (SELECT `following_id` FROM " . T_FOLLOWERS . " WHERE `follower_id` = {$user_id}) AND `user_id` <> {$user_id}";
     if (isset($limit)) {
-        $query_one .= " ORDER BY RAND() LIMIT {$limit}";
+        // Evitar ORDER BY RAND() en sugerencias de usuarios.
+        $query_one .= " ORDER BY `user_id` DESC LIMIT {$limit}";
     }
     $sql = mysqli_query($sqlConnect, $query_one);
     if (mysqli_num_rows($sql)) {
@@ -2396,7 +2398,7 @@ function Wo_RegisterFollow($following_id = 0, $followers_id = 0)
         if ($wo['config']['connectivitySystem'] == 1) {
             $active = 0;
         }
-        $query = mysqli_query($sqlConnect, " INSERT INTO " . T_FOLLOWERS . " (`following_id`,`follower_id`,`active`) VALUES ({$following_id},{$follower_id},'{$active}')");
+        $query = mysqli_query($sqlConnect, " INSERT INTO " . T_FOLLOWERS . " (`following_id`,`follower_id`,`active`,`time`) VALUES ({$following_id},{$follower_id},'{$active}'," . time() . ")");
         if ($query) {
             cache($following_id, 'users', 'delete');
             cache($follower_id, 'users', 'delete');
@@ -2593,7 +2595,7 @@ function Wo_AcceptFollowRequest($following_id = 0, $follower_id = 0)
     }
     $query = mysqli_query($sqlConnect, "UPDATE " . T_FOLLOWERS . " SET `active` = '1' WHERE `following_id` = {$follower_id} AND `follower_id` = {$following_id} AND `active` = '0'");
     if ($wo['config']['connectivitySystem'] == 1) {
-        $query_two = mysqli_query($sqlConnect, "INSERT INTO " . T_FOLLOWERS . " (`following_id`,`follower_id`,`active`) VALUES ({$following_id},{$follower_id},'1') ");
+        $query_two = mysqli_query($sqlConnect, "INSERT INTO " . T_FOLLOWERS . " (`following_id`,`follower_id`,`active`,`time`) VALUES ({$following_id},{$follower_id},'1'," . time() . ") ");
     }
     if ($query) {
         $notification_data = array(
@@ -2751,10 +2753,8 @@ function Wo_GetFollowing($user_id, $type = '', $limit = '', $after_user_id = '',
         $logged_user_id = Wo_Secure($wo['user']['user_id']);
         $query .= " AND `user_id` NOT IN (SELECT `blocked` FROM " . T_BLOCKS . " WHERE `blocker` = '{$logged_user_id}') AND `user_id` NOT IN (SELECT `blocker` FROM " . T_BLOCKS . " WHERE `blocked` = '{$logged_user_id}')";
     }
-    if ($type == 'sidebar' && !empty($limit) && is_numeric($limit)) {
-        $query .= " ORDER BY RAND() LIMIT {$limit}";
-    }
-    if ($type == 'profile' && !empty($limit) && is_numeric($limit)) {
+    if (!empty($limit) && is_numeric($limit)) {
+        // Evitar ORDER BY RAND() también en sidebar; usamos orden por id descendente.
         $query .= " ORDER BY `user_id` DESC LIMIT {$limit}";
     }
     if (!empty($placement)) {
@@ -2802,13 +2802,10 @@ WHERE f1.follower_id = {$user_id}
     if (!empty($after_user_id) && is_numeric($after_user_id)) {
         $query .= " AND f1.id < {$after_user_id}";
     }
-    if ($type == 'sidebar' && !empty($limit) && is_numeric($limit)) {
-        $query .= " ORDER BY RAND()";
+    if (!empty($limit) && is_numeric($limit)) {
+        // Evitar ORDER BY RAND(); usamos orden por id de seguidor descendente.
+        $query .= " ORDER BY f1.id DESC LIMIT {$limit} ";
     }
-    if ($type == 'profile' && !empty($limit) && is_numeric($limit)) {
-        $query .= " ORDER BY f1.id DESC";
-    }
-    $query .= " LIMIT {$limit} ";
     if (!empty($placement)) {
         if ($placement['in'] == 'profile_sidebar' && is_array($placement['mutual_friends_data'])) {
             foreach ($placement['mutual_friends_data'] as $key => $id) {
@@ -2847,13 +2844,10 @@ function Wo_GetFollowers($user_id, $type = '', $limit = '', $after_user_id = '',
         $logged_user_id = Wo_Secure($wo['user']['user_id']);
         $query .= " AND `user_id` NOT IN (SELECT `blocked` FROM " . T_BLOCKS . " WHERE `blocker` = '{$logged_user_id}') AND `user_id` NOT IN (SELECT `blocker` FROM " . T_BLOCKS . " WHERE `blocked` = '{$logged_user_id}')";
     }
-    if ($type == 'sidebar' && !empty($limit) && is_numeric($limit)) {
-        $query .= " ORDER BY RAND()";
+    if (!empty($limit) && is_numeric($limit)) {
+        // Evitar ORDER BY RAND(); usamos orden por id de usuario descendente.
+        $query .= " ORDER BY `user_id` DESC LIMIT {$limit} ";
     }
-    if ($type == 'profile' && !empty($limit) && is_numeric($limit)) {
-        $query .= " ORDER BY `user_id` DESC";
-    }
-    $query .= " LIMIT {$limit} ";
     if (!empty($placement)) {
         if ($placement['in'] == 'profile_sidebar' && is_array($placement['followers_data'])) {
             foreach ($placement['followers_data'] as $key => $id) {
@@ -2883,7 +2877,8 @@ function getRandFollower()
     global $wo, $sqlConnect;
     $user_id = $wo['user']['user_id'];
     $data = array();
-    $query = " SELECT `user_id` FROM " . T_USERS . " WHERE `user_id` IN (SELECT `follower_id` FROM " . T_FOLLOWERS . " WHERE `active` = '1' AND ((`follower_id` <> {$user_id} AND `following_id` = {$user_id}) OR (`following_id` <> {$user_id} AND `follower_id` = {$user_id}))) AND `active` = '1' AND `user_id` != {$user_id} ORDER BY RAND() LIMIT 6";
+    // Evitar ORDER BY RAND(); usamos un orden determinista por id de usuario descendente.
+    $query = " SELECT `user_id` FROM " . T_USERS . " WHERE `user_id` IN (SELECT `follower_id` FROM " . T_FOLLOWERS . " WHERE `active` = '1' AND ((`follower_id` <> {$user_id} AND `following_id` = {$user_id}) OR (`following_id` <> {$user_id} AND `follower_id` = {$user_id}))) AND `active` = '1' AND `user_id` != {$user_id} ORDER BY `user_id` DESC LIMIT 6";
     $sql_query = mysqli_query($sqlConnect, $query);
     if (mysqli_num_rows($sql_query)) {
         while ($fetched_data = mysqli_fetch_assoc($sql_query)) {
@@ -5287,7 +5282,8 @@ function Wo_ShareFile($data = array(), $type = 0, $crop = true)
                 $allowed = $wo['config']['allowedExtenstion'];
             }
         } else {
-            $allowed = 'jpg,png,jpeg,gif,mp4,m4v,webm,flv,mov,mpeg,mp3,wav,mkv';
+            // Permitir también m4a en la subida por defecto.
+            $allowed = 'jpg,png,jpeg,gif,mp4,m4v,webm,flv,mov,mpeg,mp3,wav,m4a,mkv';
         }
         $extension_allowed = explode(',', $allowed);
         if (!in_array($file_extension, $extension_allowed)) {
@@ -5321,8 +5317,12 @@ function Wo_ShareFile($data = array(), $type = 0, $crop = true)
         if (Wo_IsAdmin()) {
             $mime_types = explode(',', str_replace(' ', '', $wo['config']['mime_types'] . ',application/json,application/octet-stream,image/svg+xml'));
         }
-        if (!in_array($data['type'], $mime_types)) {
-            return false;
+        // Para sonidos (mp3/wav/m4a) evitamos fallar por `type` no contemplado,
+        // ya que la validación principal se hace por extensión.
+        if (!in_array($file_extension, array('mp3', 'wav', 'm4a'), true)) {
+            if (!in_array($data['type'], $mime_types)) {
+                return false;
+            }
         }
     }
     $dir = "upload/{$folder}/" . date('Y') . '/' . date('m');
@@ -6871,9 +6871,8 @@ function Wo_GetPosts($data = array('filter_by' => 'all', 'after_post_id' => 0, '
     }
     if (isset($data['order']) && $data['order'] != 'rand') {
         $query_text .= " ORDER BY `id` " . Wo_Secure($data['order']) . " LIMIT {$limit}";
-    } elseif (isset($data['order']) && $data['order'] == 'rand') {
-        $query_text .= " ORDER BY RAND() LIMIT {$limit}";
     } else {
+        // Evitar ORDER BY RAND() incluso si se solicita 'rand'; usar orden por id descendente para evitar sobrecarga de CPU.
         $query_text .= " ORDER BY `id` DESC LIMIT {$limit}";
     }
     $filter = $data['filter_by'];

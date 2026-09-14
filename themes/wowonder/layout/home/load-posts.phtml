@@ -11,7 +11,7 @@
 	</div>
 	<?php } } ?>
 	<?php
-		$stories = Wo_GetPosts(array('limit' => 10, 'publisher_id' => 0,'placement' => 'multi_image_post','anonymous' => true));
+		$stories = Wo_GetPosts(array('limit' => 1, 'publisher_id' => 0,'placement' => 'multi_image_post','anonymous' => true));
 		if (count($stories) <= 0) {
 			echo Wo_LoadPage('story/no-stories');
 		} else {

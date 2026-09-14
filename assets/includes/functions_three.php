@@ -8380,6 +8380,2430 @@ function GetBroadcastChatByUserId($user_id = 0, $limit = 10, $offset = 0) {
     }
     return $data;
 }
+/**
+ * Directorio de fuentes incluidas en el proyecto (httpdocs/assets/fonts/reel).
+ */
+function Wo_ReelBundledFontsDir() {
+    static $cached = null;
+    if ($cached !== null) {
+        return $cached;
+    }
+    $d = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'fonts' . DIRECTORY_SEPARATOR . 'reel';
+    $cached = (is_dir($d) && @is_readable($d)) ? $d : '';
+    return $cached;
+}
+
+/**
+ * @param string $filename Solo nombre de archivo dentro de assets/fonts/reel
+ */
+function Wo_ReelBundledFontPath($filename) {
+    $filename = preg_replace('/[^A-Za-z0-9._-]/', '', (string) $filename);
+    if ($filename === '') {
+        return '';
+    }
+    $d = Wo_ReelBundledFontsDir();
+    if ($d === '') {
+        return '';
+    }
+    $p = $d . DIRECTORY_SEPARATOR . $filename;
+    return @is_readable($p) ? $p : '';
+}
+
+/**
+ * Ruta de fuente TTF/OTF para drawtext según clave del editor (primer archivo legible).
+ */
+function Wo_ReelFontFileForKey($key) {
+    $key = preg_replace('/[^a-z]/', '', strtolower((string) $key));
+    $candidates = array(
+        'sans' => array(
+            Wo_ReelBundledFontPath('DejaVuSans-Bold.ttf'),
+            '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf',
+            '/usr/share/fonts/dejavu-sans-fonts/DejaVuSans-Bold.ttf',
+            '/usr/share/fonts/google-droid-sans-fonts/DroidSans-Bold.ttf',
+        ),
+        'serif' => array(
+            Wo_ReelBundledFontPath('DejaVuSerif-Bold.ttf'),
+            '/usr/share/fonts/truetype/dejavu/DejaVuSerif-Bold.ttf',
+            '/usr/share/fonts/urw-base35/NimbusRoman-Bold.otf',
+            '/usr/share/fonts/dejavu-sans-fonts/DejaVuSerif-Bold.ttf',
+        ),
+        'mono' => array(
+            Wo_ReelBundledFontPath('DejaVuSansMono-Bold.ttf'),
+            '/usr/share/fonts/truetype/dejavu/DejaVuSansMono-Bold.ttf',
+            '/usr/share/fonts/urw-base35/NimbusMonoPS-Bold.otf',
+            '/usr/share/fonts/dejavu-sans-fonts/DejaVuSansMono-Bold.ttf',
+        ),
+        'narrow' => array(
+            Wo_ReelBundledFontPath('DejaVuSansCondensed-Bold.ttf'),
+            '/usr/share/fonts/truetype/dejavu/DejaVuSansCondensed-Bold.ttf',
+            '/usr/share/fonts/dejavu-sans-fonts/DejaVuSansCondensed-Bold.ttf',
+            '/usr/share/fonts/dejavu-sans-fonts/DejaVuSans-Bold.ttf',
+        ),
+        'elegant' => array(
+            Wo_ReelBundledFontPath('DejaVuSerif-Bold.ttf'),
+            '/usr/share/fonts/truetype/dejavu/DejaVuSerif-Bold.ttf',
+            '/usr/share/fonts/urw-base35/C059-Bold.otf',
+            '/usr/share/fonts/urw-base35/NimbusRoman-Bold.otf',
+        ),
+        'meme' => array(
+            Wo_ReelBundledFontPath('ComicNeue-Bold.ttf'),
+            Wo_ReelBundledFontPath('DejaVuSans-Bold.ttf'),
+            '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf',
+            '/usr/share/fonts/dejavu-sans-fonts/DejaVuSans-Bold.ttf',
+            '/usr/share/fonts/google-droid-sans-fonts/DroidSans-Bold.ttf',
+        ),
+        'direction' => array(
+            Wo_ReelBundledFontPath('ArchivoBlack-Regular.ttf'),
+            Wo_ReelBundledFontPath('Anton-Regular.ttf'),
+            Wo_ReelBundledFontPath('DejaVuSans-Bold.ttf'),
+            '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf',
+            '/usr/share/fonts/urw-base35/NimbusSans-Bold.otf',
+            '/usr/share/fonts/dejavu-sans-fonts/DejaVuSans-Bold.ttf',
+        ),
+    );
+    if ($key === '' || !isset($candidates[$key])) {
+        $key = 'sans';
+    }
+    foreach ($candidates[$key] as $path) {
+        if ($path !== '' && @is_readable($path)) {
+            return $path;
+        }
+    }
+    return '';
+}
+
+/**
+ * Archivo de fuente para drawtext; si $italic, intenta variante itálica del mismo estilo.
+ */
+function Wo_ReelFontFileForReelLayer($font, $italic) {
+    $font   = preg_replace('/[^a-z]/', '', strtolower((string) $font));
+    $italic = !empty($italic);
+    if ($italic) {
+        $italic_candidates = array(
+            'sans' => array(
+                Wo_ReelBundledFontPath('DejaVuSans-BoldOblique.ttf'),
+                '/usr/share/fonts/truetype/dejavu/DejaVuSans-BoldOblique.ttf',
+                '/usr/share/fonts/urw-base35/NimbusSans-Italic.otf',
+            ),
+            'meme' => array(
+                Wo_ReelBundledFontPath('DejaVuSans-BoldOblique.ttf'),
+                '/usr/share/fonts/truetype/dejavu/DejaVuSans-BoldOblique.ttf',
+                '/usr/share/fonts/urw-base35/NimbusSans-Italic.otf',
+            ),
+            'direction' => array(
+                Wo_ReelBundledFontPath('DejaVuSans-BoldOblique.ttf'),
+                '/usr/share/fonts/truetype/dejavu/DejaVuSans-BoldOblique.ttf',
+                '/usr/share/fonts/urw-base35/NimbusSans-Italic.otf',
+            ),
+            'mono' => array('/usr/share/fonts/urw-base35/NimbusMonoPS-Italic.otf'),
+            'elegant' => array('/usr/share/fonts/urw-base35/C059-Italic.otf', '/usr/share/fonts/urw-base35/NimbusRoman-Italic.otf'),
+            'serif' => array('/usr/share/fonts/urw-base35/NimbusRoman-Italic.otf'),
+            'narrow' => array(
+                Wo_ReelBundledFontPath('DejaVuSans-BoldOblique.ttf'),
+                '/usr/share/fonts/truetype/dejavu/DejaVuSans-BoldOblique.ttf',
+                '/usr/share/fonts/dejavu-sans-fonts/DejaVuSans-Oblique.ttf',
+            ),
+        );
+        if (isset($italic_candidates[$font])) {
+            foreach ($italic_candidates[$font] as $p) {
+                if ($p !== '' && @is_readable($p)) {
+                    return $p;
+                }
+            }
+        }
+    }
+    return Wo_ReelFontFileForKey($font);
+}
+
+/**
+ * Detecta pictogramas Unicode (emojis) para elegir cómo dibuja FFmpeg el texto.
+ */
+function Wo_ReelTextContainsEmoji($s) {
+    if (!is_string($s) || $s === '') {
+        return false;
+    }
+    if (@preg_match('/\p{Extended_Pictographic}/u', $s)) {
+        return true;
+    }
+    return (bool) preg_match(
+        '/[\x{203C}\x{2049}\x{2122}\x{2139}\x{2194}-\x{2199}\x{21A9}-\x{21AA}\x{231A}-\x{231B}\x{2328}\x{23CF}\x{23E9}-\x{23F3}\x{23F8}-\x{23FA}\x{24C2}\x{25AA}-\x{25AB}\x{25B6}\x{25C0}\x{25FB}-\x{25FE}\x{2600}-\x{27BF}\x{2934}-\x{2935}\x{2B05}-\x{2B07}\x{2B1B}-\x{2B1C}\x{2B50}\x{2B55}\x{3030}\x{303D}\x{3297}\x{3299}\x{1F000}-\x{1FAFF}]/u',
+        $s
+    );
+}
+
+/**
+ * Opción drawtext: siempre fontfile (FFmpeg estático suele no tener fontconfig; rutas empaquetadas en assets/fonts/reel).
+ */
+function Wo_ReelFfmpegDrawtextFontOpt($font, $italic, $text) {
+    $font_path = Wo_ReelFontFileForReelLayer($font, !empty($italic));
+    if ($font_path === '') {
+        $font_path = Wo_ReelBundledFontPath('DejaVuSans-Bold.ttf');
+    }
+    if ($font_path === '') {
+        return '';
+    }
+    $fp_esc = str_replace(
+        array('\\', "'", ':', '%'),
+        array('\\\\', "\\'", '\:', '\%'),
+        $font_path
+    );
+    return ':fontfile=' . $fp_esc;
+}
+
+/**
+ * Escapa ruta para filtro subtitles dentro de -vf "...".
+ */
+function Wo_ReelFfEscapeSubPath($path) {
+    $path = str_replace('\\', '/', (string) $path);
+    if ($path === '') {
+        return '';
+    }
+    if (preg_match("/[\\'\\:\\,\\s]/", $path)) {
+        return "'" . str_replace("'", "\\'", $path) . "'";
+    }
+    return $path;
+}
+
+/**
+ * Valor fontsdir= para subtitles: FFmpeg exige barra final o libass puede no resolver Noto Color Emoji (tofu).
+ *
+ * @return string p. ej. fontsdir=/var/www/.../reel/  (sin comillas externas; path escapado si hace falta)
+ */
+function Wo_ReelFfSubtitlesFontsDirOption($dir) {
+    $dir = (string) $dir;
+    if ($dir === '' || !@is_dir($dir)) {
+        return '';
+    }
+    $rp = @realpath($dir);
+    $base = ($rp !== false) ? $rp : $dir;
+    $norm = rtrim(str_replace('\\', '/', $base), '/') . '/';
+    return 'fontsdir=' . Wo_ReelFfEscapeSubPath($norm);
+}
+
+/**
+ * Borra directorio no vacío (temporales de reel / fuentes para libass).
+ */
+function Wo_ReelRmTree($dir) {
+    $dir = rtrim((string) $dir, '/\\');
+    if ($dir === '' || !@is_dir($dir)) {
+        return;
+    }
+    $items = @scandir($dir);
+    if (!is_array($items)) {
+        return;
+    }
+    foreach ($items as $it) {
+        if ($it === '.' || $it === '..') {
+            continue;
+        }
+        $p = $dir . DIRECTORY_SEPARATOR . $it;
+        if (@is_dir($p)) {
+            Wo_ReelRmTree($p);
+        } else {
+            @unlink($p);
+        }
+    }
+    @rmdir($dir);
+}
+
+function Wo_ReelCleanupReelFfmpegTemp(array $paths) {
+    foreach ($paths as $p) {
+        if (!is_string($p) || $p === '') {
+            continue;
+        }
+        if (@is_file($p)) {
+            @unlink($p);
+        } elseif (@is_dir($p)) {
+            Wo_ReelRmTree($p);
+        }
+    }
+}
+
+/**
+ * Copia fuentes del bundle reel a un directorio bajo sys_get_temp_dir() para subtitles:fontsdir.
+ * Evita que libass no resuelva fuentes si el vhost tiene rutas raras, open_basedir o pocos permisos sobre el docroot.
+ *
+ * @return string ruta al directorio o cadena vacía
+ */
+function Wo_ReelCreateReelSubtitleFontBundleDir() {
+    $src = Wo_ReelBundledFontsDir();
+    if ($src === '' || !@is_dir($src)) {
+        return '';
+    }
+    $tmp = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'wo_reelffb_' . uniqid('', true);
+    if (!@mkdir($tmp, 0700, true)) {
+        return '';
+    }
+    $ok = false;
+    foreach (array('*.ttf', '*.otf') as $pat) {
+        $globbed = @glob($src . DIRECTORY_SEPARATOR . $pat);
+        if (!is_array($globbed)) {
+            continue;
+        }
+        foreach ($globbed as $f) {
+            if (!@is_readable($f)) {
+                continue;
+            }
+            $bn = basename($f);
+            if (@copy($f, $tmp . DIRECTORY_SEPARATOR . $bn)) {
+                $ok = true;
+            }
+        }
+    }
+    $needDeja = $tmp . DIRECTORY_SEPARATOR . 'DejaVuSans-Bold.ttf';
+    $needNoto = $tmp . DIRECTORY_SEPARATOR . 'NotoColorEmoji.ttf';
+    if (!$ok || !@is_readable($needDeja) || !@is_readable($needNoto)) {
+        Wo_ReelRmTree($tmp);
+        return '';
+    }
+    return $tmp;
+}
+
+/**
+ * PNG Twemoji 72×72 (jdecked/twemoji) — export fiel al color vía overlay, sin depender de Noto/libass.
+ */
+function Wo_ReelTwemoji72Dir() {
+    static $cached = null;
+    if ($cached !== null) {
+        return $cached;
+    }
+    $d = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'emojis' . DIRECTORY_SEPARATOR . 'twemoji-72';
+    if (!@is_dir($d) || !@is_readable($d)) {
+        return $cached = '';
+    }
+    $rp = @realpath($d);
+    return $cached = ($rp !== false) ? $rp : $d;
+}
+
+/**
+ * Hay carpeta Twemoji usable: no exigir un PNG concreto (deploys parciales o nombres distintos).
+ */
+function Wo_ReelTwemoji72Ready() {
+    $d = Wo_ReelTwemoji72Dir();
+    if ($d === '') {
+        return false;
+    }
+    if (@is_readable($d . DIRECTORY_SEPARATOR . '1f604.png')) {
+        return true;
+    }
+    $g = @glob($d . DIRECTORY_SEPARATOR . '*.png');
+    return is_array($g) && count($g) > 30;
+}
+
+/**
+ * @return string[] hex sin prefijo, minúsculas
+ */
+function Wo_ReelUtf8CodepointsHexLower($str) {
+    $out = array();
+    if (!is_string($str) || $str === '' || !function_exists('mb_strlen')) {
+        return $out;
+    }
+    $len = mb_strlen($str, 'UTF-8');
+    for ($i = 0; $i < $len; $i++) {
+        $ch = mb_substr($str, $i, 1, 'UTF-8');
+        $packed = @mb_convert_encoding($ch, 'UCS-4BE', 'UTF-8');
+        if ($packed === false || $packed === '') {
+            continue;
+        }
+        $unp = unpack('N', $packed);
+        if (!empty($unp[1])) {
+            $out[] = strtolower(dechex((int) $unp[1]));
+        }
+    }
+    return $out;
+}
+
+/**
+ * @return string[]
+ */
+function Wo_ReelTwemojiFilenameCandidatesForCluster($cluster) {
+    $parts = Wo_ReelUtf8CodepointsHexLower($cluster);
+    if ($parts === array()) {
+        return array();
+    }
+    $cands = array();
+    $p = $parts;
+    while (!empty($p)) {
+        $cands[] = implode('-', $p) . '.png';
+        if (end($p) === 'fe0f') {
+            array_pop($p);
+            continue;
+        }
+        break;
+    }
+    return array_values(array_unique($cands));
+}
+
+function Wo_ReelTwemojiPngPathForCluster($cluster) {
+    $dir = Wo_ReelTwemoji72Dir();
+    if ($dir === '') {
+        return '';
+    }
+    foreach (Wo_ReelTwemojiFilenameCandidatesForCluster($cluster) as $fn) {
+        if (!preg_match('/^[a-z0-9.-]+\\.png$/', $fn)) {
+            continue;
+        }
+        $full = $dir . DIRECTORY_SEPARATOR . $fn;
+        if (@is_readable($full)) {
+            return $full;
+        }
+    }
+    return '';
+}
+
+/**
+ * Lista de emojis permitidos en el picker del editor: solo los que tienen PNG en twemoji-72 (mismo criterio que el export).
+ *
+ * @param string[] $candidates
+ * @return string[]
+ */
+function Wo_ReelFilterEmojiPickerToTwemojiAssets(array $candidates) {
+    $out = array();
+    foreach ($candidates as $emo) {
+        if (!is_string($emo) || $emo === '') {
+            continue;
+        }
+        if (Wo_ReelTwemojiPngPathForCluster($emo) !== '') {
+            $out[] = $emo;
+        }
+    }
+    return $out;
+}
+
+/**
+ * Escala recurso PNG truecolor con alpha.
+ *
+ * @return resource|null
+ */
+function Wo_ReelGdScalePngPreserveAlpha($src_im, $target_h) {
+    if (!is_resource($src_im) && !(is_object($src_im) && $src_im instanceof \GdImage)) {
+        return null;
+    }
+    $sw = imagesx($src_im);
+    $sh = imagesy($src_im);
+    if ($sw <= 0 || $sh <= 0) {
+        return null;
+    }
+    $th = (int) max(8, min(160, $target_h));
+    $tw = (int) max(1, round($sw * ($th / $sh)));
+    $dst = imagecreatetruecolor($tw, $th);
+    if (!$dst) {
+        return null;
+    }
+    imagesavealpha($dst, true);
+    imagealphablending($dst, false);
+    $tr = imagecolorallocatealpha($dst, 0, 0, 0, 127);
+    imagefill($dst, 0, 0, $tr);
+    imagealphablending($dst, true);
+    imagecopyresampled($dst, $src_im, 0, 0, 0, 0, $tw, $th, $sw, $sh);
+    return $dst;
+}
+
+/**
+ * Opacidad 0–1 → alpha GD (0 opaco, 127 transparente).
+ */
+function Wo_ReelGdAlphaFromOpacity($opacity) {
+    $opacity = max(0.0, min(1.0, (float) $opacity));
+    return (int) round((1.0 - $opacity) * 127);
+}
+
+/**
+ * Paridad con reelCanvasStyleForBoxMode() en themes/wowonder/layout/reels/editor.phtml.
+ *
+ * @return array{draw_box:bool,fr:int,fg:int,fb:int,br:int,bg:int,bb:int,ba:int,bd_r:int,bd_g:int,bd_b:int,bd_a:int,need_bd:bool}
+ */
+function Wo_ReelCanvasBoxStyle($mode, $user_hex) {
+    $mode = (int) $mode;
+    if ($mode < 0 || $mode > 4) {
+        $mode = 0;
+    }
+    $hex = ltrim((string) $user_hex, '#');
+    if (strlen($hex) === 3 && preg_match('/^[0-9A-Fa-f]{3}$/', $hex)) {
+        $hex = $hex[0] . $hex[0] . $hex[1] . $hex[1] . $hex[2] . $hex[2];
+    }
+    if (!preg_match('/^[0-9A-Fa-f]{6}$/', $hex)) {
+        $hex = 'ffffff';
+    }
+    $ur = (int) hexdec(substr($hex, 0, 2));
+    $ug = (int) hexdec(substr($hex, 2, 2));
+    $ub = (int) hexdec(substr($hex, 4, 2));
+
+    if ($mode === 0) {
+        return array(
+            'draw_box' => false,
+            'fr' => $ur,
+            'fg' => $ug,
+            'fb' => $ub,
+            'br' => 0,
+            'bg' => 0,
+            'bb' => 0,
+            'ba' => 127,
+            'bd_r' => 0,
+            'bd_g' => 0,
+            'bd_b' => 0,
+            'bd_a' => 127,
+            'need_bd' => false,
+        );
+    }
+    if ($mode === 1) {
+        return array(
+            'draw_box' => true,
+            'fr' => $ur,
+            'fg' => $ug,
+            'fb' => $ub,
+            'br' => 0,
+            'bg' => 0,
+            'bb' => 0,
+            'ba' => Wo_ReelGdAlphaFromOpacity(0.78),
+            'bd_r' => 255,
+            'bd_g' => 255,
+            'bd_b' => 255,
+            'bd_a' => Wo_ReelGdAlphaFromOpacity(0.45),
+            'need_bd' => true,
+        );
+    }
+    if ($mode === 2) {
+        return array(
+            'draw_box' => true,
+            'fr' => 0,
+            'fg' => 0,
+            'fb' => 0,
+            'br' => $ur,
+            'bg' => $ug,
+            'bb' => $ub,
+            'ba' => Wo_ReelGdAlphaFromOpacity(0.88),
+            'bd_r' => 0,
+            'bd_g' => 0,
+            'bd_b' => 0,
+            'bd_a' => Wo_ReelGdAlphaFromOpacity(0.42),
+            'need_bd' => true,
+        );
+    }
+    if ($mode === 3) {
+        return array(
+            'draw_box' => true,
+            'fr' => $ur,
+            'fg' => $ug,
+            'fb' => $ub,
+            'br' => 255,
+            'bg' => 255,
+            'bb' => 255,
+            'ba' => Wo_ReelGdAlphaFromOpacity(0.92),
+            'bd_r' => 0,
+            'bd_g' => 0,
+            'bd_b' => 0,
+            'bd_a' => Wo_ReelGdAlphaFromOpacity(0.28),
+            'need_bd' => true,
+        );
+    }
+    return array(
+        'draw_box' => true,
+        'fr' => 255,
+        'fg' => 255,
+        'fb' => 255,
+        'br' => $ur,
+        'bg' => $ug,
+        'bb' => $ub,
+        'ba' => Wo_ReelGdAlphaFromOpacity(0.88),
+        'bd_r' => 255,
+        'bd_g' => 255,
+        'bd_b' => 255,
+        'bd_a' => Wo_ReelGdAlphaFromOpacity(0.58),
+        'need_bd' => true,
+    );
+}
+
+/**
+ * Rectángulo relleno con esquinas redondas (paridad aproximada con reelCanvasRoundRectPath en editor).
+ */
+function Wo_ReelGdFilledRoundRect($im, $x, $y, $w, $h, $r, $color) {
+    $w = max(1, (int) $w);
+    $h = max(1, (int) $h);
+    $r = max(0, min((int) $r, (int) floor(min($w, $h) / 2)));
+    imagealphablending($im, true);
+    if ($r < 2) {
+        imagefilledrectangle($im, $x, $y, $x + $w - 1, $y + $h - 1, $color);
+        return;
+    }
+    $xr = $x + $w - 1;
+    $yb = $y + $h - 1;
+    imagefilledrectangle($im, $x + $r, $y, $xr - $r, $yb, $color);
+    imagefilledrectangle($im, $x, $y + $r, $xr, $yb - $r, $color);
+    imagefilledellipse($im, $x + $r, $y + $r, $r * 2, $r * 2, $color);
+    imagefilledellipse($im, $x + $w - $r, $y + $r, $r * 2, $r * 2, $color);
+    imagefilledellipse($im, $x + $r, $y + $h - $r, $r * 2, $r * 2, $color);
+    imagefilledellipse($im, $x + $w - $r, $y + $h - $r, $r * 2, $r * 2, $color);
+}
+
+/**
+ * Contorno redondeado (imagearc usa grados; 0 = derecha, sentido horario).
+ */
+function Wo_ReelGdStrokeRoundRect($im, $x, $y, $w, $h, $r, $color, $thick) {
+    $w = max(1, (int) $w);
+    $h = max(1, (int) $h);
+    $r = max(0, min((int) $r, (int) floor(min($w, $h) / 2)));
+    $thick = max(1, (int) $thick);
+    imagesetthickness($im, $thick);
+    if ($r < 2) {
+        imagerectangle($im, $x, $y, $x + $w - 1, $y + $h - 1, $color);
+        imagesetthickness($im, 1);
+        return;
+    }
+    $xr = $x + $w - 1;
+    $yb = $y + $h - 1;
+    imageline($im, $x + $r, $y, $xr - $r, $y, $color);
+    imageline($im, $x + $r, $yb, $xr - $r, $yb, $color);
+    imageline($im, $x, $y + $r, $x, $yb - $r, $color);
+    imageline($im, $xr, $y + $r, $xr, $yb - $r, $color);
+    imagearc($im, $x + $r, $y + $r, $r * 2, $r * 2, 180, 270, $color);
+    imagearc($im, $xr - $r, $y + $r, $r * 2, $r * 2, 270, 360, $color);
+    imagearc($im, $xr - $r, $yb - $r, $r * 2, $r * 2, 0, 90, $color);
+    imagearc($im, $x + $r, $yb - $r, $r * 2, $r * 2, 90, 180, $color);
+    imagesetthickness($im, 1);
+}
+
+/**
+ * Caja de etiqueta reel (esquinas redondas como en el canvas del editor).
+ *
+ * @param float|int $font_size_hint tamaño de fuente usado en la capa (para radio de curvatura).
+ */
+function Wo_ReelGdDrawReelLabelBox($canvas, $bx0, $by0, $box_w, $box_h, array $st, $border_w = 1, $font_size_hint = 24) {
+    if (empty($st['draw_box'])) {
+        return;
+    }
+    $box_w = max(1, (int) $box_w);
+    $box_h = max(1, (int) $box_h);
+    $fs = max(12, (int) round((float) $font_size_hint));
+    $r = (int) min(max(6, (int) round($fs * 0.28)), max(2, (int) floor($box_w * 0.22)), max(2, (int) floor($box_h * 0.45)), 18);
+    imagealphablending($canvas, true);
+    $fill = imagecolorallocatealpha($canvas, $st['br'], $st['bg'], $st['bb'], $st['ba']);
+    Wo_ReelGdFilledRoundRect($canvas, $bx0, $by0, $box_w, $box_h, $r, $fill);
+    if (!empty($st['need_bd'])) {
+        $lc = imagecolorallocatealpha($canvas, $st['bd_r'], $st['bd_g'], $st['bd_b'], $st['bd_a']);
+        Wo_ReelGdStrokeRoundRect($canvas, $bx0, $by0, $box_w, $box_h, $r, $lc, max(1, (int) $border_w));
+    }
+}
+
+/**
+ * Capa solo emojis → PNG 1080×1920 transparente + Twemoji; overlay en FFmpeg (color fiel).
+ *
+ * @return string ruta PNG o ''
+ */
+function Wo_ReelRenderEmojiOnlyLayerPngFullFrame($it, $sw, $sh, $fs_base, array &$cleanup) {
+    if (!function_exists('imagecreatetruecolor') || !function_exists('imagepng')) {
+        return '';
+    }
+    $text = isset($it['text']) ? $it['text'] : '';
+    if (!is_string($text) || trim($text) === '' || !Wo_ReelAssLayerIsEmojiOnly($text)) {
+        return '';
+    }
+    if (!Wo_ReelTwemoji72Ready()) {
+        return '';
+    }
+    $sws = max(1, (int) $sw);
+    $shs = max(1, (int) $sh);
+    $scale = (isset($it['scale']) && is_numeric($it['scale'])) ? (float) $it['scale'] : 1.0;
+    $fs = max(12, min((int) round($fs_base * $scale), 140));
+    $ox = (int) round((int) $it['x'] * 1080 / $sws);
+    $oy = (int) round((int) $it['y'] * 1920 / $shs);
+    $bm = isset($it['box_mode']) ? (int) $it['box_mode'] : 0;
+    if ($bm <= 0 && !empty($it['box'])) {
+        $bm = 1;
+    }
+    $st = Wo_ReelCanvasBoxStyle($bm, isset($it['color']) ? $it['color'] : '#ffffff');
+
+    $max_line_w = 1068;
+    $target_h = (int) max(28, min(120, round($fs * 0.92)));
+    $gap = (int) max(2, round($fs * 0.06));
+
+    $slices = array();
+    $total_w = 0;
+    $max_h = $target_h;
+    for ($shrink_guard = 0; $shrink_guard < 100; $shrink_guard++) {
+        foreach ($slices as $sl) {
+            if ($sl[0] === 'i' && isset($sl[3])) {
+                imagedestroy($sl[3]);
+            }
+        }
+        $slices = array();
+        $total_w = 0;
+        $max_h = $target_h;
+        foreach (Wo_ReelAssSplitTextEmojiRuns($text) as $chunk) {
+            if ($chunk === '') {
+                continue;
+            }
+            if (preg_match('/^\s+$/u', $chunk)) {
+                $spw = (int) max(4, round($fs * 0.12));
+                $slices[] = array('s', $spw);
+                $total_w += $spw;
+                continue;
+            }
+            if (!Wo_ReelTextContainsEmoji($chunk)) {
+                continue;
+            }
+            $path = Wo_ReelTwemojiPngPathForCluster($chunk);
+            if ($path === '') {
+                continue;
+            }
+            $src = @imagecreatefrompng($path);
+            if (!$src) {
+                continue;
+            }
+            $sc = Wo_ReelGdScalePngPreserveAlpha($src, $target_h);
+            imagedestroy($src);
+            if (!$sc) {
+                continue;
+            }
+            $tw = imagesx($sc);
+            $th = imagesy($sc);
+            $slices[] = array('i', $tw, $th, $sc);
+            if ($total_w > 0) {
+                $total_w += $gap;
+            }
+            $total_w += $tw;
+            if ($th > $max_h) {
+                $max_h = $th;
+            }
+        }
+        if ($slices === array()) {
+            return '';
+        }
+        if ($total_w <= $max_line_w || $fs <= 10) {
+            break;
+        }
+        $fs = max(10, $fs - 1);
+        $target_h = (int) max(28, min(120, round($fs * 0.92)));
+        $gap = (int) max(2, round($fs * 0.06));
+    }
+
+    $align = (isset($it['align']) && is_string($it['align'])) ? strtolower(substr($it['align'], 0, 1)) : 'c';
+    if ($align === 'l') {
+        $start_x = $ox;
+    } elseif ($align === 'r') {
+        $start_x = $ox - $total_w;
+    } else {
+        $start_x = (int) round($ox - $total_w / 2);
+    }
+    $cy = (int) round($oy - $max_h / 2);
+    $start_x = max(0, min(1080 - $total_w, $start_x));
+    $cy = max(0, min(1920 - $max_h, $cy));
+
+    $pad = (int) max(8, round($fs * 0.2));
+    $bx0 = $start_x - $pad;
+    $by0 = $cy - $pad;
+    $box_w = $total_w + $pad * 2;
+    $box_h = $max_h + $pad * 2;
+    $bx0 = max(0, min(1080 - $box_w, $bx0));
+    $by0 = max(0, min(1920 - $box_h, $by0));
+
+    $W = 1080;
+    $H = 1920;
+    $canvas = imagecreatetruecolor($W, $H);
+    if (!$canvas) {
+        foreach ($slices as $sl) {
+            if ($sl[0] === 'i' && isset($sl[3])) {
+                imagedestroy($sl[3]);
+            }
+        }
+        return '';
+    }
+    imagesavealpha($canvas, true);
+    imagealphablending($canvas, false);
+    $tcol = imagecolorallocatealpha($canvas, 0, 0, 0, 127);
+    imagefill($canvas, 0, 0, $tcol);
+    imagealphablending($canvas, true);
+
+    $bd_w = max(1, (int) round($fs / 24));
+    Wo_ReelGdDrawReelLabelBox($canvas, $bx0, $by0, $box_w, $box_h, $st, $bd_w, $fs);
+
+    $cx = $start_x;
+    foreach ($slices as $sl) {
+        if ($sl[0] === 's') {
+            $cx += $sl[1];
+            continue;
+        }
+        if ($sl[0] === 'i') {
+            $tw = $sl[1];
+            $th = $sl[2];
+            $im = $sl[3];
+            $iy = (int) round($cy + ($max_h - $th) / 2);
+            imagecopy($canvas, $im, $cx, $iy, 0, 0, $tw, $th);
+            imagedestroy($im);
+            $cx += $tw + $gap;
+        }
+    }
+
+    $tmp = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'wo_reel_twov_' . uniqid('', true) . '.png';
+    if (!@imagepng($canvas, $tmp, 6)) {
+        imagedestroy($canvas);
+        return '';
+    }
+    imagedestroy($canvas);
+    $cleanup[] = $tmp;
+    return $tmp;
+}
+
+/**
+ * ¿Alguna capa incluye emoji? (texto+emoji o solo emoji) — activa PNG+Twemoji en filter_complex.
+ */
+function Wo_ReelItemsHaveAnyEmojiLayer(array $items) {
+    foreach ($items as $it) {
+        $t = isset($it['text']) ? $it['text'] : '';
+        if (is_string($t) && trim($t) !== '' && Wo_ReelTextContainsEmoji($t)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+/**
+ * Capa texto+emoji → PNG 1080×1920 (TTF + Twemoji alineados en una línea). Requiere FreeType en GD.
+ *
+ * @return string ruta PNG o ''
+ */
+function Wo_ReelRenderMixedTextEmojiLayerPngFullFrame(array $it, $sw, $sh, $fs_base, array &$cleanup) {
+    if (!function_exists('imagecreatetruecolor') || !function_exists('imagepng')
+        || !function_exists('imagettfbbox') || !function_exists('imagettftext')) {
+        return '';
+    }
+    $text = isset($it['text']) ? $it['text'] : '';
+    if (!is_string($text) || trim($text) === '' || !Wo_ReelTextContainsEmoji($text) || Wo_ReelAssLayerIsEmojiOnly($text)) {
+        return '';
+    }
+    if (!Wo_ReelTwemoji72Ready()) {
+        return '';
+    }
+    $sws = max(1, (int) $sw);
+    $shs = max(1, (int) $sh);
+    $scale = (isset($it['scale']) && is_numeric($it['scale'])) ? (float) $it['scale'] : 1.0;
+    $fs = max(12, min((int) round($fs_base * $scale), 140));
+    $ox = (int) round((int) $it['x'] * 1080 / $sws);
+    $oy = (int) round((int) $it['y'] * 1920 / $shs);
+
+    $fontKey = isset($it['font']) ? $it['font'] : 'sans';
+    $italic = !empty($it['italic']);
+    $fontfile = Wo_ReelFontFileForReelLayer($fontKey, $italic);
+    if ($fontfile === '' || !@is_readable($fontfile)) {
+        $fontfile = Wo_ReelBundledFontPath('DejaVuSans-Bold.ttf');
+    }
+    if ($fontfile === '' || !@is_readable($fontfile)) {
+        return '';
+    }
+
+    $bm = isset($it['box_mode']) ? (int) $it['box_mode'] : 0;
+    if ($bm <= 0 && !empty($it['box'])) {
+        $bm = 1;
+    }
+    $st = Wo_ReelCanvasBoxStyle($bm, isset($it['color']) ? $it['color'] : '#ffffff');
+
+    $max_line_w = 1068;
+    $target_h = (int) max(28, min(120, round($fs * 0.92)));
+    $gap = (int) max(2, round($fs * 0.06));
+
+    $slices = array();
+    $total_w = 0;
+    $max_h = $target_h;
+    for ($shrink_guard = 0; $shrink_guard < 100; $shrink_guard++) {
+        foreach ($slices as $sl) {
+            if ($sl[0] === 'i' && isset($sl[3])) {
+                imagedestroy($sl[3]);
+            }
+        }
+        $slices = array();
+        $total_w = 0;
+        $max_h = $target_h;
+        foreach (Wo_ReelAssSplitTextEmojiRuns($text) as $chunk) {
+            if ($chunk === '') {
+                continue;
+            }
+            if (preg_match('/^\s+$/u', $chunk)) {
+                $spw = (int) max(4, round($fs * 0.12));
+                $slices[] = array('s', $spw);
+                $total_w += $spw;
+                continue;
+            }
+            if (Wo_ReelTextContainsEmoji($chunk)) {
+                $path = Wo_ReelTwemojiPngPathForCluster($chunk);
+                if ($path === '') {
+                    continue;
+                }
+                $src = @imagecreatefrompng($path);
+                if (!$src) {
+                    continue;
+                }
+                $sc = Wo_ReelGdScalePngPreserveAlpha($src, $target_h);
+                imagedestroy($src);
+                if (!$sc) {
+                    continue;
+                }
+                $tw = imagesx($sc);
+                $th = imagesy($sc);
+                if ($total_w > 0) {
+                    $total_w += $gap;
+                }
+                $slices[] = array('i', $tw, $th, $sc);
+                $total_w += $tw;
+                if ($th > $max_h) {
+                    $max_h = $th;
+                }
+                continue;
+            }
+            $tc = trim($chunk);
+            if ($tc === '') {
+                continue;
+            }
+            $bbox = @imagettfbbox((float) $fs, 0.0, $fontfile, $tc);
+            if ($bbox === false) {
+                continue;
+            }
+            $tw = (int) ceil(abs($bbox[2] - $bbox[0]));
+            if ($tw < 1) {
+                $tw = 1;
+            }
+            $asc = (int) ceil(abs(min($bbox[7], $bbox[5])));
+            $desc = (int) ceil(abs(max($bbox[1], $bbox[3])));
+            $th = max(1, $asc + $desc);
+            if ($total_w > 0) {
+                $total_w += $gap;
+            }
+            $slices[] = array('t', $tc, $tw, $asc, $desc);
+            $total_w += $tw;
+            if ($th > $max_h) {
+                $max_h = $th;
+            }
+        }
+        if ($slices === array() || $total_w <= 0) {
+            foreach ($slices as $sl) {
+                if ($sl[0] === 'i' && isset($sl[3])) {
+                    imagedestroy($sl[3]);
+                }
+            }
+            return '';
+        }
+        if ($total_w <= $max_line_w || $fs <= 10) {
+            break;
+        }
+        $fs = max(10, $fs - 1);
+        $target_h = (int) max(28, min(120, round($fs * 0.92)));
+        $gap = (int) max(2, round($fs * 0.06));
+    }
+
+    $align = (isset($it['align']) && is_string($it['align'])) ? strtolower(substr($it['align'], 0, 1)) : 'c';
+    if ($align === 'l') {
+        $start_x = $ox;
+    } elseif ($align === 'r') {
+        $start_x = $ox - $total_w;
+    } else {
+        $start_x = (int) round($ox - $total_w / 2);
+    }
+    $cy = (int) round($oy - $max_h / 2);
+    $start_x = max(0, min(1080 - $total_w, $start_x));
+    $cy = max(0, min(1920 - $max_h, $cy));
+
+    $pad = (int) max(8, round($fs * 0.2));
+    $bx0 = $start_x - $pad;
+    $by0 = $cy - $pad;
+    $box_w = $total_w + $pad * 2;
+    $box_h = $max_h + $pad * 2;
+    $bx0 = max(0, min(1080 - $box_w, $bx0));
+    $by0 = max(0, min(1920 - $box_h, $by0));
+
+    $W = 1080;
+    $H = 1920;
+    $canvas = imagecreatetruecolor($W, $H);
+    if (!$canvas) {
+        foreach ($slices as $sl) {
+            if ($sl[0] === 'i' && isset($sl[3])) {
+                imagedestroy($sl[3]);
+            }
+        }
+        return '';
+    }
+    imagesavealpha($canvas, true);
+    imagealphablending($canvas, false);
+    $tcol = imagecolorallocatealpha($canvas, 0, 0, 0, 127);
+    imagefill($canvas, 0, 0, $tcol);
+    imagealphablending($canvas, true);
+
+    $bd_w = max(1, (int) round($fs / 24));
+    Wo_ReelGdDrawReelLabelBox($canvas, $bx0, $by0, $box_w, $box_h, $st, $bd_w, $fs);
+
+    $t_asc_max = 0;
+    $t_desc_max = 0;
+    foreach ($slices as $sl) {
+        if ($sl[0] === 't') {
+            $t_asc_max = max($t_asc_max, $sl[3]);
+            $t_desc_max = max($t_desc_max, $sl[4]);
+        }
+    }
+    $mid_y = $cy + $max_h / 2;
+    $text_baseline = (int) round($mid_y + ($t_asc_max - $t_desc_max) / 2);
+
+    $cx = $start_x;
+    $txcol = imagecolorallocate($canvas, $st['fr'], $st['fg'], $st['fb']);
+    foreach ($slices as $sl) {
+        if ($sl[0] === 's') {
+            $cx += $sl[1];
+            continue;
+        }
+        if ($sl[0] === 'i') {
+            $tw = $sl[1];
+            $th = $sl[2];
+            $im = $sl[3];
+            $iy = (int) round($cy + ($max_h - $th) / 2);
+            imagecopy($canvas, $im, $cx, $iy, 0, 0, $tw, $th);
+            imagedestroy($im);
+            $cx += $tw + $gap;
+            continue;
+        }
+        if ($sl[0] === 't') {
+            $tc = $sl[1];
+            $tw = $sl[2];
+            @imagettftext($canvas, (float) $fs, 0.0, $cx, $text_baseline, $txcol, $fontfile, $tc);
+            $cx += $tw + $gap;
+        }
+    }
+
+    $tmp = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'wo_reel_mix_' . uniqid('', true) . '.png';
+    if (!@imagepng($canvas, $tmp, 6)) {
+        imagedestroy($canvas);
+        return '';
+    }
+    imagedestroy($canvas);
+    $cleanup[] = $tmp;
+    return $tmp;
+}
+
+/**
+ * @param string $sub_bundle dir bundle o ''
+ * @return array{filter_complex:string,fc_extra_png_inputs:string[],fc_video_out:string}|null
+ */
+function Wo_ReelBuildFilterComplexReelWithTwemoji(array $items, $sw, $sh, $fs_base, array &$cleanup, $sub_bundle, $fonts_for_sub) {
+    $png_inputs = array();
+    $parts = array();
+    $parts[] = '[0:v]scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2:black,setsar=1[v0]';
+    $vcur = 0;
+    $in_i = 1;
+    $wrote = false;
+
+    foreach ($items as $it) {
+        $t = isset($it['text']) ? $it['text'] : '';
+        if (!is_string($t) || trim($t) === '') {
+            continue;
+        }
+        if (Wo_ReelAssLayerIsEmojiOnly($t)) {
+            $png = Wo_ReelRenderEmojiOnlyLayerPngFullFrame($it, $sw, $sh, $fs_base, $cleanup);
+            if ($png === '') {
+                continue;
+            }
+            $png_inputs[] = $png;
+            $vnext = $vcur + 1;
+            $parts[] = '[v' . $vcur . '][' . $in_i . ':v]overlay=0:0:format=auto[v' . $vnext . ']';
+            $vcur = $vnext;
+            $in_i++;
+            $wrote = true;
+        } elseif (Wo_ReelTextContainsEmoji($t)) {
+            $png = Wo_ReelRenderMixedTextEmojiLayerPngFullFrame($it, $sw, $sh, $fs_base, $cleanup);
+            if ($png !== '') {
+                $png_inputs[] = $png;
+                $vnext = $vcur + 1;
+                $parts[] = '[v' . $vcur . '][' . $in_i . ':v]overlay=0:0:format=auto[v' . $vnext . ']';
+                $vcur = $vnext;
+                $in_i++;
+                $wrote = true;
+            } else {
+                $mini = Wo_ReelWriteMiniAssFileForItem(
+                    $it,
+                    $sw,
+                    $sh,
+                    $fs_base,
+                    $cleanup,
+                    ($sub_bundle !== '') ? $sub_bundle : null
+                );
+                if ($mini === '') {
+                    continue;
+                }
+                $fd_opt = Wo_ReelFfSubtitlesFontsDirOption($fonts_for_sub);
+                $seg = '[v' . $vcur . ']subtitles=' . Wo_ReelFfEscapeSubPath($mini);
+                if ($fd_opt !== '') {
+                    $seg .= ':' . $fd_opt;
+                }
+                $seg .= ':charenc=UTF-8[v' . ($vcur + 1) . ']';
+                $parts[] = $seg;
+                $vcur++;
+                $wrote = true;
+            }
+        } else {
+            $mini = Wo_ReelWriteMiniAssFileForItem(
+                $it,
+                $sw,
+                $sh,
+                $fs_base,
+                $cleanup,
+                ($sub_bundle !== '') ? $sub_bundle : null
+            );
+            if ($mini === '') {
+                continue;
+            }
+            $fd_opt = Wo_ReelFfSubtitlesFontsDirOption($fonts_for_sub);
+            $seg = '[v' . $vcur . ']subtitles=' . Wo_ReelFfEscapeSubPath($mini);
+            if ($fd_opt !== '') {
+                $seg .= ':' . $fd_opt;
+            }
+            $seg .= ':charenc=UTF-8[v' . ($vcur + 1) . ']';
+            $parts[] = $seg;
+            $vcur++;
+            $wrote = true;
+        }
+    }
+
+    if (!$wrote) {
+        return null;
+    }
+    return array(
+        'filter_complex' => implode(';', $parts),
+        'fc_extra_png_inputs' => $png_inputs,
+        'fc_video_out' => '[v' . $vcur . ']',
+    );
+}
+
+function Wo_ReelAssEscapeText($s) {
+    $s = str_replace('\\', '\\\\', $s);
+    $s = str_replace('{', '\\{', $s);
+    $s = str_replace('}', '\\}', $s);
+    return str_replace(array("\r\n", "\n", "\r"), '\\N', $s);
+}
+
+/**
+ * Parte el texto en trozos de texto plano y secuencias emoji (ZWJ, FE0F, banderas).
+ *
+ * @return string[]
+ */
+function Wo_ReelAssSplitTextEmojiRuns($text) {
+    if (!is_string($text) || $text === '') {
+        return array();
+    }
+    $emojiRun = Wo_ReelAssFullEmojiRunPattern();
+    $parts = @preg_split('/(' . $emojiRun . ')/u', $text, -1, PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY);
+    if ($parts === false || $parts === null) {
+        return array($text);
+    }
+    return $parts;
+}
+
+/**
+ * Escapa texto para ASS y envuelve secuencias emoji en Noto Color Emoji.
+ * Quita borde/sombra en Noto (\bord0) para no heredar \bord de modo caja (evita emojis “contorneados” o en blanco y negro).
+ *
+ * @param string $fnMain         Nombre de fuente del cuerpo (p. ej. DejaVu Sans)
+ * @param string $restoreSuffix Todo lo que debe repetirse tras \fn al volver del emoji: peso, cursiva, \fsp, \c, caja (\bord…)
+ */
+function Wo_ReelAssEscapeTextWithEmojiFont($text, $fnMain, $restoreSuffix) {
+    if (!is_string($text) || $text === '') {
+        return '';
+    }
+    if (Wo_ReelBundledFontPath('NotoColorEmoji.ttf') === '') {
+        return Wo_ReelAssEscapeText($text);
+    }
+    if (!Wo_ReelTextContainsEmoji($text)) {
+        return Wo_ReelAssEscapeText($text);
+    }
+    $parts = Wo_ReelAssSplitTextEmojiRuns($text);
+    if ($parts === array()) {
+        return Wo_ReelAssEscapeText($text);
+    }
+    $out = '';
+    foreach ($parts as $chunk) {
+        if ($chunk === '') {
+            continue;
+        }
+        if (Wo_ReelTextContainsEmoji($chunk)) {
+            $out .= '{\fnNoto Color Emoji\b0\bord0\shad0}' . Wo_ReelAssEscapeText($chunk) . '{\fn' . $fnMain . $restoreSuffix . '}';
+        } else {
+            $out .= Wo_ReelAssEscapeText($chunk);
+        }
+    }
+    return $out;
+}
+
+function Wo_ReelAssPrimaryFromHex($hx) {
+    $hx = ltrim((string) $hx, '#');
+    if (!preg_match('/^[0-9A-Fa-f]{6}$/', $hx)) {
+        $hx = 'ffffff';
+    }
+    $r = hexdec(substr($hx, 0, 2));
+    $g = hexdec(substr($hx, 2, 2));
+    $b = hexdec(substr($hx, 4, 2));
+    return sprintf('&H%02X%02X%02X&', $b, $g, $r);
+}
+
+/**
+ * Halo / caja aproximada para capas renderizadas vía ASS (emojis).
+ */
+function Wo_ReelAssBoxTags($bm) {
+    $bm = (int) $bm;
+    if ($bm <= 0) {
+        return '';
+    }
+    return '\\bord10\\3c&H80000000';
+}
+
+/**
+ * Caracteres “tipo emoji” fuera de \p{Extended_Pictographic} en PCRE antiguos (misma idea que Wo_ReelTextContainsEmoji).
+ */
+function Wo_ReelAssLegacyEmojiCharClass() {
+    return '[\x{203C}\x{2049}\x{2122}\x{2139}\x{2194}-\x{2199}\x{21A9}-\x{21AA}\x{231A}-\x{231B}\x{2328}\x{23CF}\x{23E9}-\x{23F3}\x{23F8}-\x{23FA}\x{24C2}\x{25AA}-\x{25AB}\x{25B6}\x{25C0}\x{25FB}-\x{25FE}\x{2600}-\x{27BF}\x{2934}-\x{2935}\x{2B05}-\x{2B07}\x{2B1B}-\x{2B1C}\x{2B50}\x{2B55}\x{3030}\x{303D}\x{3297}\x{3299}]';
+}
+
+/**
+ * Patrón unificado para un “run” emoji: banderas, EP+ZWJ, plano suplementario (si EP falla en PCRE viejo), y símbolos legacy con FE0F/FE0E (p.ej. ☀️ = 2600+FE0F).
+ * Orden: epRun primero para no partir parejas de bandera con suppRun de un solo RI.
+ *
+ * @return string grupo no capturante (sin / delimitadores)
+ */
+function Wo_ReelAssFullEmojiRunPattern() {
+    static $p = null;
+    if ($p !== null) {
+        return $p;
+    }
+    $ep = '\p{Extended_Pictographic}';
+    $epRun = '(?:[\x{1F1E6}-\x{1F1FF}]{2}|' . $ep . '(?:\x{FE0F}|\x{FE0E})?(?:\x{200D}' . $ep . '(?:\x{FE0F}|\x{FE0E})?)*)';
+    $suppRun = '(?:[\x{1F000}-\x{1FAFF}](?:\x{FE0F}|\x{FE0E})?(?:\x{200D}[\x{1F000}-\x{1FAFF}](?:\x{FE0F}|\x{FE0E})?)*)';
+    $legacyVs = '(?:' . Wo_ReelAssLegacyEmojiCharClass() . '(?:\x{FE0F}|\x{FE0E})?)';
+    $p = '(?:' . $epRun . '|' . $suppRun . '|' . $legacyVs . ')';
+    return $p;
+}
+
+/**
+ * Capa cuyo contenido es solo emojis (y espacios / formato): el borde ASS estropea Noto Color Emoji; Twemoji PNG necesita esto en true.
+ */
+function Wo_ReelAssLayerIsEmojiOnly($text) {
+    if (!is_string($text) || trim($text) === '') {
+        return false;
+    }
+    if (!Wo_ReelTextContainsEmoji($text)) {
+        return false;
+    }
+    $rest = @preg_replace('/' . Wo_ReelAssFullEmojiRunPattern() . '/u', '', $text);
+    if ($rest === null) {
+        return false;
+    }
+    $rest = @preg_replace('/[\s\p{Zs}\p{Cf}\x{FEFF}\x{200B}-\x{200F}\x{202A}-\x{202E}]+/u', '', $rest);
+    if ($rest === null) {
+        return false;
+    }
+    // FE0F/FE0E huérfanos (no deberían quedar si legacyVs matcheó ☀+VS; por si acaso)
+    $rest = @preg_replace('/[\x{FE0F}\x{FE0E}]+/u', '', $rest);
+    if ($rest === null) {
+        return false;
+    }
+    return $rest === '';
+}
+
+/**
+ * Diagnóstico reel (preview/debug): por qué se eligió ASS vs Twemoji/filter_complex.
+ *
+ * @return array<string,mixed>
+ */
+function Wo_ReelExportEmojiPathDiagnostics(array $items) {
+    $out = array(
+        'items_count' => count($items),
+        'has_emoji_only_layer' => Wo_ReelItemsHaveEmojiOnlyLayer($items),
+        'noto_for_drawtext' => Wo_ReelBundledFontPath('NotoColorEmoji.ttf') !== '',
+    );
+    if (!empty($items[0]) && is_array($items[0])) {
+        $t0 = isset($items[0]['text']) && is_string($items[0]['text']) ? $items[0]['text'] : '';
+        $out['first_text_len'] = ($t0 !== '' && function_exists('mb_strlen')) ? (int) mb_strlen($t0, 'UTF-8') : strlen($t0);
+        $out['first_is_emoji_only'] = ($t0 !== '') ? Wo_ReelAssLayerIsEmojiOnly($t0) : false;
+        $out['first_contains_emoji'] = ($t0 !== '') ? Wo_ReelTextContainsEmoji($t0) : false;
+        $out['first_codepoints_hex'] = ($t0 !== '') ? array_slice(Wo_ReelUtf8CodepointsHexLower($t0), 0, 40) : array();
+    }
+    if (!empty($items[0]) && is_array($items[0]) && !empty($items[0]['text']) && is_string($items[0]['text'])) {
+        $first_cluster = '';
+        foreach (Wo_ReelAssSplitTextEmojiRuns($items[0]['text']) as $ch) {
+            if ($ch !== '' && Wo_ReelTextContainsEmoji($ch)) {
+                $first_cluster = trim($ch);
+                break;
+            }
+        }
+        if ($first_cluster !== '') {
+            $out['twemoji_png_first_cluster_ok'] = Wo_ReelTwemojiPngPathForCluster($first_cluster) !== '';
+        }
+    }
+    return $out;
+}
+
+function Wo_ReelAssFileStaticHeader() {
+    return "[Script Info]\r\nScriptType: v4.00+\r\nPlayResX: 1080\r\nPlayResY: 1920\r\nScaledBorderAndShadow: yes\r\nWrapStyle: 0\r\n\r\n"
+        . "[V4+ Styles]\r\n"
+        . "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding\r\n"
+        . "Style: WoReel,DejaVu Sans,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,0,5,0,0,0,1\r\n\r\n"
+        . "[Events]\r\n"
+        . "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\r\n";
+}
+
+/**
+ * Una línea Dialogue ASS para una capa (z-order = $layer_idx).
+ *
+ * @return string cadena vacía si la capa no tiene texto
+ */
+function Wo_ReelAssFormatSingleItemDialogueLine($it, $sw, $sh, $fs_base, $layer_idx) {
+    $text = isset($it['text']) ? $it['text'] : '';
+    if (!is_string($text) || trim($text) === '') {
+        return '';
+    }
+    $sw = max(1, (int) $sw);
+    $sh = max(1, (int) $sh);
+    $ox = (int) round((int) $it['x'] * 1080 / $sw);
+    $oy = (int) round((int) $it['y'] * 1920 / $sh);
+    $scale = (isset($it['scale']) && is_numeric($it['scale'])) ? (float) $it['scale'] : 1.0;
+    $fs = (int) round($fs_base * $scale);
+    $fs = max(12, min($fs, 140));
+    $fkey = isset($it['font']) ? $it['font'] : 'sans';
+    $fn = 'DejaVu Sans';
+    if ($fkey === 'meme' && Wo_ReelBundledFontPath('ComicNeue-Bold.ttf') !== '') {
+        $fn = 'Comic Neue';
+    } elseif ($fkey === 'elegant' || $fkey === 'serif') {
+        $fn = 'DejaVu Serif';
+    } elseif ($fkey === 'mono') {
+        $fn = 'DejaVu Sans Mono';
+    } elseif ($fkey === 'narrow') {
+        $fn = 'DejaVu Sans Condensed';
+    } elseif ($fkey === 'direction' && Wo_ReelBundledFontPath('ArchivoBlack-Regular.ttf') !== '') {
+        $fn = 'Archivo Black';
+    } elseif ($fkey === 'direction' && Wo_ReelBundledFontPath('Anton-Regular.ttf') !== '') {
+        $fn = 'Anton';
+    }
+    $italic = !empty($it['italic']);
+    $align = (isset($it['align']) && is_string($it['align'])) ? strtolower(substr($it['align'], 0, 1)) : 'c';
+    $an = 5;
+    if ($align === 'l') {
+        $an = 4;
+    } elseif ($align === 'r') {
+        $an = 6;
+    }
+    $bm = isset($it['box_mode']) ? (int) $it['box_mode'] : 0;
+    if ($bm <= 0 && !empty($it['box'])) {
+        $bm = 1;
+    }
+    $st = Wo_ReelCanvasBoxStyle($bm, isset($it['color']) ? $it['color'] : '#ffffff');
+    $primary = sprintf('&H%02X%02X%02X&', $st['fb'], $st['fg'], $st['fr']);
+    $boxTags = '';
+    if ($bm > 0 && !Wo_ReelAssLayerIsEmojiOnly($text)) {
+        $boxTags = Wo_ReelAssBoxTags($bm);
+    }
+
+    $weight = '\b1';
+    if ($fkey === 'meme' && Wo_ReelBundledFontPath('ComicNeue-Bold.ttf') !== '') {
+        $weight = '\b0';
+    } elseif ($fkey === 'direction' && ($fn === 'Anton' || $fn === 'Archivo Black')) {
+        $weight = '\b0';
+    }
+    $slant = $italic ? '\i1' : '\i0';
+    $dirExtra = '';
+    if ($fkey === 'direction') {
+        if ($fn !== 'Anton' && $fn !== 'Archivo Black') {
+            $dirExtra .= '\fscx90';
+        }
+        $fsp = (int) round($fs * 0.04);
+        if ($fsp > 0) {
+            $dirExtra .= '\fsp' . min($fsp, 10);
+        }
+    }
+
+    $inner = '\an' . $an . '\pos(' . $ox . ',' . $oy . ')\fs' . $fs . '\fn' . $fn . $weight . $slant . $dirExtra . '\c' . $primary . $boxTags;
+    $restoreSuffix = $weight . $slant . $dirExtra . '\c' . $primary . $boxTags;
+    $safe = Wo_ReelAssEscapeTextWithEmojiFont($text, $fn, $restoreSuffix);
+    $textfield = '{' . $inner . '}' . $safe;
+    return 'Dialogue: ' . (int) $layer_idx . ',0:00:00.00,0:59:59.99,WoReel,,0,0,0,,' . $textfield . "\r\n";
+}
+
+/**
+ * drawtext + fontfile=NotoColorEmoji.ttf (ruta del bundle): otra ruta freetype/libass que a veces sí pinta CBDT a color.
+ */
+function Wo_ReelFfmpegDrawtextEmojiOnlyClause($it, $sw, $sh, $fs_base) {
+    $noto = Wo_ReelBundledFontPath('NotoColorEmoji.ttf');
+    if ($noto === '') {
+        return '';
+    }
+    $text = isset($it['text']) ? $it['text'] : '';
+    if (!is_string($text) || trim($text) === '') {
+        return '';
+    }
+    $sw = max(1, (int) $sw);
+    $sh = max(1, (int) $sh);
+    $scale = (isset($it['scale']) && is_numeric($it['scale'])) ? (float) $it['scale'] : 1.0;
+    $fs = max(12, min((int) round($fs_base * $scale), 140));
+    $ox = (int) round((int) $it['x'] * 1080 / $sw);
+    $oy = (int) round((int) $it['y'] * 1920 / $sh);
+    $hex = ltrim(isset($it['color']) ? $it['color'] : '#ffffff', '#');
+    if (!preg_match('/^[0-9A-Fa-f]{6}$/', $hex)) {
+        $hex = 'ffffff';
+    }
+    $fontcolor = '0x' . $hex;
+    $align = (isset($it['align']) && is_string($it['align'])) ? strtolower(substr($it['align'], 0, 1)) : 'c';
+    if ($align === 'l') {
+        $xexpr = 'max(0\,min(w-text_w\,' . $ox . '))';
+    } elseif ($align === 'r') {
+        $xexpr = 'max(0\,min(w-text_w\,' . $ox . '-text_w))';
+    } else {
+        $xexpr = 'max(0\,min(w-text_w\,' . $ox . '-text_w/2))';
+    }
+    $yexpr = 'max(0\,min(h-text_h\,' . $oy . '-text_h/2))';
+    $safe_text = str_replace(
+        array('\\', "'", ':', '%'),
+        array('\\\\', "\\'", '\:', '\%'),
+        $text
+    );
+    $fp_esc = str_replace(
+        array('\\', "'", ':', '%'),
+        array('\\\\', "\\'", '\:', '\%'),
+        $noto
+    );
+    $bm = 0;
+    if (isset($it['box_mode']) && is_numeric($it['box_mode'])) {
+        $bm = (int) $it['box_mode'];
+    } elseif (!empty($it['box'])) {
+        $bm = 1;
+    }
+    $boxbw = max(3, min(12, (int) round($fs / 10)));
+    $boxpart = '';
+    switch ($bm) {
+        case 1:
+            $boxpart = ':box=1:boxcolor=black@0.75:boxborderw=' . $boxbw;
+            break;
+        case 2:
+            $boxpart = ':box=1:boxcolor=0x' . $hex . '@0.82:boxborderw=' . $boxbw;
+            $fontcolor = '0x000000';
+            break;
+        case 3:
+            $boxpart = ':box=1:boxcolor=white@0.9:boxborderw=' . $boxbw;
+            break;
+        case 4:
+            $boxpart = ':box=1:boxcolor=0x' . $hex . '@0.82:boxborderw=' . $boxbw;
+            $fontcolor = '0xFFFFFF';
+            break;
+    }
+    return 'drawtext=text=\'' . $safe_text . '\':fontfile=' . $fp_esc . ':fontcolor=' . $fontcolor . ':fontsize=' . $fs
+        . ':x=\'' . $xexpr . '\':y=\'' . $yexpr . '\'' . $boxpart;
+}
+
+function Wo_ReelItemsHaveEmojiOnlyLayer(array $items) {
+    foreach ($items as $it) {
+        $t = isset($it['text']) ? $it['text'] : '';
+        if (is_string($t) && trim($t) !== '' && Wo_ReelAssLayerIsEmojiOnly($t)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+/**
+ * Un .ass de una sola capa (cadena subtitles extra en cadena -vf).
+ *
+ * @param string|null $write_dir directorio (p. ej. bundle temp); si null, temp + cleanup
+ * @return string ruta o ''
+ */
+function Wo_ReelWriteMiniAssFileForItem($it, $sw, $sh, $fs_base, array &$cleanup, $write_dir = null) {
+    $line = Wo_ReelAssFormatSingleItemDialogueLine($it, $sw, $sh, $fs_base, 0);
+    if ($line === '') {
+        return '';
+    }
+    $bytes = "\xEF\xBB\xBF" . Wo_ReelAssFileStaticHeader() . $line;
+    if ($write_dir !== null && $write_dir !== '' && @is_dir($write_dir)) {
+        $path = rtrim($write_dir, '/\\') . DIRECTORY_SEPARATOR . 'wo_sm_' . uniqid('', true) . '.ass';
+        if (@file_put_contents($path, $bytes) === false) {
+            return '';
+        }
+        return $path;
+    }
+    $tmp = @tempnam(sys_get_temp_dir(), 'wo_reel_sm_');
+    if ($tmp === false) {
+        return '';
+    }
+    $path = $tmp . '.ass';
+    if (!@rename($tmp, $path)) {
+        @unlink($tmp);
+        return '';
+    }
+    if (@file_put_contents($path, $bytes) === false) {
+        @unlink($path);
+        return '';
+    }
+    $cleanup[] = $path;
+    return $path;
+}
+
+/**
+ * Un único .ass con todas las capas: misma base que el editor (\an4/5/6, y = centro vertical).
+ * libass sustituye pictogramas con Noto Color Emoji si está en fontsdir.
+ * Evita mezclar drawtext + subtitles (métricas distintas) y evita \b1 sobre Comic Neue Bold (faux bold ensanchaba "Meme").
+ *
+ * @param array       $cleanup rutas a borrar tras ffmpeg (si $subtitle_bundle_dir es null, se añade el .ass)
+ * @param string|null $subtitle_bundle_dir si es directorio: escribe wo_reel_subtitles.ass ahí (mismo sitio que las fuentes copiadas)
+ * @return string ruta del .ass o cadena vacía
+ */
+function Wo_ReelWriteFullAssForReelItems(array $items, $sw, $sh, $fs_base, array &$cleanup, $subtitle_bundle_dir = null) {
+    if (Wo_ReelBundledFontsDir() === '' || Wo_ReelBundledFontPath('DejaVuSans-Bold.ttf') === '') {
+        return '';
+    }
+    if (empty($items)) {
+        return '';
+    }
+    $sw = max(1, (int) $sw);
+    $sh = max(1, (int) $sh);
+    $ass = Wo_ReelAssFileStaticHeader();
+
+    $layer_idx = 0;
+    foreach ($items as $it) {
+        $line = Wo_ReelAssFormatSingleItemDialogueLine($it, $sw, $sh, $fs_base, $layer_idx);
+        if ($line === '') {
+            continue;
+        }
+        $ass .= $line;
+        $layer_idx++;
+    }
+    if ($layer_idx === 0) {
+        return '';
+    }
+    $ass_utf8 = "\xEF\xBB\xBF" . $ass;
+    if ($subtitle_bundle_dir !== null && $subtitle_bundle_dir !== '' && @is_dir($subtitle_bundle_dir)) {
+        $ass_path = rtrim($subtitle_bundle_dir, '/\\') . DIRECTORY_SEPARATOR . 'wo_reel_subtitles.ass';
+        if (@file_put_contents($ass_path, $ass_utf8) === false) {
+            return '';
+        }
+        return $ass_path;
+    }
+    $tmp = @tempnam(sys_get_temp_dir(), 'wo_reel_full_ass_');
+    if ($tmp === false) {
+        return '';
+    }
+    $ass_path = $tmp . '.ass';
+    if (!@rename($tmp, $ass_path)) {
+        @unlink($tmp);
+        return '';
+    }
+    if (@file_put_contents($ass_path, $ass_utf8) === false) {
+        @unlink($ass_path);
+        return '';
+    }
+    $cleanup[] = $ass_path;
+    return $ass_path;
+}
+
+/**
+ * Escala/pad 9:16 y texto. Cualquier capa con emoji: Twemoji PNG (+ TTF en GD si hay texto mezclado). Solo texto: ASS/subtitles.
+ *
+ * @return array{vf:string,filter_complex:string,fc_extra_png_inputs:string[],fc_video_out:string,cleanup:string[]}
+ */
+function Wo_PrepareReelFfmpegVideoFilter($overlay_text, $text_x, $text_y, $stage_w, $stage_h, $texts_json = '') {
+    $cleanup = array();
+    $sw = ((int) $stage_w > 0) ? (int) $stage_w : 1080;
+    $sh = ((int) $stage_h > 0) ? (int) $stage_h : 1920;
+    $sw = max(1, $sw);
+    $sh = max(1, $sh);
+    $base = 'scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2:black,setsar=1';
+    $empty_fc = array(
+        'filter_complex' => '',
+        'fc_extra_png_inputs' => array(),
+        'fc_video_out' => '',
+    );
+    $items = Wo_ParseReelTextOverlayItems($texts_json, $overlay_text, $text_x, $text_y);
+    if (empty($items)) {
+        return array_merge($empty_fc, array('vf' => $base, 'cleanup' => $cleanup));
+    }
+    $f_editor = max(24, min($sw / 15, $sh / 10));
+    $fs_base  = (int) round($f_editor * 1080 / $sw);
+    $fs_base  = max(16, min($fs_base, 120));
+
+    $fontdir = Wo_ReelBundledFontsDir();
+    if ($fontdir !== '' && Wo_ReelBundledFontPath('DejaVuSans-Bold.ttf') !== '') {
+        if (Wo_ReelItemsHaveAnyEmojiLayer($items) && Wo_ReelTwemoji72Ready()) {
+            $sub_bundle = Wo_ReelCreateReelSubtitleFontBundleDir();
+            $fonts_for_sub = ($sub_bundle !== '') ? $sub_bundle : $fontdir;
+            $fcres = Wo_ReelBuildFilterComplexReelWithTwemoji($items, $sw, $sh, $fs_base, $cleanup, $sub_bundle, $fonts_for_sub);
+            if ($fcres !== null) {
+                if ($sub_bundle !== '') {
+                    $cleanup[] = $sub_bundle;
+                }
+                return array(
+                    'vf' => '',
+                    'filter_complex' => $fcres['filter_complex'],
+                    'fc_extra_png_inputs' => $fcres['fc_extra_png_inputs'],
+                    'fc_video_out' => $fcres['fc_video_out'],
+                    'cleanup' => $cleanup,
+                );
+            }
+            if ($sub_bundle !== '') {
+                Wo_ReelRmTree($sub_bundle);
+            }
+        }
+
+        if (Wo_ReelItemsHaveEmojiOnlyLayer($items)) {
+            $sub_bundle = Wo_ReelCreateReelSubtitleFontBundleDir();
+            $fonts_for_sub = ($sub_bundle !== '') ? $sub_bundle : $fontdir;
+            $vf_parts = array($base);
+            foreach ($items as $it) {
+                $t = isset($it['text']) ? $it['text'] : '';
+                if (!is_string($t) || trim($t) === '') {
+                    continue;
+                }
+                if (Wo_ReelAssLayerIsEmojiOnly($t)) {
+                    $cl = Wo_ReelFfmpegDrawtextEmojiOnlyClause($it, $sw, $sh, $fs_base);
+                    if ($cl !== '') {
+                        $vf_parts[] = $cl;
+                    }
+                } else {
+                    $mini = Wo_ReelWriteMiniAssFileForItem(
+                        $it,
+                        $sw,
+                        $sh,
+                        $fs_base,
+                        $cleanup,
+                        ($sub_bundle !== '') ? $sub_bundle : null
+                    );
+                    if ($mini !== '') {
+                        $fd_opt = Wo_ReelFfSubtitlesFontsDirOption($fonts_for_sub);
+                        $seg = 'subtitles=' . Wo_ReelFfEscapeSubPath($mini);
+                        if ($fd_opt !== '') {
+                            $seg .= ':' . $fd_opt;
+                        }
+                        $seg .= ':charenc=UTF-8';
+                        $vf_parts[] = $seg;
+                    }
+                }
+            }
+            if (count($vf_parts) > 1) {
+                if ($sub_bundle !== '') {
+                    $cleanup[] = $sub_bundle;
+                }
+                return array_merge($empty_fc, array(
+                    'vf' => implode(',', $vf_parts),
+                    'cleanup' => $cleanup,
+                ));
+            }
+            if ($sub_bundle !== '') {
+                Wo_ReelRmTree($sub_bundle);
+            }
+        }
+
+        $sub_bundle = Wo_ReelCreateReelSubtitleFontBundleDir();
+        $ass_path   = '';
+        $fonts_for_sub = $fontdir;
+        if ($sub_bundle !== '') {
+            $ass_path = Wo_ReelWriteFullAssForReelItems($items, $sw, $sh, $fs_base, $cleanup, $sub_bundle);
+            if ($ass_path !== '') {
+                $fonts_for_sub = $sub_bundle;
+                $cleanup[] = $sub_bundle;
+            } else {
+                Wo_ReelRmTree($sub_bundle);
+            }
+        }
+        if ($ass_path === '') {
+            $ass_path = Wo_ReelWriteFullAssForReelItems($items, $sw, $sh, $fs_base, $cleanup, null);
+        }
+        if ($ass_path !== '') {
+            $fd_opt = Wo_ReelFfSubtitlesFontsDirOption($fonts_for_sub);
+            $sub_opts = 'subtitles=' . Wo_ReelFfEscapeSubPath($ass_path);
+            if ($fd_opt !== '') {
+                $sub_opts .= ':' . $fd_opt;
+            }
+            $sub_opts .= ':charenc=UTF-8';
+            return array_merge($empty_fc, array(
+                'vf' => $base . ',' . $sub_opts,
+                'cleanup' => $cleanup,
+            ));
+        }
+    }
+
+    $parts = array($base);
+    foreach ($items as $it) {
+        $scale = (isset($it['scale']) && is_numeric($it['scale'])) ? (float) $it['scale'] : 1.0;
+        $fs    = (int) round($fs_base * $scale);
+        $fs    = max(12, min($fs, 140));
+        $boxbw = max(3, min(12, (int) round($fs / 10)));
+        $safe_text = str_replace(
+            array('\\', "'", ':', '%'),
+            array('\\\\', "\\'", '\:', '\%'),
+            $it['text']
+        );
+        $ox = (int) round((int) $it['x'] * 1080 / $sw);
+        $oy = (int) round((int) $it['y'] * 1920 / $sh);
+        $hex       = ltrim($it['color'], '#');
+        $fontcolor = '0x' . $hex;
+        $align     = (isset($it['align']) && is_string($it['align'])) ? strtolower(substr($it['align'], 0, 1)) : 'c';
+        if ($align === 'l') {
+            $xexpr = 'max(0\,min(w-text_w\,' . $ox . '))';
+        } elseif ($align === 'r') {
+            $xexpr = 'max(0\,min(w-text_w\,' . $ox . '-text_w))';
+        } else {
+            $xexpr = 'max(0\,min(w-text_w\,' . $ox . '-text_w/2))';
+        }
+        $yexpr     = 'max(0\,min(h-text_h\,' . $oy . '-text_h/2))';
+        $font_opt  = Wo_ReelFfmpegDrawtextFontOpt($it['font'], !empty($it['italic']), $it['text']);
+        if ($font_opt === '') {
+            continue;
+        }
+        $bm = 0;
+        if (isset($it['box_mode']) && is_numeric($it['box_mode'])) {
+            $bm = (int) $it['box_mode'];
+        } elseif (!empty($it['box'])) {
+            $bm = 1;
+        }
+        if ($bm < 0) {
+            $bm = 0;
+        }
+        if ($bm > 4) {
+            $bm = 4;
+        }
+        $boxpart = '';
+        switch ($bm) {
+            case 1:
+                $boxpart = ':box=1:boxcolor=black@0.75:boxborderw=' . $boxbw;
+                break;
+            case 2:
+                $boxpart = ':box=1:boxcolor=0x' . $hex . '@0.82:boxborderw=' . $boxbw;
+                $fontcolor = '0x000000';
+                break;
+            case 3:
+                $boxpart = ':box=1:boxcolor=white@0.9:boxborderw=' . $boxbw;
+                break;
+            case 4:
+                $boxpart = ':box=1:boxcolor=0x' . $hex . '@0.82:boxborderw=' . $boxbw;
+                $fontcolor = '0xFFFFFF';
+                break;
+            default:
+                $boxpart = '';
+        }
+        $parts[] = 'drawtext=text=\'' . $safe_text . '\'' . $font_opt . ':fontcolor=' . $fontcolor . ':fontsize=' . $fs . ':x=\'' . $xexpr . '\':y=\'' . $yexpr . '\'' . $boxpart;
+    }
+    return array_merge($empty_fc, array(
+        'vf' => implode(',', $parts),
+        'cleanup' => $cleanup,
+    ));
+}
+
+/**
+ * H.264 + contenedor MP4 compatibles con Reproductor de Windows / Movies & TV (overlay PNG puede dejar pixel format no 4:2:0).
+ *
+ * @return string fragmento shell (con espacios)
+ */
+function Wo_ReelFfmpegMp4CompatOpts() {
+    return ' -pix_fmt yuv420p -profile:v high -level 4.2 -movflags +faststart ';
+}
+
+/**
+ * Fragmentos shell para -vf vs -filter_complex y entradas PNG extra.
+ * filter_complex se escribe en un .tmp y se pasa con -filter_complex_script (evita roturas por comillas/rutas largas en el shell).
+ *
+ * @return array{extra_inputs:string,filter_only:string,uses_fc:bool,temp_files:string[]}
+ */
+function Wo_ReelFfmpegVideoFilterShellFragment($reel_vf) {
+    $fc = isset($reel_vf['filter_complex']) ? $reel_vf['filter_complex'] : '';
+    $pngs = isset($reel_vf['fc_extra_png_inputs']) ? $reel_vf['fc_extra_png_inputs'] : array();
+    $vf = isset($reel_vf['vf']) ? $reel_vf['vf'] : '';
+
+    $png_arg = '';
+    if (is_array($pngs)) {
+        foreach ($pngs as $pp) {
+            if (is_string($pp) && $pp !== '') {
+                $png_arg .= ' -i ' . escapeshellarg($pp);
+            }
+        }
+    }
+
+    if ($fc !== '') {
+        $script = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'wo_reel_fc_' . uniqid('', true) . '.txt';
+        if (@file_put_contents($script, $fc, LOCK_EX) !== false) {
+            return array(
+                'extra_inputs' => $png_arg,
+                'filter_only' => ' -filter_complex_script ' . escapeshellarg($script) . ' ',
+                'uses_fc' => true,
+                'temp_files' => array($script),
+            );
+        }
+        $fc_esc = str_replace(array('\\', '"'), array('\\\\', '\\"'), $fc);
+        return array(
+            'extra_inputs' => $png_arg,
+            'filter_only' => ' -filter_complex "' . $fc_esc . '" ',
+            'uses_fc' => true,
+            'temp_files' => array(),
+        );
+    }
+    $vf_esc = str_replace(array('\\', '"'), array('\\\\', '\\"'), $vf);
+    return array(
+        'extra_inputs' => $png_arg,
+        'filter_only' => ' -vf "' . $vf_esc . '" ',
+        'uses_fc' => false,
+        'temp_files' => array(),
+    );
+}
+
+/**
+ * Opciones de música superpuesta en reels (offset en el archivo, duración usada, volúmenes).
+ *
+ * @param array $data POST o array equivalente (preview).
+ * @param float|int $trim_start
+ * @param float|int $trim_end
+ * @return array{trim_len:float,audio_start:float,audio_seg_len:float,music_vol:float,video_vol:float}
+ */
+function Wo_ReelParseOverlayAudioOptions($data, $trim_start, $trim_end) {
+    $trim_start = (float) $trim_start;
+    $trim_end   = (float) $trim_end;
+    $trim_len   = max(0.001, $trim_end - $trim_start);
+
+    $audio_start = 0.0;
+    if (isset($data['reel_audio_start']) && is_numeric($data['reel_audio_start'])) {
+        $audio_start = (float) $data['reel_audio_start'];
+    }
+    if ($audio_start < 0) {
+        $audio_start = 0;
+    }
+
+    $audio_seg = $trim_len;
+    if (isset($data['reel_audio_duration']) && is_numeric($data['reel_audio_duration'])) {
+        $tmp_d = (float) $data['reel_audio_duration'];
+        if ($tmp_d > 0) {
+            $audio_seg = $tmp_d;
+        }
+    }
+    if ($audio_seg <= 0) {
+        $audio_seg = $trim_len;
+    }
+    if ($audio_seg > $trim_len) {
+        $audio_seg = $trim_len;
+    }
+
+    $music_vol = 1.0;
+    if (isset($data['reel_music_volume']) && is_numeric($data['reel_music_volume'])) {
+        $music_vol = (float) $data['reel_music_volume'];
+    }
+    if ($music_vol < 0) {
+        $music_vol = 0;
+    }
+    if ($music_vol > 4) {
+        $music_vol = 4;
+    }
+
+    $video_vol = 1.0;
+    if (isset($data['reel_video_volume']) && is_numeric($data['reel_video_volume'])) {
+        $video_vol = (float) $data['reel_video_volume'];
+    }
+    if ($video_vol < 0) {
+        $video_vol = 0;
+    }
+    if ($video_vol > 1) {
+        $video_vol = 1;
+    }
+
+    return array(
+        'trim_len' => $trim_len,
+        'audio_start' => $audio_start,
+        'audio_seg_len' => $audio_seg,
+        'music_vol' => $music_vol,
+        'video_vol' => $video_vol,
+    );
+}
+
+/**
+ * Indica si el archivo de vídeo tiene al menos una pista de audio (stderr de ffmpeg -i).
+ *
+ * @param string $ffmpeg_b
+ * @param string $video_full_path
+ * @return bool
+ */
+function Wo_ReelFfmpegProbeVideoHasAudio($ffmpeg_b, $video_full_path) {
+    if (!is_string($ffmpeg_b) || $ffmpeg_b === '' || !is_string($video_full_path) || !file_exists($video_full_path)) {
+        return false;
+    }
+    $out = @shell_exec($ffmpeg_b . ' -hide_banner -i ' . escapeshellarg($video_full_path) . ' 2>&1');
+    if (!is_string($out) || $out === '') {
+        return false;
+    }
+    return (bool) preg_match('/Stream\\s+#0(?::\\d+)?(?:\\([^)]+\\))?:\\s+Audio:/i', $out);
+}
+
+/**
+ * Convierte -vf en filter_complex [0:v]…[vwo] para poder encadenar audio.
+ *
+ * @param array $reel_vf
+ */
+function Wo_ReelReelVfToFilterComplex(array &$reel_vf) {
+    if (!empty($reel_vf['filter_complex'])) {
+        if (empty($reel_vf['fc_video_out'])) {
+            $reel_vf['fc_video_out'] = '[vwo]';
+        }
+        return;
+    }
+    $vf = isset($reel_vf['vf']) ? trim((string) $reel_vf['vf']) : '';
+    if ($vf === '') {
+        $vf = 'scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2:black,setsar=1';
+    }
+    $reel_vf['filter_complex'] = '[0:v]' . $vf . '[vwo]';
+    $reel_vf['fc_video_out'] = '[vwo]';
+    $reel_vf['vf'] = '';
+}
+
+/**
+ * Añade recorte de música y opcionalmente mezcla con el audio del vídeo al grafo del reel.
+ *
+ * @param array  $reel_vf
+ * @param int    $audio_input_idx índice de la entrada del archivo de música (tras PNGs extra).
+ * @param array  $opts resultado de Wo_ReelParseOverlayAudioOptions
+ * @param bool   $mix_with_video_audio si false, solo se usa la música (volumen del vídeo = 0 o sin pista).
+ */
+function Wo_ReelAppendOverlayAudioFilterGraph(array &$reel_vf, $audio_input_idx, array $opts, $mix_with_video_audio) {
+    Wo_ReelReelVfToFilterComplex($reel_vf);
+    $fc = isset($reel_vf['filter_complex']) ? $reel_vf['filter_complex'] : '';
+    $idx = (int) $audio_input_idx;
+    $a0  = max(0.0, (float) $opts['audio_start']);
+    $dur = max(0.05, min((float) $opts['audio_seg_len'], (float) $opts['trim_len']));
+    $mv  = max(0.0, min(4.0, (float) $opts['music_vol']));
+    $vv  = max(0.0, min(1.0, (float) $opts['video_vol']));
+
+    if ($mix_with_video_audio && $vv > 0.0005) {
+        $tail = sprintf(
+            '[0:a]volume=%.5F[v_o_va];[%d:a]atrim=start=%.5F:duration=%.5F,asetpts=PTS-STARTPTS,volume=%.5F[v_o_mu];[v_o_va][v_o_mu]amix=inputs=2:duration=first:dropout_transition=2[v_o_aout]',
+            $vv,
+            $idx,
+            $a0,
+            $dur,
+            $mv
+        );
+    } else {
+        $tail = sprintf(
+            '[%d:a]atrim=start=%.5F:duration=%.5F,asetpts=PTS-STARTPTS,volume=%.5F[v_o_aout]',
+            $idx,
+            $a0,
+            $dur,
+            $mv
+        );
+    }
+    $reel_vf['filter_complex'] = rtrim($fc, ';') . ';' . $tail;
+    $reel_vf['fc_audio_out'] = '[v_o_aout]';
+}
+
+/**
+ * Texto overlay legacy desde POST: conserva UTF-8/emojis para FFmpeg (sin htmlspecialchars).
+ *
+ * @param mixed $raw
+ * @return string
+ */
+function Wo_ReelReelOverlayTextFromPost($raw) {
+    if (!is_string($raw)) {
+        return '';
+    }
+    $s = trim($raw);
+    if ($s === '') {
+        return '';
+    }
+    $s = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/u', '', $s);
+    if (function_exists('mb_substr')) {
+        return mb_substr($s, 0, 200, 'UTF-8');
+    }
+    return substr($s, 0, 600);
+}
+
+/**
+ * Normaliza capas de texto desde JSON del editor o campos legacy (un solo texto).
+ * Cada ítem: text, x, y, color, font; opcional z escala, i cursiva, a alineación l|c|r, m modo fondo 0–4, b legado 0|1.
+ */
+function Wo_ParseReelTextOverlayItems($json_raw, $legacy_text, $legacy_x, $legacy_y) {
+    $out = array();
+    if (!empty($json_raw) && is_string($json_raw)) {
+        $decoded = json_decode($json_raw, true);
+        if (is_array($decoded)) {
+            $n = 0;
+            foreach ($decoded as $row) {
+                if ($n >= 15) {
+                    break;
+                }
+                if (!is_array($row)) {
+                    continue;
+                }
+                $t = isset($row['t']) ? $row['t'] : (isset($row['text']) ? $row['text'] : '');
+                $t = is_string($t) ? trim(preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/u', '', $t)) : '';
+                if ($t === '') {
+                    continue;
+                }
+                if (function_exists('mb_substr')) {
+                    $t = mb_substr($t, 0, 200, 'UTF-8');
+                } else {
+                    $t = substr($t, 0, 200);
+                }
+                $x = isset($row['x']) ? (int) $row['x'] : 0;
+                $y = isset($row['y']) ? (int) $row['y'] : 0;
+                $c = isset($row['c']) ? $row['c'] : (isset($row['color']) ? $row['color'] : '#ffffff');
+                $c = is_string($c) ? $c : '#ffffff';
+                if (!preg_match('/^#[0-9A-Fa-f]{6}$/', $c)) {
+                    $c = '#ffffff';
+                }
+                $f = isset($row['f']) ? $row['f'] : (isset($row['font']) ? $row['font'] : 'sans');
+                $f = preg_replace('/[^a-z]/', '', strtolower(is_string($f) ? $f : 'sans'));
+                if (!in_array($f, array('sans', 'serif', 'mono', 'narrow', 'elegant', 'meme', 'direction'), true)) {
+                    $f = 'sans';
+                }
+                $scale = 1.0;
+                if (isset($row['z']) && is_numeric($row['z'])) {
+                    $scale = (float) $row['z'];
+                    if ($scale < 0.25) {
+                        $scale = 0.25;
+                    }
+                    if ($scale > 2.2) {
+                        $scale = 2.2;
+                    }
+                }
+                $italic = !empty($row['i']) || (!empty($row['italic']) && $row['italic']);
+                $align  = 'c';
+                if (!empty($row['a']) && is_string($row['a'])) {
+                    $ac = strtolower(substr($row['a'], 0, 1));
+                    if ($ac === 'l') {
+                        $align = 'l';
+                    } elseif ($ac === 'r') {
+                        $align = 'r';
+                    }
+                }
+                $box_mode = 0;
+                if (isset($row['m']) && is_numeric($row['m'])) {
+                    $box_mode = (int) $row['m'];
+                    if ($box_mode < 0) {
+                        $box_mode = 0;
+                    }
+                    if ($box_mode > 4) {
+                        $box_mode = 4;
+                    }
+                } elseif (isset($row['b']) && (int) $row['b'] === 1) {
+                    $box_mode = 1;
+                }
+                if ($f === 'direction' && function_exists('mb_strtoupper')) {
+                    $t = mb_strtoupper($t, 'UTF-8');
+                }
+                $out[] = array(
+                    'text' => $t,
+                    'x' => $x,
+                    'y' => $y,
+                    'color' => $c,
+                    'font' => $f,
+                    'scale' => $scale,
+                    'italic' => $italic,
+                    'align' => $align,
+                    'box_mode' => $box_mode,
+                );
+                $n++;
+            }
+        }
+    }
+    if (empty($out) && !empty($legacy_text) && is_string($legacy_text)) {
+        $lt = trim($legacy_text);
+        if ($lt !== '') {
+            if (function_exists('mb_substr')) {
+                $lt = mb_substr($lt, 0, 200, 'UTF-8');
+            } else {
+                $lt = substr($lt, 0, 200);
+            }
+            $out[] = array(
+                'text' => $lt,
+                'x' => (int) $legacy_x,
+                'y' => (int) $legacy_y,
+                'color' => '#ffffff',
+                'font' => 'sans',
+                'scale' => 1.0,
+                'italic' => false,
+                'align' => 'c',
+                'box_mode' => 0,
+            );
+        }
+    }
+    return $out;
+}
+
+/**
+ * Cadena de filtro (solo -vf). Si el export usa Twemoji + filter_complex, devuelve ese graph; el binario debe invocarse con Wo_ReelFfmpegVideoFilterShellFragment.
+ *
+ * @param string $texts_json JSON opcional: array de {t,x,y,c,f} desde el editor.
+ */
+function Wo_BuildReelFfmpegVideoFilter($overlay_text, $text_x, $text_y, $stage_w, $stage_h, $texts_json = '') {
+    $r = Wo_PrepareReelFfmpegVideoFilter($overlay_text, $text_x, $text_y, $stage_w, $stage_h, $texts_json);
+    if (!empty($r['filter_complex'])) {
+        return $r['filter_complex'];
+    }
+    return $r['vf'];
+}
+
+if (!defined('WO_REEL_TAGS_STICKER_PREFIX')) {
+    define('WO_REEL_TAGS_STICKER_PREFIX', 'wo_reel_tags:');
+}
+
+/**
+ * Comprueba si el usuario logueado puede etiquetar a otro (siguiendo o seguido, relación activa).
+ */
+function Wo_ReelUserCanTagAsFriend($viewer_id, $target_user_id) {
+    global $sqlConnect;
+    if (empty($viewer_id) || empty($target_user_id) || (int) $viewer_id === (int) $target_user_id) {
+        return false;
+    }
+    $viewer_id      = Wo_Secure((int) $viewer_id);
+    $target_user_id = Wo_Secure((int) $target_user_id);
+    $q              = "SELECT COUNT(*) AS c FROM " . T_FOLLOWERS . " WHERE `active` = '1' AND ((`follower_id` = '{$viewer_id}' AND `following_id` = '{$target_user_id}') OR (`follower_id` = '{$target_user_id}' AND `following_id` = '{$viewer_id}'))";
+    $sql            = mysqli_query($sqlConnect, $q);
+    if ($sql && mysqli_num_rows($sql)) {
+        $row = mysqli_fetch_assoc($sql);
+        return !empty($row['c']) && (int) $row['c'] > 0;
+    }
+    return false;
+}
+
+/**
+ * Normaliza y valida etiquetas enviadas desde el editor de reels (JSON). Devuelve lista para guardar en postSticker.
+ *
+ * @param string $json_raw
+ * @param int    $publisher_user_id
+ * @return array
+ */
+function Wo_ReelNormalizeTagsFromClientJson($json_raw, $publisher_user_id) {
+    global $wo;
+    $out = array();
+    if (empty($json_raw) || !is_string($json_raw) || strlen($json_raw) > 32000) {
+        return $out;
+    }
+    $decoded = json_decode($json_raw, true);
+    if (!is_array($decoded)) {
+        return $out;
+    }
+    $publisher_user_id = (int) $publisher_user_id;
+    $max               = 10;
+    $count             = 0;
+    foreach ($decoded as $row) {
+        if ($count >= $max) {
+            break;
+        }
+        if (!is_array($row) || empty($row['type'])) {
+            continue;
+        }
+        $type = strtolower(trim((string) $row['type']));
+        $x    = isset($row['x']) ? (float) $row['x'] : 0.5;
+        $y    = isset($row['y']) ? (float) $row['y'] : 0.88;
+        $x    = max(0.0, min(1.0, $x));
+        $y    = max(0.0, min(1.0, $y));
+        $tag_scale = 1.0;
+        if (isset($row['s'])) {
+            $tag_scale = (float) $row['s'];
+        } elseif (isset($row['scale'])) {
+            $tag_scale = (float) $row['scale'];
+        }
+        $tag_scale = max(0.45, min(3.5, $tag_scale));
+
+        if ($type === 'user') {
+            $uid = isset($row['id']) ? (int) $row['id'] : 0;
+            if ($uid < 1 || !Wo_ReelUserCanTagAsFriend($publisher_user_id, $uid)) {
+                continue;
+            }
+            $u = Wo_UserData($uid);
+            if (empty($u['user_id'])) {
+                continue;
+            }
+            $out[] = array(
+                'type'  => 'user',
+                'id'    => $uid,
+                'x'     => $x,
+                'y'     => $y,
+                's'     => $tag_scale,
+                'label' => $u['name'],
+                'href'  => $u['url'],
+                'img'   => $u['avatar'],
+            );
+            $count++;
+            continue;
+        }
+        if ($type === 'page') {
+            $pid = isset($row['id']) ? (int) $row['id'] : 0;
+            if ($pid < 1) {
+                continue;
+            }
+            $p = Wo_PageData($pid);
+            if (empty($p['page_id']) || (int) $p['user_id'] !== $publisher_user_id) {
+                continue;
+            }
+            $out[] = array(
+                'type'  => 'page',
+                'id'    => $pid,
+                'x'     => $x,
+                'y'     => $y,
+                's'     => $tag_scale,
+                'label' => $p['name'],
+                'href'  => $p['url'],
+                'img'   => $p['avatar'],
+            );
+            $count++;
+            continue;
+        }
+        if ($type === 'group') {
+            $gid = isset($row['id']) ? (int) $row['id'] : 0;
+            if ($gid < 1 || !Wo_IsGroupJoined($gid, $publisher_user_id)) {
+                continue;
+            }
+            $g = Wo_GroupData($gid);
+            if (empty($g['id'])) {
+                continue;
+            }
+            $out[] = array(
+                'type'  => 'group',
+                'id'    => $gid,
+                'x'     => $x,
+                'y'     => $y,
+                's'     => $tag_scale,
+                'label' => $g['name'],
+                'href'  => $g['url'],
+                'img'   => $g['avatar'],
+            );
+            $count++;
+            continue;
+        }
+        if ($type === 'product') {
+            $prid = isset($row['id']) ? (int) $row['id'] : 0;
+            if ($prid < 1) {
+                continue;
+            }
+            $pr = Wo_GetProduct($prid);
+            if (empty($pr['id']) || (int) $pr['user_id'] !== $publisher_user_id) {
+                continue;
+            }
+            $img = '';
+            if (!empty($pr['images']) && is_array($pr['images']) && !empty($pr['images'][0]['image'])) {
+                $img = Wo_GetMedia($pr['images'][0]['image']);
+            }
+            $out[] = array(
+                'type'  => 'product',
+                'id'    => $prid,
+                'x'     => $x,
+                'y'     => $y,
+                's'     => $tag_scale,
+                'label' => $pr['name'],
+                'href'  => $pr['url'],
+                'img'   => $img,
+            );
+            $count++;
+            continue;
+        }
+        if ($type === 'external') {
+            $url = isset($row['url']) ? trim((string) $row['url']) : '';
+            if ($url === '' || !filter_var($url, FILTER_VALIDATE_URL) || !preg_match('#^https?://#i', $url)) {
+                continue;
+            }
+            $label = isset($row['label']) ? trim((string) $row['label']) : '';
+            if ($label === '') {
+                $label = parse_url($url, PHP_URL_HOST);
+                if (empty($label)) {
+                    $label = 'Enlace';
+                }
+            }
+            if (mb_strlen($label) > 120) {
+                $label = mb_substr($label, 0, 117) . '...';
+            }
+            $img = isset($row['img']) ? trim((string) $row['img']) : '';
+            if ($img !== '' && (!filter_var($img, FILTER_VALIDATE_URL) || !preg_match('#^https?://#i', $img))) {
+                $img = '';
+            }
+            $out[] = array(
+                'type'  => 'external',
+                'url'   => $url,
+                'x'     => $x,
+                'y'     => $y,
+                's'     => $tag_scale,
+                'label' => $label,
+                'href'  => $url,
+                'img'   => $img,
+            );
+            $count++;
+        }
+    }
+    return $out;
+}
+
+/**
+ * Valor escapado para INSERT en postSticker (sin htmlspecialchars; solo mysqli escape).
+ *
+ * @param array $items
+ * @return string
+ */
+function Wo_ReelStickerSqlValueForTags(array $items) {
+    global $sqlConnect;
+    if (empty($items)) {
+        return '';
+    }
+    $payload = WO_REEL_TAGS_STICKER_PREFIX . json_encode($items, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    return mysqli_real_escape_string($sqlConnect, $payload);
+}
+
+/**
+ * @param string $postSticker Valor crudo de postSticker en BD.
+ * @return array<int, array<string, mixed>>
+ */
+function Wo_ReelTagsArrayFromPostSticker($postSticker) {
+    if (empty($postSticker) || !is_string($postSticker) || strpos($postSticker, WO_REEL_TAGS_STICKER_PREFIX) !== 0) {
+        return array();
+    }
+    $json = substr($postSticker, strlen(WO_REEL_TAGS_STICKER_PREFIX));
+    $arr  = json_decode(html_entity_decode($json, ENT_QUOTES, 'UTF-8'), true);
+    return is_array($arr) ? $arr : array();
+}
+
+function Wo_RenderReelPreview($data = array(), &$debug = array()) {
+    global $wo;
+    $debug = array(
+        'stage' => 'init',
+        'ffmpeg_binary' => !empty($wo['config']['ffmpeg_binary_file']) ? $wo['config']['ffmpeg_binary_file'] : '',
+        'video_input' => !empty($data['filename']) ? $data['filename'] : '',
+        'audio_input' => !empty($data['overlay_audio']) ? $data['overlay_audio'] : '',
+        'trim_start' => isset($data['trim_start']) ? (float) $data['trim_start'] : 0.0,
+        'trim_end' => isset($data['trim_end']) ? (float) $data['trim_end'] : 0.0
+    );
+    if ($wo['loggedin'] == false || $wo['config']['ffmpeg_system'] != 'on' || empty($data['filename'])) {
+        $debug['stage'] = 'precheck_failed';
+        $debug['reason'] = 'loggedout_or_ffmpeg_off_or_missing_filename';
+        return false;
+    }
+
+    $ffmpeg_b = $wo['config']['ffmpeg_binary_file'];
+    $dir      = dirname(dirname(__DIR__));
+    $video_rel = $data['filename'];
+    $video_full = $dir . '/' . $video_rel;
+    if (!file_exists($video_full)) {
+        $debug['stage'] = 'video_missing';
+        $debug['video_full'] = $video_full;
+        return false;
+    }
+
+    $trim_start   = isset($data['trim_start']) ? (float) $data['trim_start'] : 0.0;
+    $trim_end     = isset($data['trim_end']) ? (float) $data['trim_end'] : 0.0;
+    $overlay_text = !empty($data['overlay_text']) ? $data['overlay_text'] : '';
+    $texts_json   = !empty($data['texts_json']) && is_string($data['texts_json']) ? $data['texts_json'] : '';
+    $overlay_audio = !empty($data['overlay_audio']) ? $data['overlay_audio'] : '';
+    $text_x       = isset($data['text_x']) ? (int) $data['text_x'] : 0;
+    $text_y       = isset($data['text_y']) ? (int) $data['text_y'] : 0;
+    $stage_w      = isset($data['stage_w']) ? (int) $data['stage_w'] : 1080;
+    $stage_h      = isset($data['stage_h']) ? (int) $data['stage_h'] : 1920;
+
+    $video_base = preg_replace('/\.[^.]+$/', '', $video_rel);
+    $preview_rel = $video_base . '_preview_' . time() . '.mp4';
+    $preview_full = $dir . '/' . $preview_rel;
+
+    $trim_opts = '';
+    if ($trim_start >= 0 && $trim_end > $trim_start) {
+        $duration = $trim_end - $trim_start;
+        $trim_opts = sprintf(
+            ' -ss %s -t %s ',
+            escapeshellarg(sprintf('%.4f', $trim_start)),
+            escapeshellarg(sprintf('%.4f', $duration))
+        );
+    }
+
+    $reel_parse_items = Wo_ParseReelTextOverlayItems($texts_json, $overlay_text, $text_x, $text_y);
+    $reel_vf = Wo_PrepareReelFfmpegVideoFilter($overlay_text, $text_x, $text_y, $stage_w, $stage_h, $texts_json);
+    $debug['reel_emoji_path'] = Wo_ReelExportEmojiPathDiagnostics($reel_parse_items);
+
+    $audio_input = '';
+    $audio_full  = '';
+    if (!empty($overlay_audio)) {
+        $audio_full = $dir . '/' . $overlay_audio;
+        if (file_exists($audio_full)) {
+            $audio_input = ' -i ' . escapeshellarg($audio_full) . ' ';
+            $debug['audio_found'] = true;
+            $n_png_pre = isset($reel_vf['fc_extra_png_inputs']) && is_array($reel_vf['fc_extra_png_inputs']) ? count($reel_vf['fc_extra_png_inputs']) : 0;
+            $audio_idx = 1 + $n_png_pre;
+            $aud_opts  = Wo_ReelParseOverlayAudioOptions($data, $trim_start, $trim_end);
+            $debug['reel_overlay_audio_opts'] = $aud_opts;
+            $vid_has_a = Wo_ReelFfmpegProbeVideoHasAudio($ffmpeg_b, $video_full);
+            $debug['reel_video_has_audio'] = $vid_has_a;
+            $mix = $vid_has_a && $aud_opts['video_vol'] > 0.0005;
+            Wo_ReelAppendOverlayAudioFilterGraph($reel_vf, $audio_idx, $aud_opts, $mix);
+        } else {
+            $debug['audio_found'] = false;
+            $debug['audio_full'] = $audio_full;
+        }
+    }
+
+    $debug['reel_vf_has_filter_complex'] = isset($reel_vf['filter_complex']) && $reel_vf['filter_complex'] !== '';
+    $frag = Wo_ReelFfmpegVideoFilterShellFragment($reel_vf);
+    if (!empty($frag['temp_files']) && is_array($frag['temp_files'])) {
+        foreach ($frag['temp_files'] as $tf) {
+            if (is_string($tf) && $tf !== '') {
+                $reel_vf['cleanup'][] = $tf;
+            }
+        }
+    }
+    $n_png = isset($reel_vf['fc_extra_png_inputs']) && is_array($reel_vf['fc_extra_png_inputs']) ? count($reel_vf['fc_extra_png_inputs']) : 0;
+    $uses_fc = $frag['uses_fc'];
+    $vout_lab = isset($reel_vf['fc_video_out']) ? $reel_vf['fc_video_out'] : '[v0]';
+    $debug['uses_filter_complex'] = $uses_fc;
+    $debug['twemoji_dir'] = Wo_ReelTwemoji72Dir();
+    $debug['twemoji_ready'] = Wo_ReelTwemoji72Ready();
+    $debug['gd_for_reel_png'] = function_exists('imagecreatetruecolor') && function_exists('imagepng') && function_exists('imagecreatefrompng');
+    $debug['reel_items_count'] = count(Wo_ParseReelTextOverlayItems($texts_json, $overlay_text, $text_x, $text_y));
+    if ($texts_json !== '') {
+        $debug['reel_texts_json_bytes'] = strlen($texts_json);
+        json_decode($texts_json, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            $debug['reel_json_decode_error'] = json_last_error_msg();
+        }
+    }
+
+    if (!empty($overlay_audio) && $audio_input !== '' && !empty($reel_vf['fc_audio_out'])) {
+        $aout_lab = $reel_vf['fc_audio_out'];
+        $audio_map = ' -map ' . escapeshellarg($vout_lab) . ' -map ' . escapeshellarg($aout_lab) . ' -shortest ';
+    } elseif ($uses_fc) {
+        if ($audio_input !== '') {
+            $audio_map = ' -map ' . escapeshellarg($vout_lab) . ' -map ' . (1 + $n_png) . ':a:0 -shortest ';
+        } else {
+            $audio_map = ' -map ' . escapeshellarg($vout_lab) . ' -map 0:a? ';
+        }
+    } elseif ($audio_input !== '') {
+        $audio_map = ' -map 0:v:0 -map 1:a:0 -shortest ';
+    } else {
+        $audio_map = ' -map 0:v:0 -map 0:a? ';
+    }
+
+    $cmd = $ffmpeg_b
+        . ' -y '
+        . $trim_opts
+        . ' -i ' . escapeshellarg($video_full)
+        . $frag['extra_inputs']
+        . $audio_input
+        . $frag['filter_only']
+        . ' -c:v libx264 -preset ' . $wo['config']['convert_speed']
+        . Wo_ReelFfmpegMp4CompatOpts()
+        . ' -c:a aac -b:a 192k -ar 48000 '
+        . $audio_map
+        . ' ' . escapeshellarg($preview_full)
+        . ' 2>&1';
+
+    $debug['stage'] = 'ffmpeg_exec';
+    $debug['preview_rel'] = $preview_rel;
+    $debug['preview_full'] = $preview_full;
+    $debug['cmd'] = $cmd;
+    $output = shell_exec($cmd);
+    Wo_ReelCleanupReelFfmpegTemp($reel_vf['cleanup']);
+    $debug['ffmpeg_output_tail'] = !empty($output) ? substr($output, -1500) : '';
+    $preview_bytes = file_exists($preview_full) ? (int)@filesize($preview_full) : 0;
+    $debug['preview_bytes'] = $preview_bytes;
+    $out = (string)$output;
+    $ffmpeg_err = (stripos($out, 'Conversion failed') !== false
+        || stripos($out, 'Error initializing filter') !== false
+        || stripos($out, 'Failed to inject frame') !== false
+        || stripos($out, 'Option not found') !== false);
+    if ($preview_bytes < 128 || $ffmpeg_err) {
+        $debug['stage'] = 'ffmpeg_failed';
+        $debug['preview_exists'] = $preview_bytes > 0;
+        if (file_exists($preview_full)) {
+            @unlink($preview_full);
+        }
+        return false;
+    }
+    $debug['stage'] = 'ok';
+    $debug['preview_exists'] = true;
+    return $preview_rel;
+}
+
 function FFMPEGUpload($data) {
     global $wo, $sqlConnect, $db;
     if ($wo['loggedin'] == false || $wo['config']['ffmpeg_system'] != 'on' || empty($data) || empty($data['post_data']) || empty($data['filename'])) {
@@ -8398,9 +10822,9 @@ function FFMPEGUpload($data) {
     if (!file_exists('upload/photos/' . date('Y') . '/' . date('m'))) {
         @mkdir('upload/photos/' . date('Y') . '/' . date('m'), 0777, true);
     }
-    $explode_video               = explode('_video', $data['filename']);
-    $video_file_full_path        = dirname(dirname(__DIR__)) . '/' . $data['filename'];
-    $dir                         = dirname(dirname(__DIR__));
+    $explode_video        = explode('_video', $data['filename']);
+    $video_file_full_path = dirname(dirname(__DIR__)) . '/' . $data['filename'];
+    $dir                  = dirname(dirname(__DIR__));
     $video_path_water              = $explode_video[0] . "_video_water.mp4";
     $video_path_240              = $explode_video[0] . "_video_240p_converted.mp4";
     $video_path_360              = $explode_video[0] . "_video_360p_converted.mp4";
@@ -8417,7 +10841,19 @@ function FFMPEGUpload($data) {
     $video_output_full_path_1080 = $dir . "/" . $video_path_1080;
     $video_output_full_path_2048 = $dir . "/" . $video_path_2048;
     $video_output_full_path_4096 = $dir . "/" . $video_path_4096;
-    $video_info                  = shell_exec("$ffmpeg_b -i " . $video_file_full_path . " 2>&1");
+
+    // Parámetros opcionales desde el editor de Reels
+    $trim_start    = isset($data['trim_start']) ? (float) $data['trim_start'] : 0.0;
+    $trim_end      = isset($data['trim_end']) ? (float) $data['trim_end'] : 0.0;
+    $overlay_text  = !empty($data['overlay_text']) ? $data['overlay_text'] : '';
+    $texts_json    = !empty($data['texts_json']) && is_string($data['texts_json']) ? $data['texts_json'] : '';
+    $overlay_audio = !empty($data['overlay_audio']) ? $data['overlay_audio'] : '';
+    $is_reel       = !empty($data['is_reel']) && (int)$data['is_reel'] === 1;
+    $text_x        = isset($data['text_x']) ? (int)$data['text_x'] : 0;
+    $text_y        = isset($data['text_y']) ? (int)$data['text_y'] : 0;
+    $stage_w       = isset($data['stage_w']) ? (int)$data['stage_w'] : 1080;
+    $stage_h       = isset($data['stage_h']) ? (int)$data['stage_h'] : 1920;
+    $video_info = shell_exec("$ffmpeg_b -i " . $video_file_full_path . " 2>&1");
     $re                          = '/[0-9]{3}+x[0-9]{3}/m';
     preg_match_all($re, $video_info, $min_str);
     $resolution = 0;
@@ -8438,6 +10874,123 @@ function FFMPEGUpload($data) {
     }
     if ($time > 1) {
         $time = (int) ($time / 2);
+    }
+
+    // Edición básica previa (recorte + texto + audio + normalización 1080x1920 para reels)
+    if (
+        ($trim_start >= 0 && $trim_end > $trim_start) ||
+        !empty($overlay_text) ||
+        !empty($overlay_audio) ||
+        $is_reel
+    ) {
+        $edited_video_rel_path  = $explode_video[0] . "_video_edited.mp4";
+        $edited_video_full_path = $dir . "/" . $edited_video_rel_path;
+
+        $trim_opts = '';
+        if ($trim_start >= 0 && $trim_end > $trim_start) {
+            $duration = $trim_end - $trim_start;
+            $trim_opts = sprintf(
+                ' -ss %s -t %s ',
+                escapeshellarg(sprintf('%.4f', $trim_start)),
+                escapeshellarg(sprintf('%.4f', $duration))
+            );
+        }
+
+        $vf = '';
+        $reel_ass_cleanup = array();
+        $reel_extra_inputs = '';
+        $reel_uses_fc = false;
+        $reel_fc_video_out = '[v0]';
+        $reel_n_png = 0;
+        $reel_vf = null;
+        if ($is_reel) {
+            $reel_vf = Wo_PrepareReelFfmpegVideoFilter($overlay_text, $text_x, $text_y, $stage_w, $stage_h, $texts_json);
+            if (!empty($overlay_audio)) {
+                $overlay_audio_full_path_pre = $dir . "/" . $overlay_audio;
+                if (file_exists($overlay_audio_full_path_pre)) {
+                    $n_png_pre = isset($reel_vf['fc_extra_png_inputs']) && is_array($reel_vf['fc_extra_png_inputs']) ? count($reel_vf['fc_extra_png_inputs']) : 0;
+                    $audio_idx_pre = 1 + $n_png_pre;
+                    $aud_opts_upload = Wo_ReelParseOverlayAudioOptions($data, $trim_start, $trim_end);
+                    $vid_has_a_upload = Wo_ReelFfmpegProbeVideoHasAudio($ffmpeg_b, $video_file_full_path);
+                    $mix_upload = $vid_has_a_upload && $aud_opts_upload['video_vol'] > 0.0005;
+                    Wo_ReelAppendOverlayAudioFilterGraph($reel_vf, $audio_idx_pre, $aud_opts_upload, $mix_upload);
+                }
+            }
+            $frag = Wo_ReelFfmpegVideoFilterShellFragment($reel_vf);
+            $reel_extra_inputs = $frag['extra_inputs'];
+            $vf = $frag['filter_only'];
+            $reel_ass_cleanup = $reel_vf['cleanup'];
+            if (!empty($frag['temp_files']) && is_array($frag['temp_files'])) {
+                foreach ($frag['temp_files'] as $tf) {
+                    if (is_string($tf) && $tf !== '') {
+                        $reel_ass_cleanup[] = $tf;
+                    }
+                }
+            }
+            $reel_uses_fc = $frag['uses_fc'];
+            $reel_fc_video_out = isset($reel_vf['fc_video_out']) ? $reel_vf['fc_video_out'] : '[v0]';
+            $reel_n_png = isset($reel_vf['fc_extra_png_inputs']) && is_array($reel_vf['fc_extra_png_inputs']) ? count($reel_vf['fc_extra_png_inputs']) : 0;
+        } else {
+            $vf_filters = array();
+            if (!empty($overlay_text)) {
+                $safe_text    = str_replace("'", "\\'", $overlay_text);
+                $vf_filters[] = "drawtext=text='{$safe_text}':fontcolor=white:fontsize=32:x=(w-text_w)/2:y=h-100:box=1:boxcolor=black@0.5:boxborderw=5";
+            }
+            if (!empty($vf_filters)) {
+                $vf = " -vf \"" . implode(',', $vf_filters) . "\" ";
+            }
+        }
+
+        $audio_input = '';
+        $audio_map   = '';
+        if (!empty($overlay_audio)) {
+            $overlay_audio_full_path = $dir . "/" . $overlay_audio;
+            if (file_exists($overlay_audio_full_path)) {
+                $audio_input = " -i " . escapeshellarg($overlay_audio_full_path) . " ";
+                if (!$is_reel) {
+                    $audio_map = " -map 0:v:0 -map 1:a:0 -shortest ";
+                }
+            }
+        }
+        if ($is_reel) {
+            if ($audio_input !== '' && is_array($reel_vf) && !empty($reel_vf['fc_audio_out'])) {
+                $audio_map = ' -map ' . escapeshellarg($reel_fc_video_out) . ' -map ' . escapeshellarg($reel_vf['fc_audio_out']) . ' -shortest ';
+            } elseif ($reel_uses_fc) {
+                if ($audio_input !== '') {
+                    $audio_idx = 1 + $reel_n_png;
+                    $audio_map = ' -map ' . escapeshellarg($reel_fc_video_out) . ' -map ' . $audio_idx . ':a:0 -shortest ';
+                } else {
+                    $audio_map = ' -map ' . escapeshellarg($reel_fc_video_out) . ' -map 0:a? ';
+                }
+            } elseif ($audio_input !== '') {
+                $audio_map = ' -map 0:v:0 -map 1:a:0 -shortest ';
+            }
+        }
+
+        $aac_part = '';
+        if ($is_reel || !empty($audio_input)) {
+            $aac_part = ' -c:a aac -b:a 192k -ar 48000 ';
+        }
+        $cmd = $ffmpeg_b
+            . " -y "
+            . $trim_opts
+            . " -i " . escapeshellarg($video_file_full_path)
+            . $reel_extra_inputs
+            . $audio_input
+            . $vf
+            . " -c:v libx264 -preset " . $wo['config']['convert_speed']
+            . Wo_ReelFfmpegMp4CompatOpts()
+            . $aac_part
+            . $audio_map
+            . " " . escapeshellarg($edited_video_full_path)
+            . " 2>&1";
+
+        shell_exec($cmd);
+        Wo_ReelCleanupReelFfmpegTemp($reel_ass_cleanup);
+
+        if (file_exists($edited_video_full_path)) {
+            $video_file_full_path = $edited_video_full_path;
+        }
     }
     if ($wo['config']['watermark'] == 1) {
 

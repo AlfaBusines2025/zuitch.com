@@ -3,3 +3,8 @@
 Add here your custom css styles Example: p { text-align: center; color: red; } 
 
 */
+
+/* Más padding interno en la barra de cookies */
+.cc-window {
+  margin: 0px 20px 70px !important; /* top, sides, bottom */
+}

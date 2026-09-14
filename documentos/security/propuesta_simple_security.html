@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Propuesta seguridad — Paquete anti-bots USD 350 | Zuitch</title>
+  <meta name="description" content="Propuesta comercial: protección anti-bots con Cloudflare, reCAPTCHA, Git y hardening básico para zuitch.com. Paquete cerrado USD 350.">
+  <link rel="shortcut icon" type="image/png" href="/themes/wowonder/img/icon.png">
+  <style>
+    :root {
+      --text: #1a2332;
+      --muted: #5c6575;
+      --border: #dce3ec;
+      --card: #ffffff;
+      --bg: #ebf3f5;
+      --accent: #235777;
+      --brand: #72b0be;
+      --brand-dark: #0d3b5c;
+      --ok: #0d6b3d;
+      --soft: #e8f0f6;
+      --radius: 12px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;
+      font-size: 15px;
+      line-height: 1.55;
+      color: var(--text);
+      background: var(--bg);
+    }
+    a { color: var(--accent); }
+    code {
+      font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+      font-size: 0.88em;
+      background: var(--soft);
+      padding: 1px 6px;
+      border-radius: 4px;
+    }
+    .wrap {
+      max-width: 920px;
+      margin: 0 auto;
+      padding: 28px 20px 56px;
+    }
+    header.doc {
+      background: linear-gradient(135deg, var(--brand-dark) 0%, var(--brand) 48%, var(--accent) 100%);
+      color: #fff;
+      border-radius: var(--radius);
+      padding: 32px 34px;
+      margin-bottom: 20px;
+      box-shadow: 0 8px 28px rgba(13, 59, 92, 0.22);
+    }
+    header.doc .eyebrow {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      opacity: 0.9;
+      background: rgba(255,255,255,0.16);
+      padding: 5px 10px;
+      border-radius: 999px;
+      margin-bottom: 12px;
+    }
+    header.doc h1 {
+      margin: 0 0 10px;
+      font-size: 1.5rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.25;
+    }
+    header.doc .subtitle {
+      margin: 0;
+      opacity: 0.92;
+      font-size: 0.98rem;
+      max-width: 62ch;
+    }
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-top: 22px;
+      padding-top: 18px;
+      border-top: 1px solid rgba(255,255,255,0.22);
+    }
+    @media (max-width: 720px) {
+      .meta-grid { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 420px) {
+      .meta-grid { grid-template-columns: 1fr; }
+    }
+    .meta-grid dt {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      opacity: 0.75;
+      margin: 0 0 4px;
+    }
+    .meta-grid dd {
+      margin: 0;
+      font-weight: 650;
+      font-size: 0.95rem;
+    }
+    section.block {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 22px 26px;
+      margin-bottom: 16px;
+      box-shadow: 0 2px 10px rgba(26, 35, 50, 0.04);
+    }
+    section.block h2 {
+      margin: 0 0 12px;
+      font-size: 1.08rem;
+      color: var(--accent);
+      padding-bottom: 10px;
+      border-bottom: 2px solid var(--soft);
+    }
+    section.block h3 {
+      margin: 18px 0 8px;
+      font-size: 0.95rem;
+      color: var(--text);
+    }
+    p.lead {
+      margin: 0 0 10px;
+      color: var(--muted);
+    }
+    ul.clean {
+      margin: 8px 0 0;
+      padding: 0;
+      list-style: none;
+    }
+    ul.clean li {
+      position: relative;
+      padding: 7px 0 7px 26px;
+      border-bottom: 1px solid #f0f3f7;
+    }
+    ul.clean li:last-child { border-bottom: none; }
+    ul.clean li::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 14px;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--brand);
+    }
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 8px;
+    }
+    @media (max-width: 720px) {
+      .two-col { grid-template-columns: 1fr; }
+    }
+    .feature-card {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+      background: #fafcfd;
+    }
+    .feature-card .tag {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--accent);
+      background: var(--soft);
+      padding: 3px 8px;
+      border-radius: 999px;
+      margin-bottom: 8px;
+    }
+    .feature-card h3 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+    }
+    .feature-card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+    .pill-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .pill {
+      font-size: 12px;
+      font-weight: 600;
+      padding: 5px 10px;
+      border-radius: 999px;
+      background: var(--soft);
+      color: var(--accent);
+      border: 1px solid var(--border);
+    }
+    table.deliver {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.92rem;
+      margin-top: 6px;
+    }
+    table.deliver th,
+    table.deliver td {
+      border: 1px solid var(--border);
+      padding: 10px 12px;
+      vertical-align: top;
+      text-align: left;
+    }
+    table.deliver th {
+      background: var(--soft);
+      color: var(--accent);
+      font-weight: 700;
+    }
+    table.deliver td.right,
+    table.deliver th.right { text-align: right; white-space: nowrap; }
+    table.deliver tr.total td {
+      font-weight: 700;
+      background: #f3faf6;
+      color: var(--ok);
+      font-size: 1.05rem;
+    }
+    .price-box {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      background: linear-gradient(135deg, #f3faf6, #e8f0f6);
+      border: 1px solid #c5e6d2;
+      border-radius: var(--radius);
+      padding: 20px 22px;
+      margin-top: 14px;
+    }
+    .price-box .amount {
+      font-size: 2.2rem;
+      font-weight: 800;
+      color: var(--ok);
+      letter-spacing: -0.03em;
+      line-height: 1;
+    }
+    .price-box .amount small {
+      display: block;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--muted);
+      letter-spacing: 0;
+      margin-top: 6px;
+    }
+    .price-box .note {
+      flex: 1;
+      min-width: 220px;
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+    .out {
+      color: var(--muted);
+      font-size: 0.9rem;
+      margin: 0;
+    }
+    .out ul {
+      margin: 8px 0 0;
+      padding-left: 18px;
+      color: var(--muted);
+    }
+    .callout {
+      margin-top: 14px;
+      padding: 14px 16px;
+      border-radius: 10px;
+      border-left: 4px solid var(--brand);
+      background: var(--soft);
+    }
+    .callout h3 {
+      margin: 0 0 6px;
+      font-size: 0.95rem;
+      color: var(--brand-dark);
+    }
+    .callout p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+    footer.doc {
+      margin-top: 8px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+    .sign {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 28px;
+      margin-top: 22px;
+    }
+    @media (max-width: 640px) {
+      .sign { grid-template-columns: 1fr; }
+    }
+    .sign-box {
+      border-top: 1px solid var(--border);
+      padding-top: 10px;
+      color: var(--muted);
+      font-size: 0.9rem;
+      min-height: 72px;
+    }
+    .print-bar {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 12px;
+    }
+    .print-bar button {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .print-bar button:hover { background: var(--brand-dark); }
+    @media print {
+      body { background: #fff; }
+      .wrap { padding: 0; max-width: 100%; }
+      .print-bar { display: none; }
+      header.doc, section.block { box-shadow: none; break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="print-bar">
+      <button type="button" onclick="window.print()">Imprimir / PDF</button>
+    </div>
+
+    <header class="doc">
+      <div class="eyebrow">Propuesta comercial · Seguridad</div>
+      <h1>Paquete anti-bots: Cloudflare, reCAPTCHA, Git y hardening básico</h1>
+      <p class="subtitle">
+        Protección práctica para zuitch.com frente a bots, spam y abuso de formularios/APIs,
+        con versionado seguro del código. Paquete cerrado, sin cambio de versión de PHP.
+      </p>
+      <dl class="meta-grid">
+        <div>
+          <dt>Cliente</dt>
+          <dd>Zuitch.com</dd>
+        </div>
+        <div>
+          <dt>Ámbito</dt>
+          <dd>Edge + app + Git</dd>
+        </div>
+        <div>
+          <dt>Fecha</dt>
+          <dd>04/09/2026</dd>
+        </div>
+        <div>
+          <dt>Inversión</dt>
+          <dd>USD 350</dd>
+        </div>
+      </dl>
+    </header>
+
+    <section class="block">
+      <h2>1. Objetivo</h2>
+      <p class="lead">
+        Reducir tráfico automatizado y abuso sobre la plataforma social, filtrando amenazas antes de que lleguen al servidor
+        (Cloudflare), reforzando formularios públicos (reCAPTCHA) y dejando el código versionado de forma limpia en Git.
+      </p>
+      <div class="pill-row">
+        <span class="pill">Cloudflare WAF / bots</span>
+        <span class="pill">reCAPTCHA</span>
+        <span class="pill">Rate limit</span>
+        <span class="pill">Headers básicos</span>
+        <span class="pill">Git sin secretos</span>
+        <span class="pill">Paquete USD 350</span>
+      </div>
+    </section>
+
+    <section class="block">
+      <h2>2. Alcance incluido</h2>
+      <div class="two-col">
+        <article class="feature-card">
+          <span class="tag">Módulo A</span>
+          <h3>Cloudflare</h3>
+          <p>Configuración técnica tras el alta del cliente: SSL Full (Strict), protección anti-bots, WAF básico y rate limit en rutas sensibles.</p>
+        </article>
+        <article class="feature-card">
+          <span class="tag">Módulo B</span>
+          <h3>reCAPTCHA + Git + hardening</h3>
+          <p>Activación de claves en Admin, formularios verificados, Git limpio y refuerzo básico del origen (headers y archivos sensibles).</p>
+        </article>
+      </div>
+
+      <h3>A — Cloudflare (anti-bots en el borde)</h3>
+      <ul class="clean">
+        <li>Revisión de DNS/proxy naranja en hosts web acordados (<code>zuitch.com</code>, <code>www</code> y subdominios que indiquen).</li>
+        <li>SSL/TLS en modo <strong>Full (Strict)</strong>.</li>
+        <li>Bot Fight / reglas anti-bots según el plan de Cloudflare del cliente.</li>
+        <li>WAF managed rules básicas + rate limit en login/registro, <code>/requests.php</code> y <code>/api*</code>.</li>
+        <li>Ajuste de excepciones si la app o APIs legítimas reciben falsos positivos (incluido en el paquete, ver condiciones).</li>
+      </ul>
+
+      <h3>B — Google reCAPTCHA</h3>
+      <ul class="clean">
+        <li>Activar/verificar Site Key y Secret Key en el panel Admin.</li>
+        <li>Comprobar formularios ya contemplados: registro, contacto, recuperación de contraseña y blogs.</li>
+      </ul>
+
+      <h3>C — Git y versionamiento</h3>
+      <ul class="clean">
+        <li>Refuerzo de <code>.gitignore</code> (sin <code>config.php</code>, SQL, zips, uploads, logs).</li>
+        <li>Flujo simple: rama → cambios → merge → deploy en Plesk.</li>
+        <li>Checklist breve pre-deploy (backup + smoke test).</li>
+      </ul>
+
+      <h3>D — Hardening básico del origen</h3>
+      <ul class="clean">
+        <li>Headers: <code>X-Frame-Options</code>, <code>X-Content-Type-Options</code> (y alineación con HSTS existente).</li>
+        <li>Bloqueo o retiro de exposición HTTP de backups/SQL/zips en el webroot.</li>
+        <li>Revisión rápida del control de intentos de login fallidos.</li>
+      </ul>
+
+      <h3>Pruebas de entrega</h3>
+      <ul class="clean">
+        <li>Smoke test: home, login, un formulario con captcha y acceso admin.</li>
+        <li>Hasta <strong>2 horas</strong> de ajustes post-entrega por falsos positivos de bots.</li>
+      </ul>
+    </section>
+
+    <section class="block">
+      <h2>3. Lo que prepara el cliente</h2>
+      <p class="lead">Sin estos datos no se puede cerrar la configuración. Se entregan por canal seguro (no en este documento).</p>
+      <ul class="clean">
+        <li><strong>Cloudflare:</strong> crear cuenta, añadir <code>zuitch.com</code>, cambiar nameservers en el registrador, activar proxy naranja y enviar Zone ID + API Token.</li>
+        <li><strong>reCAPTCHA v2:</strong> Site Key + Secret Key con dominios <code>zuitch.com</code> y <code>www.zuitch.com</code>.</li>
+        <li><strong>GitHub:</strong> acceso de colaborador al repositorio del proyecto.</li>
+        <li><strong>Ventana DNS:</strong> horario acordado para el cambio de nameservers.</li>
+      </ul>
+      <div class="callout">
+        <h3>Costos a cargo del cliente</h3>
+        <p>
+          Plan de Cloudflare (Free u otro que elijan), cuenta Google para reCAPTCHA y el dominio.
+          El paquete de USD 350 cubre solo el trabajo técnico de implementación descrito.
+        </p>
+      </div>
+    </section>
+
+    <section class="block">
+      <h2>4. Entregables</h2>
+      <table class="deliver">
+        <thead>
+          <tr>
+            <th>Entregable</th>
+            <th>Descripción</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Cloudflare operativo</td>
+            <td>SSL Full Strict, anti-bots, WAF básico y rate limit en rutas sensibles.</td>
+          </tr>
+          <tr>
+            <td>reCAPTCHA activo</td>
+            <td>Keys en Admin y formularios públicos verificados.</td>
+          </tr>
+          <tr>
+            <td>Git limpio</td>
+            <td>.gitignore reforzado + flujo de versionado documentado de forma breve.</td>
+          </tr>
+          <tr>
+            <td>Hardening básico</td>
+            <td>Headers + webroot sin artefactos sensibles expuestos por HTTP.</td>
+          </tr>
+          <tr>
+            <td>Prueba smoke + 2 h ajuste</td>
+            <td>Validación de rutas clave y ventana corta por falsos positivos.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="block">
+      <h2>5. Inversión</h2>
+      <table class="deliver">
+        <thead>
+          <tr>
+            <th>Concepto</th>
+            <th class="right">Valor (USD)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Cloudflare: SSL, bots, WAF básico y rate limit</td>
+            <td class="right">Incluido</td>
+          </tr>
+          <tr>
+            <td>reCAPTCHA: activación y verificación de formularios</td>
+            <td class="right">Incluido</td>
+          </tr>
+          <tr>
+            <td>Git: .gitignore y flujo de versionado</td>
+            <td class="right">Incluido</td>
+          </tr>
+          <tr>
+            <td>Hardening básico (headers + webroot) + smoke test + 2 h ajuste</td>
+            <td class="right">Incluido</td>
+          </tr>
+          <tr class="total">
+            <td>Total del paquete</td>
+            <td class="right">USD 350</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="price-box">
+        <div class="amount">
+          $350
+          <small>Paquete cerrado · un solo pago</small>
+        </div>
+        <p class="note">
+          Precio único por el alcance de esta propuesta. No incluye cambio de versión de PHP,
+          pentest, CI/CD, backups offsite ni soporte mensual.
+        </p>
+      </div>
+    </section>
+
+    <section class="block">
+      <h2>6. Fuera de alcance</h2>
+      <ul class="out">
+        <li>Migración o actualización de versión de PHP (p. ej. 7.4 → 8.x).</li>
+        <li>Auditoría / pentest formal certificado.</li>
+        <li>GitHub Actions, deploy automático o monitoreo 24/7.</li>
+        <li>CSP agresiva, rediseño de seguridad de toda la API o del livestream Node.</li>
+        <li>Backups offsite de media o base de datos.</li>
+        <li>Soporte mensual recurrente (salvo las 2 h de ajuste incluidas).</li>
+        <li>Cualquier trabajo no listado en el alcance: requiere propuesta aparte.</li>
+      </ul>
+    </section>
+
+    <section class="block">
+      <h2>7. Condiciones</h2>
+      <ul class="clean">
+        <li>Implementación sobre la plataforma actual WoWonder de <strong>zuitch.com</strong> (Plesk).</li>
+        <li>El cliente completa el alta de Cloudflare, reCAPTCHA y acceso Git antes o durante el inicio de trabajos.</li>
+        <li>El cambio de nameservers puede implicar una ventana breve de propagación DNS; se coordina horario.</li>
+        <li>Las 2 horas de ajuste post-entrega cubren falsos positivos de bots; el resto se cotiza aparte.</li>
+      </ul>
+      <div class="sign">
+        <div class="sign-box">
+          <strong>Por el proveedor</strong><br>
+          Nombre / firma<br>
+          Fecha: _______________
+        </div>
+        <div class="sign-box">
+          <strong>Por el cliente (Zuitch)</strong><br>
+          Nombre / firma<br>
+          Fecha: _______________
+        </div>
+      </div>
+    </section>
+
+    <footer class="doc">
+      Documento de propuesta · Zuitch.com · Seguridad anti-bots · Paquete cerrado USD 350 · 04/09/2026
+    </footer>
+  </div>
+</body>
+</html>

@@ -10,7 +10,41 @@ $response_data  = array();
 $error_code     = 0;
 $error_message  = '';
 $type           = (!empty($_GET['type'])) ? Wo_Secure($_GET['type'], 0) : false;
+
+/*
+$_POST['server_key'] = $_REQUEST['server_key'] ;
+$_POST['username'] = $_REQUEST['username'] ;
+$_POST['password'] = $_REQUEST['password'] ;
+*/
+
+// ─── Leer cuerpo JSON y pasarlo a $_POST ───────────────────────────
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($_POST)) {
+    $raw  = file_get_contents('php://input');          // cuerpo crudo
+    $json = json_decode($raw, true);                   // a array asociativo
+
+    if (json_last_error() === JSON_ERROR_NONE && is_array($json)) {
+        // Copia cada par clave-valor a $_POST y $_REQUEST
+        foreach ($json as $k => $v) {
+            $_POST[$k]    = $v;
+            $_REQUEST[$k] = $v;
+        }
+    }
+}
+
+/* ─── Detectar si NO se necesita server_key ────────────────────────── */
+$no_key_needed = empty($server_key);                         // clave vacía
+$uri           = $_SERVER['REQUEST_URI']  ?? '';
+$referer       = $_SERVER['HTTP_REFERER'] ?? '';
+
+if (stripos($uri,     'set-browser-cookie') !== false ||
+    stripos($referer, 'set-browser-cookie') !== false) {
+    $no_key_needed = true;
+	$_POST['server_key'] = $wo['config']['widnows_app_api_key'];
+}
+
 $server_key     = (!empty($_POST['server_key'])) ? Wo_Secure($_POST['server_key'], 0) : false;
+
+
 if (empty($type)) {
     $response_data = array(
         'api_status' => '404',

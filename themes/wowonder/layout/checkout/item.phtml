@@ -1,3 +1,111 @@
+<?php
+
+/* ========= INICIALIZA MAPA ID => CODE (EC/US/...) =========
+   Opción A (recomendada): defínelo una sola vez ANTES del loop*/
+   $COUNTRY_LIST_BY_ID_JSON = '[
+	  {"id": 1, "code": "US"},{"id": 2, "code": "CA"},{"id": 3, "code": "AF"},{"id": 4, "code": "AL"},
+	  {"id": 5, "code": "DZ"},{"id": 6, "code": "AS"},{"id": 7, "code": "AD"},{"id": 8, "code": "AO"},
+	  {"id": 9, "code": "AI"},{"id": 10, "code": "AQ"},{"id": 11, "code": "AG"},{"id": 12, "code": "AR"},
+	  {"id": 13, "code": "AM"},{"id": 14, "code": "AW"},{"id": 15, "code": "AU"},{"id": 16, "code": "AT"},
+	  {"id": 17, "code": "AZ"},{"id": 18, "code": "BS"},{"id": 19, "code": "BH"},{"id": 20, "code": "BD"},
+	  {"id": 21, "code": "BB"},{"id": 22, "code": "BY"},{"id": 23, "code": "BE"},{"id": 24, "code": "BZ"},
+	  {"id": 25, "code": "BJ"},{"id": 26, "code": "BM"},{"id": 27, "code": "BT"},{"id": 28, "code": "BO"},
+	  {"id": 29, "code": "BA"},{"id": 30, "code": "BW"},{"id": 31, "code": "BV"},{"id": 32, "code": "BR"},
+	  {"id": 33, "code": "BN"},{"id": 34, "code": "BG"},{"id": 35, "code": "BF"},{"id": 36, "code": "BI"},
+	  {"id": 37, "code": "KH"},{"id": 38, "code": "CM"},{"id": 39, "code": "CV"},{"id": 40, "code": "KY"},
+	  {"id": 41, "code": "CF"},{"id": 42, "code": "TD"},{"id": 43, "code": "CL"},{"id": 44, "code": "CN"},
+	  {"id": 45, "code": "CX"},{"id": 46, "code": "CC"},{"id": 47, "code": "CO"},{"id": 48, "code": "KM"},
+	  {"id": 49, "code": "CG"},{"id": 50, "code": "CK"},{"id": 51, "code": "CR"},{"id": 52, "code": "HR"},
+	  {"id": 53, "code": "CU"},{"id": 54, "code": "CY"},{"id": 55, "code": "CZ"},{"id": 56, "code": "DK"},
+	  {"id": 57, "code": "DJ"},{"id": 58, "code": "DM"},{"id": 59, "code": "DO"},{"id": 60, "code": "TL"},
+	  {"id": 61, "code": "EC"},{"id": 62, "code": "EG"},{"id": 63, "code": "SV"},{"id": 64, "code": "GQ"},
+	  {"id": 65, "code": "ER"},{"id": 66, "code": "EE"},{"id": 67, "code": "ET"},{"id": 68, "code": "FK"},
+	  {"id": 69, "code": "FO"},{"id": 70, "code": "FJ"},{"id": 71, "code": "FI"},{"id": 72, "code": "FR"},
+	  {"id": 73, "code": "FX"},{"id": 74, "code": "GF"},{"id": 75, "code": "PF"},{"id": 76, "code": "TF"},
+	  {"id": 77, "code": "GA"},{"id": 78, "code": "GM"},{"id": 79, "code": "GE"},{"id": 80, "code": "DE"},
+	  {"id": 81, "code": "GH"},{"id": 82, "code": "GI"},{"id": 83, "code": "GR"},{"id": 84, "code": "GL"},
+	  {"id": 85, "code": "GD"},{"id": 86, "code": "GP"},{"id": 87, "code": "GU"},{"id": 88, "code": "GT"},
+	  {"id": 89, "code": "GN"},{"id": 90, "code": "GW"},{"id": 91, "code": "GY"},{"id": 92, "code": "HT"},
+	  {"id": 93, "code": "HM"},{"id": 94, "code": "HN"},{"id": 95, "code": "HK"},{"id": 96, "code": "HU"},
+	  {"id": 97, "code": "IS"},{"id": 98, "code": "IN"},{"id": 99, "code": "ID"},{"id": 100, "code": "IR"},
+	  {"id": 101, "code": "IQ"},{"id": 102, "code": "IE"},{"id": 103, "code": "IL"},{"id": 104, "code": "IT"},
+	  {"id": 105, "code": "CI"},{"id": 106, "code": "JM"},{"id": 107, "code": "JP"},{"id": 108, "code": "JO"},
+	  {"id": 109, "code": "KZ"},{"id": 110, "code": "KE"},{"id": 111, "code": "KI"},{"id": 112, "code": "KP"},
+	  {"id": 113, "code": "KR"},{"id": 114, "code": "XK"},{"id": 115, "code": "KW"},{"id": 116, "code": "KG"},
+	  {"id": 117, "code": "LA"},{"id": 118, "code": "LV"},{"id": 119, "code": "LB"},{"id": 120, "code": "LS"},
+	  {"id": 121, "code": "LR"},{"id": 122, "code": "LY"},{"id": 123, "code": "LI"},{"id": 124, "code": "LT"},
+	  {"id": 125, "code": "LU"},{"id": 126, "code": "MO"},{"id": 127, "code": "MK"},{"id": 128, "code": "MG"},
+	  {"id": 129, "code": "MW"},{"id": 130, "code": "MY"},{"id": 131, "code": "MV"},{"id": 132, "code": "ML"},
+	  {"id": 133, "code": "MT"},{"id": 134, "code": "MH"},{"id": 135, "code": "MQ"},{"id": 136, "code": "MR"},
+	  {"id": 137, "code": "MU"},{"id": 138, "code": "YT"},{"id": 139, "code": "MX"},{"id": 140, "code": "FM"},
+	  {"id": 141, "code": "MD"},{"id": 142, "code": "MC"},{"id": 143, "code": "MN"},{"id": 144, "code": "ME"},
+	  {"id": 145, "code": "MS"},{"id": 146, "code": "MA"},{"id": 147, "code": "MZ"},{"id": 148, "code": "MM"},
+	  {"id": 149, "code": "NA"},{"id": 150, "code": "NR"},{"id": 151, "code": "NP"},{"id": 152, "code": "NL"},
+	  {"id": 153, "code": "AN"},{"id": 154, "code": "NC"},{"id": 155, "code": "NZ"},{"id": 156, "code": "NI"},
+	  {"id": 157, "code": "NE"},{"id": 158, "code": "NG"},{"id": 159, "code": "NU"},{"id": 160, "code": "NF"},
+	  {"id": 161, "code": "MP"},{"id": 162, "code": "NO"},{"id": 163, "code": "OM"},{"id": 164, "code": "PK"},
+	  {"id": 165, "code": "PW"},{"id": 166, "code": "PA"},{"id": 167, "code": "PG"},{"id": 168, "code": "PY"},
+	  {"id": 169, "code": "PE"},{"id": 170, "code": "PH"},{"id": 171, "code": "PN"},{"id": 172, "code": "PL"},
+	  {"id": 173, "code": "PT"},{"id": 174, "code": "PR"},{"id": 175, "code": "QA"},{"id": 176, "code": "RE"},
+	  {"id": 177, "code": "RO"},{"id": 178, "code": "RU"},{"id": 179, "code": "RW"},{"id": 180, "code": "KN"},
+	  {"id": 181, "code": "LC"},{"id": 182, "code": "VC"},{"id": 183, "code": "WS"},{"id": 184, "code": "SM"},
+	  {"id": 185, "code": "ST"},{"id": 186, "code": "SA"},{"id": 187, "code": "SN"},{"id": 188, "code": "RS"},
+	  {"id": 189, "code": "SC"},{"id": 190, "code": "SL"},{"id": 191, "code": "SG"},{"id": 192, "code": "SK"},
+	  {"id": 193, "code": "SI"},{"id": 194, "code": "SB"},{"id": 195, "code": "SO"},{"id": 196, "code": "ZA"},
+	  {"id": 197, "code": "GS"},{"id": 198, "code": "ES"},{"id": 199, "code": "LK"},{"id": 200, "code": "SH"},
+	  {"id": 201, "code": "PM"},{"id": 202, "code": "SD"},{"id": 203, "code": "SR"},{"id": 204, "code": "SJ"},
+	  {"id": 205, "code": "SZ"},{"id": 206, "code": "SE"},{"id": 207, "code": "CH"},{"id": 208, "code": "SY"},
+	  {"id": 209, "code": "TW"},{"id": 210, "code": "TJ"},{"id": 211, "code": "TZ"},{"id": 212, "code": "TH"},
+	  {"id": 213, "code": "TG"},{"id": 214, "code": "TK"},{"id": 215, "code": "TO"},{"id": 216, "code": "TT"},
+	  {"id": 217, "code": "TN"},{"id": 218, "code": "TR"},{"id": 219, "code": "TM"},{"id": 220, "code": "TC"},
+	  {"id": 221, "code": "TV"},{"id": 222, "code": "UG"},{"id": 223, "code": "UA"},{"id": 224, "code": "AE"},
+	  {"id": 225, "code": "GB"},{"id": 226, "code": "UM"},{"id": 227, "code": "UY"},{"id": 228, "code": "UZ"},
+	  {"id": 229, "code": "VU"},{"id": 230, "code": "VA"},{"id": 231, "code": "VE"},{"id": 232, "code": "VN"},
+	  {"id": 233, "code": "YE"},{"id": 234, "code": "YU"},{"id": 235, "code": "ZR"},{"id": 236, "code": "ZM"},
+	  {"id": 237, "code": "ZW"},{"id": 238, "code": "PS"}
+	]';
+
+if (!isset($COUNTRY_CODE_BY_ID) || !is_array($COUNTRY_CODE_BY_ID)) {
+  $COUNTRY_CODE_BY_ID = [];
+  if (isset($COUNTRY_LIST_BY_ID_JSON)) {
+    $rows = json_decode($COUNTRY_LIST_BY_ID_JSON, true);
+    if (is_array($rows)) {
+      foreach ($rows as $r) {
+        if (isset($r['id'], $r['code'])) {
+          $COUNTRY_CODE_BY_ID[(string)$r['id']] = (string)$r['code'];
+        }
+      }
+    }
+  }
+  // Fallback mínimo por si no pegaste la lista aún (evita vacío):
+  $COUNTRY_CODE_BY_ID += ['1'=>'US','2'=>'CA','61'=>'EC'];
+}
+
+/* ===== Helpers ===== */
+if (!function_exists('dhl_resolve_val')) {
+  function dhl_resolve_val(array $product, $v): string {
+    if ($v === null) return '';
+    $key = trim((string)$v);
+    $known = ['originPostalCode','originCityName','weight','length','width','height'];
+    if (in_array($key, $known, true) && array_key_exists($key, $product)) {
+      $val = $product[$key];
+      return ($val === null) ? '' : (string)$val;
+    }
+    if (array_key_exists($key, $product)) {
+      $val = $product[$key];
+      return ($val === null) ? '' : (string)$val;
+    }
+    return $key;
+  }
+}
+if (!function_exists('dhl_country_code_by_id')) {
+  function dhl_country_code_by_id(?string $id, array $map): string {
+    if (!$id) return '';
+    return $map[$id] ?? '';
+  }
+}
+?>
+
 <div class="col-sm-3 ch_main_items">
 	<div class="prod_img">
 		<a href="<?php echo $wo['product']['user_data']['url'];?>" data-ajax="?link1=timeline&u=<?php echo $wo['product']['user_data']['username'];?>">
@@ -5,16 +113,22 @@
 		</a>
 		<div><?php echo (!empty($wo['currencies'][$wo['product']['currency']]['symbol'])) ? $wo['currencies'][$wo['product']['currency']]['symbol'] : $wo['config']['classified_currency_s'];?><?php echo $wo['product']['price']?></div>
 	</div>
+
     <div class="prod_info">
         <h4><a href="<?php echo $wo['product']['url'];?>" data-ajax="?link1=post&id=<?php echo $wo['product']['seo_id']?>"><?php echo $wo['product']['name'];?></a></h4>
 		<p><a href="<?php echo $wo['product']['user_data']['url'];?>" data-ajax="?link1=timeline&u=<?php echo $wo['product']['user_data']['username'];?>"><?php echo $wo['product']['user_data']['name'];?></a></p>
         <div class="price-wrap">
 			<div class="quantity">
-				<?php echo $wo['lang']['qty']; ?> <div class="ch_qty_toggle">
+				<?php echo $wo['lang']['qty']; ?> 
+                <div class="ch_qty_toggle">
 					<div class="value-button" onclick="decreaseValueMax<?php echo $wo['product']['id'];?>()">
 						<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M19,13H5V11H19V13Z"></path></svg>
 					</div>
-					<input type="number" id="qty_<?php echo $wo['product']['id'];?>" name="" max="$wo['product']['units']" min="1" onchange="ChangeQty(this,'<?php echo $wo['product']['id'];?>')" value="<?php echo $wo['item']->units; ?>">
+					<input type="number" id="qty_<?php echo $wo['product']['id'];?>" name=""
+						   max="<?php echo $wo['product']['units'];?>"
+						   min="1"
+						   onchange="ChangeQty(this,'<?php echo $wo['product']['id'];?>')"
+						   value="<?php echo $wo['item']->units; ?>">
 					<div class="value-button" onclick="increaseValueMax<?php echo $wo['product']['id'];?>()">
 						<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z"></path></svg>
 					</div>
@@ -22,8 +136,9 @@
 			</div>
 		</div>
     </div>
-	<div class="closed" onclick="RemoveProductFromCart('<?php echo $wo['product']['id'];?>');LoadCheckout();">&#10005;</div>
 
+	<div class="closed" onclick="RemoveProductFromCart('<?php echo $wo['product']['id'];?>');LoadCheckout();">&#10005;</div>
+	
 	<script>
 		function increaseValueMax<?php echo $wo['product']['id'];?>() {
 			var value = parseInt(document.getElementById('qty_<?php echo $wo['product']['id'];?>').value, 10);
@@ -41,4 +156,101 @@
 			ChangeQty('#qty_<?php echo $wo['product']['id'];?>','<?php echo $wo['product']['id'];?>');
 		}
 	</script>
+
+	<?php
+	/**
+	 * ==== CAPTURA EN PHP Y GUARDA EN INPUTS HIDDEN ====
+	 * Necesita $COUNTRY_CODE_BY_ID (id => code) definido antes del loop.
+	 */
+
+	if (!function_exists('dhl_resolve_val')) {
+		function dhl_resolve_val(array $product, $v): string {
+			if ($v === null) return '';
+			$key = trim((string)$v);
+			$known = ['originPostalCode','originCityName','weight','length','width','height'];
+			if (in_array($key, $known, true) && array_key_exists($key, $product)) {
+				$val = $product[$key];
+				return ($val === null) ? '' : (string)$val;
+			}
+			if (array_key_exists($key, $product)) {
+				$val = $product[$key];
+				return ($val === null) ? '' : (string)$val;
+			}
+			return $key;
+		}
+	}
+	if (!function_exists('dhl_country_code_by_id')) {
+		function dhl_country_code_by_id(?string $id, ?array $map): string {
+			if (!$id || !$map) return '';
+			return $map[$id] ?? '';
+		}
+	}
+
+	$product = $wo['product'];
+	$fields  = isset($product['fields']) && is_array($product['fields']) ? $product['fields'] : $product;
+
+	$productId        = isset($product['id']) ? (string)$product['id'] : '';
+	$shippingMethodId = isset($fields['fid_1']) ? (string)$fields['fid_1'] : '';
+	$isDHL            = ($shippingMethodId === '1');
+
+	$countryId         = isset($fields['fid_3']) ? (string)$fields['fid_3'] : '';
+	$originCountryCode = dhl_country_code_by_id($countryId, isset($COUNTRY_CODE_BY_ID) && is_array($COUNTRY_CODE_BY_ID) ? $COUNTRY_CODE_BY_ID : null);
+
+	// NUEVO: cantidad desde el item del carrito
+	$itemQuantity = isset($wo['item']) && isset($wo['item']->units) ? (string)$wo['item']->units : '1';
+
+	$params = [
+		'originCountryCode' => $originCountryCode,
+		'originPostalCode'  => dhl_resolve_val($product, $fields['fid_4'] ?? null),
+		'originCityName'    => dhl_resolve_val($product, $fields['fid_5'] ?? null),
+		'weight'            => dhl_resolve_val($product, $fields['fid_6'] ?? null),
+		'length'            => dhl_resolve_val($product, $fields['fid_7'] ?? null),
+		'width'             => dhl_resolve_val($product, $fields['fid_8'] ?? null),
+		'height'            => dhl_resolve_val($product, $fields['fid_9'] ?? null),
+
+		// NUEVO: incluir cantidad en el payload
+		'quantity'          => $itemQuantity,
+	];
+
+	$out = [
+		'product_id'         => $productId,
+		'dhl_active'         => $isDHL ? 1 : 0,
+		'shipping_method_id' => $shippingMethodId,
+		'origin_country_id'  => $countryId,
+	] + $params;
+
+	// Hidden inputs (uno por campo) => dhl_meta[PRODUCT_ID][campo]
+	$baseName = 'dhl_meta[' . htmlspecialchars($productId, ENT_QUOTES, 'UTF-8') . ']';
+	?>
+	<!-- Hidden meta DHL por producto -->
+	<input type="hidden" name="<?php echo $baseName; ?>[product_id]"         value="<?php echo htmlspecialchars($out['product_id'], ENT_QUOTES, 'UTF-8'); ?>">
+	<input type="hidden" name="<?php echo $baseName; ?>[dhl_active]"         value="<?php echo htmlspecialchars((string)$out['dhl_active'], ENT_QUOTES, 'UTF-8'); ?>">
+	<input type="hidden" name="<?php echo $baseName; ?>[shipping_method_id]" value="<?php echo htmlspecialchars($out['shipping_method_id'], ENT_QUOTES, 'UTF-8'); ?>">
+	<input type="hidden" name="<?php echo $baseName; ?>[origin_country_id]"  value="<?php echo htmlspecialchars($out['origin_country_id'], ENT_QUOTES, 'UTF-8'); ?>">
+
+	<input type="hidden" name="<?php echo $baseName; ?>[originCountryCode]"  value="<?php echo htmlspecialchars($out['originCountryCode'], ENT_QUOTES, 'UTF-8'); ?>">
+	<input type="hidden" name="<?php echo $baseName; ?>[originPostalCode]"   value="<?php echo htmlspecialchars($out['originPostalCode'], ENT_QUOTES, 'UTF-8'); ?>">
+	<input type="hidden" name="<?php echo $baseName; ?>[originCityName]"     value="<?php echo htmlspecialchars($out['originCityName'], ENT_QUOTES, 'UTF-8'); ?>">
+
+	<input type="hidden" name="<?php echo $baseName; ?>[weight]"             value="<?php echo htmlspecialchars($out['weight'], ENT_QUOTES, 'UTF-8'); ?>">
+	<input type="hidden" name="<?php echo $baseName; ?>[length]"             value="<?php echo htmlspecialchars($out['length'], ENT_QUOTES, 'UTF-8'); ?>">
+	<input type="hidden" name="<?php echo $baseName; ?>[width]"              value="<?php echo htmlspecialchars($out['width'], ENT_QUOTES, 'UTF-8'); ?>">
+	<input type="hidden" name="<?php echo $baseName; ?>[height]"             value="<?php echo htmlspecialchars($out['height'], ENT_QUOTES, 'UTF-8'); ?>">
+
+	<!-- NUEVO: hidden individual de cantidad -->
+	<input type="hidden" name="<?php echo $baseName; ?>[quantity]"           value="<?php echo htmlspecialchars($out['quantity'], ENT_QUOTES, 'UTF-8'); ?>">
+
+	<!-- Hidden con el JSON completo para este producto (incluye quantity) -->
+	<input type="hidden" name="dhl_meta_json[<?php echo htmlspecialchars($productId, ENT_QUOTES, 'UTF-8');?>]" 
+	       value="<?php echo htmlspecialchars(json_encode($out, JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES), ENT_QUOTES, 'UTF-8'); ?>">
+
+	<?php
+	// Acumular para JSON global (después del loop imprímelo en un hidden único)
+	if (!isset($GLOBALS['DHL_CART']) || !is_array($GLOBALS['DHL_CART'])) {
+		$GLOBALS['DHL_CART'] = [];
+	}
+	$GLOBALS['DHL_CART'][] = $out;
+	?>
+	
+	
 </div>

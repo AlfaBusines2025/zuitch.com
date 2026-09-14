@@ -1,0 +1,15 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls",
+      "delegate_permission/common.get_login_creds"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.zuitch.app",
+      "sha256_cert_fingerprints": [
+        "76:22:F8:6A:8E:6C:34:EE:43:CC:A8:E3:60:7A:99:18:69:52:64:E8:54:21:57:D7:9D:31:49:BA:D0:3A:B9:A2"
+      ]
+    }
+  }
+]

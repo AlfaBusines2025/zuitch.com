@@ -394,138 +394,264 @@ if ($f == 'products') {
         exit();
     }
     if ($s == 'buy') {
-        $data['status'] = 400;
-        if (!empty($_POST['address_id']) && is_numeric($_POST['address_id']) && $_POST['address_id'] > 0) {
-            $address = $db->where('id',Wo_Secure($_POST['address_id']))->where('user_id',$wo['user']['user_id'])->getOne(T_USER_ADDRESS);
-            if (!empty($address)) {
-                $items = $db->where('user_id',$wo['user']['user_id'])->get(T_USERCARD);
-                $html = '';
-                $total = 0;
-                $insert = array();
-                $wo['main_product'] = '';
+    $data['status'] = 400;
+    if (!empty($_POST['address_id']) && is_numeric($_POST['address_id']) && $_POST['address_id'] > 0) {
+        $address = $db->where('id',Wo_Secure($_POST['address_id']))->where('user_id',$wo['user']['user_id'])->getOne(T_USER_ADDRESS);
 
-                if (!empty($items)) {
-                    foreach ($items as $key => $item) {
-                        $product = $wo['main_product'] = Wo_GetProduct($item->product_id);
-                        if ($item->units <= $product['units']) {
-                            if (!empty($wo['currencies']) && !empty($wo['currencies'][$product['currency']]) && $wo['currencies'][$product['currency']]['text'] != $wo['config']['currency'] && !empty($wo['config']['exchange']) && !empty($wo['config']['exchange'][$wo['currencies'][$product['currency']]['text']])) {
-                                $total += (($product['price'] / $wo['config']['exchange'][$wo['currencies'][$product['currency']]['text']]) * $item->units);
-                            }
-                            else{
-                                $total += ($product['price'] * $item->units);
-                            }
-                            if (!in_array($product['user_id'], array_keys($insert))) {
-                                $f_price = $product['price'];
-                                if (!empty($wo['config']['exchange']) && !empty($wo['config']['exchange'][$wo['currencies'][$product['currency']]['text']])) {
-                                    $f_price = ($product['price'] / $wo['config']['exchange'][$wo['currencies'][$product['currency']]['text']]);
-                                }
-                                $insert[$product['user_id']] = array();
-                                $insert[$product['user_id']][] = array('product_id' => $product['id'],
-                                                                       'price' => $f_price,
-                                                                       'units' => $item->units);
-                            }
-                            else{
-                                $f_price = $product['price'];
-                                if (!empty($wo['config']['exchange']) && !empty($wo['config']['exchange'][$wo['currencies'][$product['currency']]['text']])) {
-                                    $f_price = ($product['price'] / $wo['config']['exchange'][$wo['currencies'][$product['currency']]['text']]);
-                                }
-                                $insert[$product['user_id']][] = array('product_id' => $product['id'],
-                                                                       'price' => $f_price,
-                                                                       'units' => $item->units);
-                            }
+        // === NUEVO: leer y normalizar dhl_total desde el POST ===
+        $dhl_total = 0.0;
+        if (isset($_POST['dhl_total']) && $_POST['dhl_total'] !== '') {
+            $raw = preg_replace('/[^\d,.\-]/', '', $_POST['dhl_total']);
+            if ($raw !== '') {
+                if (strpos($raw, ',') !== false && strpos($raw, '.') === false) {
+                    $raw = str_replace(',', '.', $raw);
+                } else {
+                    $raw = str_replace(',', '', $raw);
+                }
+                if (is_numeric($raw)) {
+                    $dhl_total = (float)$raw;
+                }
+            }
+        }
+        if ($dhl_total < 0) { $dhl_total = 0.0; }
+        // === FIN NUEVO ===
+
+        if (!empty($address)) {
+            $items = $db->where('user_id',$wo['user']['user_id'])->get(T_USERCARD);
+            $html = '';
+
+            // Usaremos $cart_subtotal para no pisar $total en bucles internos.
+            $cart_subtotal = 0.0;
+            $insert = array();
+            $wo['main_product'] = '';
+
+            if (!empty($items)) {
+                foreach ($items as $key => $item) {
+                    $product = $wo['main_product'] = Wo_GetProduct($item->product_id);
+                    if ($item->units <= $product['units']) {
+                        if (!empty($wo['currencies']) && !empty($wo['currencies'][$product['currency']]) && $wo['currencies'][$product['currency']]['text'] != $wo['config']['currency'] && !empty($wo['config']['exchange']) && !empty($wo['config']['exchange'][$wo['currencies'][$product['currency']]['text']])) {
+                            $cart_subtotal += (($product['price'] / $wo['config']['exchange'][$wo['currencies'][$product['currency']]['text']]) * $item->units);
                         }
                         else{
-                            $data['message'] = $error_icon . $wo['lang']['some_products_units'];
-                            header('Content-Type: application/json');
-                            echo json_encode($data);
-                            exit();
+                            $cart_subtotal += ($product['price'] * $item->units);
+                        }
+                        if (!in_array($product['user_id'], array_keys($insert))) {
+                            $f_price = $product['price'];
+                            if (!empty($wo['config']['exchange']) && !empty($wo['config']['exchange'][$wo['currencies'][$product['currency']]['text']])) {
+                                $f_price = ($product['price'] / $wo['config']['exchange'][$wo['currencies'][$product['currency']]['text']]);
+                            }
+                            $insert[$product['user_id']] = array();
+                            $insert[$product['user_id']][] = array(
+                                'product_id' => $product['id'],
+                                'price'      => $f_price, // precio en moneda del sitio
+                                'units'      => $item->units
+                            );
+                        }
+                        else{
+                            $f_price = $product['price'];
+                            if (!empty($wo['config']['exchange']) && !empty($wo['config']['exchange'][$wo['currencies'][$product['currency']]['text']])) {
+                                $f_price = ($product['price'] / $wo['config']['exchange'][$wo['currencies'][$product['currency']]['text']]);
+                            }
+                            $insert[$product['user_id']][] = array(
+                                'product_id' => $product['id'],
+                                'price'      => $f_price,
+                                'units'      => $item->units
+                            );
                         }
                     }
-                    if ($wo['user']['wallet'] < $total) {
-                        $data['message'] = $error_icon . $wo["lang"]["please_top_up_wallet"];
+                    else{
+                        $data['message'] = $error_icon . $wo['lang']['some_products_units'];
                         header('Content-Type: application/json');
                         echo json_encode($data);
                         exit();
                     }
+                }
 
-                    if (!empty($insert)) {
-                        foreach ($insert as $key => $value) {
-                            $hash_id = uniqid(rand(11111,999999));
-                            $total = 0;
-                            $total_commission = 0;
-                            $total_final_price = 0;
-                            foreach ($value as $key2 => $value2) {
-                                $db->where('id',$value2['product_id'])->update(T_PRODUCTS,array('units' => $db->dec($value2['units'])));
-                                $store_commission = 0;
-                                if (!empty($wo['config']['store_commission'])) {
-                                    $store_commission = round((($wo['config']['store_commission'] * ($value2['price'] * $value2['units'])) / 100), 2);
-                                }
-                                $total += ($value2['price'] * $value2['units']);
-                                $total_commission += $store_commission;
-                                $total_final_price += ($value2['price'] * $value2['units']) - $store_commission;
-                                    
-                                $db->insert(T_USER_ORDERS,array('user_id' => $wo['user']['user_id'],
-                                                           'product_owner_id' => $key,
-                                                           'product_id' => $value2['product_id'],
-                                                           'price' => ($value2['price'] * $value2['units']),
-                                                           'commission' => $store_commission,
-                                                           'final_price' => ($value2['price'] * $value2['units']) - $store_commission,
-                                                           'hash_id' => $hash_id,
-                                                           'units' => $value2['units'],
-                                                           'status' => 'placed',
-                                                           'address_id' => $address->id,
-                                                           'time' => time()));
+                // === NUEVO: validar wallet contra subtotal + envío ===
+                $grand_total = $cart_subtotal + $dhl_total;
+                if ($wo['user']['wallet'] < $grand_total) {
+                    $data['message'] = $error_icon . $wo["lang"]["please_top_up_wallet"];
+                    header('Content-Type: application/json');
+                    echo json_encode($data);
+                    exit();
+                }
+
+                // === NUEVO: prorratear DHL entre los ítems de todo el carrito ===
+                // Si cart_subtotal es 0 (caso raro), repartir en partes iguales entre líneas.
+                $all_lines_count = 0;
+                foreach ($insert as $seller_id => $rows) { $all_lines_count += count($rows); }
+                $remaining_shipping = $dhl_total;
+
+                if ($dhl_total > 0 && $all_lines_count > 0) {
+                    $line_index = 0;
+                    foreach ($insert as $seller_id => $rows) {
+                        foreach ($rows as $idx => $row) {
+                            $line_index++;
+                            $line_base_total = ($row['price'] * $row['units']);
+                            if ($cart_subtotal > 0) {
+                                // Proporción por valor
+                                $share = round(($line_base_total / $cart_subtotal) * $dhl_total, 2);
+                            } else {
+                                // Carrito "gratis": repartir por líneas
+                                $share = round($dhl_total / $all_lines_count, 2);
                             }
-                            $db->where('user_id',$wo['user']['user_id'])->update(T_USERS,array('wallet' => $db->dec($total)));
-
-                            cache($wo['user']['user_id'], 'users', 'delete');
-                            //$db->where('user_id',$key)->update(T_USERS,array('balance' => $db->inc($total_final_price)));
-                            $notes = $wo['lang']['product_purchase'];
-                            $notes_2 = $wo['lang']['product_sale'];
-                            mysqli_query($sqlConnect, "INSERT INTO " . T_PAYMENT_TRANSACTIONS . " (`userid`, `kind`, `amount`, `notes`) VALUES ({$wo['user']['user_id']}, 'PURCHASE', {$total}, '{$notes}')");
-                            mysqli_query($sqlConnect, "INSERT INTO " . T_PAYMENT_TRANSACTIONS . " (`userid`, `kind`, `amount`, `notes`) VALUES ({$key}, 'SALE', {$total_final_price}, '{$notes_2}')");
-                            $db->insert(T_PURCHAES,array('user_id' => $wo['user']['user_id'],
-                                                             'order_hash_id' => $hash_id,
-                                                             'price' => $total,
-                                                             'data' => json_encode(array('name' => !empty($wo['main_product']) && !empty($wo['main_product']['name']) ? $wo['main_product']['name'] : '')),
-                                                             'commission' => $total_commission,
-                                                             'final_price' => $total_final_price,
-                                                             'time' => time()));
-                            $notification_data_array = array(
-                                'notifier_id' => $wo['user']['user_id'],
-                                'recipient_id' => $key,
-                                'type' => 'new_orders',
-                                'url' => 'index.php?link1=orders',
-                                'time' => time()
-                            );
-                            $db->insert(T_NOTIFICATION,$notification_data_array);
+                            // Ajustar el último para que la suma cierre exactamente
+                            if ($line_index == $all_lines_count) {
+                                $share = round($remaining_shipping, 2);
+                            }
+                            $remaining_shipping -= $share;
+                            // Guardar en la estructura
+                            $insert[$seller_id][$idx]['shipping'] = max(0.0, $share);
                         }
-
-                        $db->where('user_id',$wo['user']['user_id'])->delete(T_USERCARD);
-                        $data['status'] = 200;
-                        $data['message'] = $wo["lang"]["your_order_has_been_placed_successfully"];
-                        $data['users'] = array_keys($insert);
                     }
-                    else{
-                        $data['message'] = $error_icon . $wo["lang"]["something_wrong"];
+                } else {
+                    // Si no hay envío, asegurar shipping=0 en todas las filas
+                    foreach ($insert as $seller_id => $rows) {
+                        foreach ($rows as $idx => $row) {
+                            $insert[$seller_id][$idx]['shipping'] = 0.0;
+                        }
                     }
                 }
+                // === FIN prorrateo ===
+
+                if (!empty($insert)) {
+                    $users_list = array();
+                    foreach ($insert as $key => $value) {
+                        $hash_id = uniqid(rand(11111,999999));
+
+                        // Totales por vendedor
+                        $seller_total_base      = 0.0; // sólo productos
+                        $seller_total_shipping  = 0.0; // parte del DHL
+                        $total_commission       = 0.0; // comisión de la tienda (sólo sobre productos)
+                        $total_final_price      = 0.0; // ingreso del vendedor (sólo productos menos comisión)
+
+                        // === NUEVO: nombre correcto para la compra de ESTE vendedor ===
+                        $first_product_name = '';
+                        $extra_count_label  = '';
+                        if (!empty($value)) {
+                            $first_pid   = $value[0]['product_id'];
+                            $first_prod  = Wo_GetProduct($first_pid);
+                            if (!empty($first_prod) && !empty($first_prod['name'])) {
+                                $first_product_name = $first_prod['name'];
+                            }
+                            if (count($value) > 1) {
+                                $extra_count_label = ' + ' . (count($value) - 1) . ' más';
+                            }
+                        }
+                        // === FIN NUEVO ===
+
+                        foreach ($value as $key2 => $value2) {
+                            // Decrementar stock
+                            $db->where('id',$value2['product_id'])->update(T_PRODUCTS,array('units' => $db->dec($value2['units'])));
+
+                            // Cálculos base
+                            $line_base_total = ($value2['price'] * $value2['units']); // productos
+                            $line_shipping   = isset($value2['shipping']) ? (float)$value2['shipping'] : 0.0;
+
+                            $store_commission = 0.0;
+                            if (!empty($wo['config']['store_commission'])) {
+                                // La comisión se calcula SOLO sobre los productos, no sobre el envío
+                                $store_commission = round((($wo['config']['store_commission'] * $line_base_total) / 100), 2);
+                            }
+
+                            $seller_total_base     += $line_base_total;
+                            $seller_total_shipping += $line_shipping;
+                            $total_commission      += $store_commission;
+                            $total_final_price     += ($line_base_total - $store_commission);
+
+                            // Precio mostrado al comprador por ítem = base + envío prorrateado
+                            $line_price_for_buyer = $line_base_total + $line_shipping;
+
+                            // Insertar orden por producto
+                            $db->insert(T_USER_ORDERS, array(
+                                'user_id'          => $wo['user']['user_id'],
+                                'product_owner_id' => $key,
+                                'product_id'       => $value2['product_id'],
+                                'price'            => $line_price_for_buyer,                 // incluye su parte de envío
+                                'commission'       => $store_commission,                     // sólo productos
+                                'final_price'      => ($line_base_total - $store_commission),// ingreso vendedor (sin envío)
+                                'hash_id'          => $hash_id,
+                                'units'            => $value2['units'],
+                                'status'           => 'placed',
+                                'address_id'       => $address->id,
+                                'time'             => time()
+                            ));
+                        }
+
+                        // Cobro total al comprador para este vendedor (productos + envío prorrateado)
+                        $charged_to_buyer = $seller_total_base + $seller_total_shipping;
+
+                        // Descontar de la wallet del comprador (mismo comportamiento que antes, pero con envío incluido)
+                        $db->where('user_id',$wo['user']['user_id'])->update(T_USERS,array('wallet' => $db->dec($charged_to_buyer)));
+                        cache($wo['user']['user_id'], 'users', 'delete');
+
+                        // Transacciones (PURCHASE = lo cobrado al comprador; SALE = ingreso del vendedor)
+                        $notes   = $wo['lang']['product_purchase'];
+                        $notes_2 = $wo['lang']['product_sale'];
+                        mysqli_query($sqlConnect, "INSERT INTO " . T_PAYMENT_TRANSACTIONS . " (`userid`, `kind`, `amount`, `notes`) VALUES ({$wo['user']['user_id']}, 'PURCHASE', {$charged_to_buyer}, '{$notes}')");
+                        mysqli_query($sqlConnect, "INSERT INTO " . T_PAYMENT_TRANSACTIONS . " (`userid`, `kind`, `amount`, `notes`) VALUES ({$key}, 'SALE', {$total_final_price}, '{$notes_2}')");
+
+                        // Guardar compra (price ahora incluye productos + envío del bloque del vendedor)
+                        $purchase_meta = array(
+                            // === NUEVO: usar el nombre real del primer producto de este bloque ===
+                            'name'          => $first_product_name . $extra_count_label
+                        );
+                        // Guardamos el DHL total y también el share de este bloque (útil para PDFs / detalle)
+                        if ($dhl_total > 0) {
+                            $purchase_meta['shipping_dhl'] = round($dhl_total, 2);
+                            $purchase_meta['shipping_dhl_share_block'] = round($seller_total_shipping, 2);
+                        }
+
+                        $db->insert(T_PURCHAES, array(
+                            'user_id'       => $wo['user']['user_id'],
+                            'order_hash_id' => $hash_id,
+                            'price'         => $charged_to_buyer,     // productos + envío del bloque
+                            'data'          => json_encode($purchase_meta),
+                            'commission'    => $total_commission,     // comisión de tienda (sólo productos)
+                            'final_price'   => $total_final_price,    // ingreso vendedor (sólo productos)
+                            'time'          => time()
+                        ));
+
+                        // Notificación a vendedor
+                        $notification_data_array = array(
+                            'notifier_id'  => $wo['user']['user_id'],
+                            'recipient_id' => $key,
+                            'type'         => 'new_orders',
+                            'url'          => 'index.php?link1=orders',
+                            'time'         => time()
+                        );
+                        $db->insert(T_NOTIFICATION,$notification_data_array);
+
+                        $users_list[] = $key;
+                    }
+
+                    // Vaciar carrito
+                    $db->where('user_id',$wo['user']['user_id'])->delete(T_USERCARD);
+
+                    $data['status'] = 200;
+                    $data['message'] = $wo["lang"]["your_order_has_been_placed_successfully"];
+                    $data['users'] = $users_list;
+                }
                 else{
-                    $data['message'] = $error_icon . $wo["lang"]["card_is_empty"];
+                    $data['message'] = $error_icon . $wo["lang"]["something_wrong"];
                 }
             }
             else{
-                $data['message'] = $error_icon . $wo["lang"]["address_not_found"];
+                $data['message'] = $error_icon . $wo["lang"]["card_is_empty"];
             }
         }
         else{
-            $data['message'] = $error_icon . $wo["lang"]["address_can_not_be_empty"];
+            $data['message'] = $error_icon . $wo["lang"]["address_not_found"];
         }
-        $data['status'] = 200;
-        header("Content-type: application/json");
-        echo json_encode($data);
-        exit();
     }
+    else{
+        $data['message'] = $error_icon . $wo["lang"]["address_can_not_be_empty"];
+    }
+    $data['status'] = 200;
+    header("Content-type: application/json");
+    echo json_encode($data);
+    exit();
+}
     if ($s == 'download') {
         if (!empty($_POST['id'])) {
             $id = Wo_Secure($_POST['id']);

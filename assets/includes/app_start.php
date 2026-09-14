@@ -541,6 +541,14 @@ if (!empty($_COOKIE['watched_reels'])) {
     $wo['watched_reels'] = json_decode($_COOKIE['watched_reels'],true);
 }
 
+$wo['watched_zuitch'] = array();
+if (!empty($_COOKIE['watched_zuitch'])) {
+    $decoded_z = json_decode($_COOKIE['watched_zuitch'], true);
+    if (is_array($decoded_z)) {
+        $wo['watched_zuitch'] = $decoded_z;
+    }
+}
+
 $wo['hiddenConfig'] = $wo['config'];
 $wo['have_monetization'] = 0;
 if ($wo['config']['monetization'] == 1 && $wo["loggedin"]) {

@@ -9,6 +9,65 @@ var preLoadedPreviousVideo_id = null;
 current_width = $(window).width();
 document_title = document.title;
 
+// Guard global para errores intermitentes de fluidPlayer cuando el DOM del player aún no está listo.
+if (typeof window !== 'undefined' && !window.__woFluidSafePatched) {
+  window.__woFluidSafePatched = true;
+  var __woFluidNoopInstance = {
+    play: function(){},
+    pause: function(){},
+    destroy: function(){},
+    setLayout: function(){},
+    setDefaultLayout: function(){}
+  };
+  var __woIsReelsEditorActive = function () {
+    try {
+      if (window.location && (window.location.pathname.indexOf('/reels-editor') > -1 || window.location.search.indexOf('link1=reels-editor') > -1)) {
+        return true;
+      }
+      return !!(document.getElementById('reels-step-1') || document.getElementById('reels-step-2') || document.querySelector('.wo_reels_editor_page'));
+    } catch (e) {
+      return false;
+    }
+  };
+
+  var __woPatchFluid = function () {
+    if (typeof window.fluidPlayer === 'function' && !window.__woFluidOriginal) {
+      window.__woFluidOriginal = window.fluidPlayer;
+      window.fluidPlayer = function () {
+        try {
+          // En el editor de reels no inicializamos fluidPlayer para evitar choques de layout.
+          if (__woIsReelsEditorActive()) return __woFluidNoopInstance;
+          // Evitar inicializaciones inválidas por id/elemento ausente.
+          if (!arguments || !arguments[0]) return null;
+          var target = arguments[0];
+          if (typeof target === 'string' && !document.getElementById(target)) return null;
+          if (target && target.nodeType === 1 && !document.body.contains(target)) return null;
+          return window.__woFluidOriginal.apply(this, arguments);
+        } catch (e) {
+          console.warn('fluidPlayer init skipped:', e && e.message ? e.message : e);
+          return null;
+        }
+      };
+    }
+  };
+  __woPatchFluid();
+  // Si el script de fluidplayer carga después, reintentar parche.
+  setTimeout(__woPatchFluid, 300);
+  setTimeout(__woPatchFluid, 1200);
+
+  // Silenciar SOLO el error conocido de fluidplayer (checkIfVolumebarIsRendered/clientWidth).
+  window.addEventListener('error', function (evt) {
+    var msg = (evt && evt.message) ? String(evt.message) : '';
+    var src = (evt && evt.filename) ? String(evt.filename) : '';
+    if (msg.indexOf("Cannot read properties of null (reading 'clientWidth')") > -1 && src.indexOf('fluidplayer.min.js') > -1) {
+      evt.preventDefault();
+      evt.stopImmediatePropagation();
+      return false;
+    }
+    return true;
+  }, true);
+}
+
 
 $(document).on('click', '.filterby li.filter-by-li', function(event) {
   $('.filterby li.filter-by-li').each(function(){
@@ -23,6 +82,8 @@ $(document).on('click', '.postText', function(event) {
   textAreaAdjust(this, 70);
 });
 $(function () {
+
+  console.log('zuitch-feed-2026-04-11c');
 
   $(window).on("dragover",function(e){
     e.preventDefault();
@@ -76,9 +137,10 @@ $(function () {
     e.stopPropagation();
   });
   scrolled = 0;
-  // Stick the home side bar if the screen width is > than 900
-  if(current_width > 900 || api) {
-    $(window).scroll(function () {
+  // Carga automática de posts por scroll - funciona en todas las pantallas (incluyendo móvil)
+  $(window).on('scroll', function () {
+    // Sidebar sticky solo en pantallas grandes (> 900px)
+    if(current_width > 900 || api) {
       if($('.footer-wrapper').scrollTop() > 500) {
         $('.footer-wrapper .dropdown-menu').css('bottom', 'auto');
       } else {
@@ -89,16 +151,103 @@ $(function () {
       } else {
         $('.sidebar-sticky').removeClass('Stick');
       }
-      var nearToBottom = 100;
-      if($('#posts').length > 0) {
-          if ($(window).scrollTop() + $(window).height() > $(document).height() - nearToBottom) {
-            if (scrolled == 0) {
-               scrolled = 1;
-               Wo_GetMorePosts();
+    }
+    
+    // Carga automática de posts - funciona en todas las pantallas
+    // Verificar si hay contenedor de posts
+    var hasPostsContainer = $('#posts').length > 0 || $('#posts-laoded #posts').length > 0 || $('#posts-laoded').length > 0;
+    
+    if(hasPostsContainer && scrolled == 0) {
+      // Calcular posición de scroll de manera más robusta para móvil
+      var windowHeight = $(window).height();
+      var documentHeight = $(document).height();
+      var scrollTop = $(window).scrollTop();
+      var scrollBottom = scrollTop + windowHeight;
+      
+      // Usar un umbral más grande en móvil para activar antes
+      var nearToBottom = current_width <= 900 ? 300 : 100;
+      
+      // Verificar si estamos cerca del final
+      var distanceFromBottom = documentHeight - scrollBottom;
+      
+      // También verificar si el botón "load-more-posts" es visible (está cerca del viewport)
+      var loadMoreButton = $('#load-more-posts');
+      var buttonVisible = false;
+      if(loadMoreButton.length > 0 && loadMoreButton.is(':visible')) {
+        var buttonOffset = loadMoreButton.offset();
+        var buttonTop = buttonOffset ? buttonOffset.top : 0;
+        buttonVisible = buttonTop <= scrollBottom + 200; // 200px antes de que el botón sea visible
+      }
+      
+      // Activar carga si estamos cerca del final O si el botón está visible
+      if (distanceFromBottom <= nearToBottom || buttonVisible) {
+        // Verificar que no haya más posts marcados como "no más posts"
+        if (!$('body').attr('no-more-posts')) {
+          scrolled = 1;
+          console.log('Wo_GetMorePosts: Activado por scroll automático. Distancia del final:', distanceFromBottom, 'Botón visible:', buttonVisible);
+          Wo_GetMorePosts();
+        }
+      }
+    }
+  });
+  
+  // Usar Intersection Observer para detectar cuando el botón "load-more-posts" entra en el viewport
+  // Esto es más confiable en móvil que el scroll event
+  if ('IntersectionObserver' in window) {
+    var loadMoreObserver = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (entry.isIntersecting && scrolled == 0) {
+          // Verificar que no haya más posts marcados como "no más posts"
+          if (!$('body').attr('no-more-posts')) {
+            scrolled = 1;
+            console.log('Wo_GetMorePosts: Activado por Intersection Observer (botón visible)');
+            Wo_GetMorePosts();
+          }
+        }
+      });
+    }, {
+      rootMargin: '200px' // Activar 200px antes de que el botón sea visible
+    });
+    
+    // Observar el botón cuando esté disponible
+    var observeLoadMoreButton = function() {
+      var loadMoreButton = document.getElementById('load-more-posts');
+      if (loadMoreButton) {
+        loadMoreObserver.observe(loadMoreButton);
+        console.log('Wo_GetMorePosts: Intersection Observer configurado para el botón');
+      } else {
+        // Si el botón aún no existe, intentar de nuevo después de un delay
+        setTimeout(observeLoadMoreButton, 500);
+      }
+    };
+    
+    // Iniciar observación después de que el DOM esté listo
+    observeLoadMoreButton();
+    
+    // Usar MutationObserver para detectar cuando se agrega el botón dinámicamente
+    var mutationObserver = new MutationObserver(function(mutations) {
+      mutations.forEach(function(mutation) {
+        mutation.addedNodes.forEach(function(node) {
+          if (node.nodeType === 1) { // Element node
+            var loadMoreButton = node.id === 'load-more-posts' ? node : node.querySelector('#load-more-posts');
+            if (loadMoreButton && !loadMoreButton.dataset.observed) {
+              loadMoreObserver.observe(loadMoreButton);
+              loadMoreButton.dataset.observed = 'true';
+              console.log('Wo_GetMorePosts: Intersection Observer configurado para botón dinámico');
             }
           }
-      }
+        });
+      });
     });
+    
+    // Observar cambios en el body para detectar cuando se agrega el botón
+    var bodyElement = document.body;
+    if (bodyElement) {
+      mutationObserver.observe(bodyElement, {
+        childList: true,
+        subtree: true
+      });
+    }
   }
 });
 
@@ -653,12 +802,111 @@ function Wo_GetNewPosts() {
   });
 }
 
+
+// load more posts
 // load more posts
 
 function Wo_GetMorePosts() {
+  // Buscar el contenedor de posts (puede ser #posts o dentro de #posts-laoded)
+  var postsContainer = $('#posts');
+  if (postsContainer.length == 0) {
+    // Si no existe #posts, buscar dentro de #posts-laoded
+    postsContainer = $('#posts-laoded #posts');
+  }
+  
+  // Si aún no existe, usar #posts-laoded directamente
+  if (postsContainer.length == 0) {
+    postsContainer = $('#posts-laoded');
+  }
+  
+  // Si no hay contenedor, salir
+  if (postsContainer.length == 0) {
+    console.error('Wo_GetMorePosts: No se encontró el contenedor de posts');
+    return false;
+  }
+
   var more_posts = $('#load-more-posts');
   var filter_by_more = $('#load-more-filter').find('.filter-by-more').attr('data-filter-by');
-  var after_post_id = $('div.post:last').attr('data-post-id');
+  if (!filter_by_more || filter_by_more == 'undefined') {
+    filter_by_more = 'all';
+  }
+  
+  // Obtener el ID del último post - método más confiable
+  var after_post_id = null;
+  
+  // PRIMERO: Intentar usar el after_post_id guardado de la petición anterior
+  // Esto es crítico porque el servidor busca posts con id < after_post_id
+  // Necesitamos el ID del post más reciente que agregamos, no el último post de la página
+  var savedAfterPostId = $('body').attr('data-last-after-post-id');
+  if (savedAfterPostId && savedAfterPostId != 'undefined' && savedAfterPostId != 'null') {
+    after_post_id = savedAfterPostId;
+    console.log('Wo_GetMorePosts: after_post_id obtenido de petición anterior (guardado):', after_post_id);
+  }
+  
+  // Si no hay uno guardado, obtener el ID del último post visible
+  if (!after_post_id || after_post_id == 'undefined' || after_post_id == 'null') {
+    // Método 1: Buscar todos los posts y tomar el último
+    var allPostsWithId = $('.post[data-post-id]');
+    if (allPostsWithId.length > 0) {
+      after_post_id = allPostsWithId.last().attr('data-post-id');
+      console.log('Wo_GetMorePosts: after_post_id obtenido del último post (método 1):', after_post_id);
+    }
+  
+    // Método 2: Si no funciona, buscar por contenedor
+    if (!after_post_id || after_post_id == 'undefined' || after_post_id == 'null') {
+      var lastPostContainer = $('.post-container').last();
+      if (lastPostContainer.length > 0) {
+        var postInContainer = lastPostContainer.find('.post[data-post-id]').first();
+        if (postInContainer.length > 0) {
+          after_post_id = postInContainer.attr('data-post-id');
+          console.log('Wo_GetMorePosts: after_post_id obtenido del contenedor (método 2):', after_post_id);
+        }
+      }
+    }
+    
+    // Método 3: Si aún no funciona, buscar por ID del elemento
+    if (!after_post_id || after_post_id == 'undefined' || after_post_id == 'null') {
+      var lastPostElement = $('.post').last();
+      if (lastPostElement.length > 0) {
+        var postIdFromElement = lastPostElement.attr('id');
+        if (postIdFromElement && postIdFromElement.startsWith('post-')) {
+          after_post_id = postIdFromElement.replace('post-', '');
+          console.log('Wo_GetMorePosts: after_post_id obtenido del ID del elemento (método 3):', after_post_id);
+        }
+      }
+    }
+  }
+
+  // Verificar que tenemos un post ID válido
+  if (!after_post_id || after_post_id == 'undefined' || after_post_id == 'null') {
+    console.warn('Wo_GetMorePosts: No se pudo encontrar el ID del último post. Posts encontrados:', $('.post').length);
+    // Si no hay posts, no podemos cargar más
+    if ($('.post').length == 0) {
+      console.error('Wo_GetMorePosts: No hay posts en la página');
+      return false;
+    }
+    // Si hay posts pero no encontramos el ID, intentar obtener el ID del último post por su ID de elemento
+    var lastPostElement = $('.post').last();
+    if (lastPostElement.length > 0) {
+      var postIdFromElement = lastPostElement.attr('id');
+      if (postIdFromElement && postIdFromElement.startsWith('post-')) {
+        after_post_id = postIdFromElement.replace('post-', '');
+      }
+    }
+    // Si aún no tenemos after_post_id, no podemos continuar
+    if (!after_post_id || after_post_id == 'undefined' || after_post_id == 'null') {
+      console.error('Wo_GetMorePosts: No se pudo obtener el ID del último post después de todos los intentos');
+      return false;
+    }
+  }
+  
+  // Limpiar el after_post_id para asegurar que sea un número válido
+  if (after_post_id && after_post_id.toString().startsWith('post-')) {
+    after_post_id = after_post_id.toString().replace('post-', '');
+  }
+  
+  console.log('Wo_GetMorePosts: after_post_id obtenido:', after_post_id);
+
   var page_id = 0;
   var user_id = 0;
   var group_id = 0;
@@ -670,22 +918,38 @@ function Wo_GetMorePosts() {
   if (api) {
     is_api = 1;
   }
-  if(after_post_id != null) {
-    more_posts.show();
+
+  // Obtener los IDs del contenedor (puede estar en #posts o en #posts-laoded #posts)
+  var postsElement = $('#posts');
+  if (postsElement.length == 0) {
+    postsElement = $('#posts-laoded #posts');
   }
-  if(typeof ($('#posts').attr('data-story-user')) == "string") {
-    user_id = $('#posts').attr('data-story-user');
-  } else if(typeof ($('#posts').attr('data-story-page')) == "string") {
-    page_id = $('#posts').attr('data-story-page');
-  } else if(typeof ($('#posts').attr('data-story-group')) == "string") {
-    group_id = $('#posts').attr('data-story-group');
-  } else if(typeof ($('#posts').attr('data-story-event')) == "string") {
-    event_id = $('#posts').attr('data-story-event');
+  
+  if (postsElement.length > 0) {
+    if(typeof (postsElement.attr('data-story-user')) == "string") {
+      user_id = postsElement.attr('data-story-user');
+    } else if(typeof (postsElement.attr('data-story-page')) == "string") {
+      page_id = postsElement.attr('data-story-page');
+    } else if(typeof (postsElement.attr('data-story-group')) == "string") {
+      group_id = postsElement.attr('data-story-group');
+    } else if(typeof (postsElement.attr('data-story-event')) == "string") {
+      event_id = postsElement.attr('data-story-event');
+    }
   }
-  $('#posts').append('<div class="hidden loading-status loading-single"></div>');
+
+  // Verificar si ya no hay más posts
+  if ($('body').attr('no-more-posts')) {
+    $('#load-more-posts').html('<div class="white-loading list-group"><div class="cs-loader"><div class="no-more-posts-to-show">' + ($('#get_no_posts_name').val() || 'No hay más publicaciones') + '</div></div>');
+    $('#load-more-posts').show();
+    return false;
+  }
+
+  // Ocultar el botón y mostrar loading
   $('#load-more-posts').hide();
+  postsContainer.append('<div class="hidden loading-status loading-single"></div>');
   $('.loading-status').hide().html('<div class="wo_loading_post"><div class="lightui1-shimmer"> <div class="_2iwr"></div> <div class="_2iws"></div> <div class="_2iwt"></div> <div class="_2iwu"></div> <div class="_2iwv"></div> <div class="_2iww"></div> <div class="_2iwx"></div> <div class="_2iwy"></div> <div class="_2iwz"></div> <div class="_2iw-"></div> <div class="_2iw_"></div> <div class="_2ix0"></div> </div></div>').removeClass('hidden').show();
   Wo_progressIconLoader($('#load-more-posts'));
+  
   posts_count = 0;
   if ($('.post').length > 0) {
     posts_count = $('.post').length;
@@ -699,22 +963,30 @@ function Wo_GetMorePosts() {
     story_id = $(".user-story-container").last().attr('id');
   }
 
-  if ($('body').attr('no-more-posts')) {
-    $('#load-more-posts').html('<div class="white-loading list-group"><div class="cs-loader"><div class="no-more-posts-to-show">' + $('#get_no_posts_name').val() + '</div></div>');
-      // $.get(Wo_Ajax_Requests_File(), {f: 'get_no_posts_name'}, function (data3) {
-      //     $('#load-more-posts').html('<div class="white-loading list-group"><div class="cs-loader"><div class="no-more-posts-to-show">' + data3.name + '</div></div>');
-      // });
-      $('#load-more-posts').show();
-      $('.loading-status').remove();
-      scrolled = 0;
-      return false;
-  }
   if ($('#page_post_jobs_filter').length > 0) {
     filter_by_more = 'job';
   }
   if ($('#page_post_offer_filter').length > 0) {
     filter_by_more = 'offer';
   }
+
+  // Asegurar que filter_by_more tenga un valor válido
+  if (!filter_by_more || filter_by_more == 'undefined' || filter_by_more == 'null') {
+    filter_by_more = 'all';
+  }
+
+  // Log de depuración (puedes comentar esto después de verificar que funciona)
+  console.log('Wo_GetMorePosts: Enviando petición con:', {
+    after_post_id: after_post_id,
+    filter_by_more: filter_by_more,
+    user_id: user_id,
+    page_id: page_id,
+    group_id: group_id,
+    event_id: event_id,
+    posts_count: posts_count
+  });
+
+  // Realizar la petición AJAX
   $.get(Wo_Ajax_Requests_File(), {
     f: 'posts',
     s: 'load_more_posts',
@@ -729,26 +1001,488 @@ function Wo_GetMorePosts() {
     ad_id: ad_id,
     story_id:story_id
   }, function (data) {
-    if (data.length == 0) {
+    // Limpiar el estado de carga
+    $('.loading-status').remove();
+    
+    // Log de depuración
+    console.log('Wo_GetMorePosts: Respuesta recibida, longitud:', data ? data.length : 0);
+    console.log('Wo_GetMorePosts: Contenedor encontrado:', postsContainer.length > 0 ? postsContainer.attr('id') : 'NO ENCONTRADO');
+    console.log('Wo_GetMorePosts: Primeros 200 caracteres de la respuesta:', data ? data.substring(0, 200) : 'SIN DATOS');
+    
+    // Verificar que el contenedor aún existe
+    if (postsContainer.length == 0) {
+      // Intentar encontrar el contenedor nuevamente
+      postsContainer = $('#posts');
+      if (postsContainer.length == 0) {
+        postsContainer = $('#posts-laoded #posts');
+      }
+      if (postsContainer.length == 0) {
+        postsContainer = $('#posts-laoded');
+      }
+      console.log('Wo_GetMorePosts: Re-buscando contenedor, encontrado:', postsContainer.length > 0 ? postsContainer.attr('id') : 'NO ENCONTRADO');
+    }
+    
+    if (!data || data.length == 0 || data.trim() == '') {
       $('body').attr('no-more-posts', "true");
-      $('#load-more-posts').html('<div class="white-loading list-group"><div class="cs-loader"><div class="no-more-posts-to-show">' + $('#get_no_posts_name').val() + '</div></div>');
-      // $.get(Wo_Ajax_Requests_File(), {f: 'get_no_posts_name'}, function (data3) {
-      //     $('#load-more-posts').html('<div class="white-loading list-group"><div class="cs-loader"><div class="no-more-posts-to-show">' + data3.name + '</div></div>');
-      // });
+      $('#load-more-posts').html('<div class="white-loading list-group"><div class="cs-loader"><div class="no-more-posts-to-show">' + ($('#get_no_posts_name').val() || 'No hay más publicaciones') + '</div></div>');
+      $('#load-more-posts').show();
      } else {
       if (data != 'Please login or signup to continue.') {
           $('body').removeAttr('no-more-posts');
-          $('#posts').append(data);
+        
+        // Buscar el contenedor correcto justo antes de agregar (por si cambió)
+        var targetContainer = $('#posts');
+        if (targetContainer.length == 0) {
+          targetContainer = $('#posts-laoded #posts');
+        }
+        if (targetContainer.length == 0) {
+          targetContainer = $('#posts-laoded');
+        }
+        
+        // Verificar que tenemos un contenedor válido
+        if (targetContainer.length > 0) {
+          // GUARDAR la posición actual del scroll ANTES de agregar los posts
+          // Esto evita que la página se mueva automáticamente cuando se agregan nuevos elementos
+          var savedScrollTop = $(window).scrollTop();
+          var savedScrollLeft = $(window).scrollLeft();
+          var savedDocumentHeight = $(document).height();
+          
+          console.log('Wo_GetMorePosts: Guardando posición del scroll antes de agregar posts. ScrollTop:', savedScrollTop, 'DocumentHeight:', savedDocumentHeight);
+          
+          // Agregar los nuevos posts al contenedor correcto
+          var postsBefore = $('.post').length;
+          console.log('Wo_GetMorePosts: Agregando a contenedor:', targetContainer.attr('id'), 'Posts antes:', postsBefore);
+          
+          // Agregar los datos - usar método más robusto para HTML grande
+          var $newPostsElements = null;
+          var newPostIds = []; // Declarar en scope amplio para usarlo después
+          try {
+            // Crear un contenedor temporal para parsear el HTML
+            var $tempContainer = $('<div>').html(data);
+            var postsToAdd = $tempContainer.find('.post-container');
+            
+            if (postsToAdd.length > 0) {
+              console.log('Wo_GetMorePosts: Encontrados', postsToAdd.length, 'posts en el HTML para agregar');
+              
+              // Obtener los IDs de los posts que ya existen en la página para evitar duplicados
+              // Usar Set para búsqueda más eficiente y comparación numérica
+              var existingPostIds = new Set();
+              var existingPostIdsArray = [];
+              
+              // Buscar en TODOS los contenedores posibles, no solo en targetContainer
+              $('#posts .post[data-post-id], #posts-laoded .post[data-post-id], .post[data-post-id]').each(function() {
+                var existingId = $(this).attr('data-post-id');
+                if (existingId) {
+                  var idNum = parseInt(existingId);
+                  if (!isNaN(idNum)) {
+                    existingPostIds.add(idNum);
+                    existingPostIdsArray.push(idNum);
+                  }
+                }
+              });
+              
+              // También buscar por ID del elemento (post-123)
+              $('.post[id^="post-"]').each(function() {
+                var elementId = $(this).attr('id');
+                if (elementId && elementId.startsWith('post-')) {
+                  var idNum = parseInt(elementId.replace('post-', ''));
+                  if (!isNaN(idNum)) {
+                    existingPostIds.add(idNum);
+                    if (existingPostIdsArray.indexOf(idNum) === -1) {
+                      existingPostIdsArray.push(idNum);
+                    }
+                  }
+                }
+              });
+              
+              console.log('Wo_GetMorePosts: IDs de posts existentes encontrados:', existingPostIdsArray.length, 'IDs:', existingPostIdsArray.sort(function(a,b){return b-a}).slice(0, 10));
+              
+              // Filtrar posts duplicados antes de agregar
+              var postsToAddFiltered = [];
+              var duplicateIds = [];
+              newPostIds = []; // Reinicializar para esta petición
+              
+              postsToAdd.each(function() {
+                var $postContainer = $(this);
+                var postId = $postContainer.find('.post[data-post-id]').first().attr('data-post-id');
+                
+                // Si no encuentra por data-post-id, intentar por ID del elemento
+                if (!postId) {
+                  var postElement = $postContainer.find('.post[id^="post-"]').first();
+                  if (postElement.length > 0) {
+                    var elementId = postElement.attr('id');
+                    if (elementId && elementId.startsWith('post-')) {
+                      postId = elementId.replace('post-', '');
+                    }
+                  }
+                }
+                
+                if (postId) {
+                  var postIdNum = parseInt(postId);
+                  if (!isNaN(postIdNum)) {
+                    // Verificar si el post ya existe usando comparación numérica
+                    if (!existingPostIds.has(postIdNum)) {
+                      postsToAddFiltered.push(this);
+                      newPostIds.push(postIdNum);
+                      // Agregar a existingPostIds para evitar duplicados dentro del mismo batch
+                      existingPostIds.add(postIdNum);
       } else {
-         $('body').attr('no-more-posts', "true");
+                      duplicateIds.push(postIdNum);
+                      console.log('Wo_GetMorePosts: Post duplicado detectado, omitiendo ID:', postIdNum);
+                    }
+                  } else {
+                    console.warn('Wo_GetMorePosts: ID de post inválido:', postId);
+                  }
+                } else {
+                  console.warn('Wo_GetMorePosts: No se pudo obtener ID del post, omitiendo');
+                }
+              });
+              
+              console.log('Wo_GetMorePosts: Posts a agregar después de filtrar duplicados:', postsToAddFiltered.length, 'de', postsToAdd.length, 'Duplicados encontrados:', duplicateIds.length);
+              if (duplicateIds.length > 0) {
+                console.log('Wo_GetMorePosts: IDs duplicados omitidos:', duplicateIds);
+              }
+              
+              // Guardar referencia a los posts que vamos a agregar (solo los no duplicados)
+              if (postsToAddFiltered.length > 0) {
+                // Crear un contenedor temporal para clonar los posts antes de agregarlos
+                var $tempPosts = $('<div>');
+                $(postsToAddFiltered).each(function() {
+                  $tempPosts.append($(this).clone(true));
+                });
+                $newPostsElements = $tempPosts.children();
+                
+                // Agregar solo los posts no duplicados al contenedor real
+                $(postsToAddFiltered).each(function() {
+                  targetContainer.append(this);
+                });
+                
+                console.log('Wo_GetMorePosts: Posts agregados exitosamente:', postsToAddFiltered.length, 'IDs nuevos:', newPostIds.sort(function(a,b){return b-a}));
+              } else {
+                console.warn('Wo_GetMorePosts: Todos los posts son duplicados, no se agregará nada');
+                // Si todos son duplicados, podría significar que ya no hay más posts nuevos
+                // Marcar como "no más posts" solo si recibimos exactamente los mismos posts que ya tenemos
+                if (postsToAdd.length > 0 && duplicateIds.length === postsToAdd.length) {
+                  console.log('Wo_GetMorePosts: Todos los posts recibidos son duplicados, posiblemente no hay más posts');
+                }
+              }
+            } else {
+              // Si no encuentra posts con esos selectores, agregar directamente
+              console.log('Wo_GetMorePosts: No se encontraron posts con selectores específicos, agregando HTML directamente');
+              var $parsedData = $(data);
+              $newPostsElements = $parsedData.find('.post-container');
+              targetContainer.append(data);
+            }
+          } catch (e) {
+            console.error('Wo_GetMorePosts: Error al parsear HTML, agregando directamente:', e);
+            var $parsedData = $(data);
+            $newPostsElements = $parsedData.find('.post-container');
+            targetContainer.append(data);
+          }
+          
+          var postsAfter = $('.post').length;
+          console.log('Wo_GetMorePosts: Posts después:', postsAfter, 'Nuevos posts agregados:', postsAfter - postsBefore);
+          
+          // Verificar que los posts se agregaron correctamente
+          if (postsAfter <= postsBefore) {
+            console.warn('Wo_GetMorePosts: Los posts no se agregaron correctamente. Intentando método alternativo...');
+            // Intentar parsear y agregar manualmente
+            var $data = $(data);
+            if ($data.length > 0) {
+              targetContainer.append($data);
+              var postsAfterRetry = $('.post').length;
+              console.log('Wo_GetMorePosts: Después del reintento, posts:', postsAfterRetry);
+            }
+          } else {
+            // Inicializar los nuevos posts agregados
+            console.log('Wo_GetMorePosts: Inicializando nuevos posts...');
+            
+            // Obtener los posts nuevos usando el método más confiable: slice de los últimos N posts
+            var allPosts = $('.post-container');
+            var newPostsCount = postsAfter - postsBefore;
+            var newPosts = allPosts.slice(-newPostsCount);
+            
+            console.log('Wo_GetMorePosts: Total posts en página:', allPosts.length, 'Posts antes:', postsBefore, 'Posts después:', postsAfter, 'Posts nuevos encontrados:', newPosts.length);
+            
+            // IMPORTANTE: Obtener el ID más bajo SOLO de los posts realmente agregados en esta petición
+            // El servidor busca posts con id < after_post_id, así que necesitamos el ID más bajo (más antiguo) de los nuevos posts
+            var lastNewPostId = null;
+            var allNewPostIds = [];
+            
+            // PRIMERO: Usar los IDs que ya tenemos de los posts filtrados (los que realmente se agregaron)
+            // Estos son los más confiables porque ya fueron validados como no duplicados
+            if (typeof newPostIds !== 'undefined' && newPostIds.length > 0) {
+              allNewPostIds = newPostIds.slice(); // Copiar el array
+              console.log('Wo_GetMorePosts: IDs obtenidos de posts filtrados (más confiable):', allNewPostIds.sort(function(a,b){return b-a}));
+            }
+            
+            // SEGUNDO: Si no tenemos IDs de los posts filtrados, intentar obtenerlos del HTML agregado
+            if (allNewPostIds.length == 0 && $newPostsElements && $newPostsElements.length > 0) {
+              $newPostsElements.each(function() {
+                var postId = $(this).find('.post[data-post-id]').first().attr('data-post-id');
+                if (!postId) {
+                  // Intentar por ID del elemento
+                  var postElement = $(this).find('.post[id^="post-"]').first();
+                  if (postElement.length > 0) {
+                    var elementId = postElement.attr('id');
+                    if (elementId && elementId.startsWith('post-')) {
+                      postId = elementId.replace('post-', '');
+                    }
+                  }
+                }
+                if (postId) {
+                  var postIdInt = parseInt(postId);
+                  if (!isNaN(postIdInt) && allNewPostIds.indexOf(postIdInt) === -1) {
+                    allNewPostIds.push(postIdInt);
+                  }
+                }
+              });
+              console.log('Wo_GetMorePosts: IDs obtenidos del HTML agregado:', allNewPostIds.sort(function(a,b){return b-a}));
+            }
+            
+            // TERCERO: Si aún no encontramos IDs, intentar obtenerlos de los posts nuevos encontrados en el DOM
+            // Pero solo si coinciden con la cantidad esperada
+            if (allNewPostIds.length == 0 && newPosts.length > 0 && newPosts.length == newPostsCount) {
+              newPosts.each(function() {
+                var postId = $(this).find('.post[data-post-id]').first().attr('data-post-id');
+                if (!postId) {
+                  var postElement = $(this).find('.post[id^="post-"]').first();
+                  if (postElement.length > 0) {
+                    var elementId = postElement.attr('id');
+                    if (elementId && elementId.startsWith('post-')) {
+                      postId = elementId.replace('post-', '');
+                    }
+                  }
+                }
+                if (postId) {
+                  var postIdInt = parseInt(postId);
+                  if (!isNaN(postIdInt) && allNewPostIds.indexOf(postIdInt) === -1) {
+                    allNewPostIds.push(postIdInt);
+                  }
+                }
+              });
+              console.log('Wo_GetMorePosts: IDs obtenidos del DOM (posts nuevos):', allNewPostIds.sort(function(a,b){return b-a}));
+            }
+            
+            // Obtener el ID más bajo (el más antiguo) - este es el que necesitamos para la próxima petición
+            if (allNewPostIds.length > 0) {
+              lastNewPostId = Math.min.apply(Math, allNewPostIds).toString();
+              console.log('Wo_GetMorePosts: ID más bajo de los posts nuevos agregados:', lastNewPostId, 'Total IDs nuevos:', allNewPostIds.length, 'IDs:', allNewPostIds.sort(function(a,b){return b-a}));
+            } else {
+              console.warn('Wo_GetMorePosts: No se pudieron obtener IDs de los posts nuevos. Posts agregados:', postsAfter - postsBefore);
+              // Si agregamos posts pero no pudimos obtener sus IDs, intentar obtener el ID del último post visible
+              var lastPostVisible = $('.post[data-post-id]').last();
+              if (lastPostVisible.length > 0) {
+                var lastId = lastPostVisible.attr('data-post-id');
+                if (lastId) {
+                  lastNewPostId = lastId;
+                  console.log('Wo_GetMorePosts: Usando ID del último post visible como fallback:', lastNewPostId);
+                }
+              }
+            }
+            
+            // Guardar el ID del último post nuevo en un atributo del body para la próxima petición
+            if (lastNewPostId) {
+              $('body').attr('data-last-after-post-id', lastNewPostId);
+              console.log('Wo_GetMorePosts: Guardado after_post_id para próxima petición:', lastNewPostId);
+            } else {
+              console.warn('Wo_GetMorePosts: No se pudo guardar after_post_id para la próxima petición');
+            }
+            
+            // Verificar que tenemos la cantidad correcta de posts nuevos
+            if (newPosts.length != newPostsCount) {
+              console.warn('Wo_GetMorePosts: Advertencia - Número de posts nuevos no coincide. Esperado:', newPostsCount, 'Encontrado:', newPosts.length);
+              // Intentar método alternativo: buscar los últimos posts que no estaban antes
+              var allPostIds = [];
+              allPosts.each(function() {
+                var postId = $(this).find('.post').attr('data-post-id');
+                if (postId) {
+                  allPostIds.push(postId);
+                }
+              });
+              // Los últimos N IDs deberían ser los nuevos
+              var newPostIds = allPostIds.slice(-newPostsCount);
+              if (newPostIds.length > 0) {
+                var selector = newPostIds.map(function(id) {
+                  return '.post[data-post-id="' + id + '"]';
+                }).join(', ');
+                newPosts = $(selector).closest('.post-container');
+                console.log('Wo_GetMorePosts: Método alternativo - Posts encontrados:', newPosts.length);
+              }
+            }
+            
+            // Inicializar ReadMoreText para las descripciones de los nuevos posts
+            newPosts.find(".post-description p, .product-description").each(function(index, el) {
+              if (!$(el).hasClass('readmore-initialized')) {
+                try {
+                  ReadMoreText(this);
+                  $(el).addClass('readmore-initialized');
+                } catch(e) {
+                  console.warn('Wo_GetMorePosts: Error al inicializar ReadMoreText:', e);
+                }
+              }
+            });
+            
+            // Inicializar autocompletado para menciones en los nuevos posts
+            newPosts.find(".post-commet-textarea .textarea").each(function() {
+              if (!$(this).data('autocomplete-initialized')) {
+                try {
+                  $(this).triggeredAutocomplete({
+                    hidden: '#hidden_inputbox_comment',
+                    source: Wo_Ajax_Requests_File() + "?f=mention",
+                    trigger: "@"
+                  });
+                  $(this).data('autocomplete-initialized', true);
+                } catch(e) {
+                  console.warn('Wo_GetMorePosts: Error al inicializar autocompletado:', e);
+                }
+              }
+            });
+            
+            newPosts.find(".comment-reply textarea").each(function() {
+              if (!$(this).data('autocomplete-initialized')) {
+                try {
+                  $(this).triggeredAutocomplete({
+                    hidden: '#hidden_inputbox_comment_reply',
+                    source: Wo_Ajax_Requests_File() + "?f=mention",
+                    trigger: "@"
+                  });
+                  $(this).data('autocomplete-initialized', true);
+                } catch(e) {
+                  console.warn('Wo_GetMorePosts: Error al inicializar autocompletado reply:', e);
+                }
+              }
+            });
+            
+            // Forzar la visualización de los nuevos posts (por si hay CSS que los oculta)
+            newPosts.css({
+              'display': '',
+              'visibility': 'visible',
+              'opacity': '1'
+            }).show();
+            
+            // Verificar que los posts son visibles
+            var visiblePosts = newPosts.filter(':visible').length;
+            console.log('Wo_GetMorePosts: Posts nuevos visibles:', visiblePosts, 'de', newPosts.length);
+            
+            // Inicializar videos y otros elementos multimedia después de un pequeño delay
+            // para evitar errores con fluidplayer
+            setTimeout(function() {
+              try {
+                // Reinicializar videos en los nuevos posts si es necesario
+                newPosts.find('video').each(function() {
+                  if ($(this).length > 0 && typeof Wo_InitVideoPlayer === 'function') {
+                    try {
+                      Wo_InitVideoPlayer(this);
+                    } catch(e) {
+                      console.warn('Wo_GetMorePosts: Error al inicializar video:', e);
+                    }
+                  }
+                });
+              } catch(e) {
+                console.warn('Wo_GetMorePosts: Error al inicializar videos:', e);
+              }
+            }, 100);
+            
+            // RESTAURAR la posición del scroll después de agregar los posts
+            // Esto evita que la página se mueva automáticamente cuando se agregan nuevos elementos
+            // Usar requestAnimationFrame para asegurar que el DOM se haya actualizado
+            requestAnimationFrame(function() {
+              // Calcular la diferencia de altura del documento
+              var newDocumentHeight = $(document).height();
+              var heightDifference = newDocumentHeight - savedDocumentHeight;
+              
+              // Solo restaurar el scroll si la altura cambió (se agregaron posts)
+              if (heightDifference > 0) {
+                // Restaurar la posición del scroll exacta
+                $(window).scrollTop(savedScrollTop);
+                $(window).scrollLeft(savedScrollLeft);
+                
+                console.log('Wo_GetMorePosts: Posición del scroll restaurada. ScrollTop:', savedScrollTop, 'Altura agregada:', heightDifference);
+              } else {
+                console.log('Wo_GetMorePosts: No se detectó cambio en la altura del documento, manteniendo posición del scroll');
+              }
+            });
+            
+            console.log('Wo_GetMorePosts: Inicialización completada');
+          }
+        } else {
+          console.error('Wo_GetMorePosts: No se encontró el contenedor para agregar los posts');
+          // Intentar agregar directamente a #posts como fallback
+          var fallbackContainer = $('#posts');
+          if (fallbackContainer.length > 0) {
+            // Guardar posición del scroll antes de agregar
+            var savedScrollTopFallback = $(window).scrollTop();
+            var savedScrollLeftFallback = $(window).scrollLeft();
+            var savedDocumentHeightFallback = $(document).height();
+            
+            fallbackContainer.append(data);
+            console.log('Wo_GetMorePosts: Agregado a #posts como fallback');
+            
+            // Restaurar posición del scroll después de agregar
+            requestAnimationFrame(function() {
+              var newDocumentHeight = $(document).height();
+              var heightDifference = newDocumentHeight - savedDocumentHeightFallback;
+              if (heightDifference > 0) {
+                $(window).scrollTop(savedScrollTopFallback);
+                $(window).scrollLeft(savedScrollLeftFallback);
+                console.log('Wo_GetMorePosts: Posición del scroll restaurada (fallback)');
+              }
+            });
+          } else {
+            console.error('Wo_GetMorePosts: No se pudo encontrar ningún contenedor');
+          }
+        }
+        
+        // Restaurar el botón de cargar más
+        if ($('#load-more-posts').length > 0) {
+    $('#load-more-posts').show();
+        }
+      } else {
+        $('body').attr('no-more-posts', "true");
+        $('#load-more-posts').html('<div class="white-loading list-group"><div class="cs-loader"><div class="no-more-posts-to-show">' + ($('#get_no_posts_name').val() || 'No hay más publicaciones') + '</div></div>');
+        $('#load-more-posts').show();
       }
     }
-    $('#load-more-posts').show();
+    Wo_progressIconLoader($('#load-more-posts'));
+    
+    // Obtener el ID del último post DESPUÉS de agregar los nuevos para referencia
+    // Buscar en todos los contenedores posibles
+    var lastPostIdAfter = null;
+    var lastPostSelectors = [
+      '.post[data-post-id]:last',
+      '.post-container .post[data-post-id]:last',
+      '#posts .post[data-post-id]:last',
+      '#posts-laoded .post[data-post-id]:last'
+    ];
+    
+    for (var i = 0; i < lastPostSelectors.length; i++) {
+      var lastPost = $(lastPostSelectors[i]);
+      if (lastPost.length > 0) {
+        lastPostIdAfter = lastPost.attr('data-post-id');
+        if (lastPostIdAfter) {
+          break;
+        }
+      }
+    }
+    
+    console.log('Wo_GetMorePosts: ID del último post después de agregar:', lastPostIdAfter, 'ID enviado:', after_post_id);
+    
+    // NO marcar como "no hay más posts" basándose solo en el ID
+    // El servidor es quien debe indicar si no hay más posts devolviendo una respuesta vacía
+    // Si el servidor devuelve datos, significa que hay más posts disponibles
+    
+    scrolled = 0;
+  }).fail(function(xhr, status, error) {
+    // Manejar errores de la petición
+    console.error('Wo_GetMorePosts: Error al cargar más posts', status, error);
     $('.loading-status').remove();
+    $('#load-more-posts').show();
     Wo_progressIconLoader($('#load-more-posts'));
     scrolled = 0;
   });
 }
+
 
 function animateStory(element) {
   if ($(element).hasClass('opacity')) {
@@ -1116,6 +1850,10 @@ function Wo_DeletePost(post_id) {
       if ($('.hidden_reels').length > 0) {
         $('#delete-reel-modal').modal('hide');
         window.location.href = websiteUrl+"/reels";
+      }
+      if ($('.hidden_zuitch_slides').length > 0) {
+        $('#delete-reel-modal').modal('hide');
+        window.location.href = websiteUrl+"/zuitch";
       }
       setTimeout(function () {
         $('#post-' + post_id).slideUp(200, function () {
@@ -1859,8 +2597,7 @@ function Wo_OpenChatTab(recipient_id, group_id,product_id = 0,page_id = 0,page_u
           document.location = websiteUrl+"/messages/"+page_user_id+"&page="+page_id;
         }
         else{
-          go_to = data.url;
-          // document.location = data.url;
+          document.location = data.url;
         }
         return false;
       }
@@ -1871,17 +2608,26 @@ function Wo_OpenChatTab(recipient_id, group_id,product_id = 0,page_id = 0,page_u
     });
   }
   if(current_width < 720) {
-    $.get(Wo_Ajax_Requests_File(), {
-      f: 'chat',
-      s: 'close_chat',
-      recipient_id: recipient_id,
-      story_id: story_id
-    }, function (data) {
-      if(node_socket_flow !== "0"){
-      go_to = data.url;
-      }
-    });
-    // return false;
+    if(node_socket_flow !== "0"){
+      $.get(Wo_Ajax_Requests_File(), {
+        f: 'chat',
+        s: 'close_chat',
+        recipient_id: recipient_id,
+        story_id: story_id
+      }, function (data) {
+        document.location = data.url;
+      });
+      return false;
+    } else {
+      $.get(Wo_Ajax_Requests_File(), {
+        f: 'chat',
+        s: 'close_chat',
+        recipient_id: recipient_id,
+        story_id: story_id
+      }, function (data) {
+        // Para node_socket_flow === "0", la redirección ya se maneja en is_chat_on
+      });
+    }
   }
   placement = 1;
   if ($('.chat-wrapper').length == 1) {
@@ -2144,16 +2890,151 @@ function Wo_OpenAlbumLightBox(image_id, type) {
   });
 }
 function Wo_CloseLightbox() {
+  // Función auxiliar para detener un video completamente
+  function stopVideoCompletely(video) {
+    if (!video) return;
+    try {
+      video.pause();
+      video.currentTime = 0;
+      video.muted = true;
+      video.volume = 0;
+      // Limpiar la fuente del video
+      if (video.src) {
+        video.src = '';
+        video.load();
+      }
+      // Limpiar los sources
+      var sources = video.querySelectorAll('source');
+      sources.forEach(function(source) {
+        if (source.src) {
+          source.src = '';
+        }
+      });
+    } catch(e) {
+      console.log('Error al detener video:', e);
+    }
+  }
+  
+  // Pausar específicamente videos de historias PRIMERO
+  var storyVideos = document.querySelectorAll('video[data-story-video], #video_story, .story-image-wrapper video, .story-video video');
+  storyVideos.forEach(function(video) {
+    stopVideoCompletely(video);
+  });
+  
+  // Pausar y detener TODOS los videos en la página
+  var allVideos = document.querySelectorAll('video');
+  allVideos.forEach(function(video) {
+    if (video) {
+      stopVideoCompletely(video);
+    }
+  });
+  
+  // Pausar videos de MediaElementPlayer si están activos
+  if (typeof mejs !== 'undefined') {
+    $('video').each(function() {
+      var player = $(this).data('mediaelementplayer');
+      if (player && player.media) {
+        try {
+          player.pause();
+          player.setCurrentTime(0);
+          player.setMuted(true);
+          player.setVolume(0);
+        } catch(e) {
+          console.log('Error al pausar MediaElementPlayer:', e);
+        }
+      }
+    });
+  }
+  
+  // Remover el contenedor del lightbox
   $('.lightbox-container').remove();
   document.body.style.overflow = 'auto';
+  
+  // Forzar una última verificación después de un breve delay
+  setTimeout(function() {
+    var remainingVideos = document.querySelectorAll('video:not([paused])');
+    remainingVideos.forEach(function(video) {
+      if (video && !video.paused) {
+        stopVideoCompletely(video);
+      }
+    });
+  }, 100);
 }
+/** Refuerzo para WebView / caché: fuerza contenedor a pantalla completa si el HTML trae image-reels-mode */
+function Wo_FinalizeImageReelsLightbox() {
+  var $wrap = $('.lightbox-container');
+  var $root = $wrap.find('.lightbox-content.image-reels-mode');
+  if (!$wrap.length || !$root.length) {
+    return;
+  }
+  $wrap.addClass('lightbox-container--image-reels');
+  $wrap.css({
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: '100%',
+    height: '100%',
+    maxWidth: '100%',
+    margin: 0,
+    padding: 0,
+    zIndex: 1040,
+    overflow: 'hidden',
+    boxSizing: 'border-box'
+  });
+  $root.css({
+    width: '100%',
+    maxWidth: '100%',
+    margin: 0,
+    minHeight: '100vh',
+    height: '100vh',
+    maxHeight: '100vh',
+    display: 'flex',
+    flexDirection: 'column',
+    boxSizing: 'border-box',
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 1041
+  });
+  var $comments = $root.find('.comment-section[data-lb-comments-start-collapsed="1"]');
+  if ($comments.length && !$comments.hasClass('show-comments')) {
+    $comments.css('display', 'none');
+  }
+}
+
+// Reels-style lightbox rail: onclick needs a global; AJAX HTML does not inject scripts.
+function Wo_ToggleReelsRailReactions(post_id, e) {
+  if (e) {
+    if (e.stopPropagation) e.stopPropagation();
+    if (e.preventDefault) e.preventDefault();
+  }
+  var sel = '.reactions-reels-rail-container-' + post_id;
+  var $box = $(sel);
+  if (!$box.length) {
+    return false;
+  }
+  $('.reactions-box').not($box).fadeOut(80);
+  $box.fadeToggle(100);
+  return false;
+}
+
 function Wo_OpenLightBox(post_id) {
   Wo_CloseLightbox()
   $('video').each(function(index, el) {
       $(this).get(0).pause();
   });
   $('#contnet').append('<div class="lightbox-container"><div class="lightbox-backgrond" onclick="Wo_CloseLightbox();"></div><div class="lb-preloader" style="display:block"><svg width="50px" height="50px" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid"><rect x="0" y="0" width="100" height="100" fill="none" class="bk"></rect><circle cx="50" cy="50" r="40" stroke="#676d76" fill="none" stroke-width="6" stroke-linecap="round"><animate attributeName="stroke-dashoffset" dur="1.5s" repeatCount="indefinite" from="0" to="502"></animate><animate attributeName="stroke-dasharray" dur="1.5s" repeatCount="indefinite" values="150.6 100.4;1 250;150.6 100.4"></animate></circle></svg></div></div>');
-  $.get(Wo_Ajax_Requests_File(), {f:'open_lightbox', post_id:post_id}, function(data) {
+  $.ajax({
+    url: Wo_Ajax_Requests_File(),
+    type: 'GET',
+    cache: false,
+    dataType: 'json',
+    data: { f: 'open_lightbox', post_id: post_id, _lb: Date.now() },
+    success: function (data) {
     if (data.redirect) {
       window.location.href = data.redirect;
       return;
@@ -2161,12 +3042,14 @@ function Wo_OpenLightBox(post_id) {
     if (data.status == 200) {
       document.body.style.overflow = 'hidden';
       $('.lightbox-container').html(data.html);
+      Wo_FinalizeImageReelsLightbox();
       if ($('[data-page-type="watch"]').length > 0 && $('.lightbox-container').find('video').length > 0) {
         $('.lightbox-container').find('video').get(0).play();
       }
     }
     if (data.html.length == 0) {
        document.body.style.overflow = 'auto';
+    }
     }
   });
 }
@@ -2227,14 +3110,22 @@ function Wo_NextPicture(post_id) {
    Wo_CloseLightbox();
   $('body').append('<div class="lightbox-container"><div class="lightbox-backgrond" onclick="Wo_CloseLightbox();"></div><div class="lb-preloader" style="display:block"><svg width="50px" height="50px" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid"><rect x="0" y="0" width="100" height="100" fill="none" class="bk"></rect><circle cx="50" cy="50" r="40" stroke="#676d76" fill="none" stroke-width="6" stroke-linecap="round"><animate attributeName="stroke-dashoffset" dur="1.5s" repeatCount="indefinite" from="0" to="502"></animate><animate attributeName="stroke-dasharray" dur="1.5s" repeatCount="indefinite" values="150.6 100.4;1 250;150.6 100.4"></animate></circle></svg></div></div>');
 
-  $.get(Wo_Ajax_Requests_File(), {f:'get_next_image', post_id:post_id, type:type, id:id}, function(data) {
+  $.ajax({
+    url: Wo_Ajax_Requests_File(),
+    type: 'GET',
+    cache: false,
+    dataType: 'json',
+    data: { f: 'get_next_image', post_id: post_id, type: type, id: id, _lb: Date.now() },
+    success: function (data) {
     if (data.status == 200) {
     document.body.style.overflow = 'hidden';
       $('.lightbox-container').html(data.html);
+      Wo_FinalizeImageReelsLightbox();
       $( ".changer" ).fadeIn(200);
     }
     if (data.html.length == 0) {
        document.body.style.overflow = 'auto';
+    }
     }
   });
 }
@@ -2254,14 +3145,22 @@ function Wo_PreviousPicture(post_id) {
   }
   Wo_CloseLightbox();
   $('body').append('<div class="lightbox-container"><div class="lightbox-backgrond" onclick="Wo_CloseLightbox();"></div><div class="lb-preloader" style="display:block"><svg width="50px" height="50px" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid"><rect x="0" y="0" width="100" height="100" fill="none" class="bk"></rect><circle cx="50" cy="50" r="40" stroke="#676d76" fill="none" stroke-width="6" stroke-linecap="round"><animate attributeName="stroke-dashoffset" dur="1.5s" repeatCount="indefinite" from="0" to="502"></animate><animate attributeName="stroke-dasharray" dur="1.5s" repeatCount="indefinite" values="150.6 100.4;1 250;150.6 100.4"></animate></circle></svg></div></div>');
-  $.get(Wo_Ajax_Requests_File(), {f:'get_previous_image', post_id:post_id, type:type, id:id}, function(data) {
+  $.ajax({
+    url: Wo_Ajax_Requests_File(),
+    type: 'GET',
+    cache: false,
+    dataType: 'json',
+    data: { f: 'get_previous_image', post_id: post_id, type: type, id: id, _lb: Date.now() },
+    success: function (data) {
     if (data.status == 200) {
     document.body.style.overflow = 'hidden';
       $('.lightbox-container').html(data.html);
+      Wo_FinalizeImageReelsLightbox();
       $( ".changer" ).fadeIn(200);
     }
     if (data.html.length == 0) {
        document.body.style.overflow = 'auto';
+    }
     }
   });
 }
@@ -3220,6 +4119,1259 @@ function Wo_SharePostOn(post_id, owner_id,type){
     });
 
 }
+
+(function () {
+  var zrsSearchTimer = null;
+  var zrsBound = false;
+  var ZUITCH_SVG_SHARE_NODES = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="zuitch-pill-share-svg" aria-hidden="true"><path d="M18 16.08c-.76 0-1.44.3-1.96.85L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81A3 3 0 0021 5a3 3 0 00-3-3 3 3 0 00-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 00-3 3 3 3 0 003 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0018 16.08z"/></svg>';
+
+  /**
+   * Panel paso a paso: toques/captura/inline/open sheet. Activo solo si depuración explícita:
+   * - ?reelsharedebug=1 en la URL
+   * - localStorage zuitchReelShareDebug = 1
+   * - window.__ZUITCH_REEL_SHARE_DEBUG === true (p. ej. inyectado desde la app en builds de QA)
+   * (Ya no se activa solo por WebView Android: eso mostraba el panel a todos los usuarios de la app.)
+   * Ocultar sesión: botón "Ocultar" (sessionStorage). Siempre: window.__zuitchReelShareTrace (últimos 50).
+   * Consola: __zuitchReelShareDebugForceOn() para forzar el panel en WebView sin flags.
+   *
+   * Sin consola (app Android): barra amarilla arriba con cada paso si:
+   * - ?reelshareviz=1 o localStorage zuitchReelShareViz=1 o window.__ZUITCH_REEL_SHARE_TOAST
+   * - o Android + estás en reels (URL /reels o ?link1=reels o hay .wo_reels_cont)
+   * Envío al servidor (reels_*.log): solo con reelshareviz=1 o localStorage zuitchReelShareViz=1 o __ZUITCH_REEL_SHARE_TOAST
+   */
+  var zrsDbgPanelEl = null;
+  var zrsDbgMaxLines = 28;
+  var zrsShareCaptureBound = false;
+  var zrsToastEl = null;
+  var zrsToastTimer = null;
+  var zrsTapServerQueue = [];
+  var zrsTapServerTimer = null;
+  window.__zuitchReelShareTrace = window.__zuitchReelShareTrace || [];
+  function zuitchReelShareOnReelsPage() {
+    try {
+      if (/\/reels/i.test(location.pathname || '')) {
+        return true;
+      }
+      if (/[?&]link1=reels(?:&|$)/i.test(location.search || '')) {
+        return true;
+      }
+      if (document.querySelector('.wo_reels_cont')) {
+        return true;
+      }
+    } catch (eR) {}
+    return false;
+  }
+  function zuitchReelShareVisualTapEnabled() {
+    try {
+      if (sessionStorage.getItem('zuitchReelShareVizDismissed') === '1') {
+        return false;
+      }
+      if (localStorage.getItem('zuitchReelShareViz') === '0') {
+        return false;
+      }
+      if (window.__ZUITCH_REEL_SHARE_TOAST === true) {
+        return true;
+      }
+      if (/[?&]reelshareviz=1(?:&|$)/.test(location.search)) {
+        return true;
+      }
+      if (localStorage.getItem('zuitchReelShareViz') === '1') {
+        return true;
+      }
+      if (/Android/i.test(navigator.userAgent || '') && zuitchReelShareOnReelsPage()) {
+        return true;
+      }
+    } catch (eV) {}
+    return false;
+  }
+  function zuitchReelShareTapServerEnabled() {
+    try {
+      if (window.__ZUITCH_REEL_SHARE_TOAST === true) {
+        return true;
+      }
+      if (/[?&]reelshareviz=1(?:&|$)/.test(location.search)) {
+        return true;
+      }
+      if (localStorage.getItem('zuitchReelShareViz') === '1') {
+        return true;
+      }
+    } catch (eS) {}
+    return false;
+  }
+  function zuitchReelShareShowToast(step, detail) {
+    if (!zuitchReelShareVisualTapEnabled() || !document.body) {
+      return;
+    }
+    var text = String(step || '');
+    if (detail != null && detail !== '') {
+      try {
+        text += ' · ' + (typeof detail === 'object' ? JSON.stringify(detail) : String(detail));
+      } catch (eJ) {
+        text += ' · (detalle)';
+      }
+    }
+    if (text.length > 220) {
+      text = text.slice(0, 217) + '...';
+    }
+    if (!zrsToastEl) {
+      zrsToastEl = document.createElement('div');
+      zrsToastEl.id = 'zuitch-reel-share-toast';
+      zrsToastEl.setAttribute('style', 'position:fixed;top:0;left:0;right:0;z-index:2147483646;padding:max(12px,env(safe-area-inset-top)) 10px 12px;background:#111;color:#ffeb3b;font:600 15px/1.35 system-ui,-apple-system,sans-serif;text-align:center;box-shadow:0 3px 16px rgba(0,0,0,.45);pointer-events:none;word-break:break-word;border-bottom:2px solid #fbc02d;');
+      document.body.appendChild(zrsToastEl);
+    }
+    zrsToastEl.textContent = text;
+    zrsToastEl.style.display = 'block';
+    clearTimeout(zrsToastTimer);
+    zrsToastTimer = setTimeout(function () {
+      if (zrsToastEl) {
+        zrsToastEl.style.display = 'none';
+      }
+    }, 2600);
+    try {
+      if (navigator.vibrate) {
+        navigator.vibrate(18);
+      }
+    } catch (v) {}
+  }
+  function zuitchReelShareTapServerFlush() {
+    zrsTapServerTimer = null;
+    if (!zrsTapServerQueue.length || !zuitchReelShareTapServerEnabled()) {
+      zrsTapServerQueue = [];
+      return;
+    }
+    var batch = zrsTapServerQueue.splice(0, 30);
+    var h = null;
+    try {
+      h = document.querySelector('input.main_session');
+    } catch (eH) {}
+    var hash = h && h.value;
+    if (!hash || typeof window.jQuery === 'undefined' || typeof Wo_Ajax_Requests_File !== 'function') {
+      zrsTapServerQueue = batch.concat(zrsTapServerQueue);
+      return;
+    }
+    var events = batch.map(function (row) {
+      var pid = row.postId || 0;
+      return {
+        type: 'reel_share.tap_step',
+        level: 'info',
+        message: String(row.step || '').slice(0, 500),
+        postId: pid,
+        context: row.detail != null ? row.detail : null
+      };
+    });
+    try {
+      window.jQuery.ajax({
+        url: Wo_Ajax_Requests_File() + '?f=reels_client_log&hash=' + encodeURIComponent(hash),
+        type: 'POST',
+        data: JSON.stringify({ events: events }),
+        contentType: 'application/json; charset=UTF-8',
+        processData: false,
+        timeout: 15000
+      });
+    } catch (eA) {}
+  }
+  function zuitchReelShareTapMarkEnqueueServer(step, detail) {
+    if (!zuitchReelShareTapServerEnabled()) {
+      return;
+    }
+    var pid = 0;
+    try {
+      if (detail && detail.postId != null) {
+        pid = parseInt(detail.postId, 10) || 0;
+      }
+      if (!pid && detail && detail.pid != null) {
+        pid = parseInt(detail.pid, 10) || 0;
+      }
+    } catch (eP) {}
+    zrsTapServerQueue.push({ step: String(step || ''), detail: detail, postId: pid });
+    clearTimeout(zrsTapServerTimer);
+    zrsTapServerTimer = setTimeout(zuitchReelShareTapServerFlush, 400);
+  }
+  function zuitchReelShareShareCaptureInstall() {
+    if (zrsShareCaptureBound) {
+      return;
+    }
+    zrsShareCaptureBound = true;
+    document.addEventListener('touchstart', function (e) {
+      var btn = e.target && e.target.closest && e.target.closest('.reels-share-btn');
+      if (!btn) {
+        return;
+      }
+      window.__zuitchReelShareTapMark('A cap: touchstart', { tag: e.target.tagName, pid: btn.getAttribute('data-post-id') });
+    }, true);
+    document.addEventListener('touchend', function (e) {
+      var btn = e.target && e.target.closest && e.target.closest('.reels-share-btn');
+      if (!btn) {
+        return;
+      }
+      window.__zuitchReelShareTapMark('B cap: touchend', { tag: e.target.tagName, pid: btn.getAttribute('data-post-id') });
+    }, true);
+    document.addEventListener('click', function (e) {
+      var btn = e.target && e.target.closest && e.target.closest('.reels-share-btn');
+      if (!btn) {
+        return;
+      }
+      window.__zuitchReelShareTapMark('C cap: click', { tag: e.target.tagName, pid: btn.getAttribute('data-post-id') });
+    }, true);
+  }
+  function zuitchReelShareDebugEnabled() {
+    try {
+      if (sessionStorage.getItem('zuitchReelShareDebugDismissed') === '1') {
+        return false;
+      }
+      if (window.__ZUITCH_REEL_SHARE_DEBUG === true) {
+        return true;
+      }
+      if (/[?&]reelsharedebug=1(?:&|$)/.test(location.search)) {
+        return true;
+      }
+      if (localStorage.getItem('zuitchReelShareDebug') === '1') {
+        return true;
+      }
+    } catch (eEn) {}
+    return false;
+  }
+  function zuitchReelShareDebugRender() {
+    if (!zrsDbgPanelEl) {
+      return;
+    }
+    var lines = window.__zuitchReelShareTrace.slice(-zrsDbgMaxLines);
+    var body = zrsDbgPanelEl.querySelector('.zuitch-rs-dbg-body');
+    if (!body) {
+      return;
+    }
+    body.textContent = lines.length
+      ? lines.map(function (r) {
+        var extra = '';
+        if (r.detail != null && r.detail !== '') {
+          try {
+            extra = typeof r.detail === 'object' ? JSON.stringify(r.detail) : String(r.detail);
+          } catch (eJ) {
+            extra = String(r.detail);
+          }
+          if (extra.length > 120) {
+            extra = extra.slice(0, 117) + '...';
+          }
+          extra = ' | ' + extra;
+        }
+        return String(r.seq) + '. ' + r.step + extra;
+      }).join('\n')
+      : '(Toca Compartir: aquí verás si llega touch/click y si entra ZuitchOpenReelShareSheet)';
+  }
+  window.__zuitchReelShareTapMark = function (step, detail) {
+    try {
+      var n = (window.__zuitchReelShareSeq = (window.__zuitchReelShareSeq || 0) + 1);
+      window.__zuitchReelShareTrace.push({ seq: n, t: Date.now(), step: String(step || '?'), detail: detail != null ? detail : null });
+      if (window.__zuitchReelShareTrace.length > 50) {
+        window.__zuitchReelShareTrace.shift();
+      }
+      zuitchReelShareShowToast(String(step || '?'), detail);
+      zuitchReelShareTapMarkEnqueueServer(String(step || '?'), detail);
+      if (zuitchReelShareDebugEnabled()) {
+        if (!zrsDbgPanelEl) {
+          zuitchReelShareDebugInstall();
+        }
+        zuitchReelShareDebugRender();
+      }
+    } catch (eM) {}
+  };
+  function zuitchReelShareDebugInstall() {
+    if (!zuitchReelShareDebugEnabled() || zrsDbgPanelEl || !document.body) {
+      return;
+    }
+    var wrap = document.createElement('div');
+    wrap.id = 'zuitch-reel-share-debug-panel';
+    wrap.setAttribute('style', 'position:fixed;left:0;right:0;bottom:0;z-index:2147483647;max-height:40vh;background:rgba(0,0,0,.9);color:#9f9;font:11px/1.35 ui-monospace,monospace;padding:8px 10px;box-sizing:border-box;pointer-events:auto;overflow:hidden;border-top:2px solid #0c6;');
+    wrap.innerHTML = ''
+      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;color:#efe;">'
+      + '<span>Compartir — traza (debug)</span>'
+      + '<span style="display:flex;gap:6px;">'
+      + '<button type="button" id="zuitch-rs-dbg-clear" style="background:#333;color:#fff;border:1px solid #666;padding:4px 8px;font-size:11px;">Limpiar</button>'
+      + '<button type="button" id="zuitch-rs-dbg-close" style="background:#333;color:#fff;border:1px solid #666;padding:4px 8px;font-size:11px;">Ocultar</button>'
+      + '</span></div>'
+      + '<pre class="zuitch-rs-dbg-body" style="margin:0;white-space:pre-wrap;word-break:break-word;max-height:30vh;overflow-y:auto;color:#cf9;"></pre>';
+    document.body.appendChild(wrap);
+    zrsDbgPanelEl = wrap;
+    wrap.querySelector('#zuitch-rs-dbg-close').onclick = function () {
+      try {
+        sessionStorage.setItem('zuitchReelShareDebugDismissed', '1');
+      } catch (x) {}
+      wrap.remove();
+      zrsDbgPanelEl = null;
+    };
+    wrap.querySelector('#zuitch-rs-dbg-clear').onclick = function () {
+      window.__zuitchReelShareTrace = [];
+      window.__zuitchReelShareSeq = 0;
+      zuitchReelShareDebugRender();
+    };
+    zuitchReelShareShareCaptureInstall();
+    zuitchReelShareDebugRender();
+  }
+  function zuitchReelShareDebugBoot() {
+    var go = function () {
+      if (zuitchReelShareDebugEnabled()) {
+        zuitchReelShareDebugInstall();
+      } else if (zuitchReelShareVisualTapEnabled()) {
+        zuitchReelShareShareCaptureInstall();
+      }
+    };
+    if (document.body) {
+      go();
+    } else {
+      document.addEventListener('DOMContentLoaded', go);
+    }
+    setTimeout(go, 600);
+    setTimeout(go, 2200);
+  }
+  zuitchReelShareDebugBoot();
+  /** Consola / app: __zuitchReelShareDebugForceOn() si el panel no sale (p. ej. WebView sin flags). */
+  window.__zuitchReelShareDebugForceOn = function () {
+    try {
+      sessionStorage.removeItem('zuitchReelShareDebugDismissed');
+    } catch (eRm) {}
+    window.__ZUITCH_REEL_SHARE_DEBUG = true;
+    try {
+      zuitchReelShareDebugInstall();
+      zuitchReelShareDebugRender();
+    } catch (eIn) {}
+  };
+  /** Barra amarilla + traza sin consola (también útil en WebView). */
+  window.__zuitchReelShareVizForceOn = function () {
+    try {
+      sessionStorage.removeItem('zuitchReelShareVizDismissed');
+    } catch (eR) {}
+    window.__ZUITCH_REEL_SHARE_TOAST = true;
+    try {
+      localStorage.setItem('zuitchReelShareViz', '1');
+    } catch (eL) {}
+    try {
+      zuitchReelShareShareCaptureInstall();
+    } catch (eC) {}
+    try {
+      window.__zuitchReelShareTapMark('viz_forzado', { href: location.href });
+    } catch (eM) {}
+  };
+
+  /**
+   * Diagnóstico compartir reels: consola + reels_client_log (sesión) + sendBeacon inmediato.
+   * Logs en servidor: httpdocs/cache/reels_client_logs/reels_YYYY-MM-DD.log
+   */
+  function zuitchReelShareDiag(level, type, message, postId, context, doFlush) {
+    var pid = postId ? parseInt(postId, 10) || 0 : 0;
+    var ctx = context && typeof context === 'object' ? context : (context != null ? { raw: context } : null);
+    try {
+      console.log('[ZuitchReelShareDiag]', level, type, message, ctx || '');
+    } catch (c0) {}
+    var safeType = String(type || 'reel_share.diag').replace(/[^\w.-]/g, '_');
+    var ev = {
+      type: safeType,
+      level: level === 'error' || level === 'warn' ? level : 'info',
+      message: String(message || '').slice(0, 1800),
+      postId: pid,
+      client: {
+        ua: navigator.userAgent || '',
+        url: location.href,
+        vw: window.innerWidth,
+        vh: window.innerHeight,
+        dpr: typeof window.devicePixelRatio !== 'undefined' ? window.devicePixelRatio : 1,
+        htmlWvClass: (function () {
+          try {
+            return document.documentElement.classList.contains('wo-reels-android-webview');
+          } catch (e) {
+            return false;
+          }
+        }()),
+        __woReelsAndroidWebview: !!window.__woReelsAndroidWebview,
+        __ZUITCH_ANDROID_WEBVIEW: typeof window.__ZUITCH_ANDROID_WEBVIEW !== 'undefined' ? !!window.__ZUITCH_ANDROID_WEBVIEW : null,
+        hasZuitchAppBridge: typeof window.ZuitchAppBridge !== 'undefined' && !!window.ZuitchAppBridge,
+        touch: 'ontouchstart' in window,
+        maxTouchPoints: typeof navigator.maxTouchPoints !== 'undefined' ? navigator.maxTouchPoints : 0
+      },
+      context: ctx
+    };
+    var sent = false;
+    var h = null;
+    try {
+      h = document.querySelector('input.main_session');
+    } catch (cH) {}
+    var hash = h && h.value;
+    /* WebView: sendBeacon a veces no manda cookies de sesión; con doFlush preferir AJAX (misma cookie que el resto del sitio). */
+    if (doFlush && hash && typeof window.jQuery !== 'undefined' && typeof Wo_Ajax_Requests_File === 'function') {
+      try {
+        window.jQuery.ajax({
+          url: Wo_Ajax_Requests_File() + '?f=reels_client_log&hash=' + encodeURIComponent(hash),
+          type: 'POST',
+          data: JSON.stringify({ events: [ev] }),
+          contentType: 'application/json; charset=UTF-8',
+          processData: false,
+          timeout: 15000
+        });
+        sent = true;
+      } catch (cAjax) {}
+    }
+    if (!sent) {
+      try {
+        if (hash && typeof Wo_Ajax_Requests_File === 'function' && navigator.sendBeacon) {
+          var url = Wo_Ajax_Requests_File() + '?f=reels_client_log&hash=' + encodeURIComponent(hash);
+          sent = !!navigator.sendBeacon(url, new Blob([JSON.stringify({ events: [ev] })], { type: 'application/json' }));
+        }
+      } catch (c2) {}
+    }
+    if (!sent) {
+      try {
+        if (typeof window.ZuitchReelsServerLog === 'function') {
+          window.ZuitchReelsServerLog(level || 'info', safeType, String(message || ''), pid, ctx);
+          if (doFlush && typeof window.ZuitchReelsServerLog.flush === 'function') {
+            window.ZuitchReelsServerLog.flush();
+          }
+        }
+      } catch (c1) {}
+    }
+  }
+
+  function zuitchEscAttr(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;')
+      .replace(/"/g, '&quot;')
+      .replace(/</g, '&lt;');
+  }
+
+  function zuitchShareSiteUrl() {
+    return (typeof window.__ZUITCH_SITE_URL === 'string' && window.__ZUITCH_SITE_URL) ? window.__ZUITCH_SITE_URL : (window.location.origin || '');
+  }
+
+  function zuitchSocialFlags() {
+    var d = window.__ZUITCH_SOCIAL_SHARE;
+    if (!d || typeof d !== 'object') {
+      return { twitter: true, facebook: true, whatsapp: true, linkedin: true, telegram: true, pinterest: true };
+    }
+    return d;
+  }
+
+  function zuitchShareModalAlert(msg) {
+    var $modal = $('#modal-alert');
+    var $msg = $('#modal-alert-msg');
+    if ($modal.length && $msg.length) {
+      $msg.text(msg);
+      $modal.modal('show');
+      setTimeout(function () {
+        $modal.css('z-index', 10080);
+        $('.modal-backdrop').last().css('z-index', 10070);
+      }, 10);
+      clearTimeout(window.__zuitchCopyModalTimer);
+      window.__zuitchCopyModalTimer = setTimeout(function () {
+        try {
+          $modal.modal('hide');
+        } catch (e1) {}
+      }, 2600);
+      return;
+    }
+    var $sheet = $('#zuitch-reel-share-sheet');
+    if ($sheet.length) {
+      var $body = $sheet.find('.modal-body').first();
+      var $banner = $body.find('.zuitch-reel-share-inline-alert');
+      if (!$banner.length) {
+        $banner = $('<div class="zuitch-reel-share-inline-alert" role="status"></div>');
+        $body.prepend($banner);
+      }
+      $banner.text(msg).addClass('is-visible');
+      clearTimeout(window.__zuitchInlineBannerTimer);
+      window.__zuitchInlineBannerTimer = setTimeout(function () {
+        $banner.removeClass('is-visible').text('');
+      }, 2600);
+    }
+  }
+
+  function zuitchShareCopyText(text) {
+    text = String(text || '');
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      return navigator.clipboard.writeText(text).then(function () { return true; }).catch(function () { return false; });
+    }
+    try {
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      ta.setAttribute('readonly', '');
+      ta.style.position = 'fixed';
+      ta.style.left = '-9999px';
+      document.body.appendChild(ta);
+      ta.select();
+      var ok = document.execCommand('copy');
+      document.body.removeChild(ta);
+      return Promise.resolve(ok);
+    } catch (e) {
+      return Promise.resolve(false);
+    }
+  }
+
+  function zuitchMessagesUrlForUser(userId) {
+    var base = zuitchShareSiteUrl().replace(/\/+$/, '');
+    return base + '/index.php?link1=messages&user=' + encodeURIComponent(String(userId));
+  }
+
+  /**
+   * WebViews sin navigator.share: intent URL vía location (solo Chrome Android fuera de WebView).
+   * En WebView (; wv) NO usar: location.href=intent… suele navegar a URL inválida y “cuelga” la app.
+   */
+  function zuitchTryAndroidSendPlainText(text) {
+    text = String(text || '');
+    if (!text.length || !/Android/i.test(navigator.userAgent || '')) {
+      return false;
+    }
+    var ua = navigator.userAgent || '';
+    if (/\bwv\b/i.test(ua) || window.__woReelsAndroidWebview) {
+      return false;
+    }
+    try {
+      var enc = encodeURIComponent(text);
+      window.location.href = 'intent:#Intent;action=android.intent.action.SEND;type=text/plain;S.android.intent.extra.TEXT=' + enc + ';end';
+      return true;
+    } catch (eI) {
+      return false;
+    }
+  }
+  window.zuitchTryAndroidSendPlainText = zuitchTryAndroidSendPlainText;
+
+  function zuitchReelSharePreferNativeLayer() {
+    try {
+      if (window.__woReelsAndroidWebview) {
+        return true;
+      }
+      if (typeof window.__ZUITCH_ANDROID_WEBVIEW !== 'undefined' && window.__ZUITCH_ANDROID_WEBVIEW) {
+        return true;
+      }
+      if (typeof window.ZuitchAppBridge !== 'undefined' && window.ZuitchAppBridge) {
+        return true;
+      }
+      if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent || '')) {
+        return true;
+      }
+      if (window.matchMedia && window.matchMedia('(max-width: 1024px)').matches) {
+        return true;
+      }
+      if (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) {
+        return true;
+      }
+    } catch (e) {}
+    return false;
+  }
+
+  /** Solo WebView/app Zuitch (no escritorio): permite intentar navigator.share antes del modal. */
+  function zuitchReelShareStrictAppWebview() {
+    if (window.__ZUITCH_NO_SYSTEM_SHARE === true) {
+      return false;
+    }
+    try {
+      if (window.__woReelsAndroidWebview) {
+        return true;
+      }
+      if (typeof window.__ZUITCH_ANDROID_WEBVIEW !== 'undefined' && window.__ZUITCH_ANDROID_WEBVIEW) {
+        return true;
+      }
+      if (typeof window.ZuitchAppBridge !== 'undefined' && window.ZuitchAppBridge) {
+        return true;
+      }
+      /* App que personaliza el UA (sin "; wv") y sin bridge a tiempo: mismo criterio que reels en pantalla */
+      if (/Android/i.test(navigator.userAgent || '')) {
+        if (/\/reels/i.test(location.pathname || '')) {
+          return true;
+        }
+        if (/[?&]link1=reels(?:&|$)/i.test(location.search || '')) {
+          return true;
+        }
+        try {
+          if (document.querySelector('.wo_reels_cont')) {
+            return true;
+          }
+        } catch (eQ) {}
+      }
+    } catch (eS) {}
+    return false;
+  }
+
+  function zuitchReelShareHideNative() {
+    try {
+      $('.zuitch-reel-share-native-backdrop').remove();
+    } catch (e0) {}
+    var $m = $('#zuitch-reel-share-sheet');
+    try {
+      $m.modal('hide');
+    } catch (e1) {}
+    var el = $m[0];
+    if (el) {
+      el.style.display = 'none';
+      try {
+        el.style.removeProperty('position');
+        el.style.removeProperty('top');
+        el.style.removeProperty('left');
+        el.style.removeProperty('right');
+        el.style.removeProperty('bottom');
+        el.style.removeProperty('z-index');
+        el.style.removeProperty('overflow-y');
+        el.style.removeProperty('opacity');
+        el.style.removeProperty('-webkit-overflow-scrolling');
+      } catch (e2) {}
+    }
+    $m.removeClass('in');
+    try {
+      $('.modal-backdrop.zuitch-reel-share-backdrop').remove();
+    } catch (e3) {}
+    try {
+      if (!$('.modal.in:visible').length) {
+        $('body').removeClass('modal-open');
+      }
+    } catch (e4) {}
+  }
+
+  function zuitchReelShareShowNative($m, postId) {
+    if (!$m || !$m.length) {
+      return;
+    }
+    zuitchReelShareHideNative();
+    $m.appendTo('body');
+    $m.removeClass('fade').addClass('in');
+    var el = $m[0];
+    var bd = document.createElement('div');
+    bd.className = 'zuitch-reel-share-native-backdrop';
+    bd.setAttribute('style', 'position:fixed!important;top:0!important;left:0!important;right:0!important;bottom:0!important;background:rgba(0,0,0,.58)!important;z-index:2147483645!important;');
+    bd.onclick = function (ev) {
+      if (ev.target === bd) {
+        zuitchReelShareHideNative();
+      }
+    };
+    document.body.insertBefore(bd, el);
+    el.style.setProperty('display', 'block', 'important');
+    el.style.setProperty('position', 'fixed', 'important');
+    el.style.setProperty('top', '0', 'important');
+    el.style.setProperty('left', '0', 'important');
+    el.style.setProperty('right', '0', 'important');
+    el.style.setProperty('bottom', '0', 'important');
+    el.style.setProperty('z-index', '2147483646', 'important');
+    el.style.setProperty('overflow-y', 'auto', 'important');
+    el.style.setProperty('opacity', '1', 'important');
+    try {
+      el.style.setProperty('-webkit-overflow-scrolling', 'touch');
+    } catch (eS) {}
+    try {
+      $m.find('.modal-dialog').first().css({ position: 'relative', zIndex: 2147483647 });
+    } catch (eD) {}
+    $('body').addClass('modal-open');
+    window.__zuitchReelShareDedupeAt = Date.now();
+    try {
+      if (typeof window.__zuitchReelShareTapMark === 'function') {
+        window.__zuitchReelShareTapMark('F native_layer mostrada', { postId: postId || 0 });
+      }
+    } catch (eZ3) {}
+    zuitchReelShareDiag('info', 'reel_share.native_layer_shown', 'Sheet vía capa fija (sin depender de BS)', postId || 0, null, true);
+  }
+
+  function zuitchEnsureReelShareSheetModal() {
+    if (document.getElementById('zuitch-reel-share-sheet')) {
+      return;
+    }
+    var html = ''
+      + '<div class="modal fade zuitch-reel-share-modal" id="zuitch-reel-share-sheet" tabindex="-1" role="dialog" aria-hidden="true">'
+      + '  <div class="modal-dialog zuitch-reel-share-dialog" role="document">'
+      + '    <div class="modal-content zuitch-reel-share-content">'
+      + '      <div class="zuitch-reel-share-head">'
+      + '        <span class="zuitch-reel-share-title">Compartir</span>'
+      + '        <button type="button" class="close zuitch-reel-share-close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>'
+      + '      </div>'
+      + '      <div class="modal-body zuitch-reel-share-body">'
+      + '        <div class="zuitch-reel-share-logged" style="display:none;">'
+      + '          <div class="zuitch-reel-share-search-wrap">'
+      + '            <input type="search" class="form-control zuitch-reel-share-search" placeholder="Buscar contactos" autocomplete="off" />'
+      + '          </div>'
+      + '          <div class="zuitch-reel-share-contacts-grid"></div>'
+      + '        </div>'
+      + '        <div class="zuitch-reel-share-quick-actions"></div>'
+      + '        <div class="zuitch-reel-share-social-wrap"></div>'
+      + '        <div class="zuitch-reel-share-zuitch-cta"></div>'
+      + '      </div>'
+      + '    </div>'
+      + '  </div>'
+      + '</div>';
+    $('body').append(html);
+    $('#zuitch-reel-share-sheet').on('shown.bs.modal', function () {
+      var z = 10060;
+      $(this).css('z-index', z);
+      $('.modal-backdrop').last().css('z-index', z - 10);
+      try {
+        var pid = parseInt($(this).attr('data-post-id'), 10) || 0;
+        zuitchReelShareDiag('info', 'reel_share.modal_shown_bs', 'Bootstrap shown.bs.modal', pid, { zIndex: z }, true);
+      } catch (eSh) {}
+    });
+    if (!zrsBound) {
+      zrsBound = true;
+      $(document).on('click.zrsnative', '#zuitch-reel-share-sheet .zuitch-reel-share-close', function (e) {
+        e.preventDefault();
+        zuitchReelShareHideNative();
+      });
+      $(document).on('input.zrs', '.zuitch-reel-share-search', function () {
+        var $m = $('#zuitch-reel-share-sheet');
+        var q = $(this).val();
+        clearTimeout(zrsSearchTimer);
+        zrsSearchTimer = setTimeout(function () {
+          ZuitchReelShareLoadContacts($m, q);
+        }, 280);
+      });
+      $(document).on('click.zrs', '.zuitch-reel-share-contact', function (e) {
+        e.preventDefault();
+        var uid = $(this).attr('data-user-id');
+        var $m = $('#zuitch-reel-share-sheet');
+        var url = $m.data('share-url') || '';
+        if (!uid) {
+          return;
+        }
+        zuitchShareCopyText(url).then(function () {
+          zuitchShareModalAlert('El enlace se copió. Pégalo en el chat.');
+          window.location.href = zuitchMessagesUrlForUser(uid);
+        });
+      });
+      $(document).on('click.zrs', '.zuitch-reel-share-action', function (e) {
+        var $btn = $(this);
+        var act = $btn.attr('data-action');
+        var $m = $('#zuitch-reel-share-sheet');
+        var shareUrl = $m.data('share-url') || '';
+        var shareTitle = $m.data('share-title') || '';
+        var postId = parseInt($m.data('post-id'), 10) || 0;
+        var ownerId = parseInt($m.data('owner-id'), 10) || 0;
+        if (act === 'copy') {
+          e.preventDefault();
+          zuitchShareCopyText(shareUrl).then(function (ok) {
+            zuitchShareModalAlert(ok ? 'El enlace se copió al portapapeles.' : 'No se pudo copiar el enlace.');
+          });
+        } else if (act === 'android_intent') {
+          e.preventDefault();
+          var payload = (shareTitle ? String(shareTitle) + '\n' : '') + shareUrl;
+          var uaAi = navigator.userAgent || '';
+          if (/\bwv\b/i.test(uaAi) || window.__woReelsAndroidWebview) {
+            zuitchShareModalAlert('Dentro de la app no se puede abrir el menú de Android (evita cuelgues). Usa Copiar enlace o WhatsApp, o abre Zuitch en Chrome.');
+            return;
+          }
+          if (!zuitchTryAndroidSendPlainText(payload)) {
+            zuitchShareCopyText(shareUrl).then(function (ok) {
+              zuitchShareModalAlert(ok ? 'No se pudo abrir el selector. Enlace copiado.' : 'No se pudo abrir apps ni copiar.');
+            });
+          }
+        } else if (act === 'native') {
+          e.preventDefault();
+          if (navigator.share) {
+            navigator.share({ title: shareTitle, url: shareUrl }).catch(function () {});
+          } else {
+            zuitchShareCopyText(shareUrl).then(function (ok) {
+              zuitchShareModalAlert(ok ? 'El enlace se copió al portapapeles.' : 'No se pudo copiar el enlace.');
+            });
+          }
+        }
+      });
+      $(document).on('click.zrs', '.zuitch-reel-share-social-wrap .zuitch-social-copy-only', function (e) {
+        e.preventDefault();
+        var mode = $(this).attr('data-copy-mode') || '';
+        var $m = $('#zuitch-reel-share-sheet');
+        var shareUrl = $m.data('share-url') || '';
+        zuitchShareCopyText(shareUrl).then(function (ok) {
+          if (ok) {
+            zuitchShareModalAlert(mode === 'tiktok'
+              ? 'El enlace se copió. Ábrelo en la app de TikTok.'
+              : 'El enlace se copió. Ábrelo en la app de Instagram.');
+          } else {
+            zuitchShareModalAlert('No se pudo copiar el enlace.');
+          }
+        });
+      });
+      $(document).on('click.zrs', '.zuitch-reel-open-zuitch-share', function (e) {
+        e.preventDefault();
+        var $m = $('#zuitch-reel-share-sheet');
+        var postId = parseInt($m.data('post-id'), 10) || 0;
+        var ownerId = parseInt($m.data('owner-id'), 10) || 0;
+        zuitchReelShareHideNative();
+        if (postId && typeof Wo_SharePostOn === 'function') {
+          Wo_SharePostOn(postId, ownerId, 'timeline');
+        }
+      });
+    }
+  }
+
+  function zuitchShareQuickRowHtml() {
+    var uaQr = navigator.userAgent || '';
+    var androidNoShare = typeof navigator.share !== 'function' && /Android/i.test(uaQr);
+    var isWvQr = /\bwv\b/i.test(uaQr) || window.__woReelsAndroidWebview;
+    var showIntentPill = androidNoShare && !isWvQr;
+    var intentPill = showIntentPill
+      ? '<button type="button" class="zuitch-reel-share-action zuitch-reel-share-pill zuitch-reel-share-pill-intent" data-action="android_intent" title="Menú del sistema (Chrome Android)">'
+      + '<i class="fa fa-android" aria-hidden="true"></i>'
+      + '<span class="zuitch-reel-share-pill-lbl">Apps</span></button>'
+      : '';
+    return ''
+      + '<div class="zuitch-reel-share-quick-row zuitch-reel-share-quick-row--with-intent' + (androidNoShare ? ' is-android-no-ns' : '') + '">'
+      + '<button type="button" class="zuitch-reel-share-action zuitch-reel-share-pill" data-action="copy" title="Copiar enlace">'
+      + '<i class="fa fa-link" aria-hidden="true"></i>'
+      + '<span class="zuitch-reel-share-pill-lbl">Copiar enlace</span></button>'
+      + '<button type="button" class="zuitch-reel-share-action zuitch-reel-share-pill" data-action="native" title="Compartir">'
+      + '<span class="zuitch-reel-share-pill-ico-svg" aria-hidden="true">' + ZUITCH_SVG_SHARE_NODES + '</span>'
+      + '<span class="zuitch-reel-share-pill-lbl">Compartir</span></button>'
+      + intentPill
+      + '</div>';
+  }
+
+  function zuitchShareSocialRowHtml(shareUrl, shareTitle, flags) {
+    var u = encodeURIComponent(shareUrl);
+    var t = encodeURIComponent(shareTitle || '');
+    var h = [];
+    h.push('<div class="share_modal_social_icos zuitch-reel-share-social-inner">');
+    if (flags.twitter) {
+      h.push('<a class="social-btn-parent" href="https://twitter.com/intent/tweet?text=' + u + '" target="_blank" rel="noopener noreferrer">'
+        + '<div class="social-btn"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" class="feather" fill="#55acee"><path d="M5,3H19A2,2 0 0,1 21,5V19A2,2 0 0,1 19,21H5A2,2 0 0,1 3,19V5A2,2 0 0,1 5,3M17.71,9.33C18.19,8.93 18.75,8.45 19,7.92C18.59,8.13 18.1,8.26 17.56,8.33C18.06,7.97 18.47,7.5 18.68,6.86C18.16,7.14 17.63,7.38 16.97,7.5C15.42,5.63 11.71,7.15 12.37,9.95C9.76,9.79 8.17,8.61 6.85,7.16C6.1,8.38 6.75,10.23 7.64,10.74C7.18,10.71 6.83,10.57 6.5,10.41C6.54,11.95 7.39,12.69 8.58,13.09C8.22,13.16 7.82,13.18 7.44,13.12C7.81,14.19 8.58,14.86 9.9,15C9,15.76 7.34,16.29 6,16.08C7.15,16.81 8.46,17.39 10.28,17.31C14.69,17.11 17.64,13.95 17.71,9.33Z" /></svg></div> <span>Twitter</span></a>');
+    }
+    if (flags.facebook) {
+      h.push('<a class="social-btn-parent" rel="publisher" href="https://www.facebook.com/sharer/sharer.php?u=' + u + '" target="_blank" rel="noopener noreferrer">'
+        + '<div class="social-btn"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" class="feather" fill="#337ab7"><path d="M5,3H19A2,2 0 0,1 21,5V19A2,2 0 0,1 19,21H5A2,2 0 0,1 3,19V5A2,2 0 0,1 5,3M18,5H15.5A3.5,3.5 0 0,0 12,8.5V11H10V14H12V21H15V14H18V11H15V9A1,1 0 0,1 16,8H18V5Z" /></svg></div> <span>Facebook</span></a>');
+    }
+    if (flags.whatsapp) {
+      h.push('<a class="social-btn-parent" href="https://api.whatsapp.com/send?text=' + u + '" data-action="share/whatsapp/share" target="_blank" rel="noopener noreferrer">'
+        + '<div class="social-btn"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" class="feather" fill="#04aa24"><path d="M16.75,13.96C17,14.09 17.16,14.16 17.21,14.26C17.27,14.37 17.25,14.87 17,15.44C16.8,16 15.76,16.54 15.3,16.56C14.84,16.58 14.83,16.92 12.34,15.83C9.85,14.74 8.35,12.08 8.23,11.91C8.11,11.74 7.27,10.53 7.31,9.3C7.36,8.08 8,7.5 8.26,7.26C8.5,7 8.77,6.97 8.94,7H9.41C9.56,7 9.77,6.94 9.96,7.45L10.65,9.32C10.71,9.45 10.75,9.6 10.66,9.76L10.39,10.17L10,10.59C9.88,10.71 9.74,10.84 9.88,11.09C10,11.35 10.5,12.18 11.2,12.87C12.11,13.75 12.91,14.04 13.15,14.17C13.39,14.31 13.54,14.29 13.69,14.13L14.5,13.19C14.69,12.94 14.85,13 15.08,13.08L16.75,13.96M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22C10.03,22 8.2,21.43 6.65,20.45L2,22L3.55,17.35C2.57,15.8 2,13.97 2,12A10,10 0 0,1 12,2M12,4A8,8 0 0,0 4,12C4,13.72 4.54,15.31 5.46,16.61L4.5,19.5L7.39,18.54C8.69,19.46 10.28,20 12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4Z" /></svg></div> <span>WhatsApp</span></a>');
+    }
+    if (flags.pinterest) {
+      h.push('<a class="social-btn-parent" href="https://pinterest.com/pin/create/button/?url=' + u + '" target="_blank" rel="noopener noreferrer">'
+        + '<div class="social-btn"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" class="feather" fill="#cb2027"><path d="M13,16.2C12.2,16.2 11.43,15.86 10.88,15.28L9.93,18.5L9.86,18.69L9.83,18.67C9.64,19 9.29,19.2 8.9,19.2C8.29,19.2 7.8,18.71 7.8,18.1C7.8,18.05 7.81,18 7.81,17.95H7.8L7.85,17.77L9.7,12.21C9.7,12.21 9.5,11.59 9.5,10.73C9.5,9 10.42,8.5 11.16,8.5C11.91,8.5 12.58,8.76 12.58,9.81C12.58,11.15 11.69,11.84 11.69,12.81C11.69,13.55 12.29,14.16 13.03,14.16C15.37,14.16 16.2,12.4 16.2,10.75C16.2,8.57 14.32,6.8 12,6.8C9.68,6.8 7.8,8.57 7.8,10.75C7.8,11.42 8,12.09 8.34,12.68C8.43,12.84 8.5,13 8.5,13.2A1,1 0 0,1 7.5,14.2C7.13,14.2 6.79,14 6.62,13.7C6.08,12.81 5.8,11.79 5.8,10.75C5.8,7.47 8.58,4.8 12,4.8C15.42,4.8 18.2,7.47 18.2,10.75C18.2,13.37 16.57,16.2 13,16.2M20,2H4C2.89,2 2,2.89 2,4V20A2,2 0 0,0 4,22H20A2,2 0 0,0 22,20V4C22,2.89 21.1,2 20,2Z" /></svg></div> <span>Pinterest</span></a>');
+    }
+    if (flags.linkedin) {
+      h.push('<a class="social-btn-parent" href="https://www.linkedin.com/shareArticle?mini=true&amp;url=' + u + '" target="_blank" rel="noopener noreferrer">'
+        + '<div class="social-btn"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" class="feather" fill="#007bb6"><path d="M19,3A2,2 0 0,1 21,5V19A2,2 0 0,1 19,21H5A2,2 0 0,1 3,19V5A2,2 0 0,1 5,3H19M18.5,18.5V13.2A3.26,3.26 0 0,0 15.24,9.94C14.39,9.94 13.4,10.46 12.92,11.24V10.13H10.13V18.5H12.92V13.57C12.92,12.8 13.54,12.17 14.31,12.17A1.4,1.4 0 0,1 15.71,13.57V18.5H18.5M6.88,8.56A1.68,1.68 0 0,0 8.56,6.88C8.56,5.95 7.81,5.19 6.88,5.19A1.69,1.69 0 0,0 5.19,6.88C5.19,7.81 5.95,8.56 6.88,8.56M8.27,18.5V10.13H5.5V18.5H8.27Z" /></svg></div> <span>LinkedIn</span></a>');
+    }
+    if (flags.telegram) {
+      h.push('<a class="social-btn-parent" href="https://telegram.me/share/url?url=' + u + '&amp;text=' + t + '" target="_blank" rel="noopener noreferrer">'
+        + '<div class="social-btn"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" class="feather" fill="#239bcd"><path d="M9.78,18.65L10.06,14.42L17.74,7.5C18.08,7.19 17.67,7.04 17.22,7.31L7.74,13.3L3.64,12C2.76,11.75 2.75,11.14 3.84,10.7L19.81,4.54C20.54,4.21 21.24,4.72 20.96,5.84L18.24,18.65C18.05,19.56 17.5,19.78 16.74,19.36L12.6,16.3L10.61,18.23C10.38,18.46 10.19,18.65 9.78,18.65Z" /></svg></div> <span>Telegram</span></a>');
+    }
+    h.push('<a href="#" class="social-btn-parent zuitch-social-copy-only" data-copy-mode="instagram">'
+      + '<div class="social-btn"><i class="fa fa-instagram" style="font-size:20px;color:#c13584"></i></div> <span>Instagram</span></a>');
+    h.push('<a href="#" class="social-btn-parent zuitch-social-copy-only" data-copy-mode="tiktok">'
+      + '<div class="social-btn"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="#000"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43V7.39a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.82z"/></svg></div> <span>TikTok</span></a>');
+    h.push('</div>');
+    return h.join('');
+  }
+
+  function zuitchShareZuitchBlockHtml(postId, ownerId) {
+    if (!window.__ZUITCH_LOGGED_IN || !postId) {
+      return '';
+    }
+    return ''
+      + '<div class="zuitch-reel-share-zuitch-block">'
+      + '<p class="zuitch-reel-share-zuitch-hint">Texto, menciones, línea de tiempo, página o grupo: usa el mismo formulario que en el feed.</p>'
+      + '<button type="button" class="btn btn-main btn-block zuitch-reel-open-zuitch-share">Compartir en Zuitch</button>'
+      + '</div>';
+  }
+
+  window.ZuitchReelShareLoadContacts = function ($modal, query) {
+    if (!$modal || !$modal.length || !window.__ZUITCH_LOGGED_IN || typeof Wo_Ajax_Requests_File !== 'function') {
+      return;
+    }
+    var qparam = query ? String(query) : '';
+    $.ajax({
+      url: Wo_Ajax_Requests_File(),
+      type: 'GET',
+      dataType: 'json',
+      data: { f: 'reel_share_contacts', q: qparam },
+    }).done(function (data) {
+      if (!data || data.status !== 200 || !$.isArray(data.users)) {
+        $modal.find('.zuitch-reel-share-contacts-grid').empty();
+        return;
+      }
+      var h = [];
+      data.users.forEach(function (u) {
+        if (!u || !u.id) {
+          return;
+        }
+        var name = u.name || u.username || '';
+        var av = u.avatar ? String(u.avatar) : '';
+        var shortName = name.length > 14 ? name.slice(0, 12) + '\u2026' : name;
+        h.push('<a href="#" class="zuitch-reel-share-contact" data-user-id="' + parseInt(u.id, 10) + '">'
+          + '<span class="zuitch-reel-share-av"><img src="' + zuitchEscAttr(av) + '" alt="" /></span>'
+          + '<span class="zuitch-reel-share-name" title="' + zuitchEscAttr(name) + '">' + zuitchEscAttr(shortName) + '</span>'
+          + '</a>');
+      });
+      $modal.find('.zuitch-reel-share-contacts-grid').html(h.join(''));
+    });
+  };
+
+  function zuitchReadShareTriggerDataset(el, $t) {
+    var shareUrl = '';
+    var shareTitle = '';
+    var postId = 0;
+    var ownerId = 0;
+    if (el && el.getAttribute) {
+      shareUrl = el.getAttribute('data-share-url') || '';
+      shareTitle = el.getAttribute('data-share-title') || '';
+      postId = parseInt(el.getAttribute('data-post-id'), 10) || 0;
+      ownerId = parseInt(el.getAttribute('data-owner-id'), 10) || 0;
+    }
+    if (!shareUrl && $t && $t.length && typeof $t.attr === 'function') {
+      shareUrl = $t.attr('data-share-url') || '';
+    }
+    if (!shareTitle && $t && $t.length && typeof $t.attr === 'function') {
+      shareTitle = $t.attr('data-share-title') || '';
+    }
+    if (!postId && $t && $t.length && typeof $t.attr === 'function') {
+      postId = parseInt($t.attr('data-post-id'), 10) || 0;
+    }
+    if (!ownerId && $t && $t.length && typeof $t.attr === 'function') {
+      ownerId = parseInt($t.attr('data-owner-id'), 10) || 0;
+    }
+    return { shareUrl: shareUrl, shareTitle: shareTitle, postId: postId, ownerId: ownerId };
+  }
+
+  window.ZuitchOpenReelShareSheet = function (triggerEl) {
+    var _zrNow = Date.now();
+    var elQuick = triggerEl && triggerEl.nodeType ? triggerEl : (triggerEl && triggerEl[0]) ? triggerEl[0] : null;
+    var pidQuick = elQuick && elQuick.getAttribute ? parseInt(elQuick.getAttribute('data-post-id'), 10) || 0 : 0;
+    try {
+      if (typeof window.__zuitchReelShareTapMark === 'function') {
+        window.__zuitchReelShareTapMark('D ZuitchOpenReelShareSheet llamado', { postId: pidQuick });
+      }
+    } catch (eZ) {}
+    if (window.__zuitchReelShareDedupeAt && _zrNow - window.__zuitchReelShareDedupeAt < 400) {
+      try {
+        if (typeof window.__zuitchReelShareTapMark === 'function') {
+          window.__zuitchReelShareTapMark('E BLOQUEADO dedupe 400ms', { postId: pidQuick, ms: _zrNow - window.__zuitchReelShareDedupeAt });
+        }
+      } catch (eZ2) {}
+      zuitchReelShareDiag('warn', 'reel_share.open_skipped_dedupe', 'Ignorado: dedupe 400ms', pidQuick, { msSince: _zrNow - window.__zuitchReelShareDedupeAt }, true);
+      return;
+    }
+    zuitchReelShareDiag('info', 'reel_share.open_start', 'Entrada ZuitchOpenReelShareSheet', pidQuick, {
+      hasJQ: typeof window.jQuery !== 'undefined',
+      hasModal: typeof window.jQuery !== 'undefined' && window.jQuery.fn && typeof window.jQuery.fn.modal === 'function',
+      __ZUITCH_LOGGED_IN: !!window.__ZUITCH_LOGGED_IN
+    }, true);
+    try {
+      zuitchEnsureReelShareSheetModal();
+    } catch (eEnsure) {
+      zuitchReelShareDiag('error', 'reel_share.ensure_modal_fail', String(eEnsure && eEnsure.message || eEnsure), pidQuick, { stack: String(eEnsure && eEnsure.stack || '').slice(0, 1000) }, true);
+      return;
+    }
+    var el = elQuick;
+    var $t = el ? $(el) : $();
+    var ds = zuitchReadShareTriggerDataset(el, $t);
+    var shareUrl = ds.shareUrl ? String(ds.shareUrl) : '';
+    if (!shareUrl) {
+      shareUrl = window.location.href;
+    }
+    var shareTitle = ds.shareTitle ? String(ds.shareTitle) : document.title;
+    var postId = ds.postId;
+    var ownerId = ds.ownerId;
+    var $m = $('#zuitch-reel-share-sheet');
+    if (!$m.length) {
+      zuitchReelShareDiag('error', 'reel_share.modal_node_missing', 'No existe #zuitch-reel-share-sheet tras ensure', postId || pidQuick, null, true);
+      return;
+    }
+    $m.attr('data-share-url', shareUrl);
+    $m.attr('data-share-title', shareTitle);
+    $m.attr('data-post-id', postId);
+    $m.attr('data-owner-id', ownerId);
+    $m.data('share-url', shareUrl);
+    $m.data('share-title', shareTitle);
+    $m.data('post-id', postId);
+    $m.data('owner-id', ownerId);
+    try {
+      var flags = zuitchSocialFlags();
+      $m.find('.zuitch-reel-share-quick-actions').html(zuitchShareQuickRowHtml());
+      $m.find('.zuitch-reel-share-social-wrap').html(zuitchShareSocialRowHtml(shareUrl, shareTitle, flags));
+      $m.find('.zuitch-reel-share-zuitch-cta').html(zuitchShareZuitchBlockHtml(postId, ownerId));
+    } catch (eHtml) {
+      zuitchReelShareDiag('error', 'reel_share.build_html_fail', String(eHtml && eHtml.message || eHtml), postId, { stack: String(eHtml && eHtml.stack || '').slice(0, 1000) }, true);
+      return;
+    }
+    function zuitchReelShareFinishOpenUi() {
+      if (window.__ZUITCH_LOGGED_IN) {
+        $m.find('.zuitch-reel-share-logged').show();
+        $m.find('.zuitch-reel-share-search').val('');
+        window.ZuitchReelShareLoadContacts($m, '');
+      } else {
+        $m.find('.zuitch-reel-share-logged').hide();
+      }
+      if (zuitchReelSharePreferNativeLayer()) {
+        try {
+          zuitchReelShareShowNative($m, postId);
+        } catch (eNat) {
+          zuitchReelShareDiag('error', 'reel_share.native_show_throw', String(eNat && eNat.message || eNat), postId, { stack: String(eNat && eNat.stack || '').slice(0, 800) }, true);
+          var modalErrNat = null;
+          try {
+            $m.modal('show');
+            window.__zuitchReelShareDedupeAt = Date.now();
+          } catch (eModalN) {
+            modalErrNat = eModalN;
+          }
+          window.setTimeout(function () {
+            var $el = $('#zuitch-reel-share-sheet');
+            if (!$el.length || ($el.hasClass('in') && $el.is(':visible'))) {
+              return;
+            }
+            try {
+              $el.appendTo('body');
+              $el.removeClass('fade').addClass('in');
+              $el.css({ display: 'block', opacity: 1, 'padding-right': '' });
+              var $bd = $('.modal-backdrop').last();
+              if (!$bd.length) {
+                $bd = $('<div class="modal-backdrop fade in zuitch-reel-share-backdrop"></div>').css('opacity', 0.5);
+                $('body').append($bd);
+              } else {
+                $bd.addClass('in').show().css({ 'z-index': 10050, opacity: 0.5 });
+              }
+              $('body').addClass('modal-open');
+              $el.css('z-index', 10060);
+            } catch (e2n) {}
+          }, 520);
+        }
+        return;
+      }
+      var modalErr = null;
+      try {
+        $m.modal('show');
+        window.__zuitchReelShareDedupeAt = Date.now();
+        zuitchReelShareDiag('info', 'reel_share.modal_show_called', '$.modal(show) escritorio', postId, {
+          hasClassIn: $m.hasClass('in'),
+          display: $m.css('display')
+        }, true);
+      } catch (eModal) {
+        modalErr = eModal;
+        zuitchReelShareDiag('error', 'reel_share.modal_show_throw', String(eModal && eModal.message || eModal), postId, { stack: String(eModal && eModal.stack || '').slice(0, 800) }, true);
+      }
+      window.setTimeout(function () {
+        var $el = $('#zuitch-reel-share-sheet');
+        if (!$el.length) {
+          zuitchReelShareDiag('error', 'reel_share.fallback_no_node', 'Modal ausente en timeout', postId, null, true);
+          return;
+        }
+        if ($el.hasClass('in') && $el.is(':visible')) {
+          zuitchReelShareDiag('info', 'reel_share.fallback_skip_visible', 'Modal ya visible; sin fallback', postId, { display: $el.css('display') }, true);
+          return;
+        }
+        try {
+          $el.appendTo('body');
+          $el.removeClass('fade').addClass('in');
+          $el.css({ display: 'block', opacity: 1, 'padding-right': '' });
+          var $bd = $('.modal-backdrop').last();
+          if (!$bd.length) {
+            $bd = $('<div class="modal-backdrop fade in zuitch-reel-share-backdrop"></div>').css('opacity', 0.5);
+            $('body').append($bd);
+          } else {
+            $bd.addClass('in').show().css({ 'z-index': 10050, opacity: 0.5 });
+          }
+          $('body').addClass('modal-open');
+          $el.css('z-index', 10060);
+          zuitchReelShareDiag('warn', 'reel_share.fallback_forced', 'Forzado visible (WebView/BS)', postId, { priorModalError: modalErr ? String(modalErr.message || modalErr) : null }, true);
+        } catch (e2) {
+          zuitchReelShareDiag('error', 'reel_share.fallback_throw', String(e2 && e2.message || e2), postId, { stack: String(e2 && e2.stack || '').slice(0, 800) }, true);
+        }
+      }, 520);
+    }
+    /* Plan B WebView: menú nativo de Android (Chrome WebView). Si falla o el usuario cancela, se abre la hoja HTML como antes. */
+    if (zuitchReelShareStrictAppWebview() && typeof navigator.share === 'function') {
+      try {
+        if (typeof window.__zuitchReelShareTapMark === 'function') {
+          window.__zuitchReelShareTapMark('J intento navigator.share', { postId: postId });
+        }
+      } catch (eT) {}
+      var sharePayload = {
+        title: shareTitle || document.title || '',
+        text: (shareTitle ? String(shareTitle) + '\n' : '') + shareUrl,
+        url: shareUrl
+      };
+      var pShare;
+      try {
+        pShare = navigator.share(sharePayload);
+      } catch (eSync) {
+        zuitchReelShareDiag('warn', 'reel_share.system_share_sync_throw', String(eSync && eSync.message || eSync), postId, null, true);
+        zuitchReelShareFinishOpenUi();
+        return;
+      }
+      if (pShare && typeof pShare.then === 'function') {
+        pShare.then(function () {
+          window.__zuitchReelShareDedupeAt = Date.now();
+          zuitchReelShareDiag('info', 'reel_share.system_share_ok', 'navigator.share completado', postId, null, true);
+          try {
+            if (typeof window.__zuitchReelShareTapMark === 'function') {
+              window.__zuitchReelShareTapMark('K navigator.share OK', { postId: postId });
+            }
+          } catch (eOk) {}
+        }).catch(function (err) {
+          zuitchReelShareDiag('warn', 'reel_share.system_share_fallback_sheet', String(err && err.name || err), postId, { msg: String(err && err.message || '') }, true);
+          try {
+            if (typeof window.__zuitchReelShareTapMark === 'function') {
+              window.__zuitchReelShareTapMark('L share canceló/error, hoja HTML', { name: err && err.name });
+            }
+          } catch (eC) {}
+          zuitchReelShareFinishOpenUi();
+        });
+        return;
+      }
+    }
+    zuitchReelShareFinishOpenUi();
+  };
+
+  (function woReelsBindShareTouchOpen() {
+    if (window.__woReelsShareTapBound) {
+      return;
+    }
+    window.__woReelsShareTapBound = true;
+
+    function woReelsShareUseTouchOpen() {
+      if (window.__woReelsAndroidWebview) {
+        return true;
+      }
+      if (typeof window.__ZUITCH_ANDROID_WEBVIEW !== 'undefined' && window.__ZUITCH_ANDROID_WEBVIEW) {
+        return true;
+      }
+      if (typeof window.ZuitchAppBridge !== 'undefined' && window.ZuitchAppBridge) {
+        return true;
+      }
+      if (/Android/i.test(navigator.userAgent || '')) {
+        return true;
+      }
+      try {
+        if (window.matchMedia && window.matchMedia('(pointer: coarse)').matches
+            && window.matchMedia('(max-width: 900px)').matches) {
+          return true;
+        }
+      } catch (eM) {}
+      return false;
+    }
+
+    function woReelsOpenShareFromTap(btn, e, source) {
+      if (!btn || !document.body.contains(btn)) {
+        zuitchReelShareDiag('warn', 'reel_share.tap_invalid_btn', 'btn ausente o fuera del DOM', 0, { source: source || 'unknown' }, true);
+        return;
+      }
+      if (typeof window.ZuitchOpenReelShareSheet !== 'function') {
+        zuitchReelShareDiag('error', 'reel_share.tap_no_function', 'ZuitchOpenReelShareSheet no es función', parseInt(btn.getAttribute('data-post-id'), 10) || 0, { source: source }, true);
+        return;
+      }
+      var now = Date.now();
+      if (window.__woReelsShareSheetAt && now - window.__woReelsShareSheetAt < 450) {
+        zuitchReelShareDiag('warn', 'reel_share.tap_skipped_debounce', 'Ignorado debounce touchend/pointer', parseInt(btn.getAttribute('data-post-id'), 10) || 0, { source: source }, true);
+        return;
+      }
+      window.__woReelsShareSheetAt = now;
+      try {
+        if (typeof window.__zuitchReelShareTapMark === 'function') {
+          window.__zuitchReelShareTapMark('G doc: programar open (0ms)', { source: source || 'unknown', postId: parseInt(btn.getAttribute('data-post-id'), 10) || 0 });
+        }
+      } catch (eMk) {}
+      if (e && e.cancelable) {
+        try {
+          e.preventDefault();
+        } catch (pe) {}
+      }
+      var openBtn = btn;
+      var pid = parseInt(btn.getAttribute('data-post-id'), 10) || 0;
+      zuitchReelShareDiag('info', 'reel_share.tap_schedules_open', 'Programa ZuitchOpenReelShareSheet', pid, { source: source || 'unknown' }, true);
+      window.setTimeout(function () {
+        try {
+          window.ZuitchOpenReelShareSheet(openBtn);
+        } catch (err) {
+          zuitchReelShareDiag('error', 'reel_share.tap_open_throw', String(err && err.message || err), pid, { source: source, stack: String(err && err.stack || '').slice(0, 1200) }, true);
+        }
+      }, 0);
+    }
+
+    function woReelsFindShareableReelBtn(el) {
+      if (!el || !el.closest) {
+        return null;
+      }
+      var btn = el.closest('.reels-share-btn');
+      if (!btn) {
+        return null;
+      }
+      if (btn.closest('.wo_reels_cont')
+          || btn.closest('.image-reels-mode')
+          || btn.closest('.video-text-overlay')
+          || btn.closest('.image-text-overlay')) {
+        return btn;
+      }
+      return null;
+    }
+
+    var woReelsShareTap = null;
+    var woReelsShareTouchLogAt = 0;
+    document.addEventListener('touchstart', function (e) {
+      if (!woReelsShareUseTouchOpen()) {
+        return;
+      }
+      if (!e.touches || !e.touches.length) {
+        woReelsShareTap = null;
+        return;
+      }
+      var t0 = e.touches[0];
+      var btn = woReelsFindShareableReelBtn(e.target);
+      var hitTag = '';
+      if (!btn) {
+        try {
+          var hit = document.elementFromPoint(t0.clientX, t0.clientY);
+          hitTag = hit && hit.tagName ? hit.tagName : '';
+          btn = woReelsFindShareableReelBtn(hit);
+        } catch (ePt) {}
+      }
+      if (!btn) {
+        woReelsShareTap = null;
+        return;
+      }
+      var tn = Date.now();
+      if (tn - woReelsShareTouchLogAt > 900) {
+        woReelsShareTouchLogAt = tn;
+        var pidTs = parseInt(btn.getAttribute('data-post-id'), 10) || 0;
+        zuitchReelShareDiag('info', 'reel_share.touchstart_track', 'touchstart en compartir', pidTs, {
+          targetTag: e.target && e.target.tagName,
+          elementFromPointTag: hitTag || (e.target && e.target.tagName),
+          x: Math.round(t0.clientX),
+          y: Math.round(t0.clientY)
+        }, true);
+      }
+      woReelsShareTap = { x: t0.clientX, y: t0.clientY, btn: btn };
+    }, { passive: true, capture: true });
+
+    document.addEventListener('touchend', function (e) {
+      if (!woReelsShareUseTouchOpen() || !woReelsShareTap) {
+        return;
+      }
+      var start = woReelsShareTap;
+      woReelsShareTap = null;
+      if (!e.changedTouches || !e.changedTouches.length) {
+        return;
+      }
+      var t1 = e.changedTouches[0];
+      if (Math.abs(t1.clientX - start.x) > 28 || Math.abs(t1.clientY - start.y) > 28) {
+        return;
+      }
+      woReelsOpenShareFromTap(start.btn, e, 'touchend');
+    }, { passive: false, capture: true });
+
+    if (typeof window.PointerEvent !== 'undefined') {
+      document.addEventListener('pointerup', function (e) {
+        if (e.pointerType !== 'touch') {
+          return;
+        }
+        if (!woReelsShareUseTouchOpen()) {
+          return;
+        }
+        var btn = woReelsFindShareableReelBtn(e.target);
+        if (!btn) {
+          return;
+        }
+        woReelsOpenShareFromTap(btn, e, 'pointerup');
+      }, { capture: true });
+    }
+
+  })();
+
+  /** Prueba desde consola: ZuitchReelShareDiagPing('hola') */
+  window.ZuitchReelShareDiagPing = function (msg) {
+    zuitchReelShareDiag('info', 'reel_share.manual_ping', String(msg != null ? msg : 'ping'), 0, { t: Date.now() }, true);
+  };
+  window.ZuitchReelShareCloseSheet = function () {
+    zuitchReelShareHideNative();
+  };
+})();
+
 function SearchFor(self,type){
   name = $(self).val();
   $.ajax({
@@ -3798,7 +5950,7 @@ var e=c.find(".active:last a"),f=a.Event("hide.bs.tab",{relatedTarget:b[0]}),g=a
 
 function Wo_progressIconLoader(e){e.each(function(){return progress_icon_elem=$(this).find("i.progress-icon"),default_icon=progress_icon_elem.attr("data-icon"),hide_back=!1,1==progress_icon_elem.hasClass("hidde")&&(hide_back=!0),1==$(this).find("i.fa-spinner").length?(progress_icon_elem.removeClass("fa-spinner").removeClass("fa-spin").addClass("fa-"+default_icon),1==hide_back&&progress_icon_elem.hide()):progress_icon_elem.removeClass("fa-"+default_icon).addClass("fa-spinner fa-spin").show(),!0})}function Wo_StartBar(){$(".barloading").css("display","block")}function Wo_FinishBar(){$(".barloading").css("display","none")}$(document).ready(function(){$(".nav-footer-toggle").on("click",function(e){e.preventDefault(),$(this).parent().toggleClass("Wide-Footer"),$(".nav-footer-toggle i").toggleClass("fa-arrow-circle-up fa-arrow-circle-down")})});
 
-!function(e){if(!e.hasInitialised){var t={escapeRegExp:function(e){return e.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g,"\\$&")},hasClass:function(e,t){var i=" ";return 1===e.nodeType&&(i+e.className+i).replace(/[\n\t]/g,i).indexOf(i+t+i)>=0},addClass:function(e,t){e.className+=" "+t},removeClass:function(e,t){var i=new RegExp("\\b"+this.escapeRegExp(t)+"\\b");e.className=e.className.replace(i,"")},interpolateString:function(e,t){var i=/{{([a-z][a-z0-9\-_]*)}}/gi;return e.replace(i,function(e){return t(arguments[1])||""})},getCookie:function(e){var t="; "+document.cookie,i=t.split("; "+e+"=");return 2!=i.length?void 0:i.pop().split(";").shift()},setCookie:function(e,t,i,n,o){var s=new Date;s.setDate(s.getDate()+(i||365));var r=[e+"="+t,"expires="+s.toUTCString(),"path="+(o||"/")];n&&r.push("domain="+n),document.cookie=r.join(";")},deepExtend:function(e,t){for(var i in t)t.hasOwnProperty(i)&&(i in e&&this.isPlainObject(e[i])&&this.isPlainObject(t[i])?this.deepExtend(e[i],t[i]):e[i]=t[i]);return e},throttle:function(e,t){var i=!1;return function(){i||(e.apply(this,arguments),i=!0,setTimeout(function(){i=!1},t))}},hash:function(e){var t,i,n,o=0;if(0===e.length)return o;for(t=0,n=e.length;t<n;++t)i=e.charCodeAt(t),o=(o<<5)-o+i,o|=0;return o},normaliseHex:function(e){return"#"==e[0]&&(e=e.substr(1)),3==e.length&&(e=e[0]+e[0]+e[1]+e[1]+e[2]+e[2]),e},getContrast:function(e){e=this.normaliseHex(e);var t=parseInt(e.substr(0,2),16),i=parseInt(e.substr(2,2),16),n=parseInt(e.substr(4,2),16),o=(299*t+587*i+114*n)/1e3;return o>=128?"#000":"#fff"},getLuminance:function(e){var t=parseInt(this.normaliseHex(e),16),i=38,n=(t>>16)+i,o=(t>>8&255)+i,s=(255&t)+i,r=(16777216+65536*(n<255?n<1?0:n:255)+256*(o<255?o<1?0:o:255)+(s<255?s<1?0:s:255)).toString(16).slice(1);return"#"+r},isMobile:function(){return/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)},isPlainObject:function(e){return"object"==typeof e&&null!==e&&e.constructor==Object}};e.status={deny:"deny",allow:"allow",dismiss:"dismiss"},e.transitionEnd=function(){var e=document.createElement("div"),t={t:"transitionend",OT:"oTransitionEnd",msT:"MSTransitionEnd",MozT:"transitionend",WebkitT:"webkitTransitionEnd"};for(var i in t)if(t.hasOwnProperty(i)&&"undefined"!=typeof e.style[i+"ransition"])return t[i];return""}(),e.hasTransition=!!e.transitionEnd;var i=Object.keys(e.status).map(t.escapeRegExp);e.customStyles={},e.Popup=function(){function n(){this.initialise.apply(this,arguments)}function o(e){this.openingTimeout=null,t.removeClass(e,"cc-invisible")}function s(t){t.style.display="none",t.removeEventListener(e.transitionEnd,this.afterTransition),this.afterTransition=null}function r(){var t=this.options.onInitialise.bind(this);if(!window.navigator.cookieEnabled)return t(e.status.deny),!0;if(window.CookiesOK||window.navigator.CookiesOK)return t(e.status.allow),!0;var i=Object.keys(e.status),n=this.getStatus(),o=i.indexOf(n)>=0;return o&&t(n),o}function a(){var e=this.options.position.split("-"),t=[];return e.forEach(function(e){t.push("cc-"+e)}),t}function c(){var e=this.options,i="top"==e.position||"bottom"==e.position?"banner":"floating";t.isMobile()&&(i="floating");var n=["cc-"+i,"cc-type-"+e.type,"cc-theme-"+e.theme];e["static"]&&n.push("cc-static"),n.push.apply(n,a.call(this));p.call(this,this.options.palette);return this.customStyleSelector&&n.push(this.customStyleSelector),n}function l(){var e={},i=this.options;i.showLink||(i.elements.link="",i.elements.messagelink=i.elements.message),Object.keys(i.elements).forEach(function(n){e[n]=t.interpolateString(i.elements[n],function(e){var t=i.content[e];return e&&"string"==typeof t&&t.length?t:""})});var n=i.compliance[i.type];n||(n=i.compliance.info),e.compliance=t.interpolateString(n,function(t){return e[t]});var o=i.layouts[i.layout];return o||(o=i.layouts.basic),t.interpolateString(o,function(t){return e[t]})}function u(i){var n=this.options,o=document.createElement("div"),s=n.container&&1===n.container.nodeType?n.container:document.body;o.innerHTML=i;var r=o.children[0];return r.style.display="none",t.hasClass(r,"cc-window")&&e.hasTransition&&t.addClass(r,"cc-invisible"),this.onButtonClick=h.bind(this),r.addEventListener("click",this.onButtonClick),n.autoAttach&&(s.firstChild?s.insertBefore(r,s.firstChild):s.appendChild(r)),r}function h(n){var o=n.target;if(t.hasClass(o,"cc-btn")){var s=o.className.match(new RegExp("\\bcc-("+i.join("|")+")\\b")),r=s&&s[1]||!1;r&&(this.setStatus(r),this.close(!0))}t.hasClass(o,"cc-close")&&(this.setStatus(e.status.dismiss),this.close(!0)),t.hasClass(o,"cc-revoke")&&this.revokeChoice()}function p(e){var i=t.hash(JSON.stringify(e)),n="cc-color-override-"+i,o=t.isPlainObject(e);return this.customStyleSelector=o?n:null,o&&d(i,e,"."+n),o}function d(i,n,o){if(e.customStyles[i])return void++e.customStyles[i].references;var s={},r=n.popup,a=n.button,c=n.highlight;r&&(r.text=r.text?r.text:t.getContrast(r.background),r.link=r.link?r.link:r.text,s[o+".cc-window"]=["color: "+r.text,"background-color: "+r.background],s[o+".cc-revoke"]=["color: "+r.text,"background-color: "+r.background],s[o+" .cc-link,"+o+" .cc-link:active,"+o+" .cc-link:visited"]=["color: "+r.link],a&&(a.text=a.text?a.text:t.getContrast(a.background),a.border=a.border?a.border:"transparent",s[o+" .cc-btn"]=["color: "+a.text,"border-color: "+a.border,"background-color: "+a.background],"transparent"!=a.background&&(s[o+" .cc-btn:hover, "+o+" .cc-btn:focus"]=["background-color: "+v(a.background)]),c?(c.text=c.text?c.text:t.getContrast(c.background),c.border=c.border?c.border:"transparent",s[o+" .cc-highlight .cc-btn:first-child"]=["color: "+c.text,"border-color: "+c.border,"background-color: "+c.background]):s[o+" .cc-highlight .cc-btn:first-child"]=["color: "+r.text]));var l=document.createElement("style");document.head.appendChild(l),e.customStyles[i]={references:1,element:l.sheet};var u=-1;for(var h in s)s.hasOwnProperty(h)&&l.sheet.insertRule(h+"{"+s[h].join(";")+"}",++u)}function v(e){return e=t.normaliseHex(e),"000000"==e?"#222":t.getLuminance(e)}function f(i){if(t.isPlainObject(i)){var n=t.hash(JSON.stringify(i)),o=e.customStyles[n];if(o&&!--o.references){var s=o.element.ownerNode;s&&s.parentNode&&s.parentNode.removeChild(s),e.customStyles[n]=null}}}function m(e,t){for(var i=0,n=e.length;i<n;++i){var o=e[i];if(o instanceof RegExp&&o.test(t)||"string"==typeof o&&o.length&&o===t)return!0}return!1}function b(){var t=this.setStatus.bind(this),i=this.options.dismissOnTimeout;"number"==typeof i&&i>=0&&(this.dismissTimeout=window.setTimeout(function(){t(e.status.dismiss)},Math.floor(i)));var n=this.options.dismissOnScroll;if("number"==typeof n&&n>=0){var o=function(i){window.pageYOffset>Math.floor(n)&&(t(e.status.dismiss),window.removeEventListener("scroll",o),this.onWindowScroll=null)};this.onWindowScroll=o,window.addEventListener("scroll",o)}}function y(){if("info"!=this.options.type&&(this.options.revokable=!0),t.isMobile()&&(this.options.animateRevokable=!1),this.options.revokable){var e=a.call(this);this.options.animateRevokable&&e.push("cc-animate"),this.customStyleSelector&&e.push(this.customStyleSelector);var i=this.options.revokeBtn.replace("{{classes}}",e.join(" "));this.revokeBtn=u.call(this,i);var n=this.revokeBtn;if(this.options.animateRevokable){var o=t.throttle(function(e){var i=!1,o=20,s=window.innerHeight-20;t.hasClass(n,"cc-top")&&e.clientY<o&&(i=!0),t.hasClass(n,"cc-bottom")&&e.clientY>s&&(i=!0),i?t.hasClass(n,"cc-active")||t.addClass(n,"cc-active"):t.hasClass(n,"cc-active")&&t.removeClass(n,"cc-active")},200);this.onMouseMove=o,window.addEventListener("mousemove",o)}}}var g={enabled:!0,container:null,cookie:{name:"cookieconsent_status",path:"/",domain:"",expiryDays:365},onPopupOpen:function(){},onPopupClose:function(){},onInitialise:function(e){},onStatusChange:function(e,t){},onRevokeChoice:function(){},content:{header:"Cookies used on the website!",message:"This website uses cookies to ensure you get the best experience on our website.",dismiss:"Got it!",allow:"Allow cookies",deny:"Decline",link:"Learn more",href:"http://cookiesandyou.com",close:"&#x274c;"},elements:{header:'<span class="cc-header">{{header}}</span>&nbsp;',message:'<span id="cookieconsent:desc" class="cc-message">{{message}}</span>',messagelink:'<span id="cookieconsent:desc" class="cc-message">{{message}} <a aria-label="learn more about cookies" role=button tabindex="0" class="cc-link" href="{{href}}" target="_blank">{{link}}</a></span>',dismiss:'<a aria-label="dismiss cookie message" role=button tabindex="0" class="cc-btn cc-dismiss">{{dismiss}}</a>',allow:'<a aria-label="allow cookies" role=button tabindex="0"  class="cc-btn cc-allow">{{allow}}</a>',deny:'<a aria-label="deny cookies" role=button tabindex="0" class="cc-btn cc-deny">{{deny}}</a>',link:'<a aria-label="learn more about cookies" role=button tabindex="0" class="cc-link" href="{{href}}" target="_blank">{{link}}</a>',close:'<span aria-label="dismiss cookie message" role=button tabindex="0" class="cc-close">{{close}}</span>'},window:'<div role="dialog" aria-live="polite" aria-label="cookieconsent" aria-describedby="cookieconsent:desc" class="cc-window {{classes}}"><!--googleoff: all-->{{children}}<!--googleon: all--></div>',revokeBtn:'<div class="cc-revoke {{classes}}">Cookie Policy</div>',compliance:{info:'<div class="cc-compliance">{{dismiss}}</div>',"opt-in":'<div class="cc-compliance cc-highlight">{{dismiss}}{{allow}}</div>',"opt-out":'<div class="cc-compliance cc-highlight">{{deny}}{{dismiss}}</div>'},type:"info",layouts:{basic:"{{messagelink}}{{compliance}}","basic-close":"{{messagelink}}{{compliance}}{{close}}","basic-header":"{{header}}{{message}}{{link}}{{compliance}}"},layout:"basic",position:"bottom",theme:"block","static":!1,palette:null,revokable:!1,animateRevokable:!0,showLink:!0,dismissOnScroll:!1,dismissOnTimeout:!1,autoOpen:!0,autoAttach:!0,whitelistPage:[],blacklistPage:[],overrideHTML:null};return n.prototype.initialise=function(e){this.options&&this.destroy(),t.deepExtend(this.options={},g),t.isPlainObject(e)&&t.deepExtend(this.options,e),r.call(this)&&(this.options.enabled=!1),m(this.options.blacklistPage,location.pathname)&&(this.options.enabled=!1),m(this.options.whitelistPage,location.pathname)&&(this.options.enabled=!0);var i=this.options.window.replace("{{classes}}",c.call(this).join(" ")).replace("{{children}}",l.call(this)),n=this.options.overrideHTML;if("string"==typeof n&&n.length&&(i=n),this.options["static"]){var o=u.call(this,'<div class="cc-grower">'+i+"</div>");o.style.display="",this.element=o.firstChild,this.element.style.display="none",t.addClass(this.element,"cc-invisible")}else this.element=u.call(this,i);b.call(this),y.call(this),this.options.autoOpen&&this.autoOpen()},n.prototype.destroy=function(){this.onButtonClick&&this.element&&(this.element.removeEventListener("click",this.onButtonClick),this.onButtonClick=null),this.dismissTimeout&&(clearTimeout(this.dismissTimeout),this.dismissTimeout=null),this.onWindowScroll&&(window.removeEventListener("scroll",this.onWindowScroll),this.onWindowScroll=null),this.onMouseMove&&(window.removeEventListener("mousemove",this.onMouseMove),this.onMouseMove=null),this.element&&this.element.parentNode&&this.element.parentNode.removeChild(this.element),this.element=null,this.revokeBtn&&this.revokeBtn.parentNode&&this.revokeBtn.parentNode.removeChild(this.revokeBtn),this.revokeBtn=null,f(this.options.palette),this.options=null},n.prototype.open=function(t){if(this.element)return this.isOpen()||(e.hasTransition?this.fadeIn():this.element.style.display="",this.options.revokable&&this.toggleRevokeButton(),this.options.onPopupOpen.call(this)),this},n.prototype.close=function(t){if(this.element)return this.isOpen()&&(e.hasTransition?this.fadeOut():this.element.style.display="none",t&&this.options.revokable&&this.toggleRevokeButton(!0),this.options.onPopupClose.call(this)),this},n.prototype.fadeIn=function(){var i=this.element;if(e.hasTransition&&i&&(this.afterTransition&&s.call(this,i),t.hasClass(i,"cc-invisible"))){if(i.style.display="",this.options["static"]){var n=this.element.clientHeight;this.element.parentNode.style.maxHeight=n+"px"}var r=20;this.openingTimeout=setTimeout(o.bind(this,i),r)}},n.prototype.fadeOut=function(){var i=this.element;e.hasTransition&&i&&(this.openingTimeout&&(clearTimeout(this.openingTimeout),o.bind(this,i)),t.hasClass(i,"cc-invisible")||(this.options["static"]&&(this.element.parentNode.style.maxHeight=""),this.afterTransition=s.bind(this,i),i.addEventListener(e.transitionEnd,this.afterTransition),t.addClass(i,"cc-invisible")))},n.prototype.isOpen=function(){return this.element&&""==this.element.style.display&&(!e.hasTransition||!t.hasClass(this.element,"cc-invisible"))},n.prototype.toggleRevokeButton=function(e){this.revokeBtn&&(this.revokeBtn.style.display=e?"":"none")},n.prototype.revokeChoice=function(e){this.options.enabled=!0,this.clearStatus(),this.options.onRevokeChoice.call(this),e||this.autoOpen()},n.prototype.hasAnswered=function(t){return Object.keys(e.status).indexOf(this.getStatus())>=0},n.prototype.hasConsented=function(t){var i=this.getStatus();return i==e.status.allow||i==e.status.dismiss},n.prototype.autoOpen=function(e){!this.hasAnswered()&&this.options.enabled&&this.open()},n.prototype.setStatus=function(i){var n=this.options.cookie,o=t.getCookie(n.name),s=Object.keys(e.status).indexOf(o)>=0;Object.keys(e.status).indexOf(i)>=0?(t.setCookie(n.name,i,n.expiryDays,n.domain,n.path),this.options.onStatusChange.call(this,i,s)):this.clearStatus()},n.prototype.getStatus=function(){return t.getCookie(this.options.cookie.name)},n.prototype.clearStatus=function(){var e=this.options.cookie;t.setCookie(e.name,"",-1,e.domain,e.path)},n}(),e.Location=function(){function e(e){t.deepExtend(this.options={},s),t.isPlainObject(e)&&t.deepExtend(this.options,e),this.currentServiceIndex=-1}function i(e,t,i){var n,o=document.createElement("script");o.type="text/"+(e.type||"javascript"),o.src=e.src||e,o.async=!1,o.onreadystatechange=o.onload=function(){var e=o.readyState;clearTimeout(n),t.done||e&&!/loaded|complete/.test(e)||(t.done=!0,t(),o.onreadystatechange=o.onload=null)},document.body.appendChild(o),n=setTimeout(function(){t.done=!0,t(),o.onreadystatechange=o.onload=null},i)}function n(e,t,i,n,o){var s=new(window.XMLHttpRequest||window.ActiveXObject)("MSXML2.XMLHTTP.3.0");if(s.open(n?"POST":"GET",e,1),s.setRequestHeader("X-Requested-With","XMLHttpRequest"),s.setRequestHeader("Content-type","application/x-www-form-urlencoded"),Array.isArray(o))for(var r=0,a=o.length;r<a;++r){var c=o[r].split(":",2);s.setRequestHeader(c[0].replace(/^\s+|\s+$/g,""),c[1].replace(/^\s+|\s+$/g,""))}"function"==typeof t&&(s.onreadystatechange=function(){s.readyState>3&&t(s)}),s.send(n)}function o(e){return new Error("Error ["+(e.code||"UNKNOWN")+"]: "+e.error)}var s={timeout:5e3,services:["freegeoip","ipinfo","maxmind"],serviceDefinitions:{freegeoip:function(){return{url:"//freegeoip.net/json/?callback={callback}",isScript:!0,callback:function(e,t){try{var i=JSON.parse(t);return i.error?o(i):{code:i.country_code}}catch(n){return o({error:"Invalid response ("+n+")"})}}}},ipinfo:function(){return{url:"//ipinfo.io",headers:["Accept: application/json"],callback:function(e,t){try{var i=JSON.parse(t);return i.error?o(i):{code:i.country}}catch(n){return o({error:"Invalid response ("+n+")"})}}}},ipinfodb:function(e){return{url:"//api.ipinfodb.com/v3/ip-country/?key={api_key}&format=json&callback={callback}",isScript:!0,callback:function(e,t){try{var i=JSON.parse(t);return"ERROR"==i.statusCode?o({error:i.statusMessage}):{code:i.countryCode}}catch(n){return o({error:"Invalid response ("+n+")"})}}}},maxmind:function(){return{url:"//js.maxmind.com/js/apis/geoip2/v2.1/geoip2.js",isScript:!0,callback:function(e){return window.geoip2?void geoip2.country(function(t){try{e({code:t.country.iso_code})}catch(i){e(o(i))}},function(t){e(o(t))}):void e(new Error("Unexpected response format. The downloaded script should have exported `geoip2` to the global scope"))}}}}};return e.prototype.getNextService=function(){var e;do e=this.getServiceByIdx(++this.currentServiceIndex);while(this.currentServiceIndex<this.options.services.length&&!e);return e},e.prototype.getServiceByIdx=function(e){var i=this.options.services[e];if("function"==typeof i){var n=i();return n.name&&t.deepExtend(n,this.options.serviceDefinitions[n.name](n)),n}return"string"==typeof i?this.options.serviceDefinitions[i]():t.isPlainObject(i)?this.options.serviceDefinitions[i.name](i):null},e.prototype.locate=function(e,t){var i=this.getNextService();return i?(this.callbackComplete=e,this.callbackError=t,void this.runService(i,this.runNextServiceOnError.bind(this))):void t(new Error("No services to run"))},e.prototype.setupUrl=function(e){var t=this.getCurrentServiceOpts();return e.url.replace(/\{(.*?)\}/g,function(i,n){if("callback"===n){var o="callback"+Date.now();return window[o]=function(t){e.__JSONP_DATA=JSON.stringify(t)},o}if(n in t.interpolateUrl)return t.interpolateUrl[n]})},e.prototype.runService=function(e,t){var o=this;if(e&&e.url&&e.callback){var s=e.isScript?i:n,r=this.setupUrl(e);s(r,function(i){var n=i?i.responseText:"";e.__JSONP_DATA&&(n=e.__JSONP_DATA,delete e.__JSONP_DATA),o.runServiceCallback.call(o,t,e,n)},this.options.timeout,e.data,e.headers)}},e.prototype.runServiceCallback=function(e,t,i){var n=this,o=function(t){s||n.onServiceResult.call(n,e,t)},s=t.callback(o,i);s&&this.onServiceResult.call(this,e,s)},e.prototype.onServiceResult=function(e,t){t instanceof Error||t&&t.error?e.call(this,t,null):e.call(this,null,t)},e.prototype.runNextServiceOnError=function(e,t){if(e){this.logError(e);var i=this.getNextService();i?this.runService(i,this.runNextServiceOnError.bind(this)):this.completeService.call(this,this.callbackError,new Error("All services failed"))}else this.completeService.call(this,this.callbackComplete,t)},e.prototype.getCurrentServiceOpts=function(){var e=this.options.services[this.currentServiceIndex];return"string"==typeof e?{name:e}:"function"==typeof e?e():t.isPlainObject(e)?e:{}},e.prototype.completeService=function(e,t){this.currentServiceIndex=-1,e&&e(t)},e.prototype.logError=function(e){var t=this.currentServiceIndex,i=this.getServiceByIdx(t);console.error("The service["+t+"] ("+i.url+") responded with the following error",e)},e}(),e.Law=function(){function e(e){this.initialise.apply(this,arguments)}var i={regionalLaw:!0,hasLaw:["AT","BE","BG","HR","CZ","CY","DK","EE","FI","FR","DE","EL","HU","IE","IT","LV","LT","LU","MT","NL","PL","PT","SK","SI","ES","SE","GB","UK"],revokable:["HR","CY","DK","EE","FR","DE","LV","LT","NL","PT","ES"],explicitAction:["HR","IT","ES"]};return e.prototype.initialise=function(e){t.deepExtend(this.options={},i),t.isPlainObject(e)&&t.deepExtend(this.options,e)},e.prototype.get=function(e){var t=this.options;return{hasLaw:t.hasLaw.indexOf(e)>=0,revokable:t.revokable.indexOf(e)>=0,explicitAction:t.explicitAction.indexOf(e)>=0}},e.prototype.applyLaw=function(e,t){var i=this.get(t);return i.hasLaw||(e.enabled=!1),this.options.regionalLaw&&(i.revokable&&(e.revokable=!0),i.explicitAction&&(e.dismissOnScroll=!1,e.dismissOnTimeout=!1)),e},e}(),e.initialise=function(t,i,n){var o=new e.Law(t.law);i||(i=function(){}),n||(n=function(){}),e.getCountryCode(t,function(n){delete t.law,delete t.location,n.code&&(t=o.applyLaw(t,n.code)),i(new e.Popup(t))},function(i){delete t.law,delete t.location,n(i,new e.Popup(t))})},e.getCountryCode=function(t,i,n){if(t.law&&t.law.countryCode)return void i({code:t.law.countryCode});if(t.location){var o=new e.Location(t.location);return void o.locate(function(e){i(e||{})},n)}i({})},e.utils=t,e.hasInitialised=!0,window.cookieconsent=e}}(window.cookieconsent||{});
+!function(e){if(!e.hasInitialised){var t={escapeRegExp:function(e){return e.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g,"\\$&")},hasClass:function(e,t){var i=" ";return 1===e.nodeType&&(i+e.className+i).replace(/[\n\t]/g,i).indexOf(i+t+i)>=0},addClass:function(e,t){e.className+=" "+t},removeClass:function(e,t){var i=new RegExp("\\b"+this.escapeRegExp(t)+"\\b");e.className=e.className.replace(i,"")},interpolateString:function(e,t){var i=/{{([a-z][a-z0-9\-_]*)}}/gi;return e.replace(i,function(e){return t(arguments[1])||""})},getCookie:function(e){var t="; "+document.cookie,i=t.split("; "+e+"=");return 2!=i.length?void 0:i.pop().split(";").shift()},setCookie:function(e,t,i,n,o){var s=new Date;s.setDate(s.getDate()+(i||365));var r=[e+"="+t,"expires="+s.toUTCString(),"path="+(o||"/")];n&&r.push("domain="+n),document.cookie=r.join(";")},deepExtend:function(e,t){for(var i in t)t.hasOwnProperty(i)&&(i in e&&this.isPlainObject(e[i])&&this.isPlainObject(t[i])?this.deepExtend(e[i],t[i]):e[i]=t[i]);return e},throttle:function(e,t){var i=!1;return function(){i||(e.apply(this,arguments),i=!0,setTimeout(function(){i=!1},t))}},hash:function(e){var t,i,n,o=0;if(0===e.length)return o;for(t=0,n=e.length;t<n;++t)i=e.charCodeAt(t),o=(o<<5)-o+i,o|=0;return o},normaliseHex:function(e){return"#"==e[0]&&(e=e.substr(1)),3==e.length&&(e=e[0]+e[0]+e[1]+e[1]+e[2]+e[2]),e},getContrast:function(e){e=this.normaliseHex(e);var t=parseInt(e.substr(0,2),16),i=parseInt(e.substr(2,2),16),n=parseInt(e.substr(4,2),16),o=(299*t+587*i+114*n)/1e3;return o>=128?"#000":"#fff"},getLuminance:function(e){var t=parseInt(this.normaliseHex(e),16),i=38,n=(t>>16)+i,o=(t>>8&255)+i,s=(255&t)+i,r=(16777216+65536*(n<255?n<1?0:n:255)+256*(o<255?o<1?0:o:255)+(s<255?s<1?0:s:255)).toString(16).slice(1);return"#"+r},isMobile:function(){return/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)},isPlainObject:function(e){return"object"==typeof e&&null!==e&&e.constructor==Object}};e.status={deny:"deny",allow:"allow",dismiss:"dismiss"},e.transitionEnd=function(){var e=document.createElement("div"),t={t:"transitionend",OT:"oTransitionEnd",msT:"MSTransitionEnd",MozT:"transitionend",WebkitT:"webkitTransitionEnd"};for(var i in t)if(t.hasOwnProperty(i)&&"undefined"!=typeof e.style[i+"ransition"])return t[i];return""}(),e.hasTransition=!!e.transitionEnd;var i=Object.keys(e.status).map(t.escapeRegExp);e.customStyles={},e.Popup=function(){function n(){this.initialise.apply(this,arguments)}function o(e){this.openingTimeout=null,t.removeClass(e,"cc-invisible")}function s(t){t.style.display="none",t.removeEventListener(e.transitionEnd,this.afterTransition),this.afterTransition=null}function r(){var t=this.options.onInitialise.bind(this);if(!window.navigator.cookieEnabled)return t(e.status.deny),!0;if(window.CookiesOK||window.navigator.CookiesOK)return t(e.status.allow),!0;var i=Object.keys(e.status),n=this.getStatus(),o=i.indexOf(n)>=0;return o&&t(n),o}function a(){var e=this.options.position.split("-"),t=[];return e.forEach(function(e){t.push("cc-"+e)}),t}function c(){var e=this.options,i="top"==e.position||"bottom"==e.position?"banner":"floating";t.isMobile()&&(i="floating");var n=["cc-"+i,"cc-type-"+e.type,"cc-theme-"+e.theme];e["static"]&&n.push("cc-static"),n.push.apply(n,a.call(this));p.call(this,this.options.palette);return this.customStyleSelector&&n.push(this.customStyleSelector),n}function l(){var e={},i=this.options;i.showLink||(i.elements.link="",i.elements.messagelink=i.elements.message),Object.keys(i.elements).forEach(function(n){e[n]=t.interpolateString(i.elements[n],function(e){var t=i.content[e];return e&&"string"==typeof t&&t.length?t:""})});var n=i.compliance[i.type];n||(n=i.compliance.info),e.compliance=t.interpolateString(n,function(t){return e[t]});var o=i.layouts[i.layout];return o||(o=i.layouts.basic),t.interpolateString(o,function(t){return e[t]})}function u(i){var n=this.options,o=document.createElement("div"),s=n.container&&1===n.container.nodeType?n.container:document.body;o.innerHTML=i;var r=o.children[0];return r.style.display="none",t.hasClass(r,"cc-window")&&e.hasTransition&&t.addClass(r,"cc-invisible"),this.onButtonClick=h.bind(this),r.addEventListener("click",this.onButtonClick),n.autoAttach&&(s.firstChild?s.insertBefore(r,s.firstChild):s.appendChild(r)),r}function h(n){var o=n.target;if(t.hasClass(o,"cc-btn")){var s=o.className.match(new RegExp("\\bcc-("+i.join("|")+")\\b")),r=s&&s[1]||!1;r&&(this.setStatus(r),this.close(!0))}t.hasClass(o,"cc-close")&&(this.setStatus(e.status.dismiss),this.close(!0)),t.hasClass(o,"cc-revoke")&&this.revokeChoice()}function p(e){var i=t.hash(JSON.stringify(e)),n="cc-color-override-"+i,o=t.isPlainObject(e);return this.customStyleSelector=o?n:null,o&&d(i,e,"."+n),o}function d(i,n,o){if(e.customStyles[i])return void++e.customStyles[i].references;var s={},r=n.popup,a=n.button,c=n.highlight;r&&(r.text=r.text?r.text:t.getContrast(r.background),r.link=r.link?r.link:r.text,s[o+".cc-window"]=["color: "+r.text,"background-color: "+r.background],s[o+".cc-revoke"]=["color: "+r.text,"background-color: "+r.background],s[o+" .cc-link,"+o+" .cc-link:active,"+o+" .cc-link:visited"]=["color: "+r.link],a&&(a.text=a.text?a.text:t.getContrast(a.background),a.border=a.border?a.border:"transparent",s[o+" .cc-btn"]=["color: "+a.text,"border-color: "+a.border,"background-color: "+a.background],"transparent"!=a.background&&(s[o+" .cc-btn:hover, "+o+" .cc-btn:focus"]=["background-color: "+v(a.background)]),c?(c.text=c.text?c.text:t.getContrast(c.background),c.border=c.border?c.border:"transparent",s[o+" .cc-highlight .cc-btn:first-child"]=["color: "+c.text,"border-color: "+c.border,"background-color: "+c.background]):s[o+" .cc-highlight .cc-btn:first-child"]=["color: "+r.text]));var l=document.createElement("style");document.head.appendChild(l),e.customStyles[i]={references:1,element:l.sheet};var u=-1;for(var h in s)s.hasOwnProperty(h)&&l.sheet.insertRule(h+"{"+s[h].join(";")+"}",++u)}function v(e){return e=t.normaliseHex(e),"000000"==e?"#222":t.getLuminance(e)}function f(i){if(t.isPlainObject(i)){var n=t.hash(JSON.stringify(i)),o=e.customStyles[n];if(o&&!--o.references){var s=o.element.ownerNode;s&&s.parentNode&&s.parentNode.removeChild(s),e.customStyles[n]=null}}}function m(e,t){for(var i=0,n=e.length;i<n;++i){var o=e[i];if(o instanceof RegExp&&o.test(t)||"string"==typeof o&&o.length&&o===t)return!0}return!1}function b(){var t=this.setStatus.bind(this),i=this.options.dismissOnTimeout;"number"==typeof i&&i>=0&&(this.dismissTimeout=window.setTimeout(function(){t(e.status.dismiss)},Math.floor(i)));var n=this.options.dismissOnScroll;if("number"==typeof n&&n>=0){var o=function(i){window.pageYOffset>Math.floor(n)&&(t(e.status.dismiss),window.removeEventListener("scroll",o),this.onWindowScroll=null)};this.onWindowScroll=o,window.addEventListener("scroll",o)}}function y(){if("info"!=this.options.type&&(this.options.revokable=!0),t.isMobile()&&(this.options.animateRevokable=!1),this.options.revokable){var e=a.call(this);this.options.animateRevokable&&e.push("cc-animate"),this.customStyleSelector&&e.push(this.customStyleSelector);var i=this.options.revokeBtn.replace("{{classes}}",e.join(" "));this.revokeBtn=u.call(this,i);var n=this.revokeBtn;if(this.options.animateRevokable){var o=t.throttle(function(e){var i=!1,o=20,s=window.innerHeight-20;t.hasClass(n,"cc-top")&&e.clientY<o&&(i=!0),t.hasClass(n,"cc-bottom")&&e.clientY>s&&(i=!0),i?t.hasClass(n,"cc-active")||t.addClass(n,"cc-active"):t.hasClass(n,"cc-active")&&t.removeClass(n,"cc-active")},200);this.onMouseMove=o,window.addEventListener("mousemove",o)}}}var g={enabled:!0,container:null,cookie:{name:"cookieconsent_status",path:"/",domain:"",expiryDays:365},onPopupOpen:function(){},onPopupClose:function(){},onInitialise:function(e){},onStatusChange:function(e,t){},onRevokeChoice:function(){},content:{header:"Cookies used on the website!",message:"This website uses cookies to ensure you get the best experience on our website.",dismiss:"Got it!",allow:"Allow cookies",deny:"Decline",link:"Learn more",href:"http://cookiesandyou.com",close:"&#x274c;"},elements:{header:'<span class="cc-header">{{header}}</span>&nbsp;',message:'<span id="cookieconsent:desc" class="cc-message">{{message}}</span>',messagelink:'<span id="cookieconsent:desc" class="cc-message">{{message}} <a aria-label="learn more about cookies" role=button tabindex="0" class="cc-link" href="{{href}}" target="_blank">{{link}}</a></span>',dismiss:'<a aria-label="dismiss cookie message" role=button tabindex="0" class="cc-btn cc-dismiss pb-5 mb-5">{{dismiss}}</a>',allow:'<a aria-label="allow cookies" role=button tabindex="0"  class="cc-btn cc-allow">{{allow}}</a>',deny:'<a aria-label="deny cookies" role=button tabindex="0" class="cc-btn cc-deny">{{deny}}</a>',link:'<a aria-label="learn more about cookies" role=button tabindex="0" class="cc-link" href="{{href}}" target="_blank">{{link}}</a>',close:'<span aria-label="dismiss cookie message" role=button tabindex="0" class="cc-close">{{close}}</span>'},window:'<div role="dialog" aria-live="polite" aria-label="cookieconsent" aria-describedby="cookieconsent:desc" class="cc-window {{classes}}"><!--googleoff: all-->{{children}}<!--googleon: all--></div>',revokeBtn:'<div class="cc-revoke {{classes}}">Cookie Policy</div>',compliance:{info:'<div class="cc-compliance">{{dismiss}}</div>',"opt-in":'<div class="cc-compliance cc-highlight">{{dismiss}}{{allow}}</div>',"opt-out":'<div class="cc-compliance cc-highlight">{{deny}}{{dismiss}}</div>'},type:"info",layouts:{basic:"{{messagelink}}{{compliance}}","basic-close":"{{messagelink}}{{compliance}}{{close}}","basic-header":"{{header}}{{message}}{{link}}{{compliance}}"},layout:"basic",position:"bottom",theme:"block","static":!1,palette:null,revokable:!1,animateRevokable:!0,showLink:!0,dismissOnScroll:!1,dismissOnTimeout:!1,autoOpen:!0,autoAttach:!0,whitelistPage:[],blacklistPage:[],overrideHTML:null};return n.prototype.initialise=function(e){this.options&&this.destroy(),t.deepExtend(this.options={},g),t.isPlainObject(e)&&t.deepExtend(this.options,e),r.call(this)&&(this.options.enabled=!1),m(this.options.blacklistPage,location.pathname)&&(this.options.enabled=!1),m(this.options.whitelistPage,location.pathname)&&(this.options.enabled=!0);var i=this.options.window.replace("{{classes}}",c.call(this).join(" ")).replace("{{children}}",l.call(this)),n=this.options.overrideHTML;if("string"==typeof n&&n.length&&(i=n),this.options["static"]){var o=u.call(this,'<div class="cc-grower">'+i+"</div>");o.style.display="",this.element=o.firstChild,this.element.style.display="none",t.addClass(this.element,"cc-invisible")}else this.element=u.call(this,i);b.call(this),y.call(this),this.options.autoOpen&&this.autoOpen()},n.prototype.destroy=function(){this.onButtonClick&&this.element&&(this.element.removeEventListener("click",this.onButtonClick),this.onButtonClick=null),this.dismissTimeout&&(clearTimeout(this.dismissTimeout),this.dismissTimeout=null),this.onWindowScroll&&(window.removeEventListener("scroll",this.onWindowScroll),this.onWindowScroll=null),this.onMouseMove&&(window.removeEventListener("mousemove",this.onMouseMove),this.onMouseMove=null),this.element&&this.element.parentNode&&this.element.parentNode.removeChild(this.element),this.element=null,this.revokeBtn&&this.revokeBtn.parentNode&&this.revokeBtn.parentNode.removeChild(this.revokeBtn),this.revokeBtn=null,f(this.options.palette),this.options=null},n.prototype.open=function(t){if(this.element)return this.isOpen()||(e.hasTransition?this.fadeIn():this.element.style.display="",this.options.revokable&&this.toggleRevokeButton(),this.options.onPopupOpen.call(this)),this},n.prototype.close=function(t){if(this.element)return this.isOpen()&&(e.hasTransition?this.fadeOut():this.element.style.display="none",t&&this.options.revokable&&this.toggleRevokeButton(!0),this.options.onPopupClose.call(this)),this},n.prototype.fadeIn=function(){var i=this.element;if(e.hasTransition&&i&&(this.afterTransition&&s.call(this,i),t.hasClass(i,"cc-invisible"))){if(i.style.display="",this.options["static"]){var n=this.element.clientHeight;this.element.parentNode.style.maxHeight=n+"px"}var r=20;this.openingTimeout=setTimeout(o.bind(this,i),r)}},n.prototype.fadeOut=function(){var i=this.element;e.hasTransition&&i&&(this.openingTimeout&&(clearTimeout(this.openingTimeout),o.bind(this,i)),t.hasClass(i,"cc-invisible")||(this.options["static"]&&(this.element.parentNode.style.maxHeight=""),this.afterTransition=s.bind(this,i),i.addEventListener(e.transitionEnd,this.afterTransition),t.addClass(i,"cc-invisible")))},n.prototype.isOpen=function(){return this.element&&""==this.element.style.display&&(!e.hasTransition||!t.hasClass(this.element,"cc-invisible"))},n.prototype.toggleRevokeButton=function(e){this.revokeBtn&&(this.revokeBtn.style.display=e?"":"none")},n.prototype.revokeChoice=function(e){this.options.enabled=!0,this.clearStatus(),this.options.onRevokeChoice.call(this),e||this.autoOpen()},n.prototype.hasAnswered=function(t){return Object.keys(e.status).indexOf(this.getStatus())>=0},n.prototype.hasConsented=function(t){var i=this.getStatus();return i==e.status.allow||i==e.status.dismiss},n.prototype.autoOpen=function(e){!this.hasAnswered()&&this.options.enabled&&this.open()},n.prototype.setStatus=function(i){var n=this.options.cookie,o=t.getCookie(n.name),s=Object.keys(e.status).indexOf(o)>=0;Object.keys(e.status).indexOf(i)>=0?(t.setCookie(n.name,i,n.expiryDays,n.domain,n.path),this.options.onStatusChange.call(this,i,s)):this.clearStatus()},n.prototype.getStatus=function(){return t.getCookie(this.options.cookie.name)},n.prototype.clearStatus=function(){var e=this.options.cookie;t.setCookie(e.name,"",-1,e.domain,e.path)},n}(),e.Location=function(){function e(e){t.deepExtend(this.options={},s),t.isPlainObject(e)&&t.deepExtend(this.options,e),this.currentServiceIndex=-1}function i(e,t,i){var n,o=document.createElement("script");o.type="text/"+(e.type||"javascript"),o.src=e.src||e,o.async=!1,o.onreadystatechange=o.onload=function(){var e=o.readyState;clearTimeout(n),t.done||e&&!/loaded|complete/.test(e)||(t.done=!0,t(),o.onreadystatechange=o.onload=null)},document.body.appendChild(o),n=setTimeout(function(){t.done=!0,t(),o.onreadystatechange=o.onload=null},i)}function n(e,t,i,n,o){var s=new(window.XMLHttpRequest||window.ActiveXObject)("MSXML2.XMLHTTP.3.0");if(s.open(n?"POST":"GET",e,1),s.setRequestHeader("X-Requested-With","XMLHttpRequest"),s.setRequestHeader("Content-type","application/x-www-form-urlencoded"),Array.isArray(o))for(var r=0,a=o.length;r<a;++r){var c=o[r].split(":",2);s.setRequestHeader(c[0].replace(/^\s+|\s+$/g,""),c[1].replace(/^\s+|\s+$/g,""))}"function"==typeof t&&(s.onreadystatechange=function(){s.readyState>3&&t(s)}),s.send(n)}function o(e){return new Error("Error ["+(e.code||"UNKNOWN")+"]: "+e.error)}var s={timeout:5e3,services:["freegeoip","ipinfo","maxmind"],serviceDefinitions:{freegeoip:function(){return{url:"//freegeoip.net/json/?callback={callback}",isScript:!0,callback:function(e,t){try{var i=JSON.parse(t);return i.error?o(i):{code:i.country_code}}catch(n){return o({error:"Invalid response ("+n+")"})}}}},ipinfo:function(){return{url:"//ipinfo.io",headers:["Accept: application/json"],callback:function(e,t){try{var i=JSON.parse(t);return i.error?o(i):{code:i.country}}catch(n){return o({error:"Invalid response ("+n+")"})}}}},ipinfodb:function(e){return{url:"//api.ipinfodb.com/v3/ip-country/?key={api_key}&format=json&callback={callback}",isScript:!0,callback:function(e,t){try{var i=JSON.parse(t);return"ERROR"==i.statusCode?o({error:i.statusMessage}):{code:i.countryCode}}catch(n){return o({error:"Invalid response ("+n+")"})}}}},maxmind:function(){return{url:"//js.maxmind.com/js/apis/geoip2/v2.1/geoip2.js",isScript:!0,callback:function(e){return window.geoip2?void geoip2.country(function(t){try{e({code:t.country.iso_code})}catch(i){e(o(i))}},function(t){e(o(t))}):void e(new Error("Unexpected response format. The downloaded script should have exported `geoip2` to the global scope"))}}}}};return e.prototype.getNextService=function(){var e;do e=this.getServiceByIdx(++this.currentServiceIndex);while(this.currentServiceIndex<this.options.services.length&&!e);return e},e.prototype.getServiceByIdx=function(e){var i=this.options.services[e];if("function"==typeof i){var n=i();return n.name&&t.deepExtend(n,this.options.serviceDefinitions[n.name](n)),n}return"string"==typeof i?this.options.serviceDefinitions[i]():t.isPlainObject(i)?this.options.serviceDefinitions[i.name](i):null},e.prototype.locate=function(e,t){var i=this.getNextService();return i?(this.callbackComplete=e,this.callbackError=t,void this.runService(i,this.runNextServiceOnError.bind(this))):void t(new Error("No services to run"))},e.prototype.setupUrl=function(e){var t=this.getCurrentServiceOpts();return e.url.replace(/\{(.*?)\}/g,function(i,n){if("callback"===n){var o="callback"+Date.now();return window[o]=function(t){e.__JSONP_DATA=JSON.stringify(t)},o}if(n in t.interpolateUrl)return t.interpolateUrl[n]})},e.prototype.runService=function(e,t){var o=this;if(e&&e.url&&e.callback){var s=e.isScript?i:n,r=this.setupUrl(e);s(r,function(i){var n=i?i.responseText:"";e.__JSONP_DATA&&(n=e.__JSONP_DATA,delete e.__JSONP_DATA),o.runServiceCallback.call(o,t,e,n)},this.options.timeout,e.data,e.headers)}},e.prototype.runServiceCallback=function(e,t,i){var n=this,o=function(t){s||n.onServiceResult.call(n,e,t)},s=t.callback(o,i);s&&this.onServiceResult.call(this,e,s)},e.prototype.onServiceResult=function(e,t){t instanceof Error||t&&t.error?e.call(this,t,null):e.call(this,null,t)},e.prototype.runNextServiceOnError=function(e,t){if(e){this.logError(e);var i=this.getNextService();i?this.runService(i,this.runNextServiceOnError.bind(this)):this.completeService.call(this,this.callbackError,new Error("All services failed"))}else this.completeService.call(this,this.callbackComplete,t)},e.prototype.getCurrentServiceOpts=function(){var e=this.options.services[this.currentServiceIndex];return"string"==typeof e?{name:e}:"function"==typeof e?e():t.isPlainObject(e)?e:{}},e.prototype.completeService=function(e,t){this.currentServiceIndex=-1,e&&e(t)},e.prototype.logError=function(e){var t=this.currentServiceIndex,i=this.getServiceByIdx(t);console.error("The service["+t+"] ("+i.url+") responded with the following error",e)},e}(),e.Law=function(){function e(e){this.initialise.apply(this,arguments)}var i={regionalLaw:!0,hasLaw:["AT","BE","BG","HR","CZ","CY","DK","EE","FI","FR","DE","EL","HU","IE","IT","LV","LT","LU","MT","NL","PL","PT","SK","SI","ES","SE","GB","UK"],revokable:["HR","CY","DK","EE","FR","DE","LV","LT","NL","PT","ES"],explicitAction:["HR","IT","ES"]};return e.prototype.initialise=function(e){t.deepExtend(this.options={},i),t.isPlainObject(e)&&t.deepExtend(this.options,e)},e.prototype.get=function(e){var t=this.options;return{hasLaw:t.hasLaw.indexOf(e)>=0,revokable:t.revokable.indexOf(e)>=0,explicitAction:t.explicitAction.indexOf(e)>=0}},e.prototype.applyLaw=function(e,t){var i=this.get(t);return i.hasLaw||(e.enabled=!1),this.options.regionalLaw&&(i.revokable&&(e.revokable=!0),i.explicitAction&&(e.dismissOnScroll=!1,e.dismissOnTimeout=!1)),e},e}(),e.initialise=function(t,i,n){var o=new e.Law(t.law);i||(i=function(){}),n||(n=function(){}),e.getCountryCode(t,function(n){delete t.law,delete t.location,n.code&&(t=o.applyLaw(t,n.code)),i(new e.Popup(t))},function(i){delete t.law,delete t.location,n(i,new e.Popup(t))})},e.getCountryCode=function(t,i,n){if(t.law&&t.law.countryCode)return void i({code:t.law.countryCode});if(t.location){var o=new e.Location(t.location);return void o.locate(function(e){i(e||{})},n)}i({})},e.utils=t,e.hasInitialised=!0,window.cookieconsent=e}}(window.cookieconsent||{});
 /*!
  * @preserve
  *

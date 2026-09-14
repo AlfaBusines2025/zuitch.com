@@ -90,7 +90,7 @@ if (!empty($_GET['event_id'])) {
 			<input type="hidden" value="<?php echo $_GET['hashtag'];?>" id="hashtagName">
 		<?php } ?>
 		<input type="hidden" value="true" id="api">
-		<div class="load-more pointer" id="load-more-posts" onclick="<?php echo (!empty($_GET['hashtag'])) ? 'Wo_GetMoreHashTagsPosts();' : 'Wo_GetMorePosts();' ?>">
+		<div class="load-more pointer" id="load-more-posts" onclick="<?php echo (!empty($_GET['hashtag'])) ? 'Wo_GetMoreHashTagsPosts();' : 'Wo_GetMorePosts(this);' ?>">
 			<span class="btn btn-default">
 			<i class="fa fa-chevron-circle-down progress-icon" data-icon="chevron-circle-down"></i> &nbsp;<?php echo $wo['lang']['load_more_posts'];?><span>
 		</div>

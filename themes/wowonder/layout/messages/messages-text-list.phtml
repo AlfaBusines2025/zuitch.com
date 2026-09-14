@@ -10,7 +10,15 @@
 		<div class="clear"></div>
 
 		<div class="message <?php if (!empty($wo['message']['product_id'])) {$wo['product'] = Wo_GetProduct($wo['message']['product_id']);if (!empty($wo['product'])) {?>wo_msg_prod_prnt<?php } } ?>" <?php if ($wo['message']['onwer'] == 1) { ?> style="background-color: <?php echo $wo['message']['color']; ?>"<?php } ?> data-toggle="tooltip" title="<?php echo Wo_Time_Elapsed_String($wo['message']['time']);?>" data-placement="<?php echo ($wo['message']['onwer'] == 0) ? 'bottom': 'bottom';?>">
-			<p class="message-text" id="message_text_reply_<?php echo $wo['message']['id'] ?>" dir="auto" <?php if ($wo['message']['onwer'] == 1) { ?> style="background-color: <?php echo $wo['message']['color']; ?>"<?php } ?>><?php echo $wo['message']['text'] ?></p>
+			<p class="message-text" data-translate-text="message_<?php echo $wo['message']['id'] ?>" id="message_text_reply_<?php echo $wo['message']['id'] ?>" dir="auto" <?php if ($wo['message']['onwer'] == 1) { ?> style="background-color: <?php echo $wo['message']['color']; ?>"<?php } ?>>
+				<?php echo $wo['message']['text'] ?>
+			<!-- Función de traducción agregada -->
+                <?php if ((strlen($wo['message']['text']) >= 2 && ($wo['config']['google_translate'] == 1 || $wo['config']['yandex_translate'] == 1)) && $wo['message']['onwer'] != 1): ?>
+                    <span onclick="Wo_Translate($(this).attr('id'), $(this).attr('data-language'))" title="<?php echo $wo['lang']['translate'];?>" class="pointer time" id="message_<?php echo $wo['message']['id']; ?>" data-language="<?php echo DetermineUserLang(); ?>"  data-trans-btn="message_<?php echo $wo['message']['id']; ?>" >
+                        - <i class="fa fa-language"></i> <?php echo $wo['lang']['translate'];?>
+                    </span>
+                <?php endif; ?>
+			</p>
 			<div class="message-media" id="message_media_reply_<?php echo $wo['message']['id'] ?>">
 				<div class="clear"></div>
 				<?php

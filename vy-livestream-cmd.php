@@ -117,6 +117,10 @@ try {
 	case 'generateCover':
 	$live->generateCover();
 	break;
+	case 'normalize_live_mp4':
+	header('Content-Type: application/json; charset=utf-8');
+	echo $live->normalizeLiveRecordingByPostJson();
+	break;
 	case 'get_rtmp_hls_path':
 	echo $live->getRtmpHLS_Path();
 	break;

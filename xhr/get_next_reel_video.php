@@ -1,5 +1,8 @@
 <?php
 if ($f == 'get_next_reel_video') {
+    /* Reels precargados (.hidden): no inyectar aviso "video convirtiéndose" en el HTML (molesta al hacer swipe; el post sigue teniendo processing en BD). */
+    $wo['reels_next_chunk_request'] = true;
+    $wo['reels_ui_second_post_button'] = $wo['config']['second_post_button'];
     $wo['config']['second_post_button'] = 'disabled';
     $videos = [];
     $html = '';
@@ -81,6 +84,8 @@ if ($f == 'get_next_reel_video') {
     if (!empty($wo['watched_reels'])) {
         setcookie('watched_reels', json_encode($wo['watched_reels']), time()+(60 * 60 * 24),'/');
     }
+
+    unset($wo['reels_next_chunk_request']);
 
     header("Content-type: application/json");
     echo json_encode($data);

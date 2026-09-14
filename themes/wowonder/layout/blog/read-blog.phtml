@@ -71,6 +71,13 @@
 					</div>
 				</div>
 				
+<button id="btn-translate-body"
+        class="btn btn-main"
+        data-target-lang="<?php echo DetermineUserLang(); ?>"
+        data-article-id="<?php echo (int)$wo['article']['id']; ?>">
+  <?php echo $wo['lang']['translate']; ?>
+</button>
+				
 				<!-- Additional schema meta -->
 				<div itemscope="" itemprop="publisher" itemtype="http://schema.org/Organization" class="hidden">
 					<meta itemprop="name" content="<?php echo $wo['config']['siteName'];?>">
@@ -414,4 +421,125 @@ function Wo_RegisterBlogCommReply(id,event,self){
   }
 
 }
+</script>
+
+<script>
+(function(){
+  // === AJUSTA AQUÍ TUS SELECTORES DE CONTENIDO A TRADUCIR ===
+  const TARGETS = ['.read-blog-desc', '.read-content']; // <- incluye descripción y cuerpo
+  const SKIP    = 'script,style,pre,code,svg';
+  const BTN_SEL = '#btn-translate-body';
+
+  // ⚠️ Tu API key quedará visible en el cliente
+  const API_KEY = '<?php echo($wo['config']['google_translation_api']); ?>'; // <-- ⚠️ visible en cliente
+   const ENDPOINT = 'https://translation.googleapis.com/language/translate/v2';
+
+  let isOn = false;
+  const originals = new WeakMap(); // TextNode -> texto original en el DOM
+
+  // Reúne todos los nodos de texto traducibles dentro de los selectores indicados
+  function collectTextNodes(){
+    const nodes = [];
+    TARGETS.forEach(sel=>{
+      const root = document.querySelector(sel);
+      if (!root) return;
+      const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+        acceptNode(n){
+          const t = (n.nodeValue || '').trim();
+          if (!t) return NodeFilter.FILTER_REJECT;
+
+          // Evita traducciones dentro de etiquetas no deseadas o marcadas
+          let p = n.parentNode;
+          while (p && p !== root) {
+            if (p.matches && p.matches(SKIP)) return NodeFilter.FILTER_REJECT;
+            if (p.hasAttribute && p.hasAttribute('data-no-translate')) return NodeFilter.FILTER_REJECT;
+            p = p.parentNode;
+          }
+          // Evita bullets/números sueltos
+          if (/^[\d\-\u2022\*·\s]+$/.test(t)) return NodeFilter.FILTER_REJECT;
+
+          return NodeFilter.FILTER_ACCEPT;
+        }
+      });
+      let cur; while(cur = walker.nextNode()) nodes.push(cur);
+    });
+    return nodes;
+  }
+
+  async function translateBatch(q, target){
+    const res = await fetch(`${ENDPOINT}?key=${encodeURIComponent(API_KEY)}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ q, target: String(target) })
+    });
+    const data = await res.json();
+    if (!data || !data.data || !Array.isArray(data.data.translations)) {
+      throw new Error('Respuesta inválida de la API');
+    }
+    return data.data.translations.map(x => x.translatedText || '');
+  }
+
+  async function doTranslate(lang){
+    const nodes = collectTextNodes();
+    if (!nodes.length) return;
+
+    const q = nodes.map(n => {
+      if (!originals.has(n)) originals.set(n, n.nodeValue);
+      return n.nodeValue.trim();
+    });
+
+    const translated = [];
+    for (let i = 0; i < q.length; i += 100) {
+      const chunk = q.slice(i, i + 100);
+      const ans = await translateBatch(chunk, lang);
+      translated.push(...ans);
+    }
+
+    let k = 0;
+    nodes.forEach(n => { n.nodeValue = translated[k++] || n.nodeValue; });
+    isOn = true;
+  }
+
+  function restoreOriginals(){
+    TARGETS.forEach(sel=>{
+      const root = document.querySelector(sel);
+      if (!root) return;
+      const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null, false);
+      let n; while(n = walker.nextNode()){
+        if (originals.has(n)) n.nodeValue = originals.get(n);
+      }
+    });
+    isOn = false;
+  }
+
+  // Toggle manejado por el botón existente
+  document.addEventListener('click', function(e){
+    const btn = e.target.closest(BTN_SEL);
+    if (!btn) return;
+    e.preventDefault();
+
+    const lang = btn.getAttribute('data-target-lang') || 'es';
+    const labelTranslate = (btn.getAttribute('data-t') || 'Traducir').trim();
+    const labelShowOrig  = (btn.getAttribute('data-show-original') || 'Mostrar original').trim();
+
+    (async () => {
+      if (!isOn) {
+        // Traducir
+        btn.disabled = true;
+        await doTranslate(lang);
+        btn.disabled = false;
+        btn.textContent = labelShowOrig;
+      } else {
+        // Restaurar
+        btn.disabled = true;
+        restoreOriginals();
+        btn.disabled = false;
+        btn.textContent = labelTranslate;
+      }
+    })().catch(err=>{
+      console.error(err);
+      btn.disabled = false;
+    });
+  });
+})();
 </script>

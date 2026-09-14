@@ -1,0 +1,354 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Cotización Global - Reels, Streaming y Visualización</title>
+  <style>
+    :root {
+      --text: #1b1f23;
+      --muted: #4f5b66;
+      --line: #dfe3e8;
+      --accent: #0b57d0;
+      --bg-soft: #f7f9fc;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      color: var(--text);
+      background: #fff;
+      line-height: 1.55;
+    }
+    .page {
+      max-width: 920px;
+      margin: 24px auto;
+      padding: 32px 38px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+    h1, h2, h3 {
+      margin: 0 0 10px;
+      line-height: 1.3;
+    }
+    h1 { font-size: 28px; color: var(--accent); }
+    h2 {
+      font-size: 20px;
+      margin-top: 26px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid var(--line);
+    }
+    h3 { font-size: 16px; margin-top: 18px; }
+    p { margin: 8px 0; }
+    ul { margin: 8px 0 8px 20px; }
+    li { margin: 4px 0; }
+    .meta {
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .tag {
+      display: inline-block;
+      padding: 3px 10px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--bg-soft);
+      font-size: 12px;
+      margin-right: 8px;
+      margin-bottom: 6px;
+    }
+    .box {
+      border: 1px solid var(--line);
+      background: var(--bg-soft);
+      border-radius: 8px;
+      padding: 14px 16px;
+      margin-top: 12px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      font-size: 14px;
+    }
+    th, td {
+      border: 1px solid var(--line);
+      padding: 9px 10px;
+      vertical-align: top;
+    }
+    th {
+      background: #f2f5fa;
+      text-align: left;
+      font-weight: 700;
+    }
+    .right { text-align: right; }
+    .total-row td {
+      font-weight: 700;
+      background: #f9fbff;
+    }
+    .small {
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .signature {
+      margin-top: 34px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 26px;
+    }
+    .sign-box {
+      border-top: 1px solid var(--line);
+      padding-top: 8px;
+      font-size: 14px;
+      color: var(--muted);
+    }
+    @media print {
+      .page {
+        border: none;
+        margin: 0;
+        max-width: 100%;
+        padding: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <h1>COTIZACIÓN GLOBAL CONSOLIDADA</h1>
+
+    <p><strong>Proyecto:</strong> Mejoras y funcionalidades adicionales para Reels, optimización Reels, streaming y visualización de imágenes</p>
+    <p><strong>Cliente:</strong> Aldo</p>
+    <p><strong>Fecha:</strong> 02/03/2026</p>
+
+    <div class="meta">
+      <span class="tag">Editor de Reels (Propuesta 1)</span>
+      <span class="tag">FFmpeg y Optimización</span>
+      <span class="tag">Streaming</span>
+      <span class="tag">Zoom táctil web</span>
+      <span class="tag">Etiquetado de productos</span>
+    </div>
+
+    <h2>1. Objetivo general</h2>
+    <p>
+      Implementar una solución integral y escalable que consolide el editor de Reels (MVP recortado con riesgo controlado) y las mejoras
+      adicionales de plataforma, asegurando una experiencia funcional de punta a punta para edición, render, descarga, publicación,
+      administración automática de reels, control de streaming, etiquetado de productos y mejora de visualización de imágenes.
+    </p>
+
+    <h2>2. Alcance consolidado por bloques y módulos</h2>
+
+    <h3>Bloque A — Propuesta 1: Editor de Reels (33.5 horas)</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Módulo</th>
+          <th class="right">Horas</th>
+          <th>Alcance incluido</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>M1. Estabilización del editor</td>
+          <td class="right">8 h</td>
+          <td>Corrección de bugs UX críticos: drag de texto estable, control único de edición, consistencia de play/audio y ajustes mobile clave.</td>
+        </tr>
+        <tr>
+          <td>M2. Motor de textos (recortado)</td>
+          <td class="right">12 h</td>
+          <td>Múltiples textos con alta/edición/selección/eliminación y propiedades por texto: contenido, posición, tamaño, color y 5 presets tipográficos. Soporte emojis en preview/render.</td>
+        </tr>
+        <tr>
+          <td>M3. Audio (base funcional)</td>
+          <td class="right">5 h</td>
+          <td>Subida de audio, offset por segundo, control de volumen base y sincronización en preview.</td>
+        </tr>
+        <tr>
+          <td>M4. Render FFmpeg MVP</td>
+          <td class="right">5 h</td>
+          <td>Pipeline base: recorte, textos múltiples, audio y export MP4 con manejo de errores comunes.</td>
+        </tr>
+        <tr>
+          <td>M5. Descarga de borrador</td>
+          <td class="right">3 h</td>
+          <td>Botón para descargar borrador, disparo de render y estados (procesando/listo/error).</td>
+        </tr>
+        <tr>
+          <td>M6. Publicación final básica</td>
+          <td class="right">2 h</td>
+          <td>Publicación con estado visible y feedback claro de resultado dentro del flujo Reels.</td>
+        </tr>
+        <tr>
+          <td>M7. Etiquetado de productos en reels</td>
+          <td class="right">3.5 h</td>
+          <td>Permitir etiquetar productos en video Reels y habilitar click en la descripción para redirigir al producto etiquetado.</td>
+        </tr>
+        <tr>
+          <td>Requerimiento funcional de navegación inicial</td>
+          <td class="right">Incluido</td>
+          <td>Al ingresar, mostrar por defecto Reels y configurar el click del icono de Zuitch para redirección a <code>zuitch.com/home</code>.</td>
+        </tr>
+        <tr class="total-row">
+          <td>Total Bloque A</td>
+          <td class="right">33.5 h</td>
+          <td>MVP de editor de Reels operativo y listo para fase de evolución.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>Bloque B — Mejoras adicionales (23 horas)</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Módulo</th>
+          <th class="right">Horas</th>
+          <th>Alcance incluido</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Módulo 1. Activación FFmpeg y optimización de imágenes</td>
+          <td class="right">3.5 h</td>
+          <td>
+            Verificación de FFmpeg, ruta/binario, permisos y <code>shell_exec()</code>; pruebas de conversión multiformato, thumbnails, resoluciones,
+            optimización básica de imágenes, documentación de configuración y resolución de errores comunes.
+          </td>
+        </tr>
+        <tr>
+          <td>Módulo 2. Reels (eliminación automática + descarga móvil + mejoras)</td>
+          <td class="right">13.5 h</td>
+          <td>
+            Configuración en admin para expiración de reels, proceso en <code>cron-job.php</code>, eliminación de archivos locales/cloud, limpieza de base de datos
+            con integridad, logging, endpoint seguro de descarga móvil, token temporal, validaciones, rate limit básico, botón de descarga en UI móvil,
+            mejoras de visualización/rendimiento y testing funcional.
+          </td>
+        </tr>
+        <tr>
+          <td>Módulo 4. Limitar tiempo de streaming</td>
+          <td class="right">2 h</td>
+          <td>
+            Configuración de límite en admin, contador visible, advertencias previas y detención automática del stream al alcanzar el tiempo definido.
+          </td>
+        </tr>
+        <tr>
+          <td>Módulo 5. Zoom táctil en imágenes (web)</td>
+          <td class="right">4 h</td>
+          <td>
+            Replicación de lógica táctil en lightboxes, zoom con rueda/doble click/pinch, pan al ampliar, límites min/max, reset al cerrar y testing cross-device.
+          </td>
+        </tr>
+        <tr class="total-row">
+          <td>Total Bloque B</td>
+          <td class="right">23 h</td>
+          <td>Mejoras administrativas, funcionales y de experiencia visual complementarias al editor.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="box">
+      <p><strong>Total global del proyecto:</strong> 56.5 horas (33.5 h + 23 h)</p>
+    </div>
+
+    <h2>3. Inversión</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Esquema</th>
+          <th class="right">Tarifa/hora</th>
+          <th class="right">Horas</th>
+          <th class="right">Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Precio de mercado</td>
+          <td class="right">USD $18.00</td>
+          <td class="right">56.5 h</td>
+          <td class="right"><strong>USD $1,017.00 + IVA</strong></td>
+        </tr>
+        <tr>
+          <td>Precio especial Aldo</td>
+          <td class="right">USD $15.00</td>
+          <td class="right">56.5 h</td>
+          <td class="right"><strong>USD $847.50 + IVA</strong></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p class="small">
+      Nota: Se presenta el valor en formato “+ IVA” sin desglose, para definición final de facturación según criterio del cliente.
+    </p>
+
+    <h2>4. Archivos a crear/modificar (bloque adicional y consolidación)</h2>
+    <h3>Archivo nuevo</h3>
+    <ul>
+      <li><code>/xhr/download_reel.php</code> — Endpoint de descarga de reels.</li>
+    </ul>
+    <h3>Archivos a modificar</h3>
+    <ul>
+      <li><code>/cron-job.php</code> — Eliminación automática de reels.</li>
+      <li><code>/admin-panel/pages/amazon-settings/content.phtml</code> — Configuración de eliminación de reels.</li>
+      <li><code>/admin-panel/pages/live/content.phtml</code> — Configuración límite de streaming.</li>
+      <li><code>/themes/wowonder/layout/players/video.phtml</code> — Botón/acciones de descarga reels.</li>
+      <li><code>/themes/wowonder/layout/lightbox/product-content.phtml</code> — Zoom táctil.</li>
+      <li><code>/themes/wowonder/layout/lightbox/album-content.phtml</code> — Zoom táctil.</li>
+      <li><code>/themes/wowonder/javascript/script.js</code> — Lógica de zoom, streaming, reels y flujos de editor.</li>
+      <li><code>/themes/wowonder/stylesheet/style.css</code> — Ajustes visuales necesarios.</li>
+      <li>Archivos del editor de Reels vinculados a UI/preview/render/publicación según arquitectura actual.</li>
+      <li>Componentes del feed/header para definir vista inicial en Reels y redirección del icono de marca hacia <code>/home</code>.</li>
+      <li>Componentes de Reels y/o posts para etiquetado de productos, persistencia del vínculo y redirección al producto.</li>
+    </ul>
+
+    <h2>5. Entregables</h2>
+    <ul>
+      <li>Código fuente implementado (archivos nuevos y modificaciones).</li>
+      <li>Funcionalidades operativas según alcance acordado.</li>
+      <li>Testing funcional básico por módulo.</li>
+      <li>Instrucciones de configuración y uso.</li>
+      <li>Documento breve de cambios aplicados.</li>
+    </ul>
+
+    <h2>6. No incluido</h2>
+    <ul>
+      <li>Instalación de FFmpeg a nivel sistema operativo o administración de servidor no disponible en aplicación.</li>
+      <li>Configuración externa de <code>crontab</code> y ajustes DevOps avanzados.</li>
+      <li>Recuperación de reels eliminados o backups automáticos previos.</li>
+      <li>Optimización avanzada de infraestructura, edge cases extremos y hardening de nivel enterprise.</li>
+      <li>Nuevas funcionalidades no detalladas en este documento.</li>
+      <li>Catálogo de productos avanzado (filtros, inventario, variantes) fuera de la acción de etiquetado simple en reels.</li>
+    </ul>
+
+    <h2>7. Supuestos técnicos</h2>
+    <ul>
+      <li>FFmpeg está instalado y ejecutable en servidor.</li>
+      <li>Se cuenta con accesos requeridos a panel admin y base de código.</li>
+      <li>Las pruebas se realizan sobre entorno de staging o copia controlada de producción.</li>
+      <li>Integraciones cloud (S3/Wasabi/Spaces/Backblaze) ya configuradas en el sistema, en caso de requerirse.</li>
+      <li>Los productos a etiquetar ya existen en el sistema y cuentan con URL o identificador accesible para redirección.</li>
+    </ul>
+
+    <h2>8. Cronograma estimado</h2>
+    <p>
+      Duración estimada: <strong>56.5 horas efectivas</strong>, distribuidas por hitos de implementación y validación.
+      El calendario exacto se define en función de ventanas de despliegue, validación funcional y retroalimentación del cliente.
+    </p>
+
+    <h2>9. Condiciones comerciales sugeridas</h2>
+    <ul>
+      <li>Vigencia de cotización: 7 días calendario.</li>
+      <li>Forma de pago sugerida: 50% inicio y 50% contra entrega.</li>
+      <li>Cambios fuera de alcance se cotizan como adicionales.</li>
+      <li>El inicio depende de aprobación formal de esta propuesta.</li>
+    </ul>
+
+    <div class="signature">
+      <div class="sign-box">
+        <strong>Elaborado por:</strong><br>
+        Equipo de desarrollo
+      </div>
+      <div class="sign-box">
+        <strong>Aprobado por:</strong><br>
+        Cliente
+      </div>
+    </div>
+  </main>
+</body>
+</html>

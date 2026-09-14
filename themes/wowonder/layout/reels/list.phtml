@@ -1,3 +1,6 @@
+<?php
+$reels_list_second_btn = !empty($wo['reels_ui_second_post_button']) ? $wo['reels_ui_second_post_button'] : $wo['config']['second_post_button'];
+?>
 <div class="reels_list {{CLASS}}" data-id="{{ID}}" data-reel-url="{{URL}}">
    <div class="lightbox-content post wo_imagecombo_lbox lightpost-{{STORY id}} wo_reels_cont" id="post-{{STORY id}}" data-post-id="{{STORY id}}" data-type="reels">
       <div class="story-img reels-img">
@@ -16,7 +19,7 @@
 			<button type="button" class="btn btn-delete-reel" onclick="Wo_OpenReelDeleteBox({{ID}},'show');"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z"></path></svg></button>
             <?php } ?>
 			
-            <div id="draggableHelper" style="display: table-cell;vertical-align: middle;">
+            <div class="reels-draggable-inner" style="display: table-cell;vertical-align: middle;">
                {{VIDEO}}
             </div>
          </div>
@@ -56,7 +59,7 @@
                         </div>
                     </div>
                     <div class="stats buttons" style="display: flex;">
-                        <?php if ($wo['config']['second_post_button'] == 'reaction') { ?>
+                        <?php if ($reels_list_second_btn == 'reaction') { ?>
                             <div class="like-stat  stat-item post-like-status" style="width: inherit;">
                      <span class="like-emo post-reactions-icons-<?php echo $wo['story']['id']; ?>"
                            onclick="Wo_OpenPostReactedUsers(<?php echo $wo['story']['id']; ?>);">
@@ -66,7 +69,7 @@
                             </div>
                         <?php } ?>
                     </div>
-                    <?php if ($wo['config']['second_post_button'] == 'reaction') { ?>
+                    <?php if ($reels_list_second_btn == 'reaction') { ?>
                         <style>#wo_post_stat_button > .stat-item:first-child {
                                 border-radius: 2em;
                             }</style>

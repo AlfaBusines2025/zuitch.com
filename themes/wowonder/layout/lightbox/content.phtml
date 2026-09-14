@@ -27,21 +27,109 @@ if ($wo['config']['shout_box_system'] == 1 && $wo['story']['postPrivacy'] == 4) 
     $wo['story']['publisher']['type'] = '';
     $wo['story']['publisher']['url'] = 'javascript:void(0)';
 }
+$lb_image_reels_ui = ($wo['story']['model_type'] == 'image' && (!isset($wo['page']) || $wo['page'] != 'reels'));
+$lb_reels_like_count = (int)$wo['story']['likeCount'];
+if (!empty($wo['config']['second_post_button']) && $wo['config']['second_post_button'] == 'reaction') {
+    if (isset($wo['story']['reaction']['count'])) {
+        $lb_reels_like_count = (int)$wo['story']['reaction']['count'];
+    } elseif (function_exists('Wo_GetPostReactionsTypes')) {
+        $lb_rx = Wo_GetPostReactionsTypes($wo['story']['id']);
+        if (is_array($lb_rx) && isset($lb_rx['count'])) {
+            $lb_reels_like_count = (int)$lb_rx['count'];
+        }
+    }
+}
+$lb_reels_read_more = !empty($wo['lang']['read_more']) ? $wo['lang']['read_more'] : 'Ver más';
+$lb_reels_read_less = !empty($wo['lang']['read_less']) ? $wo['lang']['read_less'] : 'Ver menos';
+$lb_reels_caption_html = isset($wo['story']['postText']) ? $wo['story']['postText'] : '';
+$lb_reels_caption_plain = trim(preg_replace('/\s+/u', ' ', html_entity_decode(strip_tags($lb_reels_caption_html), ENT_QUOTES, 'UTF-8')));
+if (function_exists('mb_strlen')) {
+    $lb_reels_caption_len = mb_strlen($lb_reels_caption_plain, 'UTF-8');
+} else {
+    $lb_reels_caption_len = strlen($lb_reels_caption_plain);
+}
+$lb_reels_caption_long = ($lb_reels_caption_len > 50);
+if (function_exists('mb_substr')) {
+    $lb_reels_caption_preview_plain = $lb_reels_caption_long ? mb_substr($lb_reels_caption_plain, 0, 50, 'UTF-8') : $lb_reels_caption_plain;
+} else {
+    $lb_reels_caption_preview_plain = $lb_reels_caption_long ? substr($lb_reels_caption_plain, 0, 50) : $lb_reels_caption_plain;
+}
+$lb_reels_has_caption = ($lb_reels_caption_len > 0);
+/* Vídeo-reel abierto por AJAX (timeline, etc.): mismo shell CSS/UX que /reels + flags para players/video.phtml */
+$wo['lightbox_reel_media_ui'] = false;
+if (($wo['story']['model_type'] ?? '') === 'video'
+    && isset($wo['story']['is_reel'])
+    && (int) $wo['story']['is_reel'] === 1
+    && (!isset($wo['page']) || $wo['page'] !== 'reels')) {
+    $wo['lightbox_reel_media_ui'] = true;
+}
+$lb_use_reels_shell = (isset($wo['page']) && $wo['page'] == 'reels') || !empty($wo['lightbox_reel_media_ui']);
 ?>
-<?php if (isset($wo['page']) &&  $wo['page'] == 'reels') { ?>
+<?php if ($lb_image_reels_ui) { ?>
+<style data-wo-lightbox-reels-critical>
+/* Viaja dentro de la respuesta AJAX del lightbox: no depende de caché de style.css en WebView */
+.lightbox-content.wo_imagecombo_lbox.image-reels-mode{width:100%!important;max-width:100%!important;margin:0!important;display:flex!important;flex-direction:column!important;position:relative;min-height:100vh;height:100vh!important;max-height:100vh;border-radius:0!important;box-sizing:border-box!important}
+.lightbox-content.wo_imagecombo_lbox.image-reels-mode .story-img{display:flex!important;flex-direction:column!important;flex:1 1 auto!important;min-height:0!important;width:100%!important;height:100%!important;max-height:none!important;border-radius:0!important}
+.lightbox-content.wo_imagecombo_lbox.image-reels-mode .sun_img_innr,.lightbox-content.wo_imagecombo_lbox.image-reels-mode #draggableHelper{flex:1 1 auto!important;min-height:0!important;height:100%!important}
+.lightbox-container .lightbox-content.wo_imagecombo_lbox.image-reels-mode{position:fixed!important;inset:0!important;z-index:1041!important;margin:0!important}
+.lightbox-container:has(.image-reels-mode){position:fixed!important;inset:0!important;z-index:1040!important;width:100%!important;height:100%!important;overflow:hidden!important;box-sizing:border-box!important}
+.lightbox-content.wo_imagecombo_lbox.image-reels-mode .image-text-overlay{justify-content:flex-end!important;padding-bottom:max(16px,env(safe-area-inset-bottom,0px))!important;box-sizing:border-box!important}
+.lightbox-content.wo_imagecombo_lbox.image-reels-mode .image-post-text-overlay.lb-reels-caption-overlay{position:absolute!important;left:0!important;right:0!important;bottom:0!important;z-index:10!important;display:flex!important;flex-direction:column!important;align-items:flex-start!important;justify-content:flex-end!important;padding:10px 76px max(18px,env(safe-area-inset-bottom,0px)) 15px!important;box-sizing:border-box!important;background:linear-gradient(to top,rgba(0,0,0,.68) 0%,rgba(0,0,0,.22) 50%,transparent 100%)!important;pointer-events:none!important}
+.lightbox-content.wo_imagecombo_lbox.image-reels-mode .image-post-text-overlay.lb-reels-caption-overlay .lb-reels-caption__author,.lightbox-content.wo_imagecombo_lbox.image-reels-mode .image-post-text-overlay.lb-reels-caption-overlay .lb-reels-caption__text{pointer-events:auto!important}
+.lightbox-content.wo_imagecombo_lbox.image-reels-mode .image-text-overlay .reels-share-btn>.reels-share-icon-svg,.lightbox-content.wo_imagecombo_lbox.image-reels-mode .image-text-overlay .reels-share-btn>.fa,.lightbox-content.wo_imagecombo_lbox.image-reels-mode .image-text-overlay .reels-share-btn>.fa-solid,.lightbox-content.wo_imagecombo_lbox.image-reels-mode .image-text-overlay .reels-download-btn>a>.fa{width:42px!important;height:42px!important;min-width:42px!important;min-height:42px!important;font-size:24px!important;line-height:1!important;padding:7px!important;box-sizing:border-box!important;display:block!important;background-color:rgba(255,255,255,.3)!important;border-radius:50%!important;color:#fff!important;-webkit-text-size-adjust:100%!important}
+.lightbox-content.wo_imagecombo_lbox.image-reels-mode .image-text-overlay .reels-share-btn>.fa:before,.lightbox-content.wo_imagecombo_lbox.image-reels-mode .image-text-overlay .reels-share-btn>.fa-solid:before,.lightbox-content.wo_imagecombo_lbox.image-reels-mode .image-text-overlay .reels-download-btn>a>.fa:before{font-size:inherit!important}
+.lightbox-content.wo_imagecombo_lbox.image-reels-mode .image-text-overlay .reels-share-btn>.reels-share-icon-svg{padding:7px!important}
+.lightbox-content.wo_imagecombo_lbox.image-reels-mode .image-text-overlay .reels-rail-icon-wrap{width:42px!important;height:42px!important;min-width:42px!important;min-height:42px!important;box-sizing:border-box!important;display:flex!important;align-items:center!important;justify-content:center!important;border-radius:50%!important;background-color:rgba(255,255,255,.3)!important;flex-shrink:0!important;margin:0 auto!important}
+.lightbox-content.wo_imagecombo_lbox.image-reels-mode .image-text-overlay .reels-rail-icon-wrap svg{width:22px!important;height:22px!important;min-width:22px!important;min-height:22px!important;display:block!important;margin:0!important;padding:0!important;background:transparent!important;box-shadow:none!important;border-radius:0!important;color:#fff!important;fill:currentColor!important;vertical-align:middle!important}
+.lightbox-content.wo_imagecombo_lbox.image-reels-mode .image-text-overlay .shorts_events>div{display:flex!important;flex-direction:column!important;align-items:center!important;gap:0!important}
+.lightbox-content.wo_imagecombo_lbox.image-reels-mode .image-text-overlay .shorts_events>div>*+*{margin-top:26px!important}
+.lightbox-content.wo_imagecombo_lbox.image-reels-mode button.lightbox-reels-exit{-webkit-appearance:none!important;appearance:none!important;background-color:rgba(0,0,0,.55)!important;background-image:none!important;color:#fff!important;border:0!important;box-shadow:none!important;outline:none!important}
+.lightbox-content.wo_imagecombo_lbox.image-reels-mode .story-img>.lightbox-reels-exit{position:absolute!important;z-index:30!important;left:auto!important;right:calc(env(safe-area-inset-right,0px)+10px)!important;top:calc(env(safe-area-inset-top,0px)+10px)!important;width:42px!important;height:42px!important;max-width:42px!important}
+.lightbox-content.wo_imagecombo_lbox.image-reels-mode .sun_img_innr{width:100%!important;max-width:100%!important;margin:0!important;display:flex!important;align-items:center!important;justify-content:center!important;flex:1 1 auto!important;min-height:0!important;direction:ltr!important}
+.lightbox-content.wo_imagecombo_lbox.image-reels-mode #draggableHelper{display:flex!important;align-items:center!important;justify-content:center!important;width:100%!important;flex:1 1 auto!important;min-height:0!important;direction:ltr!important;box-sizing:border-box!important}
+.lightbox-content.wo_imagecombo_lbox.image-reels-mode #draggableHelper>img,.lightbox-content.wo_imagecombo_lbox.image-reels-mode #draggableHelper .image_blur{margin-left:auto!important;margin-right:auto!important;max-width:100%!important}
+.lightbox-content.wo_imagecombo_lbox.image-reels-mode .image-text-overlay{right:12px!important;left:auto!important;direction:ltr!important}
+</style>
+<?php } ?>
+<?php if (!empty($wo['lightbox_reel_media_ui'])) { ?>
+<style data-wo-lightbox-video-reels-plyr>
+/* Misma lógica que style.css .wo_reels_cont .plyr__* pero embebida en la respuesta AJAX (caché WebView iOS). */
+.lightbox-content.wo_imagecombo_lbox.wo_reels_cont:not(.image-reels-mode) .plyr__controls > *:not(.plyr__control--overlaid) { display: none !important; }
+.lightbox-content.wo_imagecombo_lbox.wo_reels_cont:not(.image-reels-mode) .plyr__controls {
+	display: flex !important; align-items: center; justify-content: center; position: absolute; inset: 0; z-index: 5;
+	pointer-events: none; background: transparent !important;
+}
+.lightbox-content.wo_imagecombo_lbox.wo_reels_cont:not(.image-reels-mode) .plyr__control--overlaid { pointer-events: auto !important; }
+</style>
+<?php } ?>
+<style data-wo-lightbox-comment-row>
+/* Solo textarea (envío con Enter): ancho completo en WebView / caché */
+.wo_imagecombo_lbox .lightbox-post-footer.post-comments .post-commet-textarea textarea.lighbox.comment-textarea,.wo_imagecombo_lbox .lightbox-post-footer.post-comments .post-commet-textarea textarea.comment-textarea{width:100%!important;max-width:100%!important;display:block!important;box-sizing:border-box!important;margin:0!important}
+</style>
+<?php if ($lb_use_reels_shell) { ?>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-touch-events/2.0.0/jquery.mobile-events.min.js"></script>
 <?php } ?>
 
 <div class="lightbox-backgrond <?php echo (isset($wo['page']) &&  $wo['page'] == 'reels') ? 'hidden' : '' ?>" onclick="Wo_CloseLightbox();"></div>
-<div class="lightbox-content post wo_imagecombo_lbox lightpost-<?php echo $wo['story']['id']; ?> <?php echo (isset($wo['page']) &&  $wo['page'] == 'reels') ? 'wo_reels_cont' : '' ?>" id="post-<?php echo $wo['story']['id']; ?>" data-post-id="<?php echo $wo['story']['id']; ?>" data-type="<?php echo $wo['page'] ?? null ?>">
-    <div class="story-img <?php echo (isset($wo['page']) &&  $wo['page'] == 'reels') ? 'reels-img' : '' ?>">
+<div class="lightbox-content post wo_imagecombo_lbox lightpost-<?php echo $wo['story']['id']; ?> <?php echo $lb_use_reels_shell ? 'wo_reels_cont' : ''; ?> <?php echo $lb_image_reels_ui ? 'image-reels-mode' : ''; ?>" id="post-<?php echo $wo['story']['id']; ?>" data-post-id="<?php echo $wo['story']['id']; ?>" data-type="<?php echo $wo['page'] ?? null ?>"<?php if ($lb_image_reels_ui) { ?> style="width:100% !important;max-width:100% !important;margin:0 !important;min-height:100vh;height:100vh !important;max-height:100vh;display:flex !important;flex-direction:column !important;box-sizing:border-box !important;position:fixed !important;left:0;right:0;top:0;bottom:0;z-index:1041;border-radius:0 !important;"<?php } ?>>
+    <div class="story-img <?php echo $lb_use_reels_shell ? 'reels-img' : ''; ?>"<?php if ($lb_image_reels_ui) { ?> style="display:flex !important;flex-direction:column !important;flex:1 1 auto !important;min-height:0 !important;width:100% !important;height:100% !important;position:relative;"<?php } ?>>
+        <?php if ($lb_image_reels_ui) { ?>
+            <button type="button" class="lightbox-reels-exit" onclick="Wo_CloseLightbox();" aria-label="<?php echo $wo['lang']['close']; ?>">
+                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                     class="feather feather-x">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        <?php } ?>
 		<?php if ($wo['story']['model_type'] == 'video') { ?>
-			<?php if (isset($wo['page']) &&  $wo['page'] == 'reels') { ?>
-                <span class="changer  <?php echo (isset($wo['page']) &&  $wo['page'] == 'reels') ? 'reels-previous-btn' : 'previous-btn' ?>" onclick="Wo_PreviousVideo(<?php echo $query; ?>, '<?php echo $query_two; ?>');">
+			<?php if ($lb_use_reels_shell) { ?>
+                <span class="changer reels-previous-btn" onclick="Wo_PreviousVideo(<?php echo $query; ?>, '<?php echo $query_two; ?>');">
 					<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-chevron-left" color="#fff"><polyline points="15 18 9 12 15 6"></polyline></svg>
 				</span>
 
-                <span class="changer <?php echo (isset($wo['page']) &&  $wo['page'] == 'reels') ? 'reels-next-btn' : 'next-btn' ?>" onclick="Wo_NextVideo(<?php echo $query; ?>, '<?php echo $query_two; ?>' );">
+                <span class="changer reels-next-btn" onclick="Wo_NextVideo(<?php echo $query; ?>, '<?php echo $query_two; ?>' );">
 					<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-chevron-right" color="#fff"><polyline points="9 18 15 12 9 6"></polyline></svg>
 				</span>
             <?php } ?>
@@ -49,7 +137,7 @@ if ($wo['config']['shout_box_system'] == 1 && $wo['story']['postPrivacy'] == 4) 
 		
         <div class="sun_img_innr">
             <?php if ($wo['story']['model_type'] !== 'video') { ?>
-                <?php if ($wo['story']['have_pre_image']) { ?>
+                <?php if ($wo['story']['have_pre_image'] && (isset($wo['page']) && $wo['page'] == 'reels')) { ?>
                     <span class="changer previous-btn" onclick="Wo_PreviousPicture(<?php echo $query; ?>);">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
@@ -58,7 +146,7 @@ if ($wo['config']['shout_box_system'] == 1 && $wo['story']['postPrivacy'] == 4) 
             </svg>
          </span>
                 <?php } ?>
-                <?php if ($wo['story']['have_next_image']) { ?>
+                <?php if ($wo['story']['have_next_image'] && (isset($wo['page']) && $wo['page'] == 'reels')) { ?>
                     <span class="changer next-btn" onclick="Wo_NextPicture(<?php echo $query; ?>);">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
@@ -70,7 +158,7 @@ if ($wo['config']['shout_box_system'] == 1 && $wo['story']['postPrivacy'] == 4) 
             <?php } ?>
             <?php if ($wo['story']['model_type'] == 'video') { ?>
                 <!--                --><?php //if ($wo['story']['have_pre_video']) { ?>
-                <span class="changer  <?php echo (isset($wo['page']) &&  $wo['page'] == 'reels') ? 'hidden' : 'previous-btn' ?>"
+                <span class="changer  <?php echo $lb_use_reels_shell ? 'hidden' : 'previous-btn' ?>"
                       onclick="Wo_PreviousVideo(<?php echo $query; ?>, '<?php echo $query_two; ?>');">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
@@ -80,7 +168,7 @@ if ($wo['config']['shout_box_system'] == 1 && $wo['story']['postPrivacy'] == 4) 
          </span>
                 <!--                --><?php //} ?>
                 <!--                --><?php //if ($wo['story']['have_next_video']) { ?>
-                <span class="changer <?php echo (isset($wo['page']) &&  $wo['page'] == 'reels') ? 'hidden' : 'next-btn' ?>"
+                <span class="changer <?php echo $lb_use_reels_shell ? 'hidden' : 'next-btn' ?>"
                       onclick="Wo_NextVideo(<?php echo $query; ?>, '<?php echo $query_two; ?>' );">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
@@ -90,7 +178,7 @@ if ($wo['config']['shout_box_system'] == 1 && $wo['story']['postPrivacy'] == 4) 
          </span>
                 <!--                --><?php //} ?>
             <?php } ?>
-            <div id="draggableHelper" style="display: table-cell;vertical-align: middle;">
+            <div id="draggableHelper"<?php echo $lb_image_reels_ui ? '' : ' style="display: table-cell;vertical-align: middle;"'; ?>>
                 <?php if ($wo['story']['model_type'] == 'image') { ?>
                     <?php if ($wo['story']['blur'] == 1) { ?>
                         <button class='btn btn-main image_blur_btn remover_blur_btn_<?php echo $wo['story']['id']; ?>'
@@ -130,7 +218,112 @@ if ($wo['config']['shout_box_system'] == 1 && $wo['story']['postPrivacy'] == 4) 
 
                 <?php } ?>
             </div>
+            <?php if ($lb_image_reels_ui) { ?>
+                <div class="video-text-overlay image-text-overlay">
+                    <div class="shorts_events">
+                        <div>
+                            <a class="user-avatar" title="<?php echo $wo['story']['publisher']['name']; ?>"
+                               href="<?php echo $wo['story']['publisher']['url']; ?>">
+                                <img src="<?php echo $wo['story']['publisher']['avatar']; ?>"
+                                     alt="<?php echo $wo['story']['publisher']['name']; ?> Profile Picture">
+                            </a>
+                            <div class="pointer reels-share-btn" title="Compartir" role="button" tabindex="0"
+                                 data-share-url="<?php echo htmlspecialchars(!empty($wo['story']['url']) ? $wo['story']['url'] : '', ENT_QUOTES, 'UTF-8'); ?>"
+                                 data-share-title="<?php echo htmlspecialchars(isset($wo['story']['videoTitle']) ? (string) $wo['story']['videoTitle'] : '', ENT_QUOTES, 'UTF-8'); ?>"
+                                 data-post-id="<?php echo (int) $wo['story']['id']; ?>"
+                                 data-owner-id="<?php echo (int) $wo['story']['user_id']; ?>"
+                                 onclick="if(window.__zuitchReelShareTapMark)window.__zuitchReelShareTapMark('H inline onclick');event.stopPropagation();if(typeof ZuitchOpenReelShareSheet==='function'){ZuitchOpenReelShareSheet(this);}"
+                                 ontouchend="if(window.__zuitchReelShareTapMark)window.__zuitchReelShareTapMark('I inline ontouchend');var el=this,n=Date.now();if(window.__zrsTe&amp;&amp;n-window.__zrsTe\u003c90)return;window.__zrsTe=n;try{event.preventDefault();event.stopPropagation();}catch(z){}if(typeof ZuitchOpenReelShareSheet==='function'){ZuitchOpenReelShareSheet(el);}"
+                                 onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();event.stopPropagation();if(typeof ZuitchOpenReelShareSheet==='function'){ZuitchOpenReelShareSheet(this);}}">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="35" height="35" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" class="reels-share-icon-svg">
+                                    <path d="M18 16.08c-.76 0-1.44.3-1.96.85L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81A3 3 0 0021 5a3 3 0 00-3-3 3 3 0 00-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 00-3 3 3 3 0 003 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0018 16.08z"></path>
+                                </svg>
+                                <p style="display:none;"></p>
+                            </div>
+                            <?php if ($wo['story']['blur'] == 0) { ?>
+                            <div class="pointer reels-download-btn" title="<?php echo $wo['lang']['download']; ?>">
+                                <a href="<?php echo $image; ?>" download
+                                   onclick="event.stopPropagation();"
+                                   aria-label="<?php echo $wo['lang']['download']; ?>">
+                                    <i class="fa fa-download" aria-hidden="true"></i>
+                                </a>
+                                <p style="display:none;"></p>
+                            </div>
+                            <?php } ?>
+                            <?php
+                            $lb_rail_use_reactions = ($wo['config']['second_post_button'] == 'reaction' && $wo['loggedin'] == true && !empty($wo['reactions_types']));
+                            ?>
+                            <?php if ($lb_rail_use_reactions) { ?>
+                            <div class="reels-rail-react-wrap" data-post-id="<?php echo (int)$wo['story']['id']; ?>">
+                                <div class="like-btn pointer reels-rail-stat" title="<?php echo $wo['lang']['like']; ?>" role="button" tabindex="0" onclick="Wo_ToggleReelsRailReactions(<?php echo (int)$wo['story']['id']; ?>, event);">
+                                    <span class="reels-rail-icon-wrap" aria-hidden="true">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="feather-thumbs-up" width="22" height="22" viewBox="0 0 24 24"><path fill="currentColor" d="M23,10C23,8.89 22.1,8 21,8H14.68L15.64,3.43C15.66,3.33 15.67,3.22 15.67,3.11C15.67,2.7 15.5,2.32 15.23,2.05L14.17,1L7.59,7.58C7.22,7.95 7,8.45 7,9V19A2,2 0 0,0 9,21H18C18.83,21 19.54,20.5 19.84,19.78L22.86,12.73C22.95,12.5 23,12.26 23,12V10M1,21H5V9H1V21Z"></path></svg>
+                                    </span>
+                                    <p class="lb-reels-reaction-count" data-post-id="<?php echo (int)$wo['story']['id']; ?>"><?php echo $lb_reels_like_count; ?></p>
+                                </div>
+                                <ul class="reactions-box reactions-reels-rail-container-<?php echo (int)$wo['story']['id']; ?> unselectable" data-id="<?php echo (int)$wo['story']['id']; ?>" style="display:none;">
+                                    <?php foreach ($wo['reactions_types'] as $key => $value) {
+                                        if ($value['status'] != 1) {
+                                            continue;
+                                        } ?>
+                                        <li class="reaction reaction-<?php echo (int)$value['id']; ?>" data-reaction="<?php echo htmlspecialchars($value['name']); ?>" data-reaction-id="<?php echo (int)$value['id']; ?>" data-reaction-lang="<?php echo htmlspecialchars($value['name']); ?>" data-post-id="<?php echo (int)$wo['story']['id']; ?>" onclick="event.stopPropagation();Wo_RegisterReaction(this,'<?php echo $value['wowonder_small_icon']; ?>',<?php echo (int)$value['is_html']; ?>);">
+                                            <?php if (preg_match("/<[^<]+>/", $value['wowonder_icon'], $m)) {
+                                                echo $value['wowonder_icon'];
+                                            } else { ?>
+                                                <img src="<?php echo $value['wowonder_icon']; ?>" alt="">
+                                            <?php } ?>
+                                        </li>
+                                    <?php } ?>
+                                </ul>
+                            </div>
+                            <?php } elseif ($wo['loggedin'] == true) { ?>
+                            <div class="like-btn pointer reels-rail-stat" title="<?php echo $wo['lang']['like']; ?>" onclick="Wo_RegisterLike(<?php echo (int)$wo['story']['id']; ?>);">
+                                <span class="reels-rail-icon-wrap" aria-hidden="true">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="feather-thumbs-up" width="22" height="22" viewBox="0 0 24 24"><path fill="currentColor" d="M23,10C23,8.89 22.1,8 21,8H14.68L15.64,3.43C15.66,3.33 15.67,3.22 15.67,3.11C15.67,2.7 15.5,2.32 15.23,2.05L14.17,1L7.59,7.58C7.22,7.95 7,8.45 7,9V19A2,2 0 0,0 9,21H18C18.83,21 19.54,20.5 19.84,19.78L22.86,12.73C22.95,12.5 23,12.26 23,12V10M1,21H5V9H1V21Z"></path></svg>
+                                </span>
+                                <p class="lb-reels-reaction-count" data-post-id="<?php echo (int)$wo['story']['id']; ?>"><?php echo $lb_reels_like_count; ?></p>
+                            </div>
+                            <?php } else { ?>
+                            <div class="like-btn pointer reels-rail-stat" title="<?php echo $wo['lang']['like']; ?>" onclick="location.href='<?php echo $wo['config']['site_url']; ?>'">
+                                <span class="reels-rail-icon-wrap" aria-hidden="true">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="feather-thumbs-up" width="22" height="22" viewBox="0 0 24 24"><path fill="currentColor" d="M23,10C23,8.89 22.1,8 21,8H14.68L15.64,3.43C15.66,3.33 15.67,3.22 15.67,3.11C15.67,2.7 15.5,2.32 15.23,2.05L14.17,1L7.59,7.58C7.22,7.95 7,8.45 7,9V19A2,2 0 0,0 9,21H18C18.83,21 19.54,20.5 19.84,19.78L22.86,12.73C22.95,12.5 23,12.26 23,12V10M1,21H5V9H1V21Z"></path></svg>
+                                </span>
+                                <p class="lb-reels-reaction-count" data-post-id="<?php echo (int)$wo['story']['id']; ?>"><?php echo $lb_reels_like_count; ?></p>
+                            </div>
+                            <?php } ?>
+                            <div class="pointer reels-rail-stat reels-rail-comments" title="<?php echo $wo['lang']['write_comment']; ?>" onclick="Wo_ToggleLightboxComments(<?php echo $wo['story']['id']; ?>);">
+                                <span class="reels-rail-icon-wrap" aria-hidden="true">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="feather-thumbs-down" width="22" height="22" viewBox="0 0 24 24"><path fill="currentColor" d="M9,22A1,1 0 0,1 8,21V18H4A2,2 0 0,1 2,16V4C2,2.89 2.9,2 4,2H20A2,2 0 0,1 22,4V16A2,2 0 0,1 20,18H13.9L10.2,21.71C10,21.9 9.75,22 9.5,22V22H9M5,5V7H19V5H5M5,9V11H13V9H5M5,13V15H15V13H5Z"></path></svg>
+                                </span>
+                                <p><?php echo (int)$wo['story']['post_comments']; ?></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="video-post-text-overlay image-post-text-overlay lb-reels-caption-overlay">
+                    <div class="lb-reels-caption__author">
+                        <a href="<?php echo $wo['story']['publisher']['url']; ?>"
+                           title="<?php echo htmlspecialchars($wo['story']['publisher']['name']); ?>"
+                           onclick="event.stopPropagation();"><?php echo $wo['story']['publisher']['name']; ?></a>
+                    </div>
+                    <?php if ($lb_reels_has_caption) { ?>
+                    <div class="lb-reels-caption__text<?php echo $lb_reels_caption_long ? '' : ' lb-reels-caption__text--short'; ?>">
+                        <?php if ($lb_reels_caption_long) { ?>
+                        <div class="lb-reels-caption__preview"><?php echo htmlspecialchars($lb_reels_caption_preview_plain, ENT_QUOTES, 'UTF-8'); ?></div>
+                        <div class="lb-reels-caption__full"><?php echo $lb_reels_caption_html; ?></div>
+                        <button type="button" class="lb-reels-caption__more"
+                                data-more="<?php echo htmlspecialchars($lb_reels_read_more, ENT_QUOTES, 'UTF-8'); ?>"
+                                data-less="<?php echo htmlspecialchars($lb_reels_read_less, ENT_QUOTES, 'UTF-8'); ?>"
+                                onclick="event.stopPropagation();var w=this.closest('.lb-reels-caption__text');if(!w)return;w.classList.toggle('is-expanded');this.textContent=w.classList.contains('is-expanded')?this.getAttribute('data-less'):this.getAttribute('data-more');"><?php echo htmlspecialchars($lb_reels_read_more, ENT_QUOTES, 'UTF-8'); ?></button>
+                        <?php } else { ?>
+                        <div class="lb-reels-caption__full lb-reels-caption__full--static"><?php echo $lb_reels_caption_html; ?></div>
+                        <?php } ?>
+                    </div>
+                    <?php } ?>
+                </div>
+            <?php } ?>
         </div>
+        <?php if (!$lb_image_reels_ui) { ?>
         <div class="wo_lbox_topbar sun_light_tool <?php echo (isset($wo['page']) &&  $wo['page'] == 'reels') ? 'hidden' : '' ?>">
             <?php if ($wo['story']['blur'] == 0) { ?>
                 <span class="lbox_topbar_child">
@@ -396,13 +589,13 @@ if ($wo['config']['shout_box_system'] == 1 && $wo['story']['postPrivacy'] == 4) 
             </span>
                 <?php } ?>
                 <?php if ($wo['story']['model_type'] != 'video') { ?>
-            <span onclick="zoomin(<?php echo $wo['story']['id']; ?>)">
+            <span class="lightbox-zoom-control" onclick="zoomin(<?php echo $wo['story']['id']; ?>)">
                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
                   <path fill="currentColor"
                         d="M15.5,14L20.5,19L19,20.5L14,15.5V14.71L13.73,14.43C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.43,13.73L14.71,14H15.5M9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14M12,10H10V12H9V10H7V9H9V7H10V9H12V10Z"/>
                </svg>
             </span>
-            <span onclick="zoomout(<?php echo $wo['story']['id']; ?>)">
+            <span class="lightbox-zoom-control" onclick="zoomout(<?php echo $wo['story']['id']; ?>)">
                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
                   <path fill="currentColor"
                         d="M15.5,14H14.71L14.43,13.73C15.41,12.59 16,11.11 16,9.5A6.5,6.5 0 0,0 9.5,3A6.5,6.5 0 0,0 3,9.5A6.5,6.5 0 0,0 9.5,16C11.11,16 12.59,15.41 13.73,14.43L14,14.71V15.5L19,20.5L20.5,19L15.5,14M9.5,14C7,14 5,12 5,9.5C5,7 7,5 9.5,5C12,5 14,7 14,9.5C14,12 12,14 9.5,14M7,9H12V10H7V9Z"/>
@@ -427,9 +620,10 @@ if ($wo['config']['shout_box_system'] == 1 && $wo['story']['postPrivacy'] == 4) 
             <?php } ?>
          </span>
         </div>
+        <?php } ?>
     </div>
-    <div class="comment-section <?php echo (isset($wo['page']) && $wo['page'] == 'reels') ?  'reels-section' : '' ?>">
-        <?php if($wo['story']['model_type']  == 'video' && (!isset($wo['page']) || $wo['page'] != 'reels'))  { ?>
+    <div class="comment-section <?php echo ((isset($wo['page']) && $wo['page'] == 'reels') || !empty($wo['lightbox_reel_media_ui'])) ? 'reels-section ' : ''; ?><?php echo $lb_image_reels_ui ? 'lb-comments-reels' : ''; ?>"<?php if ($lb_image_reels_ui) { ?> style="display:none !important;" data-lb-comments-start-collapsed="1"<?php } ?>>
+        <?php if ($wo['story']['model_type'] == 'video' && (!isset($wo['page']) || $wo['page'] != 'reels') && empty($wo['lightbox_reel_media_ui'])) { ?>
 			<?php if ($wo['story']['is_reel'] == '0') { 
                 $stories = Wo_GetPosts(array('filter_by' => 'local_video', 'limit' => 3,'not_monetization' => true,'after_post_id' => $wo['story']['id']));
                 if (!empty($stories)) {
@@ -480,7 +674,7 @@ if ($wo['config']['shout_box_system'] == 1 && $wo['story']['postPrivacy'] == 4) 
             <div class="comment-section-inner">
                 <div class="comment-inner-header">
                     <div class="<?php echo Wo_RightToLeft('pull-right'); ?> close-lightbox"
-                         onclick="<?php echo (!isset($wo['page']) || $wo['page'] !== 'reels') ? 'Wo_CloseLightbox();' : ''; ?> Wo_DisableCommentBox()">
+                         onclick="<?php echo (isset($wo['page']) && $wo['page'] == 'reels') ? 'Wo_DisableCommentBox();' : 'Wo_ToggleLightboxComments(' . (int)$wo['story']['id'] . ', false);'; ?>">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
                              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                              class="feather feather-x" style="margin-top: 0px;width: 24px;height: 24px;">
@@ -586,25 +780,11 @@ if ($wo['config']['shout_box_system'] == 1 && $wo['story']['postPrivacy'] == 4) 
             <div class="lightbox-post-footer post-comments <?php echo ($wo['story']['comments_status'] == 0) ? 'hidden' : ''; ?>"
                  id="post-comments-<?php echo $wo['story']['id']; ?>"
                  <?php if ($wo['loggedin'] != true) { ?>onclick="location.href= '<?php echo $wo['config']['site_url']; ?>'"<?php } ?>>
-                <div class="post-commet-textarea dropup">
+                <div class="post-commet-textarea">
                     <textarea class="form-control lighbox comment-textarea textarea"
                               placeholder="<?php echo TextForMode('write_comment'); ?>" type="text"
                               onkeyup="Wo_RegisterComment(this.value,<?php echo $wo['story']['id']; ?>,<?php echo $wo['story']['publisher']['user_id']; ?>, event, <?php echo (!empty($wo['story']['publisher']['page_id'])) ? $wo['story']['publisher']['page_id'] : '0'; ?>)"
                               onkeydown="textAreaAdjust(this, 30,'lightbox')" dir="auto"></textarea>
-                    <span class="input-group-btn emo-comment dropdown-toggle" data-toggle="dropdown" role="button"
-                          aria-expanded="false"
-                          onclick="load_ajax_lightbox_emojii('<?php echo $wo['config']['theme_url']; ?>/emoji/');">
-                  <span class="btn btn-file">
-                     <svg fill="gray" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"
-                          class="feather feather-user-plus">
-                        <path d="M0 0h24v24H0z" fill="none"/>
-                        <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"/>
-                     </svg>
-                  </span>
-               </span>
-                    <div class="emo-post-container dropdown-menu lightbox_real_emojiis" role="menu">
-
-                    </div>
                 </div>
             </div>
             <div class="clear"></div>
@@ -623,15 +803,6 @@ function handler2(event) {
   Wo_PreviousVideo(<?php echo $query; ?>, '<?php echo $query_two; ?>');
 }
 <?php } ?>
-
-    function load_ajax_lightbox_emojii(path) {
-        var emojjii = "😀*😁*😂*🤣*😃*😄*😅*😆*😉*😊*😋*😎*😍*😘*😗*😙*😚*🙂*🤗*🤩*🤔*🤨*😐*😑*😶*🙄*😏*😣*😥*😮*🤐*😯*😪*😫*😴*😌*😛*😜*😝*🤤*😒*😓*😔*😕*🙃*🤑*😲*☹️*🙁*😖*😞*😟*😤*😢*😭*😦*😧*😨*😩*🤯*😬*😰*😱*😳*🤪*😵*😡*😠*🤬*😷*🤒*🤕*🤢*🤮*🤧*😇*🤠*🤡*🤥*🤫*🤭*🧐*🤓*😈*👿*👹*👺*💀*👻*👽*🤖*💩*😺*😸*😹*😻*😼*😽*🙀*😿*😾*👶*👧*🧒*👦*👩*🧑*👨*👵*🧓*👴*👲*💅*🤳*💃*🕺*🕴*👫*👭*👬*💑*🤲*👐*🙌*👏*🤝*👍*👎*👊*✊*🤛*🤜*🤞*✌️*🤟*🤘*👌*👈*👉*👆*👇*☝️*✋*🤚*🖐*🖖*👋*🤙*💪*🖕*✍️*🙏*💍*💄*💋*👄*👅*👂*👃*👣*👁*👀*🧠*🗣*👤*👥";
-
-        $('.lightbox_real_emojiis').html("");
-        $.each(emojjii.split('*'), function (key, value) {
-            $('.lightbox_real_emojiis').append("<span class=\"emoji_holder\" onclick=\"Wo_AddEmo('" + value + "', '.lighbox.comment-textarea.textarea');\"><span>" + value + "</span>");
-        });
-    }
 
     $(document).keydown(function (e) {
         if (e.keyCode == 27) {
@@ -652,16 +823,293 @@ function handler2(event) {
         $(".changer").fadeOut(200);
     });
 
+    // Zoom (botones + gestos táctiles: pellizco y arrastre con un dedo)
+    var initialDistance = 0;
+    var pinchBaseScale = 1;
+    var currentScale = 1;
+    var minScale = 1;
+    var maxScale = 4;
+    var isPinching = false;
+    var isTouchPanning = false;
+    var hasTouchMoved = false;
+    var panStartX = 0, panStartY = 0, panOrigLeft = 0, panOrigTop = 0;
+    var myImg = document.getElementById("wo_zoom_<?php echo $wo['story']['id'];?>");
+    var draggableHelper = document.getElementById("draggableHelper");
+    var $helper = $('#draggableHelper');
+
+    function lboxCenterTransformOrigin() {
+        if (myImg) {
+            myImg.style.transformOrigin = '50% 50%';
+        }
+    }
+
+    /** Origen del scale en el punto medio del pellizco (viewport → % del rect de la imagen). */
+    function lboxSetPinchTransformOrigin(touches) {
+        if (!myImg || !touches || touches.length < 2) return;
+        var mx = (touches[0].clientX + touches[1].clientX) / 2;
+        var my = (touches[0].clientY + touches[1].clientY) / 2;
+        var rect = myImg.getBoundingClientRect();
+        if (rect.width < 1 || rect.height < 1) return;
+        var ox = ((mx - rect.left) / rect.width) * 100;
+        var oy = ((my - rect.top) / rect.height) * 100;
+        ox = Math.max(0, Math.min(100, ox));
+        oy = Math.max(0, Math.min(100, oy));
+        myImg.style.transformOrigin = ox.toFixed(2) + '% ' + oy.toFixed(2) + '%';
+    }
+
+    function lboxReadScale() {
+        if (!myImg) return 1;
+        var tr = window.getComputedStyle(myImg).transform;
+        if (tr && tr !== 'none') {
+            if (tr.indexOf('matrix3d') === 0) {
+                var p = tr.match(/matrix3d\(([^)]+)\)/);
+                if (p) {
+                    var n = p[1].split(/\s*,\s*/);
+                    var sx = parseFloat(n[0]);
+                    if (!isNaN(sx) && sx > 0) return sx;
+                }
+            }
+            if (tr.indexOf('matrix(') === 0) {
+                var p2 = tr.match(/matrix\(([^)]+)\)/);
+                if (p2) {
+                    var n2 = p2[1].split(/\s*,\s*/);
+                    var sx2 = parseFloat(n2[0]);
+                    if (!isNaN(sx2) && sx2 > 0) return sx2;
+                }
+            }
+        }
+        var m = $(myImg).css('transform').match(/scale3d\(([^,]+)/);
+        if (m && !isNaN(parseFloat(m[1]))) return parseFloat(m[1]);
+        return $(myImg).hasClass('double_zoom') ? 2 : 1;
+    }
+
+    function lboxSyncDraggable(zoomed) {
+        if (!$helper.length) return;
+        if (zoomed) {
+            $helper.draggable({ cursor: 'move', revert: false, disabled: false });
+        } else {
+            $helper.draggable({ disabled: true, revert: true });
+            $helper.css({ left: '', top: '' });
+        }
+    }
+
     function zoomin(id) {
-        var myImg = document.getElementById("wo_zoom_<?php echo $wo['story']['id'];?>");
-        $(myImg).addClass("double_zoom");
-        $('#draggableHelper').draggable({cursor: "move", revert: true, disabled: false});
+        if (!myImg) return;
+        lboxCenterTransformOrigin();
+        var currentZoom = lboxReadScale();
+        var newScale = Math.min(maxScale, currentZoom + 0.5);
+        $(myImg).css('transform', 'scale3d(' + newScale + ',' + newScale + ',1)');
+        $(myImg).addClass('double_zoom');
+        currentScale = newScale;
+        lboxSyncDraggable(newScale > 1);
     }
 
     function zoomout(id) {
-        var myImg = document.getElementById("wo_zoom_<?php echo $wo['story']['id'];?>");
-        $(myImg).removeClass("double_zoom");
-        $('#draggableHelper').draggable({disabled: true, revert: true});
+        if (!myImg) return;
+        lboxCenterTransformOrigin();
+        var currentZoom = lboxReadScale();
+        var newScale = Math.max(minScale, currentZoom - 0.5);
+        $(myImg).css('transform', 'scale3d(' + newScale + ',' + newScale + ',1)');
+        if (newScale <= 1) {
+            $(myImg).removeClass('double_zoom');
+            currentScale = 1;
+            lboxSyncDraggable(false);
+        } else {
+            currentScale = newScale;
+            lboxSyncDraggable(true);
+        }
+    }
+
+    function setScale(nextScale) {
+        if (!myImg) return;
+        var prev = lboxReadScale();
+        var boundedScale = Math.max(minScale, Math.min(maxScale, nextScale));
+        if (boundedScale <= 1) {
+            lboxCenterTransformOrigin();
+        } else if (prev <= 1.02) {
+            lboxCenterTransformOrigin();
+        }
+        $(myImg).css('transform', 'scale3d(' + boundedScale + ',' + boundedScale + ',1)');
+        if (boundedScale <= 1) {
+            $(myImg).removeClass('double_zoom');
+            currentScale = 1;
+            lboxSyncDraggable(false);
+        } else {
+            $(myImg).addClass('double_zoom');
+            currentScale = boundedScale;
+            lboxSyncDraggable(true);
+        }
+    }
+
+    var lightboxRoot = document.querySelector('.wo_imagecombo_lbox.lightpost-<?php echo $wo['story']['id']; ?>');
+    var isImageReelsMode = !!(lightboxRoot && lightboxRoot.classList.contains('image-reels-mode'));
+    var lastVerticalNavAt = 0;
+    var swipeStartY = 0;
+
+    function canNavigateLightboxVertically() {
+        if (!isImageReelsMode) return false;
+        if (!lightboxRoot) return false;
+        var commentSection = lightboxRoot.querySelector('.comment-section');
+        if (commentSection && commentSection.classList.contains('show-comments')) return false;
+        return lboxReadScale() <= 1.05;
+    }
+
+    function navigateLightboxVertical(direction) {
+        if (!canNavigateLightboxVertically()) return;
+        var now = Date.now();
+        if ((now - lastVerticalNavAt) < 420) return;
+        lastVerticalNavAt = now;
+        if (direction > 0) {
+            Wo_PreviousPicture(<?php echo $query; ?>);
+        } else {
+            Wo_NextPicture(<?php echo $query; ?>);
+        }
+    }
+
+    if (myImg && draggableHelper) {
+        draggableHelper.addEventListener('wheel', function (e) {
+            if (isImageReelsMode && canNavigateLightboxVertically()) {
+                if (Math.abs(e.deltaY) > 8) {
+                    e.preventDefault();
+                    navigateLightboxVertical(e.deltaY < 0 ? 1 : -1);
+                }
+                return;
+            }
+            e.preventDefault();
+            var direction = e.deltaY < 0 ? 0.2 : -0.2;
+            setScale(lboxReadScale() + direction);
+        }, { passive: false });
+
+        draggableHelper.addEventListener('dblclick', function (e) {
+            e.preventDefault();
+            var currentZoom = lboxReadScale();
+            if (currentZoom > 1.5) {
+                setScale(1);
+            } else {
+                setScale(Math.min(maxScale, currentZoom + 1));
+            }
+        });
+    }
+
+    if (myImg && draggableHelper) {
+        function getDistance(touches) {
+            var dx = touches[0].clientX - touches[1].clientX;
+            var dy = touches[0].clientY - touches[1].clientY;
+            return Math.sqrt(dx * dx + dy * dy);
+        }
+
+        function finalizePinchScale(finalScale) {
+            $(myImg).css('transition', 'transform .3s cubic-bezier(0,0,.25,1) 0');
+            if (finalScale < 1.05) {
+                lboxCenterTransformOrigin();
+                $(myImg).css('transform', 'scale3d(1,1,1)');
+                $(myImg).removeClass('double_zoom');
+                currentScale = 1;
+                lboxSyncDraggable(false);
+            } else {
+                $(myImg).addClass('double_zoom');
+                currentScale = finalScale;
+                lboxSyncDraggable(true);
+            }
+        }
+
+        draggableHelper.addEventListener('touchstart', function (e) {
+            if (e.touches.length === 2) {
+                e.preventDefault();
+                isPinching = true;
+                isTouchPanning = false;
+                lboxSetPinchTransformOrigin(e.touches);
+                initialDistance = getDistance(e.touches);
+                pinchBaseScale = lboxReadScale();
+                $(myImg).css('transition', 'none');
+                if ($helper.data('ui-draggable')) {
+                    try { $helper.draggable('disable'); } catch (err) {}
+                }
+            } else if (e.touches.length === 1 && lboxReadScale() > 1 && !isPinching) {
+                isTouchPanning = true;
+                hasTouchMoved = false;
+                var t = e.touches[0];
+                panStartX = t.clientX;
+                panStartY = t.clientY;
+                panOrigLeft = parseInt($helper.css('left'), 10) || 0;
+                panOrigTop = parseInt($helper.css('top'), 10) || 0;
+                if ($helper.data('ui-draggable')) {
+                    try { $helper.draggable('disable'); } catch (err2) {}
+                }
+            } else if (e.touches.length === 1) {
+                swipeStartY = e.touches[0].clientY;
+            }
+        }, { passive: false });
+
+        draggableHelper.addEventListener('touchmove', function (e) {
+            if (e.touches.length === 2 && isPinching) {
+                e.preventDefault();
+                var currentDistance = getDistance(e.touches);
+                if (initialDistance <= 0) return;
+                var scale = pinchBaseScale * (currentDistance / initialDistance);
+                scale = Math.max(minScale, Math.min(maxScale, scale));
+                $(myImg).css({
+                    transform: 'scale3d(' + scale + ',' + scale + ',1)',
+                    transition: 'none'
+                });
+            } else if (e.touches.length === 1 && isTouchPanning && !isPinching) {
+                var sc = lboxReadScale();
+                if (sc > 1) {
+                    e.preventDefault();
+                    hasTouchMoved = true;
+                    var t = e.touches[0];
+                    var dx = t.clientX - panStartX;
+                    var dy = t.clientY - panStartY;
+                    $helper.css({
+                        left: (panOrigLeft + dx) + 'px',
+                        top: (panOrigTop + dy) + 'px'
+                    });
+                }
+            }
+        }, { passive: false });
+
+        function onTouchEnd(e) {
+            if (isPinching && e.touches.length < 2) {
+                e.preventDefault();
+                isPinching = false;
+                finalizePinchScale(lboxReadScale());
+            }
+            if (isTouchPanning && e.touches.length === 0) {
+                isTouchPanning = false;
+                if (lboxReadScale() > 1) {
+                    lboxSyncDraggable(true);
+                }
+            }
+        }
+
+        draggableHelper.addEventListener('touchend', onTouchEnd, { passive: false });
+        draggableHelper.addEventListener('touchcancel', onTouchEnd, { passive: false });
+
+        draggableHelper.addEventListener('touchend', function (e) {
+            if (isImageReelsMode && !hasTouchMoved && e.changedTouches.length === 1 && canNavigateLightboxVertically()) {
+                var swipeEndY = e.changedTouches[0].clientY;
+                var deltaY = swipeEndY - swipeStartY;
+                if (Math.abs(deltaY) > 55) {
+                    navigateLightboxVertical(deltaY > 0 ? 1 : -1);
+                    return;
+                }
+            }
+            if (e.changedTouches.length === 1 && !hasTouchMoved) {
+                var now = Date.now();
+                draggableHelper._lastTap = draggableHelper._lastTap || 0;
+                if (now - draggableHelper._lastTap < 300) {
+                    var currentZoom = lboxReadScale();
+                    if (currentZoom > 1.5) {
+                        setScale(1);
+                    } else {
+                        setScale(Math.min(maxScale, currentZoom + 1));
+                    }
+                    draggableHelper._lastTap = 0;
+                } else {
+                    draggableHelper._lastTap = now;
+                }
+            }
+        }, { passive: true });
     }
 
     var angle = 0;
@@ -692,6 +1140,27 @@ function handler2(event) {
         <?php } ?>
         window.history.pushState({}, "", newURL);
         <?php } ?>
+    }
+
+    function Wo_ToggleLightboxComments(postId, shouldOpen) {
+        var root = document.querySelector('.wo_imagecombo_lbox.lightpost-' + postId);
+        if (!root) return;
+        var commentSection = root.querySelector('.comment-section');
+        if (!commentSection) return;
+        var openComments = (typeof shouldOpen === 'boolean') ? shouldOpen : !commentSection.classList.contains('show-comments');
+        if (openComments) {
+            commentSection.classList.add('show-comments');
+            commentSection.style.setProperty('display', 'block', 'important');
+        } else {
+            commentSection.classList.remove('show-comments');
+            commentSection.style.setProperty('display', 'none', 'important');
+        }
+        var commentInput = root.querySelector('#post-comments-<?php echo $wo['story']['id']; ?> .comment-textarea');
+        if (openComments && commentInput) {
+            setTimeout(function () {
+                commentInput.focus();
+            }, 200);
+        }
     }
 </script>
 

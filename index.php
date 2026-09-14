@@ -165,6 +165,12 @@ if ((!$wo['loggedin'] || ($wo['loggedin'] && $wo['user']['banned'] != 1))) {
                     case 'reels':
                         include('sources/reels.php');
                         break;
+                    case 'zuitch':
+                        include('sources/zuitch.php');
+                        break;
+                    case 'reels-editor':
+                        include('sources/reels-editor.php');
+                        break;
                     case 'directory':
                         include('sources/directory/directory.php');
                         break;
@@ -621,6 +627,12 @@ if ((!$wo['loggedin'] || ($wo['loggedin'] && $wo['user']['banned'] != 1))) {
                     case 'reels':
                         include('sources/reels.php');
                         break;
+                    case 'zuitch':
+                        include('sources/zuitch.php');
+                        break;
+                    case 'reels-editor':
+                        include('sources/reels-editor.php');
+                        break;
                     case 'directory':
                         include('sources/directory/directory.php');
                         break;
@@ -750,6 +762,12 @@ if ((!$wo['loggedin'] || ($wo['loggedin'] && $wo['user']['banned'] != 1))) {
                     break;
                 case 'reels':
                     include('sources/reels.php');
+                    break;
+                case 'zuitch':
+                    include('sources/zuitch.php');
+                    break;
+                case 'reels-editor':
+                    include('sources/reels-editor.php');
                     break;
                 case 'directory':
                     include('sources/directory/directory.php');
@@ -889,6 +907,12 @@ if ((!$wo['loggedin'] || ($wo['loggedin'] && $wo['user']['banned'] != 1))) {
                 break;
             case 'reels':
                 include('sources/reels.php');
+                break;
+            case 'zuitch':
+                include('sources/zuitch.php');
+                break;
+            case 'reels-editor':
+                include('sources/reels-editor.php');
                 break;
             case 'directory':
                 include('sources/directory/directory.php');
@@ -1033,6 +1057,9 @@ if ((!$wo['loggedin'] || ($wo['loggedin'] && $wo['user']['banned'] != 1))) {
                 break;
             case 'reels':
                 include('sources/reels.php');
+                break;
+            case 'zuitch':
+                include('sources/zuitch.php');
                 break;
             case 'saved-posts':
                 include('sources/savedPosts.php');
@@ -1346,6 +1373,12 @@ if ((!$wo['loggedin'] || ($wo['loggedin'] && $wo['user']['banned'] != 1))) {
             break;
         case 'reels':
             include('sources/reels.php');
+            break;
+        case 'zuitch':
+            include('sources/zuitch.php');
+            break;
+        case 'reels-editor':
+            include('sources/reels-editor.php');
             break;
         case 'directory':
             include('sources/directory/directory.php');

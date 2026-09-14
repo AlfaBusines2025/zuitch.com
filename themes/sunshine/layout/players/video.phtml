@@ -3,7 +3,7 @@ $rand = rand(111,9999);
 if ($wo['story']['processing'] > 0 && (Wo_IsModerator() || Wo_IsAdmin() || $wo['story']['user_id'] == $wo['user']['id'])) { ?>
 	<div class="alert alert-warning vid_procss_alrt processing_alert_<?php echo $wo['media']['storyId'];?>"><span class="pointer" onclick="ProcessingVideo('<?php echo $wo['media']['storyId'];?>')"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-x"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></span><?php echo $wo['lang']['processing_video']; ?></div>
 <?php } ?>
-<video id="video--<?php echo $wo['media']['storyId'] ;?>" class="plyrr-<?php echo $wo['media']['storyId'].$rand ;?> <?php echo($wo['rvad_con']); ?>" playsinline preload="metadata" poster="<?php  echo $wo['media']['video_thumb'];?>" data-setup="{}" data-post-video="<?php echo $wo['media']['storyId'];?>">
+<video id="video--<?php echo $wo['media']['storyId'] ;?>" class="plyrr-<?php echo $wo['media']['storyId'].$rand ;?> <?php echo($wo['rvad_con']); ?>" playsinline preload="metadata" poster="<?php  echo $wo['media']['video_thumb'];?>" data-setup="{}" data-post-video="<?php echo $wo['media']['storyId'];?>" autoplay<?php if(!(isset($wo['page']) && $wo['page'] == 'reels')){ ?> muted<?php } ?>>
 	<?php if (empty($wo['story']['240p_video']) && empty($wo['story']['360p_video'])  && empty($wo['story']['480p_video'])  && empty($wo['story']['720p_video'])  && empty($wo['story']['1080p_video'])  && empty($wo['story']['2048p_video'])  && empty($wo['story']['4096p_video'])) { ?>
 		<source src="<?php echo $wo['media']['filename'];?>" type='video/mp4'>
 		<source src="<?php echo $wo['media']['filename'];?>" type='video/webm'>
@@ -42,7 +42,16 @@ if ($wo['story']['processing'] > 0 && (Wo_IsModerator() || Wo_IsAdmin() || $wo['
                 <a class="user-avatar" title="<?php echo $wo['story']['publisher']['name']?>" href="<?php echo $wo['story']['publisher']['url']?>" data-ajax="?link1=timeline&u=<?php echo $wo['story']['publisher']['username']?>">
                 <img src="<?php echo $wo['story']['publisher']['avatar']?>" alt="<?php echo $wo['story']['publisher']['name']?> Profile Picture" >
                 </a>
-				
+				<!-- Descargar reel (antes de guardar) -->
+				<div class="pointer reels-download-btn"
+					 title="Descargar"
+					 onclick="event.stopPropagation();(function(){var vid=document.getElementById('video--<?php echo $wo['media']['storyId']; ?>');var url='';if(vid){url=vid.currentSrc||vid.src||'';}if(!url){url='<?php echo $wo['story']['filename']; ?>';}if(!url) return;var ext='mp4';try{var m=String(url).match(/\\.([a-zA-Z0-9]+)(?:\\?|#|$)/);if(m&&m[1]) ext=m[1];}catch(e){}var a=document.createElement('a');a.href=url;a.download='reel-<?php echo $wo['story']['id']; ?>.'+ext;document.body.appendChild(a);a.click();a.remove();})();">
+					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+						<path d="M5 20h14v-2H5v2zm7-18v10l4-4 1 1-6 6-6-6 1-1 4 4V2h2z"></path>
+					</svg>
+					<p style="display:none;"></p>
+				</div>
+
 				<div class="pointer reel-save-btn save_reel_<?php echo($wo['story']['id']) ?>" onclick="Wo_SaveReelPost(<?php echo($wo['story']['id']) ?>);">
 					<?php if($wo['story']['is_post_saved'] === true) { ?>
 						<svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24"><path fill="currentColor" d="M200-120v-640q0-33 23.5-56.5T280-840h400q33 0 56.5 23.5T760-760v640L480-240 200-120Z"/></svg>
@@ -50,6 +59,14 @@ if ($wo['story']['processing'] > 0 && (Wo_IsModerator() || Wo_IsAdmin() || $wo['
 						<svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24"><path fill="currentColor" d="M200-120v-640q0-33 23.5-56.5T280-840h400q33 0 56.5 23.5T760-760v640L480-240 200-120Zm80-122 200-86 200 86v-518H280v518Zm0-518h400-400Z"/></svg>
 					<?php } ?>
                 </div>
+
+				<div class="pointer reels-share-btn" title="Compartir"
+					 onclick="event.stopPropagation();(async function(){var shareUrl='<?php echo !empty($wo['story']['url']) ? $wo['story']['url'] : ''; ?>' || window.location.href;var shareTitle='<?php echo addslashes($wo['story']['videoTitle']); ?>' || document.title;try{if(navigator.share){await navigator.share({title:shareTitle,url:shareUrl});return;}if(navigator.clipboard&&navigator.clipboard.writeText){await navigator.clipboard.writeText(shareUrl);if(typeof Wo_AlertPopup==='function'){Wo_AlertPopup('Enlace copiado');}else{alert('Enlace copiado');}return;}window.prompt('Copia este enlace:',shareUrl);}catch(e){}})();">
+					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+						<path d="M18 16.08c-1.76 0-3.29.92-4.16 2.3l-6.91-3.46a3.27 3.27 0 0 0 0-1.84l6.91-3.46A4.99 4.99 0 1 0 13 7a3.9 3.9 0 0 0 .07.74L6.16 11.2a5 5 0 1 0 0 1.6l6.91 3.46c-.04.24-.07.48-.07.74a5 5 0 1 0 5-5z"></path>
+					</svg>
+					<p style="display:none;"></p>
+				</div>
 				
                 <?php if ($wo['loggedin']) { ?>
                 <div class="like-btn <?php echo (Wo_IsLiked($wo['story']['id'], $wo['user']['user_id']) === true) ? 'active-like' : ''; ?> reels_like_btn pointer" onclick="Wo_RegisterReelsLike(<?php echo $wo['story']['id']; ?>,this)" >
@@ -82,6 +99,8 @@ if ($wo['story']['processing'] > 0 && (Wo_IsModerator() || Wo_IsAdmin() || $wo['
 <script>
 
 var wovideo = '.plyrr-<?php echo $wo['story']['id'].$rand ;?>';
+var isReelsPage = <?php echo (isset($wo['page']) && $wo['page']== 'reels') ? 'true' : 'false'; ?>;
+var reelsSoundBtn = isReelsPage ? document.getElementById('reels-sound-toggle-<?php echo $wo['story']['id'].$rand; ?>') : null;
 var players = new Plyr(wovideo, {
 	<?php if (Wo_IsMobile() == false) { ?>
 	ratio: '16:9',
@@ -90,12 +109,232 @@ var players = new Plyr(wovideo, {
 		iosNative: true
 	},
 	resetOnEnd: true,
+	autoplay: true,
+	muted: <?php echo (isset($wo['page']) && $wo['page'] == 'reels') ? 'false' : 'true'; ?>,
 	<?php if(isset($wo['page']) && $wo['page']== 'reels') { ?>
 	fullscreen: false,
 	<?php } ?>
 });
 
+// Variable para rastrear si es la primera reproducción automática
+var isFirstAutoplay = true;
+
+function setSoundButtonState(isMuted) {
+	try {
+		if (!reelsSoundBtn) return;
+		var onPaths = reelsSoundBtn.querySelectorAll('path[data-sound="on"]');
+		var offPaths = reelsSoundBtn.querySelectorAll('path[data-sound="off"]');
+		onPaths.forEach(function (el) {
+			el.style.display = isMuted ? 'none' : '';
+		});
+		offPaths.forEach(function (el) {
+			el.style.display = isMuted ? '' : 'none';
+		});
+
+		var label = isMuted ? 'Activar sonido' : 'Desactivar sonido';
+		reelsSoundBtn.setAttribute('title', label);
+		reelsSoundBtn.setAttribute('aria-label', label);
+	} catch (e) {}
+}
+
+	function toggleSoundFromUser() {
+	try {
+		var media = players.media;
+			var isPausedNow = !!(media && media.paused);
+		var isMutedNow = !!(media && media.muted);
+
+		if (!isMutedNow) {
+			// Desactivar sonido
+			if (media) {
+				media.muted = true;
+				media.defaultMuted = true;
+				media.volume = 0;
+			}
+			try { if (typeof players.setVolume === 'function') players.setVolume(0); } catch (e) {}
+			try { if (typeof players.mute === 'function') players.mute(); } catch (e) {}
+			setSoundButtonState(true);
+			return;
+		}
+
+		// Activar sonido
+		if (media) {
+			media.muted = false;
+			media.defaultMuted = false;
+			media.volume = 1;
+		}
+		try { players.unmute && players.unmute(); } catch (e) {}
+		try {
+			if (typeof players.setVolume === 'function') {
+				players.setVolume(1);
+			}
+		} catch (e) {}
+
+		// Si el video ya está reproduciéndose, aseguramos que Plyr re-evalúe el audio.
+		// (Si está en pausa, NO llamamos play para no reproducir de nuevo.)
+		try {
+			if (!isPausedNow && typeof players.play === 'function') {
+				players.play().catch(function () {});
+			}
+		} catch (e) {}
+
+		setTimeout(function() {
+			try {
+				var mediaAfter = players.media;
+				var mutedAfter = !!(mediaAfter && mediaAfter.muted);
+				setSoundButtonState(mutedAfter);
+			} catch (e) {
+				setSoundButtonState(true);
+			}
+		}, 150);
+	} catch (e) {
+		setSoundButtonState(true);
+	}
+}
+
+if (reelsSoundBtn) {
+	// En reels, los controles de Plyr están ocultos; necesitamos un gesto del usuario para habilitar audio.
+	var reelsIgnoreScreenToggle = false;
+	var lastSoundToggleAt = 0;
+	var handler = function(e) {
+		try {
+			var now = Date.now();
+			if (now - lastSoundToggleAt < 250) return;
+			lastSoundToggleAt = now;
+			if (e && typeof e.cancelable === 'boolean' && e.cancelable) e.preventDefault();
+			e.stopPropagation();
+			if (typeof e.stopImmediatePropagation === 'function') e.stopImmediatePropagation();
+			reelsIgnoreScreenToggle = true;
+			setTimeout(function () {
+				reelsIgnoreScreenToggle = false;
+			}, 250);
+		} catch (err) {}
+		toggleSoundFromUser();
+	};
+	// Usar solo `click` evita dobles toggles por mezcla touch/pointer/click.
+	reelsSoundBtn.addEventListener('click', handler);
+}
+
+    // Click en la pantalla (video/overlay): alternar pause/play.
+    // Se ignoran los clicks sobre los botones de reels para no romper like/save/comentarios.
+	var reelsForcePause = false;
+	var reelsAudioRetryTimers = [];
+    function togglePlayPauseFromScreen() {
+        try {
+            if (!players || !players.media) return;
+            var wasPlaying = !!(players.playing || (players.media && !players.media.paused));
+            setTimeout(function() {
+                try {
+                    if (wasPlaying) {
+                        reelsForcePause = true;
+                        if (typeof players.pause === 'function') players.pause();
+                        // Asegurar que el audio se detenga al pausar.
+                        try { if (players.media && typeof players.media.pause === 'function') players.media.pause(); } catch (e) {}
+                        // Pausar cualquier otro video que pueda estar reproduciendo audio en segundo plano.
+                        try { $('video').trigger('pause'); } catch (e) {}
+                    } else {
+                        reelsForcePause = false;
+                        if (typeof players.play === 'function') players.play().catch(function () {});
+                    }
+                } catch (e) {}
+            }, 0);
+        } catch (e) {}
+    }
+
+    if (isReelsPage) {
+        var reelVideoEl = document.getElementById('video--<?php echo $wo['media']['storyId']; ?>');
+        var overlayEl = reelVideoEl ? reelVideoEl.nextElementSibling : null; // .video-text-overlay
+        var postTextEl = overlayEl ? overlayEl.nextElementSibling : null; // .video-post-text-overlay
+
+        var screenClickHandler = function(e) {
+            try {
+				if (reelsIgnoreScreenToggle) {
+					reelsIgnoreScreenToggle = false;
+					return;
+				}
+                // Si el click fue dentro del botón de sonido, no hacemos toggle de play/pause.
+                if (reelsSoundBtn && e && e.target && reelsSoundBtn.contains(e.target)) return;
+                if (e && e.target && e.target.closest) {
+                    // No togglear play/pause si el usuario hizo click en los controles.
+                    var ignored = e.target.closest('.shorts_events, .reels-sound-toggle, .reels-download-btn, .reel-save-btn, .reels_like_btn');
+                    if (ignored) return;
+                }
+            } catch (err) {}
+            togglePlayPauseFromScreen();
+        };
+
+        if (reelVideoEl) reelVideoEl.addEventListener('click', screenClickHandler);
+        if (overlayEl) overlayEl.addEventListener('click', screenClickHandler);
+        if (postTextEl && postTextEl.classList && postTextEl.classList.contains('video-post-text-overlay')) {
+            postTextEl.addEventListener('click', screenClickHandler);
+        }
+    }
+
+// Asegurar autoplay cuando el video está listo
+players.on('ready', (event) => {
+    setSoundButtonState(!!(players.media && players.media.muted));
+    players.play().catch(function(error) {
+        // Si el autoplay falla, intentar reproducir con interacción del usuario
+        console.log('Autoplay falló:', error);
+        isFirstAutoplay = false;
+    });
+});
+
+// En la mayoría de navegadores, autoplay con sonido se bloquea hasta
+// la primera interacción del usuario. Al primer gesto, activamos audio.
+if (isReelsPage) {
+	var unlockReelsAudio = function() {
+		try {
+			var media = players.media;
+			if (media) {
+				media.muted = false;
+				media.defaultMuted = false;
+				media.volume = 1;
+			}
+			if (typeof players.unmute === 'function') players.unmute();
+			if (typeof players.setVolume === 'function') players.setVolume(1);
+			if (typeof players.play === 'function') players.play().catch(function () {});
+			setSoundButtonState(false);
+		} catch (e) {}
+	};
+
+	document.addEventListener('click', unlockReelsAudio, {once: true, capture: true});
+	document.addEventListener('touchstart', unlockReelsAudio, {once: true, capture: true, passive: true});
+	document.addEventListener('pointerdown', unlockReelsAudio, {once: true, capture: true, passive: true});
+}
+
+function forceReelsAudioOn() {
+	try {
+		if (!players || !players.media) return;
+		players.media.muted = false;
+		players.media.defaultMuted = false;
+		players.media.volume = 1;
+		try { players.media.removeAttribute && players.media.removeAttribute('muted'); } catch (e) {}
+		if (typeof players.unmute === 'function') players.unmute();
+		if (typeof players.setVolume === 'function') players.setVolume(1);
+		setSoundButtonState(false);
+	} catch (e) {}
+}
+
 players.on('play', (event) => {
+	// Si el usuario da play en reels, forzar audio activo.
+	if (isReelsPage) {
+		try {
+			reelsAudioRetryTimers.forEach(function(t){ clearTimeout(t); });
+			reelsAudioRetryTimers = [];
+			forceReelsAudioOn();
+			// Reintentos: algunos scripts re-aplican mute después del play.
+			reelsAudioRetryTimers.push(setTimeout(forceReelsAudioOn, 50));
+			reelsAudioRetryTimers.push(setTimeout(forceReelsAudioOn, 150));
+			reelsAudioRetryTimers.push(setTimeout(forceReelsAudioOn, 300));
+		} catch (e) {}
+	} else {
+		// Si no es reels, mantener comportamiento anterior.
+		if (!isFirstAutoplay || players.media.muted) {
+			players.unmute();
+		}
+	}
+	isFirstAutoplay = false;
+	
 	Wo_AddVideoViews(<?php echo $wo['story']['id'];?>);
    <?php if(isset($wo['page']) && $wo['page'] == 'watch') { ?>
     players.pause();
@@ -106,7 +345,33 @@ players.on('play', (event) => {
   $('video').not('.plyrr-<?php echo $wo['story']['id'].$rand ;?>').trigger('pause');
 });
 
+// También detectar clic directo en el botón de play de Plyr
+players.on('ready', function() {
+	var playButton = players.elements.buttons.play;
+	if (playButton) {
+		playButton.forEach(function(button) {
+			button.addEventListener('click', function() {
+				// Desmutear cuando el usuario hace clic en play
+				setTimeout(function() {
+					if (players.playing) {
+						players.unmute();
+					}
+				}, 100);
+			});
+		});
+	}
+});
+
 players.on('pause', (event) => {
-    //$('.video-text-overlay').fadeIn();
+    // En reels, cualquier pause debe cortar audio inmediatamente.
+    try {
+        if (!isReelsPage) return;
+        reelsAudioRetryTimers.forEach(function(t){ clearTimeout(t); });
+        reelsAudioRetryTimers = [];
+
+        if (players.media && typeof players.media.pause === 'function') players.media.pause();
+        $('video').not('.plyrr-<?php echo $wo['story']['id'].$rand ;?>').trigger('pause');
+        reelsForcePause = false;
+    } catch (e) {}
 });
 </script>

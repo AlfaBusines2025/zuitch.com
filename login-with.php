@@ -1,6 +1,16 @@
-
-
 <?php
+// ¡Debe ser la primera línea del archivo!
+if (session_status() !== PHP_SESSION_ACTIVE) {
+    @ini_set('session.use_strict_mode', 1);
+    @ini_set('session.cookie_httponly', 1);
+    @ini_set('session.cookie_secure', 1); // requiere HTTPS
+    ob_start();
+    session_start();
+}
+
+require_once('assets/init.php');
+decryptConfigData();
+
 // +------------------------------------------------------------------------+
 // | @author Deen Doughouz (DoughouzForest)
 // | @author_url 1: http://www.wowonder.com

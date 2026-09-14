@@ -1,6 +1,6 @@
 <?php 
 $rand = rand(111,9999);
-if ($wo['story']['processing'] > 0 && (Wo_IsModerator() || Wo_IsAdmin() || $wo['story']['user_id'] == $wo['user']['id'])) { ?>
+if (empty($wo['reels_next_chunk_request']) && $wo['story']['processing'] > 0 && (Wo_IsModerator() || Wo_IsAdmin() || $wo['story']['user_id'] == $wo['user']['id'])) { ?>
     <div class="alert alert-warning vid_procss_alrt processing_alert_<?php echo $wo['media']['storyId']; ?>"><span
                 class="pointer" onclick="ProcessingVideo('<?php echo $wo['media']['storyId']; ?>')"><svg
                     xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
@@ -9,13 +9,16 @@ if ($wo['story']['processing'] > 0 && (Wo_IsModerator() || Wo_IsAdmin() || $wo['
                                                                                                y2="18"></line></svg></span><?php echo $wo['lang']['processing_video']; ?>
     </div>
 <?php } ?>
+<?php
+$wo_vertical_reel_feed = !empty($wo['page']) && ($wo['page'] === 'reels' || $wo['page'] === 'zuitch');
+$wo_video_preload_attr = $wo_vertical_reel_feed ? 'auto' : 'metadata';
+?>
 <video id="video--<?php echo $wo['media']['storyId']; ?>"
        class="plyrr-<?php echo $wo['media']['storyId'].$rand ; ?> <?php echo($wo['rvad_con']); ?> video-container" playsinline
-       preload="metadata" poster="<?php echo $wo['media']['video_thumb']; ?>" data-setup="{}"
-       data-post-video="<?php echo $wo['media']['storyId']; ?>"  >
+       preload="<?php echo htmlspecialchars($wo_video_preload_attr, ENT_QUOTES, 'UTF-8'); ?>" poster="<?php echo $wo['media']['video_thumb']; ?>" data-setup="{}"
+       data-post-video="<?php echo $wo['media']['storyId']; ?>" autoplay<?php if(!(isset($wo['page']) && $wo['page'] == 'reels')){ ?> muted<?php } ?> >
     <?php if (empty($wo['story']['240p_video']) && empty($wo['story']['360p_video']) && empty($wo['story']['480p_video']) && empty($wo['story']['720p_video']) && empty($wo['story']['1080p_video']) && empty($wo['story']['2048p_video']) && empty($wo['story']['4096p_video'])) { ?>
         <source src="<?php echo $wo['media']['filename']; ?>" type='video/mp4'>
-        <source src="<?php echo $wo['media']['filename']; ?>" type='video/webm'>
     <?php } else { ?>
         <?php if (!empty($wo['story']['4096p_video'])) { ?>
             <source src="<?php echo($wo['story']['4096p_video']) ?>" type="video/mp4" data-quality="4096p" size='4096'
@@ -47,7 +50,72 @@ if ($wo['story']['processing'] > 0 && (Wo_IsModerator() || Wo_IsAdmin() || $wo['
         <?php } ?>
     <?php } ?>
 </video>
-<?php if(isset($wo['page']) && $wo['page']== 'reels') { ?>
+<?php
+$wo_reel_is_reel_view = !empty($wo['story']['is_reel']) && (int) $wo['story']['is_reel'] === 1;
+$wo_reel_view_tags    = $wo_reel_is_reel_view ? Wo_ReelTagsArrayFromPostSticker(isset($wo['story']['postSticker']) ? $wo['story']['postSticker'] : '') : array();
+if ($wo_reel_is_reel_view && !empty($wo_reel_view_tags)) { ?>
+<div class="reel-view-tags-anchor" aria-hidden="false" style="position:absolute;left:0;top:0;right:0;bottom:0;pointer-events:none;z-index:22;">
+    <?php foreach ($wo_reel_view_tags as $wo_reel_tg) {
+        if (empty($wo_reel_tg) || !is_array($wo_reel_tg)) {
+            continue;
+        }
+        $wo_reel_px = isset($wo_reel_tg['x']) ? (float) $wo_reel_tg['x'] : 0.5;
+        $wo_reel_py = isset($wo_reel_tg['y']) ? (float) $wo_reel_tg['y'] : 0.82;
+        $wo_reel_px = max(0.0, min(1.0, $wo_reel_px));
+        $wo_reel_py = max(0.0, min(1.0, $wo_reel_py));
+        $wo_reel_href = !empty($wo_reel_tg['href']) ? $wo_reel_tg['href'] : '#';
+        $wo_reel_img  = !empty($wo_reel_tg['img']) ? $wo_reel_tg['img'] : $wo['userDefaultAvatar'];
+        $wo_reel_lab  = !empty($wo_reel_tg['label']) ? $wo_reel_tg['label'] : '';
+        $wo_reel_ext  = (isset($wo_reel_tg['type']) && $wo_reel_tg['type'] === 'external');
+        $wo_reel_sc   = 1.0;
+        if (isset($wo_reel_tg['s'])) {
+            $wo_reel_sc = (float) $wo_reel_tg['s'];
+        } elseif (isset($wo_reel_tg['scale'])) {
+            $wo_reel_sc = (float) $wo_reel_tg['scale'];
+        }
+        $wo_reel_sc = max(0.45, min(3.5, $wo_reel_sc));
+        ?>
+    <a href="<?php echo htmlspecialchars($wo_reel_href, ENT_QUOTES, 'UTF-8'); ?>"
+       class="reel-view-tag-chip"
+       title="<?php echo htmlspecialchars($wo_reel_lab, ENT_QUOTES, 'UTF-8'); ?>"
+       style="position:absolute;left:<?php echo $wo_reel_px * 100; ?>%;top:<?php echo $wo_reel_py * 100; ?>%;transform:translate(-50%,-50%) scale(<?php echo $wo_reel_sc; ?>);pointer-events:auto;width:46px;height:46px;border-radius:50%;overflow:hidden;border:2px solid rgba(255,255,255,0.95);box-shadow:0 2px 10px rgba(0,0,0,0.45);background:#222;"
+       onclick="event.stopPropagation();"
+        <?php if ($wo_reel_ext) { ?>target="_blank" rel="noopener noreferrer"<?php } ?>>
+        <img src="<?php echo htmlspecialchars($wo_reel_img, ENT_QUOTES, 'UTF-8'); ?>" alt="" style="width:100%;height:100%;object-fit:cover;display:block;">
+    </a>
+    <?php } ?>
+</div>
+<?php } ?>
+<?php if(isset($wo['page']) && $wo['page']== 'reels') {
+    $reels_sid = (int)$wo['story']['id'];
+    $reels_rail_count = (int)$wo['story']['likeCount'];
+    /* En /reels/ la config se pone en "disabled" para el panel lateral; el valor real va en reels_ui_second_post_button */
+    $reels_second_btn = !empty($wo['reels_ui_second_post_button']) ? $wo['reels_ui_second_post_button'] : $wo['config']['second_post_button'];
+    $reels_rx = array('is_reacted' => false, 'type' => '', 'count' => 0);
+    if ($reels_second_btn == 'reaction') {
+        if (isset($wo['story']['reaction']) && is_array($wo['story']['reaction'])) {
+            $reels_rx = $wo['story']['reaction'];
+        } elseif (function_exists('Wo_GetPostReactionsTypes')) {
+            $_reels_rx_tmp = Wo_GetPostReactionsTypes($reels_sid);
+            if (is_array($_reels_rx_tmp)) {
+                $reels_rx = $_reels_rx_tmp;
+            }
+        }
+        if (isset($reels_rx['count'])) {
+            $reels_rail_count = (int)$reels_rx['count'];
+        }
+    }
+    $reels_rail_use_rx = ($reels_second_btn == 'reaction' && $wo['loggedin'] == true && !empty($wo['reactions_types']));
+    $reels_rail_icon_html = '<svg xmlns="http://www.w3.org/2000/svg" class="feather-thumbs-up" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M23,10C23,8.89 22.1,8 21,8H14.68L15.64,3.43C15.66,3.33 15.67,3.22 15.67,3.11C15.67,2.7 15.5,2.32 15.23,2.05L14.17,1L7.59,7.58C7.22,7.95 7,8.45 7,9V19A2,2 0 0,0 9,21H18C18.83,21 19.54,20.5 19.84,19.78L22.86,12.73C22.95,12.5 23,12.26 23,12V10M1,21H5V9H1V21Z"></path></svg>';
+    $reels_rail_like_classes = 'like-btn pointer reels-rail-stat reels_like_btn';
+    if ($reels_rail_use_rx && !empty($reels_rx['is_reacted']) && $reels_rx['type'] !== '' && isset($wo['reactions_types'][$reels_rx['type']])) {
+        $_rtt = $wo['reactions_types'][$reels_rx['type']];
+        $reels_rail_like_classes .= ' active-like active-like-' . (int)$reels_rx['type'];
+        if (!empty($_rtt['wowonder_small_icon'])) {
+            $reels_rail_icon_html = '<img src="' . htmlspecialchars($_rtt['wowonder_small_icon']) . '" alt="" style="width:22px;height:22px;display:block;object-fit:contain;border-radius:50%;">';
+        }
+    }
+?>
 	<div class="video-text-overlay">
 		
 		<!--<h1><?php echo $wo['story']['videoTitle'] ?></h1>
@@ -58,6 +126,16 @@ if ($wo['story']['processing'] > 0 && (Wo_IsModerator() || Wo_IsAdmin() || $wo['
                 <a class="user-avatar" title="<?php echo $wo['story']['publisher']['name']?>" href="<?php echo $wo['story']['publisher']['url']?>" data-ajax="?link1=timeline&u=<?php echo $wo['story']['publisher']['username']?>">
                 <img src="<?php echo $wo['story']['publisher']['avatar']?>" alt="<?php echo $wo['story']['publisher']['name']?> Profile Picture" >
                 </a>
+				<!-- Descargar reel (antes de guardar) -->
+				<div class="pointer reels-download-btn"
+					 title="Descargar"
+					 onclick="event.stopPropagation();(function(){var vid=document.getElementById('video--<?php echo $wo['media']['storyId']; ?>');var url='';if(vid){url=vid.currentSrc||vid.src||'';}if(!url){url='<?php echo $wo['story']['filename']; ?>';}if(!url) return;var ext='mp4';try{var m=String(url).match(/\\.([a-zA-Z0-9]+)(?:\\?|#|$)/);if(m&&m[1]) ext=m[1];}catch(e){}var a=document.createElement('a');a.href=url;a.download='reel-<?php echo $wo['story']['id']; ?>.'+ext;document.body.appendChild(a);a.click();a.remove();})();">
+					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+						<path d="M5 20h14v-2H5v2zm7-18v10l4-4 1 1-6 6-6-6 1-1 4 4V2h2z"></path>
+					</svg>
+					<p style="display:none;"></p>
+				</div>
+
 				<div class="pointer reel-save-btn save_reel_<?php echo($wo['story']['id']) ?>" onclick="Wo_SaveReelPost(<?php echo($wo['story']['id']) ?>);">
 					<?php if($wo['story']['is_post_saved'] === true) { ?>
 						<svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24"><path fill="currentColor" d="M200-120v-640q0-33 23.5-56.5T280-840h400q33 0 56.5 23.5T760-760v640L480-240 200-120Z"/></svg>
@@ -65,11 +143,53 @@ if ($wo['story']['processing'] > 0 && (Wo_IsModerator() || Wo_IsAdmin() || $wo['
 						<svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24"><path fill="currentColor" d="M200-120v-640q0-33 23.5-56.5T280-840h400q33 0 56.5 23.5T760-760v640L480-240 200-120Zm80-122 200-86 200 86v-518H280v518Zm0-518h400-400Z"/></svg>
 					<?php } ?>
                 </div>
+
+				<div class="pointer reels-share-btn" title="Compartir" role="button" tabindex="0"
+					 data-share-url="<?php echo htmlspecialchars(!empty($wo['story']['url']) ? $wo['story']['url'] : '', ENT_QUOTES, 'UTF-8'); ?>"
+					 data-share-title="<?php echo htmlspecialchars(isset($wo['story']['videoTitle']) ? (string) $wo['story']['videoTitle'] : '', ENT_QUOTES, 'UTF-8'); ?>"
+					 data-post-id="<?php echo (int) $wo['story']['id']; ?>"
+					 data-owner-id="<?php echo (int) $wo['story']['user_id']; ?>"
+					 onclick="if(window.__zuitchReelShareTapMark)window.__zuitchReelShareTapMark('H inline onclick');event.stopPropagation();if(typeof ZuitchOpenReelShareSheet==='function'){ZuitchOpenReelShareSheet(this);}"
+					 ontouchend="if(window.__zuitchReelShareTapMark)window.__zuitchReelShareTapMark('I inline ontouchend');var el=this,n=Date.now();if(window.__zrsTe&amp;&amp;n-window.__zrsTe\u003c90)return;window.__zrsTe=n;try{event.preventDefault();event.stopPropagation();}catch(z){}if(typeof ZuitchOpenReelShareSheet==='function'){ZuitchOpenReelShareSheet(el);}"
+					 onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();event.stopPropagation();if(typeof ZuitchOpenReelShareSheet==='function'){ZuitchOpenReelShareSheet(this);}}">
+					<svg xmlns="http://www.w3.org/2000/svg" width="35" height="35" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" class="reels-share-icon-svg">
+						<path d="M18 16.08c-.76 0-1.44.3-1.96.85L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81A3 3 0 0021 5a3 3 0 00-3-3 3 3 0 00-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 00-3 3 3 3 0 003 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0018 16.08z"></path>
+					</svg>
+					<p style="display:none;"></p>
+				</div>
 				
-                <div class="like-btn  <?php echo (Wo_IsLiked($wo['story']['id'], $wo['user']['user_id']) === true) ? 'active-like' : ''; ?> reels_like_btn  pointer" onclick="Wo_RegisterReelsLike(<?php echo $wo['story']['id']; ?>,this)" >
+                <?php if ($reels_rail_use_rx) { ?>
+                <div class="reels-rail-react-wrap" data-post-id="<?php echo $reels_sid; ?>">
+                    <div class="<?php echo $reels_rail_like_classes; ?>" title="<?php echo htmlspecialchars($wo['lang']['like']); ?>" role="button" tabindex="0" onclick="Wo_ToggleReelsRailReactions(<?php echo $reels_sid; ?>, event);">
+                        <span class="reels-rail-icon-wrap" aria-hidden="true"><?php echo $reels_rail_icon_html; ?></span>
+                        <p class="short_likes lb-reels-reaction-count" data-post-id="<?php echo $reels_sid; ?>"><?php echo $reels_rail_count; ?></p>
+                    </div>
+                    <ul class="reactions-box reactions-reels-rail-container-<?php echo $reels_sid; ?> unselectable" data-id="<?php echo $reels_sid; ?>" style="display:none;">
+                        <?php foreach ($wo['reactions_types'] as $key => $value) {
+                            if ($value['status'] != 1) {
+                                continue;
+                            } ?>
+                        <li class="reaction reaction-<?php echo (int)$value['id']; ?>" data-reaction="<?php echo htmlspecialchars($value['name']); ?>" data-reaction-id="<?php echo (int)$value['id']; ?>" data-reaction-lang="<?php echo htmlspecialchars($value['name']); ?>" data-post-id="<?php echo $reels_sid; ?>" onclick="event.stopPropagation();Wo_RegisterReaction(this,'<?php echo $value['wowonder_small_icon']; ?>',<?php echo (int)$value['is_html']; ?>);">
+                            <?php if (preg_match("/<[^<]+>/", $value['wowonder_icon'], $m)) {
+                                echo $value['wowonder_icon'];
+                            } else { ?>
+                                <img src="<?php echo $value['wowonder_icon']; ?>" alt="">
+                            <?php } ?>
+                        </li>
+                        <?php } ?>
+                    </ul>
+                </div>
+                <?php } elseif ($wo['loggedin'] == true) { ?>
+                <div class="like-btn <?php echo (Wo_IsLiked($wo['story']['id'], $wo['user']['user_id']) === true) ? 'active-like' : ''; ?> reels_like_btn pointer" onclick="Wo_RegisterReelsLike(<?php echo $wo['story']['id']; ?>,this)" >
                     <svg xmlns="http://www.w3.org/2000/svg" class="feather-thumbs-up" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M23,10C23,8.89 22.1,8 21,8H14.68L15.64,3.43C15.66,3.33 15.67,3.22 15.67,3.11C15.67,2.7 15.5,2.32 15.23,2.05L14.17,1L7.59,7.58C7.22,7.95 7,8.45 7,9V19A2,2 0 0,0 9,21H18C18.83,21 19.54,20.5 19.84,19.78L22.86,12.73C22.95,12.5 23,12.26 23,12V10M1,21H5V9H1V21Z"></path></svg>
                     <p class="short_likes"><?php echo $wo['story']['likeCount'] ?></p>
                 </div>
+                <?php } else { ?>
+                <div class="like-btn reels_like_btn pointer" onclick="location.href='<?php echo $wo['config']['site_url']; ?>'">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="feather-thumbs-up" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M23,10C23,8.89 22.1,8 21,8H14.68L15.64,3.43C15.66,3.33 15.67,3.22 15.67,3.11C15.67,2.7 15.5,2.32 15.23,2.05L14.17,1L7.59,7.58C7.22,7.95 7,8.45 7,9V19A2,2 0 0,0 9,21H18C18.83,21 19.54,20.5 19.84,19.78L22.86,12.73C22.95,12.5 23,12.26 23,12V10M1,21H5V9H1V21Z"></path></svg>
+                    <p class="short_likes"><?php echo $wo['story']['likeCount'] ?></p>
+                </div>
+                <?php } ?>
 <!--                <div class="dislike-btn-63002  pointer"  data-likes="0">-->
 <!--                    <svg xmlns="http://www.w3.org/2000/svg" class="feather-thumbs-down" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M19,15H23V3H19M15,3H6C5.17,3 4.46,3.5 4.16,4.22L1.14,11.27C1.05,11.5 1,11.74 1,12V14A2,2 0 0,0 3,16H9.31L8.36,20.57C8.34,20.67 8.33,20.77 8.33,20.88C8.33,21.3 8.5,21.67 8.77,21.94L9.83,23L16.41,16.41C16.78,16.05 17,15.55 17,15V5C17,3.89 16.1,3 15,3Z"></path></svg>-->
 <!--                    <p class="short_dislikes">0</p>-->
@@ -87,13 +207,52 @@ if ($wo['story']['processing'] > 0 && (Wo_IsModerator() || Wo_IsAdmin() || $wo['
         </div>
     </div>
 
-	<div class="video-post-text-overlay">
-		<p ><?php echo $wo['story']['videoTitle']?></p>
+	<div class="video-post-text-overlay lb-reels-caption-overlay">
+		<div class="lb-reels-caption__author">
+			<a href="<?php echo $wo['story']['publisher']['url']; ?>"
+			   title="<?php echo htmlspecialchars($wo['story']['publisher']['name']); ?>"
+			   data-ajax="?link1=timeline&u=<?php echo $wo['story']['publisher']['username']; ?>"
+			   onclick="event.stopPropagation();"><?php echo $wo['story']['publisher']['name']; ?></a>
+		</div>
+		<?php
+		$lb_reels_title = trim((string)($wo['story']['videoTitle'] ?? ''));
+		$lb_reels_use_post_html = ($lb_reels_title === '' && !empty($wo['story']['postText']));
+		if ($lb_reels_title !== '' || $lb_reels_use_post_html) { ?>
+		<div class="lb-reels-caption__text">
+			<p><?php
+				if ($lb_reels_use_post_html) {
+					echo $wo['story']['postText'];
+				} else {
+					echo htmlspecialchars($lb_reels_title, ENT_QUOTES, 'UTF-8');
+				}
+			?></p>
+		</div>
+		<?php } ?>
 	</div>
 <?php } ?>
 
 <script>
+(function () {
     var wovideo = '.plyrr-<?php echo $wo['story']['id'].$rand ;?>';
+    var isReelsPage = <?php echo (isset($wo['page']) && $wo['page']== 'reels') ? 'true' : 'false'; ?>;
+    var reelsSoundBtn = isReelsPage ? document.getElementById('reels-sound-toggle-<?php echo $wo['story']['id'].$rand; ?>') : null;
+    var reelsIgnoreScreenToggle = false;
+    var reelsForcePause = false;
+    /* Pausa explícita por tap en pantalla: no mostrar overlay de "cargando" encima del negro. */
+    var woReelUserChosePause = false;
+    /* iOS/Safari a veces no marcan el evento "play" como isTrusted; si el usuario acaba de pulsar el botón grande de Plyr, no pausar. */
+    var reelsUserClickedPlyrPlay = false;
+    var reelsAudioRetryTimers = [];
+    var isFirstAutoplay = true;
+    var woReelPostId = <?php echo (int) $wo['story']['id']; ?>;
+    function woReelsRemoteLog(level, type, msg, ctx) {
+        try {
+            if (typeof window.ZuitchReelsServerLog !== 'function') {
+                return;
+            }
+            window.ZuitchReelsServerLog(level, type, msg, woReelPostId, ctx || null);
+        } catch (e) {}
+    }
     var players = new Plyr(wovideo, {
     	<?php if (Wo_IsMobile() == false) { ?>
     	ratio: '16:9',
@@ -102,23 +261,815 @@ if ($wo['story']['processing'] > 0 && (Wo_IsModerator() || Wo_IsAdmin() || $wo['
     		iosNative: true
     	},
     	resetOnEnd: true,
+    	<?php /* En /reels/ muchos <video> en DOM: autoplay Plyr + pause() global → AbortError; play solo si el reel está visible */ ?>
+    	autoplay: <?php echo (isset($wo['page']) && $wo['page'] == 'reels') ? 'false' : 'true'; ?>,
+    muted: <?php echo (isset($wo['page']) && $wo['page'] == 'reels') ? 'false' : 'true'; ?>,
 		<?php if(isset($wo['page']) && $wo['page']== 'reels') { ?>
 	fullscreen: false,
 	<?php } ?>
     });
 
+    if (isReelsPage && players && players.media) {
+        try {
+            players.media._woPlyr = players;
+        } catch (e) {}
+    }
 
+    function woPlyrSafeUnmute(p) {
+        try {
+            if (!p) {
+                return;
+            }
+            if (typeof p.unmute === 'function') {
+                p.unmute();
+            } else if (p.media) {
+                p.media.muted = false;
+                p.media.defaultMuted = false;
+            }
+        } catch (e) {}
+    }
+
+    function woReelsVideoShouldAutoplay() {
+        if (!isReelsPage || !players || !players.media) {
+            return true;
+        }
+        if (window.__woReelsAnimating) {
+            return false;
+        }
+        var list = players.media.closest && players.media.closest('.reels_list');
+        if (!list && players.elements && players.elements.container && players.elements.container.closest) {
+            list = players.elements.container.closest('.reels_list');
+        }
+        if (!list || list.classList.contains('hidden')) {
+            return false;
+        }
+        /* Durante la transición dos reels pueden no tener .hidden; el que sale lleva clase exit */
+        if (list.classList.contains('reels-anim-next-exit') || list.classList.contains('reels-anim-prev-exit')) {
+            return false;
+        }
+        return true;
+    }
+
+    function woSafePlayPlyr(p, postId) {
+        if (!p || typeof p.play !== 'function') {
+            return;
+        }
+        p.play().catch(function (error) {
+            if (error && error.name === 'AbortError') {
+                if (window.ZuitchReelsDebug && window.__ZUITCH_REELS_DEBUG_VERBOSE && woReelsVideoShouldAutoplay()) {
+                    window.ZuitchReelsDebug.log('play() AbortError (reel visible; suele ser carrera play/pause)', { postId: postId });
+                }
+                return;
+            }
+            if (window.ZuitchReelsDebug) {
+                window.ZuitchReelsDebug.warn('play() rechazado', { postId: postId, message: String(error && error.message || error) });
+            }
+            var lvl = (error && error.name === 'NotAllowedError') ? 'warn' : 'error';
+            woReelsRemoteLog(lvl, 'plyr_play_rejected', String(error && error.message || error), {
+                name: error && error.name ? error.name : null,
+                postId: postId
+            });
+            isFirstAutoplay = false;
+        });
+    }
+
+    /**
+     * Tarjeta .reels_list visible (reels + zuitch); no depende de isReelsPage para que Zuitch reciba la misma UX de buffer.
+     */
+    function woReelReelCardVisible() {
+        try {
+            if (window.__woReelsAnimating) {
+                return false;
+            }
+            if (!players || !players.media) {
+                return false;
+            }
+            var list = players.media.closest && players.media.closest('.reels_list');
+            if (!list && players.elements && players.elements.container && players.elements.container.closest) {
+                list = players.elements.container.closest('.reels_list');
+            }
+            if (!list || list.classList.contains('hidden')) {
+                return false;
+            }
+            if (list.classList.contains('reels-anim-next-exit') || list.classList.contains('reels-anim-prev-exit')) {
+                return false;
+            }
+            return true;
+        } catch (eRv) {
+            return false;
+        }
+    }
+
+    function woReelBufferedAheadSeconds(v) {
+        try {
+            if (!v || !v.buffered || v.buffered.length === 0) {
+                return 0;
+            }
+            var t = v.currentTime;
+            var b = v.buffered;
+            var j;
+            for (j = 0; j < b.length; j++) {
+                if (b.start(j) <= t && t <= b.end(j)) {
+                    return Math.max(0, b.end(j) - t);
+                }
+            }
+            for (j = 0; j < b.length; j++) {
+                if (b.start(j) > t) {
+                    return Math.max(0, b.end(j) - t);
+                }
+            }
+            return 0;
+        } catch (eB) {
+            return 0;
+        }
+    }
+
+    function woReelInstallBufferRecovery() {
+        var media = players && players.media;
+        if (!media || media._woReelBufferBound) {
+            return;
+        }
+        if (!media.closest || !media.closest('.reels_list')) {
+            return;
+        }
+        media._woReelBufferBound = true;
+        var MIN_RESUME_SEC = 2.8;
+        var START_GRACE_MS = 500;
+        var SPURIOUS_WAIT_MAX_AHEAD = 0.28;
+        var stallRecovery = false;
+        var wantedResume = false;
+        var overlayEl = null;
+        var syncUiTimer = null;
+
+        function applyOverlayBackdrop() {
+            if (!overlayEl || !media) {
+                return;
+            }
+            try {
+                var p = (media.getAttribute('poster') || media.getAttribute('data-poster') || media.poster || '').trim();
+                if (p) {
+                    overlayEl.classList.add('wo-reel-buffer-overlay--has-poster');
+                    overlayEl.style.backgroundImage = 'linear-gradient(180deg, rgba(0,0,0,0.38) 0%, rgba(0,0,0,0.82) 100%), url(' + JSON.stringify(p) + ')';
+                } else {
+                    overlayEl.classList.remove('wo-reel-buffer-overlay--has-poster');
+                    /* El fondo lo define CSS (más claro que “negro puro”); aquí no pisar con inline oscuro. */
+                    overlayEl.style.backgroundImage = '';
+                }
+                overlayEl.style.backgroundSize = 'cover';
+                overlayEl.style.backgroundPosition = 'center';
+                overlayEl.style.backgroundRepeat = 'no-repeat';
+            } catch (eB) {}
+        }
+
+        function ensureOverlay() {
+            if (overlayEl) {
+                return;
+            }
+            /* Hijo directo de .plyr (container): si va dentro de .plyr__video-wrapper queda por debajo de .plyr__controls (z-index 5). */
+            var c = players.elements && players.elements.container;
+            if (!c) {
+                return;
+            }
+            try {
+                var pos = window.getComputedStyle(c).position;
+                if (pos === 'static' || pos === '') {
+                    c.style.position = 'relative';
+                }
+            } catch (ePos) {}
+            overlayEl = document.createElement('div');
+            overlayEl.className = 'wo-reel-buffer-overlay';
+            overlayEl.setAttribute('role', 'status');
+            overlayEl.setAttribute('aria-live', 'polite');
+            overlayEl.setAttribute('aria-hidden', 'true');
+            overlayEl.setAttribute('aria-busy', 'false');
+            overlayEl.innerHTML = ''
+                + '<div class="wo-reel-buffer-overlay__inner">'
+                + '<div class="wo-reel-buffer-overlay__spinner" role="presentation" aria-hidden="true"></div>'
+                + '<span class="wo-reel-buffer-overlay__text">Cargando vídeo</span>'
+                + '<span class="wo-reel-buffer-overlay__hint">Espera un momento…</span>'
+                + '</div>';
+            overlayEl.style.display = 'none';
+            c.appendChild(overlayEl);
+        }
+
+        function showOverlay() {
+            ensureOverlay();
+            if (overlayEl) {
+                applyOverlayBackdrop();
+                overlayEl.style.display = 'flex';
+                try {
+                    overlayEl.setAttribute('aria-hidden', 'false');
+                    overlayEl.setAttribute('aria-busy', 'true');
+                } catch (eA) {}
+                try {
+                    media.classList.add('wo-reel-buffer-video-hidden');
+                } catch (eV) {}
+                try {
+                    requestAnimationFrame(function () {
+                        applyOverlayBackdrop();
+                    });
+                } catch (eRaf) {}
+            }
+        }
+
+        function hideOverlay() {
+            if (overlayEl) {
+                overlayEl.style.display = 'none';
+                overlayEl.style.backgroundImage = '';
+                overlayEl.style.backgroundSize = '';
+                overlayEl.style.backgroundPosition = '';
+                overlayEl.style.backgroundRepeat = '';
+                overlayEl.classList.remove('wo-reel-buffer-overlay--has-poster');
+                try {
+                    overlayEl.setAttribute('aria-hidden', 'true');
+                    overlayEl.setAttribute('aria-busy', 'false');
+                } catch (eA2) {}
+            }
+            try {
+                media.classList.remove('wo-reel-buffer-video-hidden');
+            } catch (eH) {}
+        }
+
+        function abortStallRecovery() {
+            stallRecovery = false;
+            wantedResume = false;
+            hideOverlay();
+        }
+
+        players._woReelAbortStall = abortStallRecovery;
+
+        /** No quitar "Cargando" hasta que haya píxeles reales: si no, queda negro tras readyState/buffer. */
+        function woReelPlaybackReadyForDisplay() {
+            if (!media || media.ended) {
+                return false;
+            }
+            try {
+                if (media.videoWidth < 2 || media.videoHeight < 2) {
+                    return false;
+                }
+            } catch (eDim) {
+                return false;
+            }
+            var ahead = woReelBufferedAheadSeconds(media);
+            var rs = media.readyState;
+            if (rs < 3) {
+                return false;
+            }
+            try {
+                if (isFinite(media.duration) && media.duration > 0 && media.duration < 3) {
+                    return ahead >= 0.12 || rs >= 4;
+                }
+            } catch (eDur) {}
+            return ahead >= 0.55 || rs >= 4;
+        }
+
+        function woReelTryHideLoadingOverlay() {
+            if (!media || woReelUserChosePause) {
+                return;
+            }
+            if (!woReelPlaybackReadyForDisplay()) {
+                return;
+            }
+            if (stallRecovery && wantedResume) {
+                abortStallRecovery();
+                return;
+            }
+            hideOverlay();
+        }
+
+        function syncLoadingUi() {
+            try {
+                if (!media) {
+                    return;
+                }
+                if (!woReelReelCardVisible()) {
+                    if (!stallRecovery) {
+                        hideOverlay();
+                    }
+                    return;
+                }
+                if (media.ended) {
+                    if (!stallRecovery) {
+                        hideOverlay();
+                    }
+                    return;
+                }
+                if (stallRecovery && wantedResume) {
+                    showOverlay();
+                    woReelTryHideLoadingOverlay();
+                    return;
+                }
+                if (woReelUserChosePause) {
+                    hideOverlay();
+                    return;
+                }
+                woReelTryHideLoadingOverlay();
+                /* Mientras no haya frame decodificable + buffer: mostrar overlay (también en pausa al inicio;
+                   antes solo mirábamos readyState/buffer y quedaba pantalla negra sin “Cargando”). */
+                var displayReady = woReelPlaybackReadyForDisplay();
+                if (!displayReady) {
+                    showOverlay();
+                } else if (!stallRecovery) {
+                    hideOverlay();
+                }
+            } catch (eSync) {}
+        }
+
+        function scheduleSyncLoadingUi() {
+            if (syncUiTimer) {
+                clearTimeout(syncUiTimer);
+            }
+            syncUiTimer = setTimeout(function () {
+                syncUiTimer = null;
+                syncLoadingUi();
+                maybeResume();
+            }, 140);
+        }
+
+        function maybeResume() {
+            if (!stallRecovery || !wantedResume) {
+                return;
+            }
+            if (!woReelReelCardVisible()) {
+                return;
+            }
+            if (media.ended) {
+                abortStallRecovery();
+                return;
+            }
+            var ahead = woReelBufferedAheadSeconds(media);
+            /* Misma condición que para quitar overlay: buffer + frame decodificable (evita negro al reanudar). */
+            if (ahead >= MIN_RESUME_SEC && woReelPlaybackReadyForDisplay()) {
+                woSafePlayPlyr(players, woReelPostId);
+                scheduleSyncLoadingUi();
+            }
+        }
+
+        function onWaiting() {
+            var ts = media._woReelBufferReadyTs || 0;
+            if (ts && Date.now() - ts < START_GRACE_MS) {
+                scheduleSyncLoadingUi();
+                return;
+            }
+            if (!woReelReelCardVisible()) {
+                return;
+            }
+            if (media.ended) {
+                return;
+            }
+            var ahead = woReelBufferedAheadSeconds(media);
+            if (!media.paused && ahead >= SPURIOUS_WAIT_MAX_AHEAD) {
+                scheduleSyncLoadingUi();
+                return;
+            }
+            if (media.paused && !stallRecovery) {
+                scheduleSyncLoadingUi();
+                if (!woReelUserChosePause && (media.readyState < 3 || ahead < 0.32)) {
+                    stallRecovery = true;
+                    wantedResume = true;
+                    showOverlay();
+                }
+                return;
+            }
+            if (!media.paused) {
+                stallRecovery = true;
+                wantedResume = true;
+                showOverlay();
+                try {
+                    if (typeof players.pause === 'function') {
+                        players.pause();
+                    }
+                } catch (eP1) {}
+                try {
+                    media.pause();
+                } catch (eP2) {}
+            } else if (stallRecovery) {
+                showOverlay();
+            }
+            scheduleSyncLoadingUi();
+        }
+
+        function onStalled() {
+            onWaiting();
+        }
+
+        media.addEventListener('loadstart', scheduleSyncLoadingUi);
+        media.addEventListener('loadedmetadata', scheduleSyncLoadingUi);
+        media.addEventListener('loadeddata', scheduleSyncLoadingUi);
+        media.addEventListener('resize', scheduleSyncLoadingUi);
+        media.addEventListener('waiting', onWaiting);
+        media.addEventListener('stalled', onStalled);
+        media.addEventListener('progress', scheduleSyncLoadingUi);
+        media.addEventListener('canplay', scheduleSyncLoadingUi);
+        media.addEventListener('canplaythrough', scheduleSyncLoadingUi);
+        media.addEventListener('timeupdate', scheduleSyncLoadingUi);
+        media.addEventListener('playing', function () {
+            try {
+                if (stallRecovery && wantedResume && woReelPlaybackReadyForDisplay()) {
+                    abortStallRecovery();
+                } else {
+                    woReelTryHideLoadingOverlay();
+                }
+            } catch (ePl) {}
+            scheduleSyncLoadingUi();
+        });
+        media.addEventListener('ended', abortStallRecovery);
+        media.addEventListener('emptied', function () {
+            abortStallRecovery();
+        });
+
+        players._woReelSyncLoadingUi = scheduleSyncLoadingUi;
+    }
+
+    players.on('ready', function woReelBufferOnPlayerReady() {
+        try {
+            woReelInstallBufferRecovery();
+            if (players.media) {
+                players.media._woReelBufferReadyTs = Date.now();
+            }
+        } catch (eBuf) {}
+    });
+    setTimeout(function woReelBufferDeferredInit() {
+        try {
+            woReelInstallBufferRecovery();
+            if (players.media) {
+                players.media._woReelBufferReadyTs = Date.now();
+            }
+        } catch (eDef) {}
+    }, 0);
+
+    if (isReelsPage && players.media) {
+        players.media.addEventListener('error', function () {
+            var err = this.error;
+            var src = '';
+            try {
+                src = this.currentSrc || this.src || '';
+            } catch (e2) {}
+            if (window.ZuitchReelsDebug) {
+                window.ZuitchReelsDebug.error('Fallo carga <video> (p. ej. MP4 500, CORS o archivo ausente)', {
+                    postId: woReelPostId,
+                    mediaErrorCode: err ? err.code : null,
+                    src: src
+                });
+            }
+            if (!this._woReelsMediaErrorLogged) {
+                this._woReelsMediaErrorLogged = true;
+                woReelsRemoteLog('error', 'video_media_error', 'Fallo carga elemento video', {
+                    mediaErrorCode: err ? err.code : null,
+                    src: src
+                });
+            }
+        });
+    }
+
+    function setSoundButtonState(isMuted) {
+        try {
+            if (!reelsSoundBtn) return;
+            var onPaths = reelsSoundBtn.querySelectorAll('path[data-sound="on"]');
+            var offPaths = reelsSoundBtn.querySelectorAll('path[data-sound="off"]');
+            onPaths.forEach(function (el) {
+                el.style.display = isMuted ? 'none' : '';
+            });
+            offPaths.forEach(function (el) {
+                el.style.display = isMuted ? '' : 'none';
+            });
+
+            var label = isMuted ? 'Activar sonido' : 'Desactivar sonido';
+            reelsSoundBtn.setAttribute('title', label);
+            reelsSoundBtn.setAttribute('aria-label', label);
+        } catch (e) {}
+    }
+
+    function toggleSoundFromUser() {
+        try {
+            var media = players.media;
+            var isPausedNow = !!(media && media.paused);
+            var isMutedNow = !!(media && media.muted);
+
+            if (!isMutedNow) {
+                // Desactivar sonido
+                if (media) {
+                    media.muted = true;
+                    media.defaultMuted = true;
+                    media.volume = 0;
+                }
+                try { if (typeof players.setVolume === 'function') players.setVolume(0); } catch (e) {}
+                try { if (typeof players.mute === 'function') players.mute(); } catch (e) {}
+                setSoundButtonState(true);
+                return;
+            }
+
+            // Activar sonido
+            if (media) {
+                media.muted = false;
+                media.defaultMuted = false;
+                media.volume = 1;
+            }
+            woPlyrSafeUnmute(players);
+            try {
+                if (typeof players.setVolume === 'function') {
+                    players.setVolume(1);
+                }
+            } catch (e) {}
+
+            // Si el video ya está reproduciéndose, aseguramos que Plyr re-evalúe el audio.
+            // (Si está en pausa, NO llamamos play para no reproducir de nuevo.)
+            try {
+                if (!isPausedNow) {
+                    woSafePlayPlyr(players, woReelPostId);
+                }
+            } catch (e) {}
+
+            // Reintento corto: algunos WebViews tardan en aplicar el estado de volumen.
+            setTimeout(function() {
+                try {
+                    var mediaAfter = players.media;
+                    var mutedAfter = !!(mediaAfter && mediaAfter.muted);
+                    setSoundButtonState(mutedAfter);
+                } catch (e) {
+                    setSoundButtonState(true);
+                }
+            }, 150);
+        } catch (e) {
+            setSoundButtonState(true);
+        }
+    }
+
+    if (reelsSoundBtn) {
+        // En reels, los controles de Plyr están ocultos; necesitamos un gesto del usuario para habilitar audio.
+        var lastSoundToggleAt = 0;
+        var handler = function(e) {
+            try {
+                var now = Date.now();
+                if (now - lastSoundToggleAt < 250) return;
+                lastSoundToggleAt = now;
+                if (e && typeof e.cancelable === 'boolean' && e.cancelable) e.preventDefault();
+                e.stopPropagation();
+                if (typeof e.stopImmediatePropagation === 'function') e.stopImmediatePropagation();
+                reelsIgnoreScreenToggle = true;
+                setTimeout(function () {
+                    reelsIgnoreScreenToggle = false;
+                }, 250);
+            } catch (err) {}
+            toggleSoundFromUser();
+        };
+        // Usar solo `click` evita dobles toggles por mezcla touch/pointer/click.
+        reelsSoundBtn.addEventListener('click', handler);
+    }
+
+    // Click en la pantalla (video/overlay): alternar pause/play.
+    // Se ignoran los clicks sobre los botones de reels para no romper like/save/comentarios.
+    function togglePlayPauseFromScreen() {
+        try {
+            if (!players || !players.media) {
+                return;
+            }
+            var wasPlaying = !!(players.playing || (players.media && !players.media.paused));
+            if (wasPlaying) {
+                woReelUserChosePause = true;
+                try {
+                    if (typeof players._woReelAbortStall === 'function') {
+                        players._woReelAbortStall();
+                    }
+                } catch (eAbort) {}
+                reelsForcePause = true;
+                if (window.woReelsHardPauseAll) {
+                    window.woReelsHardPauseAll(null);
+                } else {
+                    if (typeof players.pause === 'function') {
+                        players.pause();
+                    }
+                    try {
+                        if (players.media && typeof players.media.pause === 'function') {
+                            players.media.pause();
+                        }
+                    } catch (e) {}
+                    try {
+                        $('video').trigger('pause');
+                    } catch (e2) {}
+                }
+            } else {
+                woReelUserChosePause = false;
+                reelsForcePause = false;
+                if (window.woReelsHardPauseAll && players.media) {
+                    window.woReelsHardPauseAll(players.media);
+                }
+                woSafePlayPlyr(players, woReelPostId);
+                try {
+                    if (typeof players._woReelSyncLoadingUi === 'function') {
+                        players._woReelSyncLoadingUi();
+                    }
+                } catch (eSynTap) {}
+            }
+            try {
+                var now = Date.now();
+                var tk = 'taplog_' + woReelPostId;
+                if (!window.__woReelsTapLogAt) {
+                    window.__woReelsTapLogAt = {};
+                }
+                if (!window.__woReelsTapLogAt[tk] || now - window.__woReelsTapLogAt[tk] > 2800) {
+                    window.__woReelsTapLogAt[tk] = now;
+                    woReelsRemoteLog('info', 'reel_screen_tap_toggle', wasPlaying ? 'Usuario: pausar' : 'Usuario: reproducir', {
+                        wasPlaying: wasPlaying
+                    });
+                }
+            } catch (eTap) {}
+        } catch (e) {}
+    }
+
+    if (isReelsPage) {
+        var reelVideoEl = document.getElementById('video--<?php echo $wo['media']['storyId']; ?>');
+        var reelRoot = reelVideoEl && reelVideoEl.closest ? reelVideoEl.closest('.reels_list, .wo_reels_cont') : null;
+        var overlayEl = reelRoot ? reelRoot.querySelector('.video-text-overlay') : null;
+        var postTextEl = reelRoot ? reelRoot.querySelector('.video-post-text-overlay.lb-reels-caption-overlay') : null;
+
+        var screenClickHandler = function(e) {
+            try {
+                if (reelsIgnoreScreenToggle) {
+                    reelsIgnoreScreenToggle = false;
+                    return;
+                }
+                // Si el click fue dentro del botón de sonido, no hacemos toggle de play/pause.
+                if (reelsSoundBtn && e && e.target && reelsSoundBtn.contains(e.target)) return;
+                if (e && e.target && e.target.closest) {
+                    var ignored = e.target.closest(
+                        '.shorts_events, .reels-sound-toggle, .reels-download-btn, .reel-save-btn, .reels_like_btn, .reels-rail-react-wrap, .reel-view-tag-chip, .plyr__control--overlaid, .plyr__controls button, a[href]'
+                    );
+                    if (ignored) {
+                        return;
+                    }
+                }
+            } catch (err) {}
+            togglePlayPauseFromScreen();
+        };
+
+        /* Plyr envuelve el <video> y suele poner poster/capas encima: el click no llegaba al video. Captura en el contenedor .plyr. */
+        players.on('ready', function woReelsBindScreenTap() {
+            var c = players.elements && players.elements.container;
+            if (!c || c._woReelsScreenTapBound) {
+                return;
+            }
+            c._woReelsScreenTapBound = true;
+            c.addEventListener('click', screenClickHandler, true);
+        });
+
+        if (overlayEl) {
+            overlayEl.addEventListener('click', screenClickHandler);
+        }
+        if (postTextEl && postTextEl.classList && postTextEl.classList.contains('video-post-text-overlay')) {
+            postTextEl.addEventListener('click', screenClickHandler);
+        }
+    }
+    
+    // Asegurar autoplay cuando el video está listo (mismo evento ready que el bind de tap en reels)
+    players.on('ready', (event) => {
+        setSoundButtonState(!!(players.media && players.media.muted));
+        if (isReelsPage && !woReelsVideoShouldAutoplay()) {
+            try {
+                if (typeof players.pause === 'function') {
+                    players.pause();
+                }
+            } catch (e) {}
+            return;
+        }
+        woSafePlayPlyr(players, woReelPostId);
+        try {
+            if (typeof players._woReelSyncLoadingUi === 'function') {
+                players._woReelSyncLoadingUi();
+            }
+        } catch (eSy) {}
+    });
+
+    // Desbloqueo de audio en /reels/: una sola vez por página (reels/content.phtml) usando video._woPlyr.
+
+    function forceReelsAudioOn() {
+        try {
+            if (!players || !players.media) return;
+            players.media.muted = false;
+            players.media.defaultMuted = false;
+            players.media.volume = 1;
+            try { players.media.removeAttribute && players.media.removeAttribute('muted'); } catch (e) {}
+            woPlyrSafeUnmute(players);
+            if (typeof players.setVolume === 'function') players.setVolume(1);
+            setSoundButtonState(false);
+        } catch (e) {}
+    }
+
+    // Detectar clic en el botón de play para desmutear automáticamente
     players.on('play', (event) => {
+        try {
+            woReelUserChosePause = false;
+        } catch (eUp) {}
+        if (isReelsPage) {
+            var playFromUserGesture = false;
+            try {
+                playFromUserGesture = !!(event && event.isTrusted === true);
+            } catch (eTr) {}
+            if (!playFromUserGesture && reelsUserClickedPlyrPlay) {
+                playFromUserGesture = true;
+            }
+            var listForPlay = null;
+            try {
+                listForPlay = players.media.closest && players.media.closest('.reels_list');
+                if (!listForPlay && players.elements && players.elements.container) {
+                    listForPlay = players.elements.container.closest('.reels_list');
+                }
+            } catch (eL) {}
+            if (listForPlay && listForPlay.classList.contains('hidden')) {
+                try {
+                    if (typeof players.pause === 'function') {
+                        players.pause();
+                    }
+                } catch (e) {}
+                try {
+                    if (players.media && typeof players.media.pause === 'function') {
+                        players.media.pause();
+                    }
+                } catch (e2) {}
+                return;
+            }
+            /* No cortar play() si el usuario pulsó play (overlaid o pantalla); solo bloquear autoplay en reels ocultos. */
+            if (!woReelsVideoShouldAutoplay() && !playFromUserGesture) {
+                try {
+                    if (typeof players.pause === 'function') {
+                        players.pause();
+                    }
+                } catch (e) {}
+                try {
+                    if (players.media && typeof players.media.pause === 'function') {
+                        players.media.pause();
+                    }
+                } catch (e2) {}
+                return;
+            }
+            try {
+                if (window.woReelsHardPauseAll && players.media) {
+                    window.woReelsHardPauseAll(players.media);
+                }
+            } catch (eH) {}
+            try {
+                reelsAudioRetryTimers.forEach(function(t){ clearTimeout(t); });
+                reelsAudioRetryTimers = [];
+                forceReelsAudioOn();
+                reelsAudioRetryTimers.push(setTimeout(forceReelsAudioOn, 50));
+                reelsAudioRetryTimers.push(setTimeout(forceReelsAudioOn, 150));
+                reelsAudioRetryTimers.push(setTimeout(forceReelsAudioOn, 300));
+            } catch (e) {}
+        } else {
+            // Si no es reels, mantener comportamiento anterior.
+            if (!isFirstAutoplay || players.media.muted) {
+                woPlyrSafeUnmute(players);
+            }
+        }
+        isFirstAutoplay = false;
+        
         Wo_AddVideoViews(<?php echo $wo['story']['id'];?>);
         <?php if(isset($wo['page']) && $wo['page'] == 'watch') { ?>
         players.pause();
         $('.plyrr-<?php echo $wo['story']['id'].$rand ;?>').removeClass('plyrr-<?php echo $wo['story']['id'];?> video-container');
         Wo_OpenLightBox(<?php echo $wo['story']['id'];?>)
         <?php } ?>
+        <?php if (!(isset($wo['page']) && $wo['page'] == 'reels')) { ?>
       $('video').not('.plyrr-<?php echo $wo['story']['id'].$rand ;?>').trigger('pause');
+        <?php } ?>
+    });
+    
+    // También detectar clic directo en el botón de play de Plyr
+    players.on('ready', function() {
+        var playButton = players.elements.buttons.play;
+        if (playButton) {
+            playButton.forEach(function(button) {
+                button.addEventListener('click', function() {
+                    reelsUserClickedPlyrPlay = true;
+                    setTimeout(function () {
+                        reelsUserClickedPlyrPlay = false;
+                    }, 900);
+                    // Desmutear cuando el usuario hace clic en play
+                    setTimeout(function() {
+                        if (players.playing) {
+                            woPlyrSafeUnmute(players);
+                        }
+                    }, 100);
+                }, true);
+            });
+        }
     });
 
     players.on('pause', (event) => {
-        
+        try {
+            if (!isReelsPage) {
+                return;
+            }
+            reelsAudioRetryTimers.forEach(function(t){ clearTimeout(t); });
+            reelsAudioRetryTimers = [];
+            reelsForcePause = false;
+            /* Importante: si pausamos un reel OCULTO (p. ej. al dar play en otro), NO llamar
+               woReelsHardPauseAll aquí: con "except" sería ese mismo oculto y se pausaría TODO el feed,
+               incluido el vídeo que estás viendo (unos segundos y corta, varios clics para recuperar). */
+            if (woReelsVideoShouldAutoplay() && window.woReelsHardPauseAll && players.media) {
+                window.woReelsHardPauseAll(players.media);
+            }
+        } catch (e) {}
     });
+})();
 </script>

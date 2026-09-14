@@ -3,6 +3,8 @@ if ($wo['config']['reels_upload'] == 0 || $wo['config']['have_reels'] == 0) {
     header("Location: " . $wo['config']['site_url']);
     exit();
 }
+/* El reproductor (video.phtml) necesita el valor real para el rail de reacciones; el panel comentarios sigue usando "disabled". */
+$wo['reels_ui_second_post_button'] = $wo['config']['second_post_button'];
 $wo['config']['second_post_button'] = 'disabled';
 $wo['watched_reels'] = array();
 $html = '';
