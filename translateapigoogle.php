@@ -1,21 +1,32 @@
 <?php
-// Traduce "Hellow, its me" de EN a ES con Google Translate v2 (REST)
+/**
+ * Google Translate v2 smoke test.
+ * API key MUST come from environment — never hardcode secrets in this file.
+ *
+ * Set GOOGLE_TRANSLATE_API_KEY in the server .env (not committed).
+ */
 
-// === Configuración ===
-//$apiKey  = 'AIzaSyBBqGaLDxhgl4kI_5D0He9aYw6taWcaySE'; // Tu API Key (restringe y mantén en secreto)
-$text    = 'Hellow, its me';
-$source  = 'en';
-$target  = 'es';
+require_once __DIR__ . '/assets/includes/daas_env.php';
+daas_env_load();
 
-// Endpoint v2 con API key por querystring
+$apiKey = daas_env('GOOGLE_TRANSLATE_API_KEY', '');
+if ($apiKey === '') {
+    http_response_code(500);
+    header('Content-Type: text/plain; charset=utf-8');
+    exit('GOOGLE_TRANSLATE_API_KEY is not configured on this server.');
+}
+
+$text   = 'Hello, it is me';
+$source = 'en';
+$target = 'es';
+
 $url = 'https://translation.googleapis.com/language/translate/v2?key=' . urlencode($apiKey);
 
-// Cuerpo JSON (puedes omitir "source" para autodetección)
 $payload = [
-    'q'       => $text,
-    'source'  => $source,
-    'target'  => $target,
-    'format'  => 'text',
+    'q'      => $text,
+    'source' => $source,
+    'target' => $target,
+    'format' => 'text',
 ];
 
 $ch = curl_init();
@@ -35,27 +46,22 @@ if ($response === false) {
 }
 curl_close($ch);
 
-// Decodificar respuesta
 $data = json_decode($response, true);
 
-// Manejo de errores de la API
 if (isset($data['error'])) {
-    $msg = $data['error']['message'] ?? 'Error desconocido';
+    $msg  = $data['error']['message'] ?? 'Error desconocido';
     $code = $data['error']['code'] ?? 500;
     http_response_code(500);
     exit("Error API ($code): $msg");
 }
 
-// Extraer traducción
 $translated = $data['data']['translations'][0]['translatedText'] ?? null;
 if (!$translated) {
     http_response_code(500);
-    exit('No se encontró "translatedText" en la respuesta: ' . $response);
+    exit('No se encontró "translatedText" en la respuesta.');
 }
 
-// Google devuelve entidades HTML (p. ej., &#39; para apostrofes), así que las decodificamos:
 $translated = html_entity_decode($translated, ENT_QUOTES | ENT_HTML5, 'UTF-8');
 
-// Mostrar resultado
 header('Content-Type: text/plain; charset=utf-8');
-echo $translated; // Ejemplo esperado: "Hola, soy yo"
+echo $translated;
