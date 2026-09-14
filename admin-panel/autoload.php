@@ -122,6 +122,7 @@ $pages = array(
     'edit-section',
     'cronjob_settings',
     'system_status',
+    'daas',
     "upload-to-storage",
     "ai-settings",
     "manage-content-monetization",
@@ -1529,6 +1530,16 @@ if (!empty($_COOKIE['mode']) && $_COOKIE['mode'] == 'night') {
                             <?php } ?>
                         </ul>
                     </li> -->
+                    <?php } ?>
+                    <?php if ($is_admin) { ?>
+                    <li>
+                        <a <?php echo ($page == 'daas') ? 'class="active"' : ''; ?> href="<?php echo Wo_LoadAdminLinkSettings('daas'); ?>" data-ajax="?path=daas">
+                            <span class="nav-link-icon">
+                                <i class="material-icons">cloud_sync</i>
+                            </span>
+                            <span>DaaS + GitHub</span>
+                        </a>
+                    </li>
                     <?php } ?>
                     <li>
                         <a <?php echo ($page == 'system_status') ? 'class="active"' : ''; ?> href="<?php echo Wo_LoadAdminLinkSettings('system_status'); ?>" data-ajax="?path=system_status">
