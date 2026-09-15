@@ -336,6 +336,11 @@ if ($messages_alert == 0) {
 				<li>
 					<a href="<?php echo $wo['config']['site_url'] . '/admin-cp'; ?>"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M13,3V9H21V3M13,21H21V11H13M3,21H11V15H3M3,13H11V3H3V13Z" /></svg> <?php echo $wo['lang']['admin_area']; ?></a>
 				</li>
+				<?php if (Wo_IsAdmin()) { ?>
+				<li>
+					<a href="<?php echo $wo['config']['site_url'] . '/admin-cp/daas'; ?>"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M12,18.54L19.37,12.8L21,14.07L12,21.07L3,14.07L4.62,12.81L12,18.54M12,16L3,9L12,2L21,9L12,16M12,4.53L6.26,9L12,13.47L17.74,9L12,4.53Z" /></svg> Pedidos UX/UI (DaaS)</a>
+				</li>
+				<?php } ?>
 			<?php } ?>
 			<li><hr></li>
 			<li>
