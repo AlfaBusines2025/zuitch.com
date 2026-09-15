@@ -1,0 +1,34 @@
+---
+description: Completar pedidos DaaS con tokens reales vía PHP CLI (nunca el navegador)
+alwaysApply: true
+---
+
+# DaaS — completar pedidos (Zuitch)
+
+Cuando termines un pedido DaaS (`order_id = N`):
+
+1. Suma los tokens **reales** del agente Cursor de esta tarea (input + output + cache si aplica).
+2. Si no hay usage visible, **pregunta al humano**. No inventes tokens.
+3. Completa **solo desde PHP en el servidor** (nunca `fetch`/JS con el secret):
+
+```bash
+php assets/includes/Daas/daas_complete_order.php --order=N --tokens=<entero> --notes="resumen corto"
+```
+
+Eso llama `POST /api/v1/orders/{N}/complete` con `source: zuitch_cursor` y escribe la `quote` en `logs/daas-complete.log`.
+
+4. **No** hagas `git push` a GitHub desde producción al cerrar un pedido UX. El código llega por GitHub → `pull` / sync HMAC (`POST /api/daas/sync`).
+
+## Listar pendientes
+
+```bash
+php assets/includes/Daas/daas_complete_order.php --list-pending
+```
+
+→ `GET /api/v1/orders?company_external_id=zuitch&status=new&per_page=50` con Bearer `DAAS_PROJECT_SECRET`.
+
+## Prohibido
+
+- Exponer `DAAS_PROJECT_SECRET` / `DAAS_UPDATE_SECRET` / `GITHUB_TOKEN` al navegador o commits.
+- Completar desde el frontend con el secret.
+- Inventar tokens o reportar `0`/placeholder.

@@ -301,6 +301,7 @@ if (!function_exists('zuitch_daas_format_date')) {
                                 $created = isset($order['created_at']) ? (string) $order['created_at'] : '';
                                 $pr = isset($order['cursor_latest_pr_url']) ? (string) $order['cursor_latest_pr_url'] : '';
                                 $canCancel = in_array($status, array('new', 'planned'), true);
+                                $canComplete = !in_array($status, array('done', 'dismissed'), true);
                                 $long = mb_strlen($prompt) > 140;
                                 ?>
                                 <article class="daas-order-card" data-order-id="<?php echo $id; ?>">
@@ -323,6 +324,9 @@ if (!function_exists('zuitch_daas_format_date')) {
                                         <?php } ?>
                                         <?php if ($canCancel) { ?>
                                             <button type="button" class="btn btn-sm btn-outline-danger daas-cancel-order" data-id="<?php echo $id; ?>">Cancelar</button>
+                                        <?php } ?>
+                                        <?php if ($canComplete) { ?>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary daas-complete-order" data-id="<?php echo $id; ?>">Completar</button>
                                         <?php } ?>
                                     </div>
                                 </article>
@@ -423,6 +427,7 @@ if (!function_exists('zuitch_daas_format_date')) {
 
     function orderCardHtml(o) {
         var canCancel = (o.status === 'new' || o.status === 'planned');
+        var canComplete = (o.status !== 'done' && o.status !== 'dismissed');
         var prompt = o.prompt || '';
         var long = String(prompt).length > 140;
         var actions = '';
@@ -434,6 +439,9 @@ if (!function_exists('zuitch_daas_format_date')) {
         }
         if (canCancel) {
             actions += '<button type="button" class="btn btn-sm btn-outline-danger daas-cancel-order" data-id="' + esc(o.id) + '">Cancelar</button>';
+        }
+        if (canComplete) {
+            actions += '<button type="button" class="btn btn-sm btn-outline-secondary daas-complete-order" data-id="' + esc(o.id) + '">Completar</button>';
         }
         var type = o.type_label || o.type || '';
         return (
@@ -567,6 +575,42 @@ if (!function_exists('zuitch_daas_format_date')) {
             }
         }, 'json').fail(function () {
             alert('Error al cancelar');
+        });
+    });
+
+    $(document).on('click', '.daas-complete-order', function () {
+        var id = $(this).data('id');
+        if (!id) return;
+        var tokensRaw = window.prompt('Tokens reales del run (input+output+cache). No inventes.', '');
+        if (tokensRaw === null) return;
+        var tokens = parseInt(String(tokensRaw).replace(/[^\d]/g, ''), 10);
+        if (!tokens || tokens <= 0) {
+            alert('Tokens inválidos. Usa el usage real del agente.');
+            return;
+        }
+        var notes = window.prompt('Notas cortas (opcional)', '') || '';
+        $.post(Wo_Ajax_Requests_File() + '?f=daas&s=complete_order', {
+            hash_id: daasHash(),
+            order_id: id,
+            tokens: tokens,
+            notes: notes
+        }, function (data) {
+            if (data && data.status == 200) {
+                var q = data.quote || {};
+                var msg = 'Orden #' + id + ' completada.';
+                if (q.units != null || q.total_usd != null) {
+                    msg += '\nQuote: units=' + (q.units != null ? q.units : '—')
+                        + ', subtotal=' + (q.subtotal_usd != null ? q.subtotal_usd : '—')
+                        + ', IVA=' + (q.iva_usd != null ? q.iva_usd : '—')
+                        + ', total=' + (q.total_usd != null ? q.total_usd : '—') + ' USD';
+                }
+                alert(msg);
+                refreshOrders();
+            } else {
+                alert((data && data.message) || 'No se pudo completar');
+            }
+        }, 'json').fail(function () {
+            alert('Error al completar');
         });
     });
 

@@ -92,6 +92,60 @@ if ($f == 'daas') {
         exit();
     }
 
+    if ($s == 'complete_order') {
+        if (Wo_CheckMainSession($hash_id) !== true) {
+            echo json_encode(array('status' => 403, 'message' => 'Invalid session hash'));
+            exit();
+        }
+
+        $orderId = 0;
+        if (!empty($_POST['order_id'])) {
+            $orderId = (int) $_POST['order_id'];
+        } elseif (!empty($_GET['order_id'])) {
+            $orderId = (int) $_GET['order_id'];
+        }
+        if ($orderId <= 0) {
+            echo json_encode(array('status' => 400, 'message' => 'order_id required'));
+            exit();
+        }
+
+        $tokens = 0;
+        if (isset($_POST['tokens'])) {
+            $tokens = (int) $_POST['tokens'];
+        } elseif (isset($_GET['tokens'])) {
+            $tokens = (int) $_GET['tokens'];
+        }
+        if ($tokens <= 0) {
+            echo json_encode(array('status' => 400, 'message' => 'tokens must be a positive integer'));
+            exit();
+        }
+
+        $notes = '';
+        if (isset($_POST['notes'])) {
+            $notes = (string) $_POST['notes'];
+        } elseif (isset($_GET['notes'])) {
+            $notes = (string) $_GET['notes'];
+        }
+
+        $client = new DaasClient();
+        $res = $client->completeOrder($orderId, $tokens, $notes, 'zuitch_cursor');
+        if (!empty($res['ok'])) {
+            echo json_encode(array(
+                'status' => 200,
+                'message' => 'Order completed',
+                'data' => isset($res['data']) ? $res['data'] : null,
+                'quote' => isset($res['quote']) ? $res['quote'] : null,
+            ));
+        } else {
+            echo json_encode(array(
+                'status' => isset($res['status']) && $res['status'] ? (int) $res['status'] : 422,
+                'message' => isset($res['message']) ? $res['message'] : 'Complete failed',
+                'quote' => isset($res['quote']) ? $res['quote'] : null,
+            ));
+        }
+        exit();
+    }
+
     echo json_encode(array('status' => 400, 'message' => 'Unknown action'));
     exit();
 }
