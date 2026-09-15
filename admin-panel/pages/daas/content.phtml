@@ -2,6 +2,7 @@
 $httpdocs = dirname(dirname(dirname(__DIR__)));
 require_once $httpdocs . '/assets/includes/daas_env.php';
 require_once $httpdocs . '/assets/includes/Daas/GitSyncService.php';
+require_once $httpdocs . '/assets/includes/Daas/DaasClient.php';
 
 if (!Wo_IsAdmin()) {
     echo '<div class="alert alert-danger">Solo el superadministrador puede gestionar pedidos UX/UI desde aquí.</div>';
@@ -14,26 +15,38 @@ $st = $git->status();
 $publicKey = daas_env('DAAS_PUBLIC_KEY', '');
 $companyId = daas_env('DAAS_BILLING_EXTERNAL_ID', 'zuitch');
 $daasUrl = rtrim(daas_env('DAAS_URL', 'https://daas.alfabusiness.app'), '/');
-$requesterEmail = !empty($wo['user']['email']) ? $wo['user']['email'] : '';
-$requesterId = !empty($wo['user']['user_id']) ? ('user:' . $wo['user']['user_id']) : '';
 $hash = Wo_CreateSession();
-$widgetSrc = $daasUrl . '/widget.js';
+
+$daas = new DaasClient();
+$ordersRes = $daas->listOrders(array(
+    'company_external_id' => $companyId,
+    'per_page' => 50,
+));
+$orders = (!empty($ordersRes['ok']) && !empty($ordersRes['data']) && is_array($ordersRes['data']))
+    ? $ordersRes['data']
+    : array();
+$ordersError = empty($ordersRes['ok'])
+    ? (isset($ordersRes['message']) ? $ordersRes['message'] : 'No se pudieron cargar las órdenes')
+    : '';
+
+function zuitch_daas_status_badge($status)
+{
+    $map = array(
+        'new' => 'primary',
+        'planned' => 'info',
+        'in_progress' => 'warning',
+        'needs_review' => 'secondary',
+        'done' => 'success',
+        'dismissed' => 'dark',
+    );
+    $s = (string) $status;
+    return isset($map[$s]) ? $map[$s] : 'secondary';
+}
 ?>
 <style>
-#daas-ux-panel { position: relative; z-index: 20; }
-#daas-widget-shell {
-  min-height: 480px;
-  border: 1px dashed #c32e3a;
-  border-radius: 8px;
-  padding: 16px;
-  background: #fff;
-  position: relative;
-  overflow: visible;
-}
-#daas-widget-root { min-height: 420px; width: 100%; display: block; }
-#daas-widget-fallback { display: none; }
-#daas-widget-status { margin-bottom: 12px; }
-.daas-fallback-form textarea { min-height: 140px; }
+.daas-orders-table td { vertical-align: middle; }
+.daas-order-prompt { max-width: 420px; white-space: pre-wrap; word-break: break-word; }
+.daas-local-queue .list-group-item { background: #fafafa; }
 </style>
 <div class="container-fluid" id="daas-ux-panel">
     <div>
@@ -47,55 +60,95 @@ $widgetSrc = $daasUrl . '/widget.js';
     </div>
 
     <div class="alert alert-info">
-        Desde aquí el <strong>superadministrador</strong> envía pedidos de cambios UX/UI a DaaS.
-        Tras aprobar y mergear en GitHub, producción se actualiza sola (o con el botón de la derecha).
+        Los pedidos se crean con el <strong>FAB DaaS</strong> (logo Alfa) en el sitio.
+        Aquí ves la <strong>cola / órdenes</strong> del hub y puedes refrescar o cancelar las que estén en <em>new</em> o <em>planned</em>.
     </div>
 
     <div class="row">
-        <div class="col-lg-7 col-md-12">
-            <div class="card">
+        <div class="col-lg-8 col-md-12">
+            <div class="card mb-3">
                 <div class="card-body">
-                    <h6 class="card-title">1. Enviar pedido UX/UI</h6>
-                    <div id="daas-widget-status" class="alert alert-secondary">Cargando widget DaaS…</div>
-                    <?php if ($publicKey === '') { ?>
-                        <div class="alert alert-warning">Falta <code>DAAS_PUBLIC_KEY</code> en <code>.env</code> del servidor.</div>
-                    <?php } else { ?>
-                        <div id="daas-widget-shell">
-                            <div id="daas-widget-root"
-                                 data-daas-widget
-                                 data-public-key="<?php echo htmlspecialchars($publicKey, ENT_QUOTES, 'UTF-8'); ?>"
-                                 data-company-external-id="<?php echo htmlspecialchars($companyId, ENT_QUOTES, 'UTF-8'); ?>"
-                                 data-requester-email="<?php echo htmlspecialchars($requesterEmail, ENT_QUOTES, 'UTF-8'); ?>"
-                                 data-requester-external-id="<?php echo htmlspecialchars($requesterId, ENT_QUOTES, 'UTF-8'); ?>"></div>
-
-                            <div id="daas-widget-fallback" class="daas-fallback-form mt-3">
-                                <p class="mb-2">El script oficial no montó UI. Usa este formulario (misma API pública del widget):</p>
-                                <div class="form-group">
-                                    <label>Descripción del cambio UX/UI</label>
-                                    <textarea id="daas-fallback-prompt" class="form-control" placeholder="Describe el cambio, pantallas afectadas, comportamiento esperado…"></textarea>
-                                </div>
-                                <div class="form-group">
-                                    <label>Capturas (opcional)</label>
-                                    <input type="file" id="daas-fallback-files" class="form-control" accept="image/*" multiple>
-                                </div>
-                                <button type="button" class="btn btn-primary" id="daas-fallback-submit">Enviar pedido a DaaS</button>
-                                <div id="daas-fallback-result" class="mt-3"></div>
-                            </div>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6 class="card-title mb-0">Órdenes en DaaS (cola y resto)</h6>
+                        <div>
+                            <button type="button" class="btn btn-sm btn-outline-primary" id="daas-orders-refresh">Refrescar</button>
+                            <a class="btn btn-sm btn-light" href="<?php echo htmlspecialchars($daasUrl); ?>/app" target="_blank" rel="noopener">Abrir portal DaaS</a>
                         </div>
-                        <?php /* Exact docs pattern: script after the mount node, no async */ ?>
-                        <script src="<?php echo htmlspecialchars($widgetSrc, ENT_QUOTES, 'UTF-8'); ?>"
-                                id="daas-official-widget-script"
-                                data-zuitch-daas-widget="1"
-                                onerror="window.ZuitchDaasWidgetScriptFailed && window.ZuitchDaasWidgetScriptFailed();"></script>
-                    <?php } ?>
+                    </div>
+                    <input type="hidden" id="hash_id" name="hash_id" value="<?php echo htmlspecialchars($hash, ENT_QUOTES, 'UTF-8'); ?>">
+                    <div id="daas-orders-alert">
+                        <?php if ($ordersError !== '') { ?>
+                            <div class="alert alert-danger"><?php echo htmlspecialchars($ordersError); ?></div>
+                        <?php } ?>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover daas-orders-table" id="daas-orders-table">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Estado</th>
+                                    <th>Tipo</th>
+                                    <th>Pedido</th>
+                                    <th>Fecha</th>
+                                    <th>PR</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody id="daas-orders-tbody">
+                                <?php if (empty($orders)) { ?>
+                                    <tr class="daas-orders-empty"><td colspan="7" class="text-muted">No hay órdenes todavía.</td></tr>
+                                <?php } else { ?>
+                                    <?php foreach ($orders as $order) {
+                                        $id = isset($order['id']) ? (int) $order['id'] : 0;
+                                        $status = isset($order['status']) ? (string) $order['status'] : '';
+                                        $statusLabel = isset($order['status_label']) ? (string) $order['status_label'] : $status;
+                                        $typeLabel = isset($order['type_label']) ? (string) $order['type_label'] : (isset($order['type']) ? (string) $order['type'] : '');
+                                        $prompt = isset($order['prompt']) ? (string) $order['prompt'] : '';
+                                        $created = isset($order['created_at']) ? (string) $order['created_at'] : '';
+                                        $pr = isset($order['cursor_latest_pr_url']) ? (string) $order['cursor_latest_pr_url'] : '';
+                                        $canCancel = in_array($status, array('new', 'planned'), true);
+                                        ?>
+                                        <tr data-order-id="<?php echo $id; ?>">
+                                            <td><?php echo $id; ?></td>
+                                            <td><span class="badge badge-<?php echo zuitch_daas_status_badge($status); ?>"><?php echo htmlspecialchars($statusLabel); ?></span></td>
+                                            <td><?php echo htmlspecialchars($typeLabel); ?></td>
+                                            <td class="daas-order-prompt"><?php echo htmlspecialchars($prompt); ?></td>
+                                            <td><small><?php echo htmlspecialchars($created); ?></small></td>
+                                            <td>
+                                                <?php if ($pr !== '') { ?>
+                                                    <a href="<?php echo htmlspecialchars($pr); ?>" target="_blank" rel="noopener">PR</a>
+                                                <?php } else { ?>
+                                                    <span class="text-muted">—</span>
+                                                <?php } ?>
+                                            </td>
+                                            <td>
+                                                <?php if ($canCancel) { ?>
+                                                    <button type="button" class="btn btn-sm btn-outline-danger daas-cancel-order" data-id="<?php echo $id; ?>">Cancelar</button>
+                                                <?php } ?>
+                                            </td>
+                                        </tr>
+                                    <?php } ?>
+                                <?php } ?>
+                            </tbody>
+                        </table>
+                    </div>
+                    <small class="admin-info">Fuente: <code>GET <?php echo htmlspecialchars($daasUrl); ?>/api/v1/orders?company_external_id=<?php echo htmlspecialchars($companyId); ?></code></small>
+                </div>
+            </div>
+
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h6 class="card-title">Borradores locales del widget (cola en este navegador)</h6>
+                    <p class="admin-info mb-2">Si usaste “Agregar a cola” y aún no pulsaste “Enviar cola”, viven en <code>localStorage</code> de este browser.</p>
+                    <div id="daas-local-queue" class="daas-local-queue list-group"></div>
                 </div>
             </div>
         </div>
 
-        <div class="col-lg-5 col-md-12">
-            <div class="card">
+        <div class="col-lg-4 col-md-12">
+            <div class="card mb-3">
                 <div class="card-body">
-                    <h6 class="card-title">2. Código en producción (GitHub)</h6>
+                    <h6 class="card-title">Código en producción (GitHub)</h6>
                     <p class="mb-1"><strong>Rama:</strong> <?php echo htmlspecialchars($st['branch']); ?></p>
                     <p class="mb-1"><strong>SHA:</strong> <code id="daas-git-sha"><?php echo htmlspecialchars($st['sha']); ?></code></p>
                     <p class="mb-1"><strong>Origin:</strong> <code><?php echo htmlspecialchars($st['origin']); ?></code></p>
@@ -103,19 +156,24 @@ $widgetSrc = $daasUrl . '/widget.js';
                         <strong>Working tree:</strong>
                         <?php if (!empty($st['dirty'])) { ?>
                             <span class="badge badge-warning">sucio</span>
-                            <small class="d-block text-muted mt-1" style="white-space:pre-wrap;max-height:120px;overflow:auto;"><?php echo htmlspecialchars($st['dirty_files']); ?></small>
                         <?php } else { ?>
                             <span class="badge badge-success">limpio</span>
                         <?php } ?>
                     </p>
-                    <input type="hidden" id="hash_id" name="hash_id" value="<?php echo htmlspecialchars($hash, ENT_QUOTES, 'UTF-8'); ?>">
                     <button type="button" class="btn btn-primary" id="daas-pull-btn" onclick="return window.ZuitchDaasPull && window.ZuitchDaasPull(this);">
                         Actualizar código desde GitHub
                     </button>
                     <div id="daas-pull-result" class="mt-3"></div>
                     <small class="admin-info d-block mt-2">
-                        Sync URL: <code><?php echo htmlspecialchars($wo['config']['site_url']); ?>/api/daas/sync</code>
+                        Sync: <code><?php echo htmlspecialchars($wo['config']['site_url']); ?>/api/daas/sync</code>
                     </small>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="card-title">Crear pedidos</h6>
+                    <p class="mb-2">Usa el botón flotante DaaS (logo Alfa) en cualquier página del sitio estando logueado como superadmin.</p>
+                    <a class="btn btn-outline-primary btn-sm" href="<?php echo htmlspecialchars($wo['config']['site_url']); ?>" target="_blank" rel="noopener">Ir al sitio</a>
                 </div>
             </div>
         </div>
@@ -123,41 +181,87 @@ $widgetSrc = $daasUrl . '/widget.js';
 </div>
 <script>
 (function () {
-    var DAAS_URL = <?php echo json_encode($daasUrl); ?>;
     var PUBLIC_KEY = <?php echo json_encode($publicKey); ?>;
     var COMPANY_ID = <?php echo json_encode($companyId); ?>;
-    var REQUESTER_EMAIL = <?php echo json_encode($requesterEmail); ?>;
-    var REQUESTER_ID = <?php echo json_encode($requesterId); ?>;
 
-    function setStatus(type, html) {
-        var el = document.getElementById('daas-widget-status');
-        if (!el) return;
-        el.className = 'alert alert-' + type;
-        el.innerHTML = html;
+    function esc(s) {
+        return String(s == null ? '' : s)
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
     }
 
-    function rootHasWidgetUi() {
-        var root = document.getElementById('daas-widget-root');
-        if (!root) return false;
-        // Official widget usually injects children / shadow / iframe
-        if (root.childNodes && root.childNodes.length > 0) return true;
-        if (root.shadowRoot && root.shadowRoot.childNodes.length > 0) return true;
-        // Sometimes mounts as sibling FAB
-        if (document.querySelector('[data-daas-widget-mounted], .daas-widget, #daas-widget, iframe[src*="daas.alfabusiness"]')) {
-            return true;
+    function statusBadge(status) {
+        var map = { new: 'primary', planned: 'info', in_progress: 'warning', needs_review: 'secondary', done: 'success', dismissed: 'dark' };
+        return map[status] || 'secondary';
+    }
+
+    function renderOrders(orders) {
+        var $tb = $('#daas-orders-tbody');
+        $tb.empty();
+        if (!orders || !orders.length) {
+            $tb.append('<tr class="daas-orders-empty"><td colspan="7" class="text-muted">No hay órdenes todavía.</td></tr>');
+            return;
         }
-        return false;
+        orders.forEach(function (o) {
+            var canCancel = (o.status === 'new' || o.status === 'planned');
+            var pr = o.cursor_latest_pr_url
+                ? '<a href="' + esc(o.cursor_latest_pr_url) + '" target="_blank" rel="noopener">PR</a>'
+                : '<span class="text-muted">—</span>';
+            var cancelBtn = canCancel
+                ? '<button type="button" class="btn btn-sm btn-outline-danger daas-cancel-order" data-id="' + esc(o.id) + '">Cancelar</button>'
+                : '';
+            $tb.append(
+                '<tr data-order-id="' + esc(o.id) + '">' +
+                '<td>' + esc(o.id) + '</td>' +
+                '<td><span class="badge badge-' + statusBadge(o.status) + '">' + esc(o.status_label || o.status) + '</span></td>' +
+                '<td>' + esc(o.type_label || o.type || '') + '</td>' +
+                '<td class="daas-order-prompt">' + esc(o.prompt || '') + '</td>' +
+                '<td><small>' + esc(o.created_at || '') + '</small></td>' +
+                '<td>' + pr + '</td>' +
+                '<td>' + cancelBtn + '</td>' +
+                '</tr>'
+            );
+        });
     }
 
-    function showFallback(reason) {
-        var fb = document.getElementById('daas-widget-fallback');
-        if (fb) fb.style.display = 'block';
-        setStatus('warning', reason + ' Puedes usar el formulario de abajo.');
+    function refreshOrders() {
+        $('#daas-orders-alert').html('<div class="alert alert-secondary">Cargando…</div>');
+        $.get(Wo_Ajax_Requests_File() + '?f=daas&s=list_orders', { hash_id: $('#hash_id').val() }, function (data) {
+            if (data && data.status == 200) {
+                $('#daas-orders-alert').html('');
+                renderOrders(data.orders || []);
+            } else {
+                $('#daas-orders-alert').html('<div class="alert alert-danger">' + esc((data && data.message) || 'Error') + '</div>');
+            }
+        }, 'json').fail(function (xhr) {
+            var msg = 'Request failed';
+            try { var j = JSON.parse(xhr.responseText); if (j.message) msg = j.message; } catch (e) {}
+            $('#daas-orders-alert').html('<div class="alert alert-danger">' + esc(msg) + '</div>');
+        });
     }
 
-    window.ZuitchDaasWidgetScriptFailed = function () {
-        showFallback('No se pudo cargar <code>' + DAAS_URL + '/widget.js</code> desde tu navegador.');
-    };
+    function renderLocalQueue() {
+        var $box = $('#daas-local-queue');
+        $box.empty();
+        var key = 'daas-draft-queue:' + PUBLIC_KEY + ':' + COMPANY_ID;
+        var raw = null;
+        try { raw = localStorage.getItem(key); } catch (e) {}
+        var items = [];
+        try { items = raw ? JSON.parse(raw) : []; } catch (e) { items = []; }
+        if (!Array.isArray(items) || !items.length) {
+            $box.append('<div class="list-group-item text-muted">No hay borradores locales en este navegador.</div>');
+            return;
+        }
+        items.forEach(function (it, idx) {
+            var prompt = (it && (it.prompt || it.description || it.title)) || JSON.stringify(it).slice(0, 120);
+            $box.append(
+                '<div class="list-group-item">' +
+                '<strong>Borrador ' + (idx + 1) + '</strong>' +
+                '<div class="daas-order-prompt mt-1">' + esc(prompt) + '</div>' +
+                '</div>'
+            );
+        });
+    }
 
     window.ZuitchDaasPull = function (btn) {
         var $btn = $(btn);
@@ -169,82 +273,40 @@ $widgetSrc = $daasUrl . '/widget.js';
         }, function (data) {
             $btn.prop('disabled', false).text('Actualizar código desde GitHub');
             if (data && data.status == 200) {
-                $out.html('<div class="alert alert-success">' + (data.message || 'OK') +
-                    (data.sha ? ' <code>' + data.sha + '</code>' : '') + '</div>');
+                $out.html('<div class="alert alert-success">' + esc(data.message || 'OK') +
+                    (data.sha ? ' <code>' + esc(data.sha) + '</code>' : '') + '</div>');
                 if (data.sha) $('#daas-git-sha').text(data.sha);
             } else {
-                $out.html('<div class="alert alert-danger">' + ((data && data.message) ? data.message : 'Error') + '</div>');
+                $out.html('<div class="alert alert-danger">' + esc((data && data.message) || 'Error') + '</div>');
             }
         }, 'json').fail(function (xhr) {
             $btn.prop('disabled', false).text('Actualizar código desde GitHub');
             var msg = 'Request failed';
             try { var j = JSON.parse(xhr.responseText); if (j.message) msg = j.message; } catch (e) {}
-            $out.html('<div class="alert alert-danger">' + msg + '</div>');
+            $out.html('<div class="alert alert-danger">' + esc(msg) + '</div>');
         });
         return false;
     };
 
-    // Watch for official widget mount; otherwise show fallback
-    var tries = 0;
-    var timer = setInterval(function () {
-        tries++;
-        if (rootHasWidgetUi()) {
-            clearInterval(timer);
-            setStatus('success', 'Widget DaaS listo. Envía tu pedido UX/UI aquí.');
-            var fb = document.getElementById('daas-widget-fallback');
-            if (fb) fb.style.display = 'none';
-            return;
-        }
-        if (tries >= 15) {
-            clearInterval(timer);
-            showFallback('El widget oficial no apareció tras cargar el script.');
-        }
-    }, 400);
+    $('#daas-orders-refresh').on('click', refreshOrders);
 
-    // Fallback form → DaaS public orders API (same as widget)
-    $(document).on('click', '#daas-fallback-submit', function () {
-        var prompt = ($('#daas-fallback-prompt').val() || '').trim();
-        var $out = $('#daas-fallback-result');
-        if (!prompt) {
-            $out.html('<div class="alert alert-danger">Escribe la descripción del cambio.</div>');
-            return;
-        }
-        var fd = new FormData();
-        fd.append('public_key', PUBLIC_KEY);
-        fd.append('company_external_id', COMPANY_ID);
-        fd.append('prompt', prompt);
-        fd.append('description', prompt);
-        fd.append('title', prompt.substring(0, 80));
-        if (REQUESTER_EMAIL) fd.append('requester_email', REQUESTER_EMAIL);
-        if (REQUESTER_ID) fd.append('requester_external_id', REQUESTER_ID);
-        var files = document.getElementById('daas-fallback-files').files || [];
-        for (var i = 0; i < files.length; i++) {
-            fd.append('attachments[]', files[i]);
-            fd.append('screenshots[]', files[i]);
-        }
-        $out.html('<div class="alert alert-secondary">Enviando…</div>');
-        fetch(DAAS_URL + '/api/v1/orders', {
-            method: 'POST',
-            body: fd,
-            credentials: 'omit'
-        }).then(function (r) {
-            return r.text().then(function (t) {
-                var j = null;
-                try { j = JSON.parse(t); } catch (e) {}
-                return { ok: r.ok, status: r.status, json: j, text: t };
-            });
-        }).then(function (res) {
-            if (res.ok) {
-                var id = res.json && (res.json.id || (res.json.data && res.json.data.id));
-                $out.html('<div class="alert alert-success">Pedido enviado' + (id ? ' (#' + id + ')' : '') + '.</div>');
-                $('#daas-fallback-prompt').val('');
-                return;
+    $(document).on('click', '.daas-cancel-order', function () {
+        var id = $(this).data('id');
+        if (!id || !confirm('¿Cancelar la orden #' + id + '?')) return;
+        $.post(Wo_Ajax_Requests_File() + '?f=daas&s=cancel_order', {
+            hash_id: $('#hash_id').val(),
+            order_id: id
+        }, function (data) {
+            if (data && data.status == 200) {
+                refreshOrders();
+            } else {
+                alert((data && data.message) || 'No se pudo cancelar');
             }
-            var msg = (res.json && (res.json.message || res.json.error)) ? (res.json.message || res.json.error) : ('HTTP ' + res.status);
-            $out.html('<div class="alert alert-danger">No se pudo crear el pedido: ' + msg + '</div>');
-        }).catch(function (err) {
-            $out.html('<div class="alert alert-danger">No hay conexión con DaaS desde el navegador (' + (err && err.message ? err.message : 'error') + '). Abre <a href="' + DAAS_URL + '" target="_blank" rel="noopener">' + DAAS_URL + '</a> y verifica que cargue.</div>');
+        }, 'json').fail(function () {
+            alert('Error al cancelar');
         });
     });
+
+    renderLocalQueue();
 })();
 </script>
