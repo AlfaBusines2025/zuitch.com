@@ -84,14 +84,26 @@ if ($f == 'pages') {
                     $errors[] = $error_icon . $wo['lang']['website_invalid_characters'];
                 }
             }
+            if (!empty($_POST['page_email']) && !filter_var($_POST['page_email'], FILTER_VALIDATE_EMAIL)) {
+                $errors[] = $error_icon . $wo['lang']['email_invalid_characters'];
+            }
             if ($PageData['user_id'] == $wo['user']['id'] || Wo_IsCanPageUpdate($_POST['page_id'], 'info')) {
                 if (empty($errors)) {
+                    $whatsapp = '';
+                    if (!empty($_POST['whatsapp'])) {
+                        $whatsapp = preg_replace('/\D+/', '', $_POST['whatsapp']);
+                    }
                     $Update_data = array(
                         'website' => $_POST['website'],
                         'page_description' => $_POST['page_description'],
                         'company' => $_POST['company'],
                         'address' => $_POST['address'],
-                        'phone' => $_POST['phone']
+                        'phone' => $_POST['phone'],
+                        'whatsapp' => $whatsapp,
+                        'page_email' => !empty($_POST['page_email']) ? $_POST['page_email'] : '',
+                        'show_cta_whatsapp' => (!empty($_POST['show_cta_whatsapp']) && $_POST['show_cta_whatsapp'] == '1') ? 1 : 0,
+                        'show_cta_email' => (!empty($_POST['show_cta_email']) && $_POST['show_cta_email'] == '1') ? 1 : 0,
+                        'show_cta_call' => (!empty($_POST['show_cta_call']) && $_POST['show_cta_call'] == '1') ? 1 : 0
                     );
                     if (Wo_UpdatePageData($_POST['page_id'], $Update_data)) {
                         $data = array(

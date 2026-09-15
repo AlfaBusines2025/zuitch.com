@@ -1,0 +1,46 @@
+<?php
+if (!empty($wo['story']['page_id']) && !empty($wo['story']['publisher']) && !empty($wo['story']['publisher']['page_id'])) {
+	$page = $wo['story']['publisher'];
+	$cta_items = array();
+
+	if (!empty($page['show_cta_whatsapp']) && !empty($page['whatsapp'])) {
+		$wa = preg_replace('/\D+/', '', $page['whatsapp']);
+		if ($wa !== '') {
+			$cta_items[] = array(
+				'href' => 'https://wa.me/' . $wa,
+				'label' => 'WhatsApp',
+				'class' => 'page-cta-whatsapp'
+			);
+		}
+	}
+
+	if (!empty($page['show_cta_email']) && !empty($page['page_email']) && filter_var($page['page_email'], FILTER_VALIDATE_EMAIL)) {
+		$cta_items[] = array(
+			'href' => 'mailto:' . $page['page_email'],
+			'label' => 'Email',
+			'class' => 'page-cta-email'
+		);
+	}
+
+	if (!empty($page['show_cta_call']) && !empty($page['phone'])) {
+		$tel = preg_replace('/[^\d+]/', '', $page['phone']);
+		if ($tel !== '') {
+			$cta_items[] = array(
+				'href' => 'tel:' . $tel,
+				'label' => 'Llamar',
+				'class' => 'page-cta-call'
+			);
+		}
+	}
+
+	if (!empty($cta_items)) {
+?>
+<div class="page-post-ctas" style="padding:8px 15px 0;display:flex;flex-wrap:wrap;gap:8px;">
+	<?php foreach ($cta_items as $cta) { ?>
+		<a class="btn btn-default btn-sm <?php echo $cta['class']; ?>" href="<?php echo htmlspecialchars($cta['href'], ENT_QUOTES, 'UTF-8'); ?>" target="_blank" rel="noopener noreferrer"><?php echo htmlspecialchars($cta['label'], ENT_QUOTES, 'UTF-8'); ?></a>
+	<?php } ?>
+</div>
+<?php
+	}
+}
+?>

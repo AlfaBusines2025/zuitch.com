@@ -24,6 +24,43 @@
 		<div class="row">
 			<div class="col-md-6">
 				<div class="wow_form_fields">
+					<label for="whatsapp">WhatsApp</label>
+					<input id="whatsapp" name="whatsapp" type="text" value="<?php echo !empty($wo['setting']['whatsapp']) ? $wo['setting']['whatsapp'] : '';?>" placeholder="5939xxxxxxx" autocomplete="off">
+					<span class="help-block">Solo dígitos con código de país (sin +)</span>
+				</div>
+			</div>
+			<div class="col-md-6">
+				<div class="wow_form_fields">
+					<label for="page_email">Email de contacto</label>
+					<input id="page_email" name="page_email" type="email" value="<?php echo !empty($wo['setting']['page_email']) ? $wo['setting']['page_email'] : '';?>" autocomplete="off">
+				</div>
+			</div>
+		</div>
+		<div class="wow_form_fields mb-0">
+			<label>Mostrar en posts de la Página</label>
+		</div>
+		<div class="form-group">
+			<?php
+				$cta_wa = !empty($wo['setting']['show_cta_whatsapp']) ? ' checked' : '';
+				$cta_em = !empty($wo['setting']['show_cta_email']) ? ' checked' : '';
+				$cta_call = !empty($wo['setting']['show_cta_call']) ? ' checked' : '';
+			?>
+			<div class="col-md-12 round-check">
+				<input type="checkbox" name="show_cta_whatsapp" id="show_cta_whatsapp" value="1"<?php echo $cta_wa; ?>>
+				<label for="show_cta_whatsapp">Botón WhatsApp</label>
+			</div>
+			<div class="col-md-12 round-check">
+				<input type="checkbox" name="show_cta_email" id="show_cta_email" value="1"<?php echo $cta_em; ?>>
+				<label for="show_cta_email">Botón Email</label>
+			</div>
+			<div class="col-md-12 round-check">
+				<input type="checkbox" name="show_cta_call" id="show_cta_call" value="1"<?php echo $cta_call; ?>>
+				<label for="show_cta_call">Botón Llamar (usa el teléfono de arriba)</label>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-md-6">
+				<div class="wow_form_fields">
 					<label for="address"><?php echo $wo['lang']['location']; ?></label>
 					<input name="address" id="address" type="text" value="<?php echo $wo['setting']['address']?>">
 					<?php if ($wo['config']['yandex_map'] == 1) { ?>

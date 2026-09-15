@@ -310,4 +310,18 @@ ExpiresDefault "access plus 1 month"
 
   Header unset Keep-Alive
   Header set Keep-Alive timeout=100,max=500
+
+  Header always set X-Frame-Options "SAMEORIGIN"
+  Header always set X-Content-Type-Options "nosniff"
 </ifModule>
+
+# Bloquear descarga pública de artefactos sensibles
+<FilesMatch "\.(zip|sql|log|tar|gz|rar|7z|bak)$">
+  <IfModule mod_authz_core.c>
+    Require all denied
+  </IfModule>
+  <IfModule !mod_authz_core.c>
+    Order allow,deny
+    Deny from all
+  </IfModule>
+</FilesMatch>
