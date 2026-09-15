@@ -958,14 +958,12 @@
       echo '<div class="contnet">' . $footer_ad . '</div>';
     }
     ?>
-    <?php if ($wo['loggedin'] && function_exists('Wo_IsAdmin') && Wo_IsAdmin() && !in_array($wo['page'], array('welcome', 'register', 'reels', 'zuitch'))) { ?>
-    <a href="<?php echo $wo['config']['site_url']; ?>/admin-cp/daas"
-       id="zuitch-daas-fab"
-       title="Pedidos UX/UI (DaaS)"
-       style="position:fixed;right:18px;bottom:88px;z-index:99999;background:#C32E3A;color:#fff;padding:12px 16px;border-radius:999px;font-weight:700;box-shadow:0 6px 20px rgba(0,0,0,.25);text-decoration:none;font-size:13px;">
-      Pedidos UX/UI
-    </a>
-    <?php } ?>
+    <?php
+    // Official DaaS FAB (Alfa logo) for superadmin only — site-wide
+    if ($wo['loggedin'] == true) {
+      echo Wo_LoadPage('extra/daas-widget');
+    }
+    ?>
     <footer>
       <?php
       if ($wo['page'] != 'welcome' && $wo['page'] != 'register' && $wo['page'] != 'get_news_feed' && $wo['page'] != 'forum' && $wo['page'] != 'messages' && $wo['page'] != 'jobs') {
