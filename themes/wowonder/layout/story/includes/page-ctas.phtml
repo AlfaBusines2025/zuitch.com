@@ -1,35 +1,75 @@
 <?php
-if (!empty($wo['story']['page_id']) && !empty($wo['story']['publisher']) && !empty($wo['story']['publisher']['page_id'])) {
-	$page = $wo['story']['publisher'];
+if (!empty($wo['story']['page_id']) && (int) $wo['story']['page_id'] > 0) {
 	$cta_items = array();
+	$use_post_cta = (
+		(!empty($wo['story']['show_cta_whatsapp']) && !empty($wo['story']['post_whatsapp'])) ||
+		(!empty($wo['story']['show_cta_email']) && !empty($wo['story']['post_email'])) ||
+		(!empty($wo['story']['show_cta_call']) && !empty($wo['story']['post_phone']))
+	);
 
-	if (!empty($page['show_cta_whatsapp']) && !empty($page['whatsapp'])) {
-		$wa = preg_replace('/\D+/', '', $page['whatsapp']);
-		if ($wa !== '') {
+	if ($use_post_cta) {
+		if (!empty($wo['story']['show_cta_whatsapp']) && !empty($wo['story']['post_whatsapp'])) {
+			$wa = preg_replace('/\D+/', '', $wo['story']['post_whatsapp']);
+			if ($wa !== '') {
+				$cta_items[] = array(
+					'href' => 'https://wa.me/' . $wa,
+					'label' => 'WhatsApp',
+					'class' => 'page-cta-whatsapp'
+				);
+			}
+		}
+		if (!empty($wo['story']['show_cta_email']) && !empty($wo['story']['post_email']) && filter_var($wo['story']['post_email'], FILTER_VALIDATE_EMAIL)) {
 			$cta_items[] = array(
-				'href' => 'https://wa.me/' . $wa,
-				'label' => 'WhatsApp',
-				'class' => 'page-cta-whatsapp'
+				'href' => 'mailto:' . $wo['story']['post_email'],
+				'label' => 'Email',
+				'class' => 'page-cta-email'
 			);
 		}
-	}
-
-	if (!empty($page['show_cta_email']) && !empty($page['page_email']) && filter_var($page['page_email'], FILTER_VALIDATE_EMAIL)) {
-		$cta_items[] = array(
-			'href' => 'mailto:' . $page['page_email'],
-			'label' => 'Email',
-			'class' => 'page-cta-email'
-		);
-	}
-
-	if (!empty($page['show_cta_call']) && !empty($page['phone'])) {
-		$tel = preg_replace('/[^\d+]/', '', $page['phone']);
-		if ($tel !== '') {
-			$cta_items[] = array(
-				'href' => 'tel:' . $tel,
-				'label' => 'Llamar',
-				'class' => 'page-cta-call'
-			);
+		if (!empty($wo['story']['show_cta_call']) && !empty($wo['story']['post_phone'])) {
+			$tel = preg_replace('/[^\d+]/', '', $wo['story']['post_phone']);
+			if ($tel !== '') {
+				$cta_items[] = array(
+					'href' => 'tel:' . $tel,
+					'label' => 'Llamar',
+					'class' => 'page-cta-call'
+				);
+			}
+		}
+	} else {
+		$page = array();
+		if (!empty($wo['story']['publisher']) && !empty($wo['story']['publisher']['page_id'])) {
+			$page = $wo['story']['publisher'];
+		} else {
+			$page = Wo_PageData($wo['story']['page_id']);
+		}
+		if (!empty($page) && !empty($page['page_id'])) {
+			if (!empty($page['show_cta_whatsapp']) && !empty($page['whatsapp'])) {
+				$wa = preg_replace('/\D+/', '', $page['whatsapp']);
+				if ($wa !== '') {
+					$cta_items[] = array(
+						'href' => 'https://wa.me/' . $wa,
+						'label' => 'WhatsApp',
+						'class' => 'page-cta-whatsapp'
+					);
+				}
+			}
+			if (!empty($page['show_cta_email']) && !empty($page['page_email']) && filter_var($page['page_email'], FILTER_VALIDATE_EMAIL)) {
+				$cta_items[] = array(
+					'href' => 'mailto:' . $page['page_email'],
+					'label' => 'Email',
+					'class' => 'page-cta-email'
+				);
+			}
+			if (!empty($page['show_cta_call']) && !empty($page['phone'])) {
+				$tel = preg_replace('/[^\d+]/', '', $page['phone']);
+				if ($tel !== '') {
+					$cta_items[] = array(
+						'href' => 'tel:' . $tel,
+						'label' => 'Llamar',
+						'class' => 'page-cta-call'
+					);
+				}
+			}
 		}
 	}
 

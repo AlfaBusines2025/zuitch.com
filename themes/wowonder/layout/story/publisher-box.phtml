@@ -122,6 +122,34 @@ if (!empty($_GET['url'])) {
                 <?php } ?>
             </div>
         </div>
+        <?php if ($wo['page'] == 'page' && !empty($wo['page_profile']['page_id'])) {
+            $cta_wa_val = !empty($wo['page_profile']['whatsapp']) ? $wo['page_profile']['whatsapp'] : '';
+            $cta_em_val = !empty($wo['page_profile']['page_email']) ? $wo['page_profile']['page_email'] : '';
+            $cta_ph_val = !empty($wo['page_profile']['phone']) ? $wo['page_profile']['phone'] : '';
+            $cta_wa_chk = !empty($wo['page_profile']['show_cta_whatsapp']) ? ' checked' : '';
+            $cta_em_chk = !empty($wo['page_profile']['show_cta_email']) ? ' checked' : '';
+            $cta_call_chk = !empty($wo['page_profile']['show_cta_call']) ? ' checked' : '';
+        ?>
+        <div class="publisher-hidden-option" id="post-cta-form" style="display:block;padding:10px 15px 0;border-top:1px dashed #ededed;">
+            <div style="font-size:13px;font-weight:600;margin-bottom:8px;color:#555;">CTAs de esta publicación</div>
+            <div class="row">
+                <div class="col-md-4" style="margin-bottom:8px;">
+                    <input name="post_cta_whatsapp" type="text" class="form-control" placeholder="WhatsApp (5939xxxxxxx)" value="<?php echo htmlspecialchars($cta_wa_val, ENT_QUOTES, 'UTF-8'); ?>" autocomplete="off">
+                </div>
+                <div class="col-md-4" style="margin-bottom:8px;">
+                    <input name="post_cta_email" type="email" class="form-control" placeholder="Email de contacto" value="<?php echo htmlspecialchars($cta_em_val, ENT_QUOTES, 'UTF-8'); ?>" autocomplete="off">
+                </div>
+                <div class="col-md-4" style="margin-bottom:8px;">
+                    <input name="post_cta_phone" type="text" class="form-control" placeholder="Teléfono para llamar" value="<?php echo htmlspecialchars($cta_ph_val, ENT_QUOTES, 'UTF-8'); ?>" autocomplete="off">
+                </div>
+            </div>
+            <div class="form-group" style="margin-bottom:8px;">
+                <label style="font-weight:normal;margin-right:12px;"><input type="checkbox" name="show_cta_whatsapp" value="1"<?php echo $cta_wa_chk; ?>> WhatsApp</label>
+                <label style="font-weight:normal;margin-right:12px;"><input type="checkbox" name="show_cta_email" value="1"<?php echo $cta_em_chk; ?>> Email</label>
+                <label style="font-weight:normal;"><input type="checkbox" name="show_cta_call" value="1"<?php echo $cta_call_chk; ?>> Llamar</label>
+            </div>
+        </div>
+        <?php } ?>
         <!--Add Emojis-->
         <div id="emo-form">
             <div class="publisher-hidden-option" style="border-top: 1px dashed #ededed;">
@@ -388,12 +416,18 @@ if (!empty($_GET['url'])) {
                 <?php } ?>
                 <?php if ($wo['config']['reels_upload'] == 1 ) {
                     $wo_pub_reels_editor_url = Wo_SeoLink('index.php?link1=reels-editor');
+                    $wo_pub_reels_ajax = '?link1=reels-editor';
+                    if ($wo['page'] == 'page' && !empty($wo['page_profile']['page_id'])) {
+                        $wo_pub_reels_page_id = (int) $wo['page_profile']['page_id'];
+                        $wo_pub_reels_editor_url .= (strpos($wo_pub_reels_editor_url, '?') !== false ? '&' : '?') . 'page_id=' . $wo_pub_reels_page_id;
+                        $wo_pub_reels_ajax .= '&page_id=' . $wo_pub_reels_page_id;
+                    }
                 ?>
                     <div class="sun_pub_more_items">
                         <div class="poster-left-buttons">
                             <a class="btn btn-file vid"
                                href="<?php echo $wo_pub_reels_editor_url; ?>"
-                               data-ajax="?link1=reels-editor">
+                               data-ajax="<?php echo htmlspecialchars($wo_pub_reels_ajax, ENT_QUOTES, 'UTF-8'); ?>">
                                 <span>
                                     <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 34 34">
                                         <path d="M27.5 1h-21C3.46 1 1 3.47 1 6.5v21C1 30.53 3.46 33 6.5 33h21c3.03 0 5.5-2.47 5.5-5.5v-21C33 3.47 30.53 1 27.5 1zM13 4h1.5c.82 0 1.5.67 1.5 1.5S15.32 7 14.5 7H13c-.83 0-1.5-.67-1.5-1.5S12.17 4 13 4zm8.58 12.19c.26.19.42.49.42.81 0 .33-.16.63-.42.82l-7 5c-.18.12-.38.18-.58.18a.92.92 0 0 1-.46-.11A.997.997 0 0 1 13 22V12c0-.37.21-.71.54-.88s.73-.15 1.04.07zM8 30H6.5c-.83 0-1.5-.67-1.5-1.5S5.67 27 6.5 27H8c.82 0 1.5.67 1.5 1.5S8.82 30 8 30zM8 7H6.5C5.67 7 5 6.33 5 5.5S5.67 4 6.5 4H8c.82 0 1.5.67 1.5 1.5S8.82 7 8 7zm6.5 23H13c-.83 0-1.5-.67-1.5-1.5S12.17 27 13 27h1.5c.82 0 1.5.67 1.5 1.5s-.68 1.5-1.5 1.5zm6.5 0h-1.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5H21c.82 0 1.5.67 1.5 1.5S21.82 30 21 30zm0-23h-1.5c-.83 0-1.5-.67-1.5-1.5S18.67 4 19.5 4H21c.82 0 1.5.67 1.5 1.5S21.82 7 21 7zm6.5 23H26c-.83 0-1.5-.67-1.5-1.5S25.17 27 26 27h1.5c.82 0 1.5.67 1.5 1.5s-.68 1.5-1.5 1.5zm0-23H26c-.83 0-1.5-.67-1.5-1.5S25.17 4 26 4h1.5c.82 0 1.5.67 1.5 1.5S28.32 7 27.5 7z"
