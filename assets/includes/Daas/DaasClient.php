@@ -51,7 +51,8 @@ class DaasClient
      */
     public function cancelOrder($id)
     {
-        return $this->request('POST', '/api/v1/orders/' . rawurlencode((string) $id) . '/cancel');
+        // Hub rejects body-less POST with HTML 403; empty JSON body is required.
+        return $this->request('POST', '/api/v1/orders/' . rawurlencode((string) $id) . '/cancel', array());
     }
 
     /**
