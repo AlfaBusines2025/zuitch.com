@@ -15,7 +15,7 @@ $st = $git->status();
 $publicKey = daas_env('DAAS_PUBLIC_KEY', '');
 $companyId = daas_env('DAAS_BILLING_EXTERNAL_ID', 'zuitch');
 $daasUrl = rtrim(daas_env('DAAS_URL', 'https://daas.alfabusiness.app'), '/');
-$hash = Wo_CreateSession();
+$hash = Wo_CreateMainSession();
 
 $daas = new DaasClient();
 $ordersRes = $daas->listOrders(array(
@@ -123,6 +123,33 @@ if (!function_exists('zuitch_daas_format_date')) {
   background: #a82630;
   border-color: #a82630;
   color: #fff;
+}
+/* Admin theme forces outline buttons to white text on transparent bg — override */
+#daas-ux-panel .btn.btn-outline-secondary,
+#daas-ux-panel a.btn.btn-outline-secondary {
+  color: #374151 !important;
+  background: #fff !important;
+  border-color: #d1d5db !important;
+  box-shadow: none !important;
+}
+#daas-ux-panel .btn.btn-outline-secondary:hover,
+#daas-ux-panel a.btn.btn-outline-secondary:hover {
+  color: #111827 !important;
+  background: #f3f4f6 !important;
+  border-color: #9ca3af !important;
+}
+#daas-ux-panel .btn.btn-outline-danger,
+#daas-ux-panel button.btn.btn-outline-danger {
+  color: #C32E3A !important;
+  background: #fff !important;
+  border-color: #C32E3A !important;
+  box-shadow: none !important;
+}
+#daas-ux-panel .btn.btn-outline-danger:hover,
+#daas-ux-panel button.btn.btn-outline-danger:hover {
+  color: #fff !important;
+  background: #C32E3A !important;
+  border-color: #C32E3A !important;
 }
 #daas-ux-panel .daas-orders-list { display: flex; flex-direction: column; gap: 12px; min-height: 48px; }
 #daas-ux-panel .daas-order-card {
@@ -377,6 +404,10 @@ if (!function_exists('zuitch_daas_format_date')) {
         return d.getDate() + ' ' + months[d.getMonth()] + ' ' + d.getFullYear() + ', ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
     }
 
+    function daasHash() {
+        return ($('.main_session').val() || $('#hash_id').val() || '');
+    }
+
     function updateChips(orders) {
         var q = 0, p = 0, d = 0;
         (orders || []).forEach(function (o) {
@@ -436,7 +467,7 @@ if (!function_exists('zuitch_daas_format_date')) {
         var $btn = $('#daas-orders-refresh');
         $btn.prop('disabled', true).text('Cargando…');
         $('#daas-orders-alert').html('');
-        $.get(Wo_Ajax_Requests_File() + '?f=daas&s=list_orders', { hash_id: $('#hash_id').val() }, function (data) {
+        $.get(Wo_Ajax_Requests_File() + '?f=daas&s=list_orders', { hash_id: daasHash() }, function (data) {
             $btn.prop('disabled', false).text('Refrescar');
             if (data && data.status == 200) {
                 renderOrders(data.orders || []);
@@ -482,7 +513,7 @@ if (!function_exists('zuitch_daas_format_date')) {
         $btn.prop('disabled', true).text('Actualizando…');
         $out.html('');
         $.post(Wo_Ajax_Requests_File() + '?f=daas&s=pull', {
-            hash_id: $('#hash_id').val()
+            hash_id: daasHash()
         }, function (data) {
             $btn.prop('disabled', false).text('Actualizar desde GitHub');
             if (data && data.status == 200) {
@@ -526,7 +557,7 @@ if (!function_exists('zuitch_daas_format_date')) {
         var id = $(this).data('id');
         if (!id || !confirm('¿Cancelar la orden #' + id + '?')) return;
         $.post(Wo_Ajax_Requests_File() + '?f=daas&s=cancel_order', {
-            hash_id: $('#hash_id').val(),
+            hash_id: daasHash(),
             order_id: id
         }, function (data) {
             if (data && data.status == 200) {
