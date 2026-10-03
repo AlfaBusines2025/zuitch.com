@@ -26,6 +26,61 @@ header('Content-Type: application/json; charset=utf-8');
 function message_reference(): string {
   try { return bin2hex(random_bytes(16)); } catch (Throwable $e) { return dechex(time()) . '-' . mt_rand(); }
 }
+/** Normalize dim/weight to a positive float string for MyDHL (strip units, commas). */
+function dhl_normalize_measure($value, float $min = 0.1): string {
+  if ($value === null) return '';
+  $s = trim((string)$value);
+  if ($s === '') return '';
+  $s = str_replace(',', '.', $s);
+  if (preg_match('/(-?\d+(?:\.\d+)?)/', $s, $m)) {
+    $n = (float)$m[1];
+    if ($n <= 0) $n = $min;
+    if ($n < $min) $n = $min;
+    return rtrim(rtrim(number_format($n, 3, '.', ''), '0'), '.') ?: (string)$min;
+  }
+  return '';
+}
+function dhl_parse_error_message($rawBody, int $http): string {
+  $fallback = 'No se pudo calcular el envío DHL';
+  if ($http === 401) return 'Credenciales DHL inválidas';
+  if ($http === 404) return 'DHL no tiene servicio para esta ruta o código postal';
+  if (!is_string($rawBody) || $rawBody === '') {
+    return $http === 400 ? 'Datos de envío inválidos (origen, peso o medidas)' : $fallback;
+  }
+  $j = json_decode($rawBody, true);
+  if (!is_array($j)) {
+    return $http === 400 ? 'Datos de envío inválidos (origen, peso o medidas)' : $fallback;
+  }
+  $candidates = [];
+  if (!empty($j['detail']) && is_string($j['detail'])) $candidates[] = $j['detail'];
+  if (!empty($j['message']) && is_string($j['message'])) $candidates[] = $j['message'];
+  if (!empty($j['title']) && is_string($j['title'])) $candidates[] = $j['title'];
+  if (!empty($j['additionalDetails']) && is_array($j['additionalDetails'])) {
+    foreach ($j['additionalDetails'] as $ad) {
+      if (is_string($ad)) $candidates[] = $ad;
+      elseif (is_array($ad) && !empty($ad['message'])) $candidates[] = (string)$ad['message'];
+    }
+  }
+  if (!empty($j['reasons']) && is_array($j['reasons'])) {
+    foreach ($j['reasons'] as $r) {
+      if (is_array($r) && !empty($r['msg'])) $candidates[] = (string)$r['msg'];
+      elseif (is_string($r)) $candidates[] = $r;
+    }
+  }
+  foreach ($candidates as $c) {
+    $c = trim(preg_replace('/\s+/', ' ', $c));
+    if ($c !== '') {
+      // Mensajes técnicos cortos → texto usable
+      if (preg_match('/postal|zip|postcode/i', $c)) return 'Código postal de origen o destino no válido para DHL';
+      if (preg_match('/weight|dimension|length|width|height/i', $c)) return 'Peso o medidas del producto no válidos para DHL';
+      if (preg_match('/country/i', $c)) return 'País de origen o destino no válido para DHL';
+      if (preg_match('/account/i', $c)) return 'Cuenta DHL no válida para esta cotización';
+      if (strlen($c) <= 180) return $c;
+      return substr($c, 0, 177) . '…';
+    }
+  }
+  return $http === 400 ? 'Datos de envío inválidos (origen, peso o medidas)' : $fallback;
+}
 function dhl_headers(): array {
   $apiKey    = DHL_API_KEY ?: (getenv('DHL_API_KEY') ?: '');
   $apiSecret = DHL_API_SECRET ?: (getenv('DHL_API_SECRET') ?: '');
@@ -181,11 +236,28 @@ foreach ($items as $p) {
 
   // Campos mínimos de DHL
   $need = ['originCountryCode','originPostalCode','originCityName','weight','length','width','height'];
+  // Normalizar medidas / país antes de validar
+  $p['originCountryCode'] = strtoupper(substr(preg_replace('/[^A-Za-z]/', '', (string)($p['originCountryCode'] ?? '')), 0, 2));
+  $p['originPostalCode']  = trim((string)($p['originPostalCode'] ?? ''));
+  $p['originCityName']    = trim((string)($p['originCityName'] ?? ''));
+  $p['weight'] = dhl_normalize_measure($p['weight'] ?? '', 0.1);
+  $p['length'] = dhl_normalize_measure($p['length'] ?? '', 1);
+  $p['width']  = dhl_normalize_measure($p['width'] ?? '', 1);
+  $p['height'] = dhl_normalize_measure($p['height'] ?? '', 1);
+
   $hasAll = true; foreach ($need as $k) { if (empty($p[$k])) { $hasAll = false; break; } }
+  if ($hasAll && strlen($p['originCountryCode']) !== 2) {
+    $hasAll = false;
+  }
 
   if (!$use || !$hasAll) {
+    $reason = !$use ? 'not_selected' : 'missing_fields';
+    $userMessage = $reason === 'missing_fields'
+      ? 'Faltan datos de envío en el producto (país, ciudad, CP, peso o medidas)'
+      : '';
     $perProduct[] = [
-      'productId'=>$pid, 'quoted'=>false, 'reason'=> $use ? 'missing_fields' : 'not_selected',
+      'productId'=>$pid, 'quoted'=>false, 'reason'=> $reason,
+      'userMessage'=>$userMessage,
       'unit'=>0.0, 'subtotal'=>0.0, 'extraPerUnit'=>$extra, 'extraSubtotal'=>0.0, 'total'=>0.0,
       'env'=>$env
     ];
@@ -238,11 +310,15 @@ foreach ($items as $p) {
 
   // Si ambos fallan
   if (!$resUsed['ok']) {
+    $httpCode = (int)($resUsed['code'] ?? 0);
+    $userMessage = dhl_parse_error_message($resUsed['data'] ?? '', $httpCode);
+    error_log('[DHL] rate fail pid=' . $pid . ' http=' . $httpCode . ' msg=' . $userMessage);
     $itemOut = [
-      'productId'=>$pid, 'quoted'=>false, 'reason'=>'dhl_error', 'http'=>$resUsed['code'] ?? 0,
+      'productId'=>$pid, 'quoted'=>false, 'reason'=>'dhl_error', 'http'=>$httpCode,
+      'userMessage'=>$userMessage,
       'unit'=>0.0, 'subtotal'=>0.0, 'extraPerUnit'=>round($extra,2), 'extraSubtotal'=>0.0, 'total'=>0.0,
       'env'=>$env,
-      'message'=>'No se pudo cotizar con DHL usando cuentas primaria ni fallback.'
+      'message'=>$userMessage
     ];
     if ($debug) { $itemOut['attempts'] = $attempts; $itemOut['raw'] = $resUsed['data'] ?? null; }
     $perProduct[] = $itemOut;

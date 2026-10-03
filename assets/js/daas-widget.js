@@ -492,9 +492,60 @@
     }
 
     function targetFromEvent(e) {
-      var el = e.target;
+      var el = null;
+      var cx = null;
+      var cy = null;
+      /* iOS: prefer elementFromPoint / elementsFromPoint so capas encima del video siguen siendo marcables */
+      try {
+        cx = (e.changedTouches && e.changedTouches[0])
+          ? e.changedTouches[0].clientX
+          : (typeof e.clientX === 'number' ? e.clientX : null);
+        cy = (e.changedTouches && e.changedTouches[0])
+          ? e.changedTouches[0].clientY
+          : (typeof e.clientY === 'number' ? e.clientY : null);
+        if (cx != null && cy != null && document.elementFromPoint) {
+          el = document.elementFromPoint(cx, cy);
+        }
+      } catch (errPt) { el = null; }
+      if (!(el instanceof Element)) {
+        el = e.target;
+      }
       if (!(el instanceof Element)) return null;
       if (el.closest('#daas-widget-root, #rw-suggest-root, [data-daas-widget], .rw-suggest-root')) return null;
+
+      /* Lives: si el toque cae en el escenario del en vivo / grabado, marcar el <video>, no overlays. */
+      try {
+        var stage = el.closest(
+          '.vy_lv_a5v, #vy_lv_rtmpv, .vy-lv-record-player-root, #vy_lv_main_videoel, [id^="vy_lv_recordplayer_id_"]'
+        );
+        if (stage) {
+          var liveVid = null;
+          if (stage.tagName === 'VIDEO') {
+            liveVid = stage;
+          } else {
+            liveVid = stage.querySelector('video#vy_lv_main_videoel, video[id^="vy_lv_recordplayer_id_"], video');
+          }
+          if (!liveVid && cx != null && cy != null && document.elementsFromPoint) {
+            var stack = document.elementsFromPoint(cx, cy);
+            for (var si = 0; si < stack.length; si++) {
+              var n = stack[si];
+              if (!(n instanceof Element)) continue;
+              if (n.tagName === 'VIDEO' && (
+                n.id === 'vy_lv_main_videoel'
+                || (n.id && n.id.indexOf('vy_lv_recordplayer_id_') === 0)
+                || (n.closest && n.closest('.vy_lv_a5v, #vy_lv_rtmpv, .vy-lv-record-player-root'))
+              )) {
+                liveVid = n;
+                break;
+              }
+            }
+          }
+          if (liveVid) {
+            return liveVid;
+          }
+        }
+      } catch (errLive) {}
+
       return el;
     }
 
@@ -614,9 +665,11 @@
     function startPick() {
       if (picking) return;
       picking = true;
+      window.__ZUITCH_DAAS_PICKING = true;
       setOpen(false);
       banner.classList.add('is-on');
       document.body.classList.add('rw-suggest-picking');
+      try { document.documentElement.classList.add('rw-suggest-picking'); } catch (eHtml) {}
       modePick.classList.add('is-on');
       modeOpen.classList.remove('is-on');
       refreshHighlights();
@@ -632,6 +685,11 @@
         e.preventDefault();
         e.stopPropagation();
         e.stopImmediatePropagation();
+        var nowPick = Date.now();
+        if (nowPick - (window.__ZUITCH_DAAS_PICK_AT || 0) < 350) {
+          return;
+        }
+        window.__ZUITCH_DAAS_PICK_AT = nowPick;
         var el = targetFromEvent(e);
         if (!el) return;
         capture(el);
@@ -641,15 +699,19 @@
       onScroll = function () { refreshHighlights(); };
       document.addEventListener('mousemove', onMove, true);
       document.addEventListener('click', onClick, true);
+      document.addEventListener('touchend', onClick, true);
+      document.addEventListener('pointerup', onClick, true);
       window.addEventListener('scroll', onScroll, true);
       window.addEventListener('resize', onScroll);
     }
 
     function stopPick() {
       picking = false;
+      window.__ZUITCH_DAAS_PICKING = false;
       banner.classList.remove('is-on');
       banner.textContent = 'Haz clic en el elemento a cambiar · Esc para terminar';
       document.body.classList.remove('rw-suggest-picking');
+      try { document.documentElement.classList.remove('rw-suggest-picking'); } catch (eHtml2) {}
       modePick.classList.remove('is-on');
       modeOpen.classList.add('is-on');
       if (hoverEl) {
@@ -657,7 +719,11 @@
         hoverEl = null;
       }
       if (onMove) document.removeEventListener('mousemove', onMove, true);
-      if (onClick) document.removeEventListener('click', onClick, true);
+      if (onClick) {
+        document.removeEventListener('click', onClick, true);
+        document.removeEventListener('touchend', onClick, true);
+        document.removeEventListener('pointerup', onClick, true);
+      }
       if (onScroll) {
         window.removeEventListener('scroll', onScroll, true);
         window.removeEventListener('resize', onScroll);

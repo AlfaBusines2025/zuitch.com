@@ -41,18 +41,30 @@
         if (/Android/i.test(ua) && /\bwv\b/i.test(ua)) {
             return true;
         }
-        /* Apps que quitan "wv" del UA pero inyectan bridge nativo */
         if (/Android/i.test(ua) && typeof window.ZuitchAppBridge !== 'undefined' && window.ZuitchAppBridge) {
             return true;
         }
         return false;
     }
+    function woReelsComputeIosClient() {
+        var ua = navigator.userAgent || '';
+        if (/iPhone|iPad|iPod/i.test(ua)) return true;
+        if (navigator.platform === 'MacIntel' && (navigator.maxTouchPoints || 0) > 1) return true;
+        return false;
+    }
     function woReelsApplyAndroidWebviewClass() {
         window.__woReelsAndroidWebview = woReelsComputeAndroidWebview();
+        window.__woReelsIosClient = woReelsComputeIosClient();
+        window.__woReelsUseNativeSwipe = !!(window.__woReelsAndroidWebview || window.__woReelsIosClient);
         if (window.__woReelsAndroidWebview) {
             document.documentElement.classList.add('wo-reels-android-webview');
         } else {
             document.documentElement.classList.remove('wo-reels-android-webview');
+        }
+        if (window.__woReelsIosClient) {
+            document.documentElement.classList.add('wo-reels-ios-client');
+        } else {
+            document.documentElement.classList.remove('wo-reels-ios-client');
         }
     }
     woReelsApplyAndroidWebviewClass();
@@ -406,9 +418,9 @@ window.woReelsWarmNeighbourBuffers = function () {
             }, { passive: false });
         }
 
-        /* WebView Android: swipe vertical nativo (el video nativo intercepta toques al reproducir; jQuery Mobile no ve el gesto). */
-        if (window.__woReelsAndroidWebview && !window.__woReelsAndroidSwipeBound) {
-            window.__woReelsAndroidSwipeBound = true;
+        /* WebView Android + iOS: swipe vertical nativo con debounce. */
+        if (window.__woReelsUseNativeSwipe && !window.__woReelsNativeSwipeBound) {
+            window.__woReelsNativeSwipeBound = true;
             var woReelsSwipeSx = 0;
             var woReelsSwipeSy = 0;
             var woReelsSwipeActive = false;
@@ -462,7 +474,7 @@ window.woReelsWarmNeighbourBuffers = function () {
                     return;
                 }
                 var navNow = Date.now();
-                if (navNow - (window.__woReelsTouchNavAt || 0) < 480) {
+                if (navNow - (window.__woReelsTouchNavAt || 0) < 600) {
                     return;
                 }
                 window.__woReelsTouchNavAt = navNow;
@@ -517,7 +529,7 @@ window.woReelsWarmNeighbourBuffers = function () {
     function woReelsPrefetchNext() {
         $.get(Wo_Ajax_Requests_File(), {f:'get_next_zuitch_slide','zuitch_user': "<?php echo($wo['reelOwnerName']) ?>"}, function(data) {
             if (data.status == 200) {
-                if (!window.__woReelsAndroidWebview) {
+                if (!window.__woReelsUseNativeSwipe) {
                     $('.story-img').unbind('swipeup', handler);
                     $('.story-img').unbind('swipedown', handler2);
                 }
@@ -525,7 +537,7 @@ window.woReelsWarmNeighbourBuffers = function () {
                 if (typeof window.woReelsWarmNeighbourBuffers === 'function') {
                     window.woReelsWarmNeighbourBuffers();
                 }
-                if (!window.__woReelsAndroidWebview) {
+                if (!window.__woReelsUseNativeSwipe) {
                     $('.story-img').bind('swipeup', handler);
                     $('.story-img').bind('swipedown', handler2);
                 }
@@ -557,8 +569,8 @@ window.woReelsWarmNeighbourBuffers = function () {
 
     /** dir: 'next' | 'prev' — animación tipo TikTok (vertical). */
     function woReelsRunSlideTransition(dir, $out, $in, onDone) {
-        /* En WebView Android: sin animación (más fluido y evita fallos con transitionend). */
-        if (window.__woReelsAndroidWebview) {
+        /* En WebView Android + iOS: sin animación. */
+        if (window.__woReelsAndroidWebview || window.__woReelsIosClient || window.__woReelsUseNativeSwipe) {
             $out.removeClass('reels-anim-next-exit reels-anim-prev-exit');
             $in.removeClass(
                 'reels-anim-next-enter-prep reels-anim-next-enter-go reels-anim-prev-enter-prep reels-anim-prev-enter-go'
@@ -618,6 +630,21 @@ window.woReelsWarmNeighbourBuffers = function () {
         }, 480);
     }
 
+    function woReelsNavDebounceOk(dir, currentId) {
+        var now = Date.now();
+        if (now - (window.__woReelsNavAt || 0) < 600) {
+            try {
+                if (typeof window.ZuitchReelsServerLog === 'function') {
+                    window.ZuitchReelsServerLog('warn', 'reel_nav_blocked_debounce', 'Nav ignorado: debounce 600ms', currentId || 0, { dir: dir || '?' });
+                }
+            } catch (eD) {}
+            return false;
+        }
+        window.__woReelsNavAt = now;
+        window.__woReelsTouchNavAt = now;
+        return true;
+    }
+
     function Wo_NextReelVideo() {
         var currentId = parseInt($('.reels_list:not(.hidden)').data('id'), 10);
         if (window.__woReelsAnimating) {
@@ -626,6 +653,9 @@ window.woReelsWarmNeighbourBuffers = function () {
                     window.ZuitchReelsServerLog('warn', 'reel_next_blocked_animating', 'Siguiente ignorado: transición en curso', currentId || 0, { dir: 'next' });
                 }
             } catch (eA) {}
+            return;
+        }
+        if (!woReelsNavDebounceOk('next', currentId)) {
             return;
         }
         var $current = $(".reels_list[data-id='" + currentId + "']");
@@ -638,7 +668,8 @@ window.woReelsWarmNeighbourBuffers = function () {
                 window.ZuitchReelsServerLog('info', 'reel_nav_next', $next.length ? 'Ir a siguiente reel' : 'Sin siguiente; disparar prefetch', currentId || 0, {
                     hasNext: $next.length > 0,
                     skipPrefetch: !!skipPrefetch,
-                    androidWebview: !!window.__woReelsAndroidWebview
+                    androidWebview: !!window.__woReelsAndroidWebview,
+                    useNativeSwipe: !!window.__woReelsUseNativeSwipe
                 });
             }
         } catch (eN) {}
@@ -674,6 +705,9 @@ window.woReelsWarmNeighbourBuffers = function () {
             } catch (eB) {}
             return;
         }
+        if (!woReelsNavDebounceOk('prev', currentId)) {
+            return;
+        }
         var $current = $(".reels_list[data-id='" + currentId + "']");
         var currentIndex = $current.index();
         var prevIndex = currentIndex > 0 ? currentIndex - 1 : 0;
@@ -683,7 +717,8 @@ window.woReelsWarmNeighbourBuffers = function () {
             if (typeof window.ZuitchReelsServerLog === 'function') {
                 window.ZuitchReelsServerLog('info', 'reel_nav_prev', (currentIndex > 0 && $prev.length) ? 'Ir a reel anterior' : 'Sin anterior', currentId || 0, {
                     currentIndex: currentIndex,
-                    androidWebview: !!window.__woReelsAndroidWebview
+                    androidWebview: !!window.__woReelsAndroidWebview,
+                    useNativeSwipe: !!window.__woReelsUseNativeSwipe
                 });
             }
         } catch (eP2) {}
@@ -709,7 +744,12 @@ window.woReelsWarmNeighbourBuffers = function () {
     function handler2(event) {
     	Wo_PreviousReelVideo();
     }
-    if (!window.__woReelsAndroidWebview) {
+    try {
+        $('.story-img').unbind('swipeup', handler);
+        $('.story-img').unbind('swipedown', handler2);
+        $('.story-img').off('swipeup swipedown');
+    } catch (eUb) {}
+    if (!window.__woReelsUseNativeSwipe) {
         $('.story-img').bind('swipeup', handler);
         $('.story-img').bind('swipedown', handler2);
     }

@@ -23,6 +23,7 @@ if (!empty($_POST['hash_id'])) {
 $data = array();
 $allow_array = array(
     'reels_client_log',
+    'live_client_log',
     'upgrade',
     'paystack',
     'cashfree',

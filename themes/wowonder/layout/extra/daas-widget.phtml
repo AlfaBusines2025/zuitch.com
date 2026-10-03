@@ -26,6 +26,10 @@ $requesterId = !empty($wo['user']['user_id']) ? ('user:' . $wo['user']['user_id'
 $logoUrl = $daasUrl . '/landing/assets/brand/alfa-mark-white.png';
 $storeUrl = $daasUrl . '/api/v1/orders';
 $localWidget = $wo['config']['site_url'] . '/assets/js/daas-widget.js';
+$localPath = $httpdocs . '/assets/js/daas-widget.js';
+if (is_file($localPath)) {
+    $localWidget .= '?v=' . (int) filemtime($localPath);
+}
 $remoteWidget = $daasUrl . '/widget.js';
 ?>
 <div id="daas-widget-root"
@@ -54,7 +58,8 @@ $remoteWidget = $daasUrl . '/widget.js';
     document.body.appendChild(s);
   }
   if (!document.querySelector('script[data-zuitch-daas-widget]')) {
-    load(remote, local);
+    /* Prefer local (reels iOS pick / site customizations); remote only as fallback. */
+    load(local, remote);
   }
 })();
 </script>

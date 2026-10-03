@@ -124,6 +124,12 @@ $zuitch_ios_pol_q = (is_file($zuitch_ios_pol_fs)) ? (int) filemtime($zuitch_ios_
 		} 
 
 		vy_lvst.enableTopMinProductMouseevents();
+		/* F7: boot preview en posts AJAX (scripts inline no corren). */
+		try {
+			if (typeof vy_lvst.initFeedPreviewWatchers === 'function') {
+				vy_lvst.initFeedPreviewWatchers();
+			}
+		} catch (eFeedBoot) {}
 
 		if(window.vy_lv_lend){
 			setTimeout(function(){

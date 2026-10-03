@@ -45,6 +45,95 @@
     } catch (e) {}
   }
 
+  /**
+   * Primer toque en WKWebView: play() (muted si hace falta) + unmute en el mismo gesto.
+   * Evita “mantener pulsado” para ver el primer frame.
+   */
+  function bindNativeFirstTapPlay(videoEl, root) {
+    if (!videoEl || videoEl._zuitchLiveRecTapBound) {
+      return;
+    }
+    videoEl._zuitchLiveRecTapBound = true;
+
+    function unlockPlay() {
+      try {
+        videoEl.setAttribute('playsinline', '');
+        videoEl.setAttribute('webkit-playsinline', '');
+        videoEl.controls = true;
+        var already = !videoEl.paused && !videoEl.ended;
+        if (already && !videoEl.muted && videoEl.volume > 0) {
+          return;
+        }
+        function applyUnmute() {
+          try {
+            videoEl.muted = false;
+            videoEl.defaultMuted = false;
+            videoEl.volume = 1;
+            videoEl.removeAttribute('muted');
+          } catch (eU) {}
+        }
+        if (already) {
+          applyUnmute();
+          return;
+        }
+        var triedMuted = false;
+        var p = null;
+        try {
+          p = videoEl.play();
+        } catch (eP) {
+          p = null;
+        }
+        function afterPlayOk() {
+          applyUnmute();
+        }
+        function tryMutedThenUnmute() {
+          if (triedMuted) {
+            return;
+          }
+          triedMuted = true;
+          try {
+            videoEl.muted = true;
+          } catch (eM) {}
+          var p2 = null;
+          try {
+            p2 = videoEl.play();
+          } catch (eP2) {
+            p2 = null;
+          }
+          if (p2 && typeof p2.then === 'function') {
+            p2.then(function () {
+              applyUnmute();
+            }).catch(function () {});
+          } else {
+            applyUnmute();
+          }
+        }
+        if (p && typeof p.then === 'function') {
+          p.then(afterPlayOk).catch(tryMutedThenUnmute);
+        } else if (videoEl.paused) {
+          tryMutedThenUnmute();
+        } else {
+          afterPlayOk();
+        }
+      } catch (e) {}
+    }
+
+    var evt = ('PointerEvent' in window) ? 'pointerdown' : 'touchend';
+    var target = root || videoEl;
+    target.addEventListener(evt, function () {
+      unlockPlay();
+    }, { capture: true, passive: true });
+
+    try {
+      videoEl.addEventListener('pause', function () {
+        try {
+          videoEl.controls = true;
+          videoEl.setAttribute('controls', '');
+        } catch (eC) {}
+      });
+    } catch (ePause) {}
+  }
+
   function initVyLvRecordPlayer(root) {
     if (!root || root.getAttribute('data-vy-lv-scheduled') === '1' || root.getAttribute('data-vy-lv-inited') === '1') {
       return;
@@ -71,6 +160,7 @@
 
       if (useNative) {
         prepareNativeRecordedVideo(vid);
+        bindNativeFirstTapPlay(vid, root);
         root.style.display = '';
         root.setAttribute('data-vy-lv-native-player', '1');
         return;

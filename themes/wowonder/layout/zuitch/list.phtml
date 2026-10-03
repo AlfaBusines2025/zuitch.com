@@ -22,6 +22,10 @@ $reels_list_second_btn = !empty($wo['reels_ui_second_post_button']) ? $wo['reels
             <div class="reels-draggable-inner" style="display: table-cell;vertical-align: middle;">
                {{VIDEO}}
             </div>
+            <?php
+                $wo['cta_render_mode'] = 'overlay';
+                include dirname(__DIR__) . '/story/includes/page-ctas.phtml';
+            ?>
          </div>
       </div>
       <div class="comment-section reels-section">
@@ -58,7 +62,6 @@ $reels_list_second_btn = !empty($wo['reels_ui_second_post_button']) ? $wo['reels
                             <p>{{STORY postText}}</p>
                         </div>
                     </div>
-                    <?php include dirname(__DIR__) . '/story/includes/page-ctas.phtml'; ?>
                     <div class="stats buttons" style="display: flex;">
                         <?php if ($reels_list_second_btn == 'reaction') { ?>
                             <div class="like-stat  stat-item post-like-status" style="width: inherit;">
@@ -80,6 +83,10 @@ $reels_list_second_btn = !empty($wo['reels_ui_second_post_button']) ? $wo['reels
                             $wo['story']['viewmode'] = "lightbox";
                             echo Wo_LoadPage('buttons/like-wonder');
                         } ?>
+                        <?php
+                            $wo['cta_render_mode'] = 'stat';
+                            include dirname(__DIR__) . '/story/includes/page-ctas.phtml';
+                        ?>
                     </div>
                 </div>
             </div>

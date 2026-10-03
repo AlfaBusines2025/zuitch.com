@@ -96,6 +96,12 @@ hr, .lightbox-content .comment-section .stats {border-color: #424242 !important;
 .post .post-description p, .user-story-container .ads-headline, .user-ad-container div.post-advertisement .ads-headline p {color: #c0c0c0;}
 #wo_post_stat_button .stat-item {color: #b2b2b2;}
 #wo_post_stat_button .dropdown.open .stat-item, #wo_post_stat_button .stat-item:hover {background-color: rgba(255, 255, 255, 0.04) !important;}
+#wo_post_stat_button > .post-cta-row, .post .post-cta-row {border-top-color: #3a3a3a;}
+#wo_post_stat_button > .post-cta-row .post-cta-stat, .post .post-cta-row .post-cta-stat {background: #2c2c2c; border-color: #444; color: #ddd;}
+#wo_post_stat_button > .post-cta-row .post-cta-stat.page-cta-whatsapp, .post .post-cta-row .post-cta-stat.page-cta-whatsapp {background: #02806B; border-color: #02806B; color: #fff;}
+#wo_post_stat_button > .post-cta-row .post-cta-stat.page-cta-whatsapp:hover, .post .post-cta-row .post-cta-stat.page-cta-whatsapp:hover {background: #016656; border-color: #016656; color: #fff;}
+#wo_post_stat_button > .post-cta-row .post-cta-stat.page-cta-email, .post .post-cta-row .post-cta-stat.page-cta-email {background: #1c2a40; border-color: #2d4a73; color: #8ab4f8;}
+#wo_post_stat_button > .post-cta-row .post-cta-stat.page-cta-call, .post .post-cta-row .post-cta-stat.page-cta-call {background: #1c3324; border-color: #2f5a3d; color: #81c995;}
 .reactions-box {background: #424242;}
 .post .post-footer, .wo_imagecombo_lbox .comment-section-inner .comment-inner-footer, .wo_imagecombo_lbox .lightbox-post-footer .comments-list {background: #2a2a2a !important;}
 #wo_comment_combo, #wo_comment_combo.comment-toggle {border-color: #474747;}

@@ -1040,26 +1040,31 @@ if ($f == 'posts') {
                 'is_reel' => $is_reel
             );
 
-            // Per-post CTAs (Page posts/reels only)
+            // Per-post CTAs (optional): only persist valid formats; no checkboxes
             $post_data['post_whatsapp'] = '';
             $post_data['post_email'] = '';
             $post_data['post_phone'] = '';
             $post_data['show_cta_whatsapp'] = 0;
             $post_data['show_cta_email'] = 0;
             $post_data['show_cta_call'] = 0;
-            if (!empty($page_id)) {
-                if (!empty($_POST['post_cta_whatsapp'])) {
-                    $post_data['post_whatsapp'] = Wo_Secure(preg_replace('/\D+/', '', $_POST['post_cta_whatsapp']));
+            if (!empty($_POST['post_cta_whatsapp'])) {
+                $wa_digits = preg_replace('/\D+/', '', $_POST['post_cta_whatsapp']);
+                if (strlen($wa_digits) >= 8 && strlen($wa_digits) <= 15) {
+                    $post_data['post_whatsapp'] = Wo_Secure($wa_digits);
+                    $post_data['show_cta_whatsapp'] = 1;
                 }
-                if (!empty($_POST['post_cta_email']) && filter_var($_POST['post_cta_email'], FILTER_VALIDATE_EMAIL)) {
-                    $post_data['post_email'] = Wo_Secure($_POST['post_cta_email']);
+            }
+            if (!empty($_POST['post_cta_email']) && filter_var(trim($_POST['post_cta_email']), FILTER_VALIDATE_EMAIL)) {
+                $post_data['post_email'] = Wo_Secure(trim($_POST['post_cta_email']));
+                $post_data['show_cta_email'] = 1;
+            }
+            if (!empty($_POST['post_cta_phone'])) {
+                $tel = preg_replace('/[^\d+]/', '', $_POST['post_cta_phone']);
+                $tel_digits = preg_replace('/\D+/', '', $tel);
+                if (strlen($tel_digits) >= 7 && strlen($tel_digits) <= 15) {
+                    $post_data['post_phone'] = Wo_Secure($tel);
+                    $post_data['show_cta_call'] = 1;
                 }
-                if (!empty($_POST['post_cta_phone'])) {
-                    $post_data['post_phone'] = Wo_Secure(preg_replace('/[^\d+]/', '', $_POST['post_cta_phone']));
-                }
-                $post_data['show_cta_whatsapp'] = (!empty($_POST['show_cta_whatsapp']) && $_POST['show_cta_whatsapp'] == '1') ? 1 : 0;
-                $post_data['show_cta_email'] = (!empty($_POST['show_cta_email']) && $_POST['show_cta_email'] == '1') ? 1 : 0;
-                $post_data['show_cta_call'] = (!empty($_POST['show_cta_call']) && $_POST['show_cta_call'] == '1') ? 1 : 0;
             }
             
             if ($post_privacy == 6) {
@@ -1625,6 +1630,40 @@ if ($f == 'posts') {
                     'post_id' => $_POST['post_id'],
                     'text' => $_POST['text']
                 ));
+                // Optional contact CTAs: only persist valid formats (no checkboxes)
+                $cta_whatsapp = '';
+                $cta_email = '';
+                $cta_phone = '';
+                $show_cta_whatsapp = 0;
+                $show_cta_email = 0;
+                $show_cta_call = 0;
+                if (!empty($_POST['post_cta_whatsapp'])) {
+                    $wa_digits = preg_replace('/\D+/', '', $_POST['post_cta_whatsapp']);
+                    if (strlen($wa_digits) >= 8 && strlen($wa_digits) <= 15) {
+                        $cta_whatsapp = Wo_Secure($wa_digits);
+                        $show_cta_whatsapp = 1;
+                    }
+                }
+                if (!empty($_POST['post_cta_email']) && filter_var(trim($_POST['post_cta_email']), FILTER_VALIDATE_EMAIL)) {
+                    $cta_email = Wo_Secure(trim($_POST['post_cta_email']));
+                    $show_cta_email = 1;
+                }
+                if (!empty($_POST['post_cta_phone'])) {
+                    $tel = preg_replace('/[^\d+]/', '', $_POST['post_cta_phone']);
+                    $tel_digits = preg_replace('/\D+/', '', $tel);
+                    if (strlen($tel_digits) >= 7 && strlen($tel_digits) <= 15) {
+                        $cta_phone = Wo_Secure($tel);
+                        $show_cta_call = 1;
+                    }
+                }
+                $db->where('id', $post_id)->update(T_POSTS, array(
+                    'post_whatsapp' => $cta_whatsapp,
+                    'post_email' => $cta_email,
+                    'post_phone' => $cta_phone,
+                    'show_cta_whatsapp' => $show_cta_whatsapp,
+                    'show_cta_email' => $show_cta_email,
+                    'show_cta_call' => $show_cta_call
+                ));
                 if (!empty($_POST['text'])) {
                     $posts = $db->where('parent_id', $post_id)->get(T_ALBUMS_MEDIA);
                     if (!empty($posts)) {
@@ -1779,9 +1818,19 @@ if ($f == 'posts') {
                     }
                 }
                 Wo_CleanCache();
+                $wo['story'] = Wo_PostData($post_id);
+                $wo['cta_render_mode'] = 'stat';
+                $cta_html = '';
+                $cta_file = dirname(__DIR__) . '/themes/' . $wo['config']['theme'] . '/layout/story/includes/page-ctas.phtml';
+                if (file_exists($cta_file)) {
+                    ob_start();
+                    include $cta_file;
+                    $cta_html = ob_get_clean();
+                }
                 $data = array(
                     'status' => 200,
-                    'html' => $updatePost
+                    'html' => $updatePost,
+                    'cta_html' => $cta_html
                 );
                 if (Wo_CanSenEmails()) {
                     $data['can_send'] = 1;

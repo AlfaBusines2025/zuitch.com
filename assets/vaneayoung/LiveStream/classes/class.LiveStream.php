@@ -93,11 +93,23 @@ class LIVE_STREAM extends VY_LIVESTREAM_CORE
         $resp = 0;
  
         $q = $this->db->query(
-            "select `id`,`stream_name` from " .
+            "select `id`,`stream_name`,`islivenow`,`ended` from " .
                 VY_LV_TBL["BROADCASTS"] .
                 " where `post_id`='{$this->id}' limit 1"
         );
         $r = $q->fetch_array(MYSQLI_ASSOC);
+
+        if (!$r || empty($r['id'])) {
+            echo $resp;
+            return $resp;
+        }
+
+        /* No borrar broadcasts activos: viewers con JS viejo pueden llamar
+           delete-crashed tras un terminated falso de Node. */
+        if (isset($r['islivenow']) && $r['islivenow'] === 'yes' && (!isset($r['ended']) || $r['ended'] !== 'yes')) {
+            echo 0;
+            return 0;
+        }
 
             // delete post
             $delete_post = $this->deletePost($this->id);
@@ -111,7 +123,8 @@ class LIVE_STREAM extends VY_LIVESTREAM_CORE
  
             $resp = 1;
 
-        echo $resp; 
+        echo $resp;
+        return $resp;
            }
     public function removeFiles($filename = '')
     {
@@ -724,6 +737,60 @@ class LIVE_STREAM extends VY_LIVESTREAM_CORE
 
         echo $this->jencode($response);
     }
+    /**
+     * iOS WebView: blob MediaRecorder → streams/{uid}/{filename}.{mp4|webm}
+     * Debe ejecutarse ANTES de stopLive para que el MP4 con moov exista.
+     */
+    public function uploadLiveRec()
+    {
+        $filename = preg_replace('/[^a-zA-Z0-9_-]/', '', (string) $this->post_vars('filename'));
+        $file_type = strtolower((string) $this->post_vars('file_type'));
+        if (!in_array($file_type, ['mp4', 'webm'], true)) {
+            $file_type = 'mp4';
+        }
+        $live_id = (int) $this->post_vars('live_id');
+        $uid = !empty($this->USER['id']) ? (int) $this->USER['id'] : (int) $this->userid;
+
+        if ($filename === '' || $uid < 1 || empty($_FILES['video-blob']) || empty($_FILES['video-blob']['tmp_name'])) {
+            return $this->jencode(['ok' => 0, 'err' => 'bad_request']);
+        }
+        if (!empty($_FILES['video-blob']['error'])) {
+            return $this->jencode(['ok' => 0, 'err' => 'upload_error', 'code' => (int) $_FILES['video-blob']['error']]);
+        }
+
+        $relDir = str_replace('\\', '/', sprintf($this->upload_path_blobs, $uid));
+        $doc = rtrim((string) ($_SERVER['DOCUMENT_ROOT'] ?? ''), '/');
+        $absDir = $doc . '/' . trim($relDir, '/');
+        if (!is_dir($absDir)) {
+            @mkdir($absDir, 0775, true);
+        }
+        $abs = $absDir . '/' . $filename . '.' . $file_type;
+        if (!@move_uploaded_file($_FILES['video-blob']['tmp_name'], $abs)) {
+            return $this->jencode(['ok' => 0, 'err' => 'move_fail']);
+        }
+        @chmod($abs, 0644);
+        $size = (int) @filesize($abs);
+        $has_moov = null;
+        if ($file_type === 'mp4') {
+            $has_moov = $this->vyLvMp4HasMoovAtom($abs) ? 1 : 0;
+        }
+
+
+        $this->vyLvDiagLog('info', 'live_client_rec_upload', 'Client MediaRecorder upload', $live_id, [
+            'size' => $size,
+            'has_moov' => $has_moov,
+            'file_type' => $file_type,
+            'filename' => $filename . '.' . $file_type,
+        ]);
+
+        return $this->jencode([
+            'ok' => ($size >= 1024) ? 1 : 0,
+            'size' => $size,
+            'has_moov' => $has_moov,
+            'file_type' => $file_type,
+        ]);
+    }
+
     public function stopLive()
     {
         $post_id = $this->post_vars("post_id");
@@ -732,10 +799,20 @@ class LIVE_STREAM extends VY_LIVESTREAM_CORE
         $post_to_timeline = $this->post_vars("post_to_timeline");
         $file_type = $this->post_vars("file_type");
         $filename = $this->post_vars("filename") . "." . $file_type;
+        $client_rec = (string) $this->post_vars("client_rec") === '1' ? 1 : 0;
+        $via_beacon = !empty($_SERVER['HTTP_CONTENT_TYPE']) && stripos((string) $_SERVER['HTTP_CONTENT_TYPE'], 'multipart/form-data') !== false
+            && empty($_SERVER['HTTP_X_REQUESTED_WITH']);
 
         $update = $update2 = true;
+        $decision = 'keep';
+        $mp4_exists = null;
+        $mp4_size = null;
+        $mp4_has_moov = null;
+        $moov_polls = null;
+        $rel_mp4 = null;
 
         if (!$this->recording || $post_to_timeline == "no") {
+            $decision = 'delete';
             // delete post
             $delete_post = $this->deletePost($post_id);
             // delete broadcast
@@ -743,22 +820,91 @@ class LIVE_STREAM extends VY_LIVESTREAM_CORE
             // delete comments
             $delete_comments = $this->deleteComments($post_id);
         } else {
-            $update2 = $this->query_update(
-                "update " .
-                    T_POSTS .
-                    " SET`live_ended`='1' where `id`='{$post_id}' || `post_id` = '{$post_id}'"
-            );
-            $update3 = $this->query_update(
-                "update " .
-                    VY_LV_TBL["BROADCASTS"] .
-                    " set `islivenow`='no',`ended`='yes',`stream_name`='{$filename}',`time`='{$time}' where `id`='{$broadcast_id}'"
-            );
-            if (strtolower(substr($filename, -4)) === '.mp4') {
+            $relSpawn = null;
+            $abs = null;
+            $ext = strtolower((string) pathinfo($filename, PATHINFO_EXTENSION));
+            if ($ext === 'mp4' || $ext === 'webm') {
                 $relSpawn = sprintf($this->upload_path_blobs, $this->userid) . $filename;
                 $relSpawn = str_replace('\\', '/', $relSpawn);
-                $this->vyLvSpawnBackgroundSafariNormalize($relSpawn);
+                $rel_mp4 = $relSpawn;
+                $doc = rtrim((string) ($_SERVER['DOCUMENT_ROOT'] ?? ''), '/');
+                $abs = $doc . '/' . ltrim($relSpawn, '/');
+                /* Client upload ya en disco: no esperar 2s. Kurento sí puede tardar. */
+                if (!$client_rec && (!is_file($abs) || (int) @filesize($abs) < 1024)) {
+                    usleep(2000000);
+                }
+                $mp4_exists = is_file($abs) ? 1 : 0;
+                $mp4_size = is_file($abs) ? (int) @filesize($abs) : 0;
+            }
+
+            /* MP4: exigir moov. WebM cliente: exigir tamaño. client_rec=1 → pocas polls. */
+            $mp4_has_moov = null;
+            $moov_polls = 0;
+            if ($relSpawn && $abs && $ext === 'mp4') {
+                $maxPolls = $client_rec ? 4 : 20;
+                for ($pi = 0; $pi < $maxPolls; $pi++) {
+                    $moov_polls = $pi + 1;
+                    $mp4_exists = is_file($abs) ? 1 : 0;
+                    $mp4_size = is_file($abs) ? (int) @filesize($abs) : 0;
+                    if ($mp4_exists && $mp4_size >= 1024 && $this->vyLvMp4HasMoovAtom($abs)) {
+                        $mp4_has_moov = 1;
+                        break;
+                    }
+                    $mp4_has_moov = 0;
+                    usleep(500000);
+                }
+            } elseif ($relSpawn && $abs && $ext === 'webm') {
+                $mp4_exists = is_file($abs) ? 1 : 0;
+                $mp4_size = is_file($abs) ? (int) @filesize($abs) : 0;
+                $mp4_has_moov = ($mp4_exists && $mp4_size >= 1024) ? 1 : 0;
+            }
+            $badFile = $relSpawn && (
+                !$mp4_exists
+                || ($mp4_size !== null && $mp4_size < 1024)
+                || ($ext === 'mp4' && $mp4_has_moov === 0)
+                || ($ext === 'webm' && $mp4_has_moov === 0)
+            );
+            if ($badFile) {
+                $decision = 'delete';
+                $this->deletePost($post_id);
+                $this->deleteBroadCast($broadcast_id);
+                $this->deleteComments($post_id);
+                if ($abs && is_file($abs)) {
+                    @unlink($abs);
+                }
+            } else {
+                $update2 = $this->query_update(
+                    "update " .
+                        T_POSTS .
+                        " SET`live_ended`='1' where `id`='{$post_id}' || `post_id` = '{$post_id}'"
+                );
+                $update3 = $this->query_update(
+                    "update " .
+                        VY_LV_TBL["BROADCASTS"] .
+                        " set `islivenow`='no',`ended`='yes',`stream_name`='{$filename}',`time`='{$time}' where `id`='{$broadcast_id}'"
+                );
+                if ($relSpawn && $ext === 'mp4') {
+                    $this->vyLvSpawnBackgroundSafariNormalize($relSpawn);
+                }
             }
         }
+
+        $this->vyLvDiagLog('info', 'live_stop_server', 'stopLive servidor', (int) $post_id, [
+            'decision' => $decision,
+            'recording_enabled' => !empty($this->recording) ? 1 : 0,
+            'post_to_timeline' => (string) $post_to_timeline,
+            'broadcast_id' => (string) $broadcast_id,
+            'time_sec' => (string) $time,
+            'filename' => (string) $filename,
+            'mp4_exists_at_stop' => $mp4_exists,
+            'mp4_size' => $mp4_size,
+            'mp4_has_moov' => isset($mp4_has_moov) ? $mp4_has_moov : null,
+            'moov_polls' => isset($moov_polls) ? $moov_polls : null,
+            'client_rec' => $client_rec,
+            'mp4_rel' => $rel_mp4,
+            'via_likely_beacon' => $via_beacon ? 1 : 0,
+            'http_user_agent' => isset($_SERVER['HTTP_USER_AGENT']) ? substr((string) $_SERVER['HTTP_USER_AGENT'], 0, 400) : '',
+        ]);
 
         // re-generate the stream keys for OBS
         $this->generateUniqueStreamKey();
@@ -769,6 +915,53 @@ class LIVE_STREAM extends VY_LIVESTREAM_CORE
             echo 0;
         }
     }
+    /**
+     * Diagnóstico guardar/no guardar live → cache/live_client_logs/live_YYYY-MM-DD.log
+     */
+    protected function vyLvDiagLog($level, $type, $message, $postId = 0, $context = null)
+    {
+        try {
+            $doc = rtrim((string) ($_SERVER['DOCUMENT_ROOT'] ?? ''), DIRECTORY_SEPARATOR);
+            if ($doc === '') {
+                return;
+            }
+            $logDir = $doc . DIRECTORY_SEPARATOR . 'cache' . DIRECTORY_SEPARATOR . 'live_client_logs';
+            if (!is_dir($logDir)) {
+                @mkdir($logDir, 0750, true);
+            }
+            $logFile = $logDir . DIRECTORY_SEPARATOR . 'live_' . gmdate('Y-m-d') . '.log';
+            $uid = 0;
+            $uname = '';
+            if (!empty($this->USER['id'])) {
+                $uid = (int) $this->USER['id'];
+            } elseif (!empty($this->userid)) {
+                $uid = (int) $this->userid;
+            }
+            if (!empty($this->USER['username'])) {
+                $uname = (string) $this->USER['username'];
+            }
+            $row = [
+                'ts_utc' => gmdate('Y-m-d\TH:i:s\Z'),
+                'level' => in_array($level, ['info', 'warn', 'error'], true) ? $level : 'info',
+                'type' => preg_replace('/[^a-zA-Z0-9_.-]/', '', (string) $type) ?: 'unknown',
+                'message' => function_exists('mb_substr')
+                    ? mb_substr(strip_tags((string) $message), 0, 2000)
+                    : substr(strip_tags((string) $message), 0, 2000),
+                'post_id' => (int) $postId,
+                'user_id' => $uid,
+                'username' => $uname,
+                'source' => 'server',
+                'context' => $context,
+            ];
+            $line = json_encode($row, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            if ($line !== false) {
+                @file_put_contents($logFile, $line . "\n", FILE_APPEND | LOCK_EX);
+            }
+        } catch (\Throwable $e) {
+            /* no bloquear el cierre del live por el log */
+        }
+    }
+
     public function getRtmpHLS_Path(){
         return $GLOBALS['V_Y']['host'] . DIRECTORY_SEPARATOR .sprintf($this->upload_path_blobs, $this->id) . "index.m3u8";
     }
@@ -953,7 +1146,9 @@ class LIVE_STREAM extends VY_LIVESTREAM_CORE
                 " where `post_id`='{$post_id}' limit 1"
         );
         $rows = $query2->fetch_array(MYSQLI_ASSOC);
-        $user_details = $this->lv_getUserDetails($rows["user_id"]);
+        if (empty($rows) || empty($rows['id'])) {
+        }
+        $user_details = $this->lv_getUserDetails(!empty($rows['user_id']) ? $rows['user_id'] : 0);
         // get last 15 comments
         $comments = $this->query_select(
             "
@@ -1241,6 +1436,41 @@ class LIVE_STREAM extends VY_LIVESTREAM_CORE
     }
 
     /**
+     * True si el MP4 contiene un átomo moov (reproducible). Archivos a medio cerrar solo tienen ftyp/mdat.
+     */
+    protected function vyLvMp4HasMoovAtom($absPath)
+    {
+        if (!is_string($absPath) || $absPath === '' || !is_file($absPath)) {
+            return false;
+        }
+        $size = (int) @filesize($absPath);
+        if ($size < 64) {
+            return false;
+        }
+        $fh = @fopen($absPath, 'rb');
+        if (!$fh) {
+            return false;
+        }
+        $found = false;
+        $chunk = 512 * 1024;
+        while (!feof($fh)) {
+            $data = @fread($fh, $chunk);
+            if ($data === false || $data === '') {
+                break;
+            }
+            if (strpos($data, 'moov') !== false) {
+                $found = true;
+                break;
+            }
+            if (!feof($fh)) {
+                @fseek($fh, -4, SEEK_CUR);
+            }
+        }
+        @fclose($fh);
+        return $found;
+    }
+
+    /**
      * Los MP4 generados solo con copy/mux a veces llevan esds AAC no estándar (p. ej. objectProfileIndication 0x6B).
      * Safari usa ese metadato para activar el decoder de audio; Chrome es más tolerante — por eso "en web" oía y en Safari no.
      * Re-encode solo la pista de audio a AAC LC "correcto" y deja el vídeo en copy.
@@ -1399,6 +1629,14 @@ class LIVE_STREAM extends VY_LIVESTREAM_CORE
         $rel = sprintf($this->upload_path_blobs, $row['user_id']) . $name;
         $rel = str_replace('\\', '/', $rel);
         $ok = $this->vyLvNormalizeRecordedMp4SafariAudio($rel);
+        $doc = rtrim((string) ($_SERVER['DOCUMENT_ROOT'] ?? ''), '/');
+        $abs = $doc . '/' . ltrim($rel, '/');
+        $this->vyLvDiagLog($ok ? 'info' : 'warn', 'live_normalize_result', $ok ? 'normalize_live_mp4 OK' : 'normalize_live_mp4 falló', $post_id, [
+            'path' => $rel,
+            'mp4_exists' => is_file($abs) ? 1 : 0,
+            'mp4_size' => is_file($abs) ? (int) @filesize($abs) : 0,
+            'ok' => $ok ? 1 : 0,
+        ]);
         if (!$ok) {
             return json_encode(['ok' => 0, 'err' => 'ffmpeg', 'path' => $rel]);
         }

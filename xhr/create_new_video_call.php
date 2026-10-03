@@ -41,6 +41,23 @@ if ($f == 'create_new_video_call') {
         ));
         if ($insertData > 0) {
             $wo['calling_user'] = $user_2;
+
+            // Zuitch: ring the callee's iOS devices through PushKit/CallKit.
+            // Additive — the OneSignal pushes below still fire. Never blocks the call.
+            require_once 'assets/includes/zuitch_voip.php';
+            Zuitch_SendVoipCall($user_2['user_id'], array(
+                'call_id'       => $insertData,
+                'room_name'     => $room_script,
+                'call_type'     => $call_type,
+                'provider'      => 'agora',
+                'from_id'       => $wo['user']['id'],
+                'from_name'     => $wo['user']['name'],
+                'from_username' => $wo['user']['username'],
+                'from_avatar'   => $wo['user']['avatar'],
+                'agora_app_id'  => $wo['config']['agora_chat_app_id'],
+                'agora_token'   => isset($wo['AgoraToken']) ? $wo['AgoraToken'] : '',
+            ));
+
             if (!empty($wo['calling_user']['ios_m_device_id']) && $wo['config']['ios_push_messages'] == 1) {
                 $send_array = array(
                     'send_to' => array(

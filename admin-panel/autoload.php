@@ -123,6 +123,7 @@ $pages = array(
     'cronjob_settings',
     'system_status',
     'daas',
+    'dev-docs',
     "upload-to-storage",
     "ai-settings",
     "manage-content-monetization",
@@ -1539,6 +1540,14 @@ if (!empty($_COOKIE['mode']) && $_COOKIE['mode'] == 'night') {
                                 <i class="material-icons">cloud_sync</i>
                             </span>
                             <span>Pedidos UX/UI (DaaS)</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a <?php echo ($page == 'dev-docs') ? 'class="active"' : ''; ?> href="<?php echo Wo_LoadAdminLinkSettings('dev-docs'); ?>">
+                            <span class="nav-link-icon">
+                                <i class="material-icons">menu_book</i>
+                            </span>
+                            <span>Docs desarrolladores</span>
                         </a>
                     </li>
                     <?php } ?>

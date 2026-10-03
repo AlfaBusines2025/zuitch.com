@@ -3513,12 +3513,15 @@ function Wo_SendMessages() {
 }
 // request permission on page load
 document.addEventListener('DOMContentLoaded', function () {
+  if (typeof Notification === 'undefined') {
+    return;
+  }
   if (Notification.permission !== "granted")
     Notification.requestPermission();
 });
 
 function Wo_NotifyMe(icon, title, notification_text, url) {
-  if (!Notification) {
+  if (typeof Notification === 'undefined' || !Notification) {
     return;
   }
   if (Notification.permission !== "granted")

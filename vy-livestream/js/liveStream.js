@@ -3,7 +3,7 @@
 Livestream Plugin.
 email: movileanuion@gmail.com
 Copyright 2022 by Vanea Young
-@version: 1.2.24
+@version: 1.2.47
 */
 'use strict';
 /* Errors reporting: disabled
@@ -361,6 +361,66 @@ $.extend(VY_LIVE_STREAM.prototype, {
         return iOSSafari;
 
     },
+    zuitchIsIosWebview: function() {
+        var ua = navigator.userAgent || '';
+        if (!/iPhone|iPad|iPod/i.test(ua) && !(navigator.platform === 'MacIntel' && (navigator.maxTouchPoints || 0) > 1)) {
+            return false;
+        }
+        if (/Mobile\//i.test(ua) && !/Safari\//i.test(ua)) {
+            return true;
+        }
+        if (window.webkit && window.webkit.messageHandlers) {
+            return true;
+        }
+        return false;
+    },
+    zuitchLiveDiagClientMeta: function() {
+        var ua = navigator.userAgent || '';
+        return {
+            ua: ua,
+            isIOS: /iPhone|iPad|iPod/i.test(ua) || (navigator.platform === 'MacIntel' && (navigator.maxTouchPoints || 0) > 1),
+            iosWebView: this.zuitchIsIosWebview(),
+            isIosSafari: this.isIosSafari(),
+            url: location.href,
+            visibility: document.visibilityState || '',
+            connection: (navigator.connection && navigator.connection.effectiveType) ? String(navigator.connection.effectiveType) : ''
+        };
+    },
+    zuitchLiveDiag: function(level, type, message, postId, context, useBeacon) {
+        try {
+            var ev = {
+                type: type || 'event',
+                level: level || 'info',
+                message: String(message || ''),
+                postId: postId ? parseInt(postId, 10) || 0 : 0,
+                client: this.zuitchLiveDiagClientMeta(),
+                context: context != null ? context : null
+            };
+            var hashEl = document.querySelector('input.main_session');
+            var hash = hashEl && hashEl.value ? hashEl.value : '';
+            var urlBase = (typeof Wo_Ajax_Requests_File === 'function')
+                ? Wo_Ajax_Requests_File()
+                : '/requests.php';
+            var url = urlBase + '?f=live_client_log&hash=' + encodeURIComponent(hash);
+            var payload = JSON.stringify({ events: [ev] });
+            if (useBeacon && navigator.sendBeacon) {
+                try {
+                    navigator.sendBeacon(url, new Blob([payload], { type: 'application/json' }));
+                    return;
+                } catch (eB) {}
+            }
+            if (typeof jQuery !== 'undefined') {
+                jQuery.ajax({
+                    url: url,
+                    type: 'POST',
+                    data: payload,
+                    contentType: 'application/json; charset=UTF-8',
+                    processData: false,
+                    timeout: 8000
+                });
+            }
+        } catch (e) {}
+    },
     readCookie: function(name) {
         var nameEQ = name + "=";
 
@@ -705,7 +765,9 @@ $.extend(VY_LIVE_STREAM.prototype, {
                 o.filename = encodeURIComponent(self.filename);
             }
 
-            if(self.post_to_timeline == 'yes')
+            /* iOS WV + Android: Kurento MP4 sin moov tras flips (52376–78, 52395).
+               Grabación cliente (MediaRecorder) + upload; no activar RecorderEndpoint. */
+            if (self.post_to_timeline == 'yes' && !self.zuitchShouldUseClientRecorder())
                 o.record_enabled = 1;
 
             vy_lvst.ws_sendMessage(o);
@@ -1124,8 +1186,20 @@ $.extend(VY_LIVE_STREAM.prototype, {
 
             }
 
+            // #region agent log
+            (function(p){try{fetch('http://localhost:7513/ingest/8e34e2dd-c41b-414a-b93a-885e60cc6800',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'b1de00'},body:JSON.stringify(p)}).catch(function(){});fetch('/vy-livestream/debug_ingest_b1de00.php',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'b1de00'},body:JSON.stringify(p)}).catch(function(){});}catch(_){}})({sessionId:'b1de00',runId:'pre-fix',hypothesisId:'C_D',location:'liveStream.js:reaction_floating',message:'reaction_floating received',data:{sender:data&&data.sender,appendTo:settings.appendTo,appendElExists:!!document.getElementById(settings.appendTo),floatingType:typeof floating,hasIcon:!!(data&&data.icon),pointerX:settings.pointerX,pointerY:settings.pointerY},timestamp:Date.now()});
+            // #endregion
 
-            floating(settings);
+            try {
+                floating(settings);
+                // #region agent log
+                (function(p){try{fetch('http://localhost:7513/ingest/8e34e2dd-c41b-414a-b93a-885e60cc6800',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'b1de00'},body:JSON.stringify(p)}).catch(function(){});fetch('/vy-livestream/debug_ingest_b1de00.php',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'b1de00'},body:JSON.stringify(p)}).catch(function(){});}catch(_){}})({sessionId:'b1de00',runId:'pre-fix',hypothesisId:'D',location:'liveStream.js:reaction_floating:after',message:'floating() ok',data:{appendTo:settings.appendTo},timestamp:Date.now()});
+                // #endregion
+            } catch (eFloat) {
+                // #region agent log
+                (function(p){try{fetch('http://localhost:7513/ingest/8e34e2dd-c41b-414a-b93a-885e60cc6800',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'b1de00'},body:JSON.stringify(p)}).catch(function(){});fetch('/vy-livestream/debug_ingest_b1de00.php',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'b1de00'},body:JSON.stringify(p)}).catch(function(){});}catch(_){}})({sessionId:'b1de00',runId:'pre-fix',hypothesisId:'D',location:'liveStream.js:reaction_floating:error',message:'floating() threw',data:{err:String(eFloat&&eFloat.message||eFloat),appendTo:settings.appendTo},timestamp:Date.now()});
+                // #endregion
+            }
 
         });
         this.socket.on('new_comment', function(data) {
@@ -1426,9 +1500,624 @@ $.extend(VY_LIVE_STREAM.prototype, {
 
     },
     stopTracks: function() {
+        try {
+            this.zuitchStopCamProxy(false);
+        } catch (eProxy) {}
+        try {
+            this.zuitchStopRetiredTracks();
+        } catch (eRet) {}
         if (this.localStream)
             this.localStream.getTracks().forEach(track => track.stop()); // stop each of them
 
+    },
+    /** Solo corta video (flip de cámara): conserva audio mientras el live sigue activo. */
+    stopVideoTracksOnly: function() {
+        if (!this.localStream) {
+            return;
+        }
+        try {
+            this.localStream.getVideoTracks().forEach(function(track) {
+                try { track.stop(); } catch (eStop) {}
+            });
+        } catch (e) {}
+    },
+    /**
+     * iOS/WKWebView: video estable hacia Kurento.
+     * Preferido (P): HTMLVideoElement.captureStream — el track del peer sigue al cambiar srcObject
+     * (flip = nueva cámara en el <video>, sin replaceTrack / sin canvas).
+     * Fallback (H): canvas.captureStream(0)+requestFrame.
+     */
+    zuitchStartCamProxy: async function(camStream) {
+        var self = this;
+        if (!camStream || typeof camStream.getTracks !== 'function') {
+            return false;
+        }
+        var canVideoCap = typeof HTMLVideoElement !== 'undefined' &&
+            !!(HTMLVideoElement.prototype.captureStream || HTMLVideoElement.prototype.mozCaptureStream);
+        var canCanvasCap = typeof HTMLCanvasElement !== 'undefined' &&
+            !!HTMLCanvasElement.prototype.captureStream;
+        if (!canVideoCap && !canCanvasCap) {
+            return false;
+        }
+        try {
+            self.zuitchStopCamProxy(true);
+        } catch (eStopPrev) {}
+
+        var camVideo = document.createElement('video');
+        camVideo.setAttribute('playsinline', '');
+        camVideo.setAttribute('webkit-playsinline', '');
+        camVideo.muted = true;
+        camVideo.autoplay = true;
+        camVideo.playsInline = true;
+        /* Visible mínimo: captureStream de <video> en iOS exige elemento en el documento. */
+        camVideo.style.cssText = 'position:fixed;left:0;top:0;width:2px;height:2px;opacity:0.02;pointer-events:none;z-index:-1;';
+        try { document.body.appendChild(camVideo); } catch (eAppend) {}
+
+        camVideo.srcObject = camStream;
+        try {
+            await camVideo.play();
+        } catch (ePlay) {}
+        try {
+            await new Promise(function(r) {
+                if (camVideo.readyState >= 2) {
+                    r();
+                    return;
+                }
+                camVideo.onloadedmetadata = r;
+                setTimeout(r, 1200);
+            });
+        } catch (eMeta) {}
+
+        var proxyStream = null;
+        var proxyVideo = null;
+        var proxyMode = null;
+        var useRequestFrame = false;
+        var canvas = null;
+        var lockW = camVideo.videoWidth || 640;
+        var lockH = camVideo.videoHeight || 480;
+        var drawCount = 0;
+        var isAndroidUa = false;
+        try {
+            isAndroidUa = /Android/i.test((typeof navigator !== 'undefined' && navigator.userAgent) ? navigator.userAgent : '');
+        } catch (eUa) {}
+
+        /* P: video.captureStream — en iOS el track sigue al cambiar srcObject.
+           Android Chrome (52396): captureStream NO sigue srcObject → flip “ok” sin cambio visual;
+           forzar canvas abajo. */
+        if (canVideoCap && !isAndroidUa) {
+            try {
+                var capFn = camVideo.captureStream || camVideo.mozCaptureStream;
+                proxyStream = capFn.call(camVideo);
+                proxyVideo = proxyStream && proxyStream.getVideoTracks()[0] || null;
+                if (proxyVideo) {
+                    proxyMode = 'videoCaptureStream';
+                } else {
+                    proxyStream = null;
+                }
+            } catch (eVidCap) {
+                proxyStream = null;
+                proxyVideo = null;
+            }
+        }
+
+        /* H: canvas + rAF (Android siempre; iOS fallback si P falla).
+           Android WV: captureStream(0)+requestFrame puede dejar preview congelada (52397);
+           forzar captureStream(30) para que el flip se vea. iOS mantiene requestFrame. */
+        if (!proxyVideo && canCanvasCap) {
+            canvas = document.createElement('canvas');
+            canvas.width = lockW;
+            canvas.height = lockH;
+            canvas.style.cssText = 'position:fixed;left:0;top:0;width:2px;height:2px;opacity:0.02;pointer-events:none;z-index:-1;';
+            try { document.body.appendChild(canvas); } catch (eAppend2) {}
+            var ctx = canvas.getContext('2d', { alpha: false, desynchronized: true }) || canvas.getContext('2d');
+            try {
+                if (isAndroidUa) {
+                    proxyStream = canvas.captureStream(30);
+                    proxyVideo = proxyStream.getVideoTracks()[0] || null;
+                    useRequestFrame = false;
+                    if (proxyVideo) {
+                        proxyMode = 'canvasTimed30';
+                    }
+                } else {
+                    proxyStream = canvas.captureStream(0);
+                    proxyVideo = proxyStream.getVideoTracks()[0] || null;
+                    useRequestFrame = !!(proxyVideo && typeof proxyVideo.requestFrame === 'function');
+                    if (!useRequestFrame) {
+                        try {
+                            proxyStream.getTracks().forEach(function(t) { try { t.stop(); } catch (eS) {} });
+                        } catch (eStopPs) {}
+                        proxyStream = canvas.captureStream(30);
+                        proxyVideo = proxyStream.getVideoTracks()[0] || null;
+                    }
+                    if (proxyVideo) {
+                        proxyMode = 'canvasRequestFrame';
+                    }
+                }
+            } catch (eCap) {
+                proxyVideo = null;
+            }
+            if (proxyVideo && ctx) {
+                var drawing = true;
+                var drawLoop = function() {
+                    if (!drawing || !self._zuitchProxyActive) {
+                        return;
+                    }
+                    try {
+                        if (camVideo.readyState >= 2) {
+                            var w = camVideo.videoWidth || lockW;
+                            var h = camVideo.videoHeight || lockH;
+                            ctx.fillStyle = '#000';
+                            ctx.fillRect(0, 0, lockW, lockH);
+                            if (w > 0 && h > 0) {
+                                var scale = Math.min(lockW / w, lockH / h);
+                                var dw = w * scale;
+                                var dh = h * scale;
+                                var dx = (lockW - dw) / 2;
+                                var dy = (lockH - dh) / 2;
+                                ctx.drawImage(camVideo, dx, dy, dw, dh);
+                            }
+                            if (self._zuitchProxyUseRequestFrame && self._zuitchProxyVideoTrack) {
+                                try { self._zuitchProxyVideoTrack.requestFrame(); } catch (eRf) {}
+                            }
+                            drawCount++;
+                        }
+                    } catch (eDraw) {}
+                    self._zuitchProxyRaf = requestAnimationFrame(drawLoop);
+                };
+                self._zuitchProxyDrawing = function() { drawing = false; };
+                self._zuitchProxyRaf = requestAnimationFrame(drawLoop);
+            } else if (canvas) {
+                try { canvas.remove(); } catch (eRc) {}
+                canvas = null;
+            }
+        }
+
+        if (!proxyVideo) {
+            try { camVideo.remove(); } catch (eR3) {}
+            return false;
+        }
+
+        var out = new MediaStream();
+        out.addTrack(proxyVideo);
+        try {
+            camStream.getAudioTracks().forEach(function(t) {
+                if (t && t.readyState !== 'ended') {
+                    out.addTrack(t);
+                }
+            });
+        } catch (eAud) {}
+
+        self._zuitchCamStream = camStream;
+        self._zuitchProxyCamVideo = camVideo;
+        self._zuitchProxyCanvas = canvas;
+        self._zuitchProxyVideoTrack = proxyVideo;
+        self._zuitchProxyUseRequestFrame = useRequestFrame;
+        self._zuitchProxyMode = proxyMode;
+        if (!self._zuitchProxyDrawing) {
+            self._zuitchProxyDrawing = function() {};
+        }
+        self._zuitchProxyActive = true;
+        self.localStream = out;
+
+                try {
+                    self.zuitchLiveDiag('info', 'live_cam_proxy_start', 'Camera proxy activo', self.live_id, {
+                        iosWebView: self.zuitchIsIosWebview(),
+                        android: isAndroidUa,
+                        w: lockW,
+                        h: lockH,
+                        proxyMode: proxyMode,
+                        useRequestFrame: useRequestFrame
+                    });
+                    // #region agent log
+                    fetch('/vy-livestream/dbg-cadeb8.php',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'cadeb8'},body:JSON.stringify({sessionId:'cadeb8',runId:'android-flip',hypothesisId:'A1',location:'liveStream.js:zuitchStartCamProxy',message:'proxy start',data:{android:isAndroidUa,proxyMode:proxyMode,useRequestFrame:useRequestFrame,w:lockW,h:lockH},timestamp:Date.now()}),keepalive:true}).catch(function(){});
+                    // #endregion
+                } catch (eLog) {}
+                return true;
+            },
+    /**
+     * @param {boolean} keepCamTracks si true, no hace stop de la cámara (re-wrap).
+     */
+    zuitchStopCamProxy: function(keepCamTracks) {
+        var self = this;
+        self._zuitchProxyActive = false;
+        try {
+            if (typeof self._zuitchProxyDrawing === 'function') {
+                self._zuitchProxyDrawing();
+            }
+        } catch (eD) {}
+        try {
+            if (self._zuitchProxyRaf) {
+                cancelAnimationFrame(self._zuitchProxyRaf);
+            }
+        } catch (eRaf) {}
+        self._zuitchProxyRaf = null;
+        self._zuitchProxyDrawing = null;
+
+        try {
+            if (self._zuitchProxyCamVideo) {
+                self._zuitchProxyCamVideo.srcObject = null;
+                if (self._zuitchProxyCamVideo.parentNode) {
+                    self._zuitchProxyCamVideo.parentNode.removeChild(self._zuitchProxyCamVideo);
+                }
+            }
+        } catch (eV) {}
+        self._zuitchProxyCamVideo = null;
+
+        try {
+            if (self._zuitchProxyCanvas && self._zuitchProxyCanvas.parentNode) {
+                self._zuitchProxyCanvas.parentNode.removeChild(self._zuitchProxyCanvas);
+            }
+        } catch (eC) {}
+        self._zuitchProxyCanvas = null;
+        self._zuitchProxyVideoTrack = null;
+        self._zuitchProxyUseRequestFrame = false;
+        self._zuitchProxyMode = null;
+
+        if (!keepCamTracks && self._zuitchCamStream) {
+            try {
+                self._zuitchCamStream.getTracks().forEach(function(t) {
+                    try { t.stop(); } catch (eT) {}
+                });
+            } catch (eCam) {}
+        }
+        self._zuitchCamStream = null;
+    },
+    /**
+     * Flip: nueva cámara en el <video> del proxy.
+     * Con videoCaptureStream el track del peer no cambia (solo srcObject).
+     */
+    zuitchProxySwapCamera: async function(wantFaceUser) {
+        var self = this;
+        if (!self._zuitchProxyActive || !self._zuitchProxyCamVideo) {
+            return false;
+        }
+        /* Android: no abre 2 cámaras; liberar video del cam stream (el proxy/MediaRecorder siguen). */
+        try {
+            var uaPx = (typeof navigator !== 'undefined' && navigator.userAgent) ? navigator.userAgent : '';
+            if (/Android/i.test(uaPx) && self._zuitchCamStream) {
+                self._zuitchCamStream.getVideoTracks().forEach(function(t) {
+                    try {
+                        if (t && t.readyState !== 'ended') {
+                            t.stop();
+                        }
+                    } catch (eStopCam) {}
+                });
+            }
+        } catch (eRelCam) {}
+        var fresh = null;
+        try {
+            fresh = await self.zuitchGetUserMediaForFlip(wantFaceUser, true);
+        } catch (eGum) {
+            return false;
+        }
+        var newVideo = fresh.getVideoTracks()[0] || null;
+        if (!newVideo) {
+            try { fresh.getTracks().forEach(function(t) { t.stop(); }); } catch (eS) {}
+            return false;
+        }
+        var oldCam = self._zuitchCamStream;
+        var camOnly = new MediaStream();
+        camOnly.addTrack(newVideo);
+        try {
+            var keepAudio = [];
+            if (oldCam) {
+                keepAudio = oldCam.getAudioTracks().filter(function(t) {
+                    return t && t.readyState !== 'ended';
+                });
+            }
+            keepAudio.forEach(function(t) { camOnly.addTrack(t); });
+        } catch (eA) {}
+        try { fresh.getAudioTracks().forEach(function(t) { t.stop(); }); } catch (eXa) {}
+
+        self._zuitchCamStream = camOnly;
+        /* Canvas/iOS captureStream: solo cambia lo que reproduce el <video> del proxy. */
+        self._zuitchProxyCamVideo.srcObject = camOnly;
+        try {
+            await self._zuitchProxyCamVideo.play();
+        } catch (ePlay) {}
+        try {
+            await new Promise(function(r) {
+                if (self._zuitchProxyCamVideo.readyState >= 2) {
+                    r();
+                    return;
+                }
+                self._zuitchProxyCamVideo.onloadedmetadata = r;
+                setTimeout(r, 800);
+            });
+        } catch (eMetaPx) {}
+        self.shouldFaceUser = !!wantFaceUser;
+
+        /* No stop inmediato de la cámara anterior (52371: stop-after correlacionó con video~8s).
+           Retirar y liberar al cerrar el live. */
+        if (oldCam) {
+            try {
+                oldCam.getVideoTracks().forEach(function(t) {
+                    try {
+                        if (t && t.readyState !== 'ended') {
+                            if (!self._zuitchRetiredTracks) {
+                                self._zuitchRetiredTracks = [];
+                            }
+                            self._zuitchRetiredTracks.push(t);
+                        }
+                    } catch (eRet) {}
+                });
+            } catch (eOld) {}
+        }
+
+        /* Preview local: asegurar que el <video> UI sigue el proxy stream. */
+        try {
+            if (self.video && self.video[0] && self.localStream) {
+                self.video[0].srcObject = self.localStream;
+                self.zuitchEnsureLivePreviewPlaying();
+            }
+        } catch (ePrev) {}
+
+        try {
+            var camLabel = '';
+            try { camLabel = String((newVideo && newVideo.label) || '').slice(0, 80); } catch (eLb) {}
+            self.zuitchLiveDiag('info', 'live_camera_flip_proxy_ok', 'Flip via proxy (sin replaceTrack)', self.live_id, {
+                facingMode: self.zuitchFlipFacingMode(wantFaceUser),
+                iosWebView: self.zuitchIsIosWebview(),
+                proxyMode: self._zuitchProxyMode,
+                camLabel: camLabel,
+                camReady: newVideo ? newVideo.readyState : 'none'
+            });
+            // #region agent log
+            var prevCt = null, prevRs = null;
+            try {
+                if (self.video && self.video[0]) {
+                    prevCt = self.video[0].currentTime;
+                    prevRs = self.video[0].readyState;
+                }
+            } catch (ePv) {}
+            fetch('/vy-livestream/dbg-cadeb8.php',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'cadeb8'},body:JSON.stringify({sessionId:'cadeb8',runId:'android-flip',hypothesisId:'A2',location:'liveStream.js:zuitchProxySwapCamera',message:'proxy swap ok',data:{facing:self.zuitchFlipFacingMode(wantFaceUser),proxyMode:self._zuitchProxyMode||null,camLabel:camLabel,camReady:newVideo?newVideo.readyState:'none',previewCurrentTime:prevCt,previewReadyState:prevRs},timestamp:Date.now()}),keepalive:true}).catch(function(){});
+            setTimeout(function() {
+                try {
+                    var v = self.video && self.video[0];
+                    var cam = self._zuitchCamStream && self._zuitchCamStream.getVideoTracks()[0];
+                    fetch('/vy-livestream/dbg-cadeb8.php',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'cadeb8'},body:JSON.stringify({sessionId:'cadeb8',runId:'android-flip',hypothesisId:'A2',location:'liveStream.js:zuitchProxySwapCamera',message:'proxy swap +400ms',data:{facing:self.zuitchFlipFacingMode(wantFaceUser),proxyMode:self._zuitchProxyMode||null,camLabel:cam?String(cam.label||'').slice(0,80):'',camReady:cam?cam.readyState:'none',previewCurrentTime:v?v.currentTime:null,previewReadyState:v?v.readyState:null,previewPaused:v?v.paused:null,hasSrcObject:!!(v&&v.srcObject)},timestamp:Date.now()}),keepalive:true}).catch(function(){});
+                } catch (eT) {}
+            }, 400);
+            // #endregion
+        } catch (eLog) {}
+        return true;
+    },
+    /** Preview / productor: playsinline + play() tras srcObject (WKWebView iOS). */
+    zuitchEnsureLivePreviewPlaying: function() {
+        var self = this;
+        try {
+            if (!self.video || !self.video[0]) {
+                return;
+            }
+            var v = self.video[0];
+            try { v.setAttribute('playsinline', ''); } catch (e1) {}
+            try { v.setAttribute('webkit-playsinline', ''); } catch (e2) {}
+            try { v.playsInline = true; } catch (e3) {}
+            var p = null;
+            try {
+                p = v.play();
+            } catch (ePlay) {
+                p = null;
+            }
+            if (p && typeof p.catch === 'function') {
+                p.catch(function() {});
+            }
+            /* Un toque en la preview reanuda si iOS pausó sin matar el live. */
+            if (!v._zuitchPreviewTapBound) {
+                v._zuitchPreviewTapBound = true;
+                var tapEvt = ('PointerEvent' in window) ? 'pointerdown' : 'touchend';
+                v.addEventListener(tapEvt, function() {
+                    try {
+                        if (self.is_live && !self.live_stopped) {
+                            self.zuitchEnsureLivePreviewPlaying();
+                        }
+                    } catch (eTap) {}
+                }, { passive: true });
+            }
+        } catch (e) {}
+    },
+    /** facingMode objetivo tras un flip (user ↔ environment). */
+    zuitchFlipFacingMode: function(faceUser) {
+        return faceUser ? 'user' : 'environment';
+    },
+    /**
+     * Android: liberar video actual antes de abrir la otra cámara (NotReadableError si no).
+     * No toca audio. En iOS no se usa (proxy/applyConstraints).
+     */
+    zuitchReleaseVideoTracksForFlip: function() {
+        var self = this;
+        var stopped = 0;
+        var streams = [];
+        try {
+            if (self._zuitchCamStream) {
+                streams.push(self._zuitchCamStream);
+            }
+        } catch (e1) {}
+        try {
+            if (self.localStream) {
+                streams.push(self.localStream);
+            }
+        } catch (e2) {}
+        streams.forEach(function(s) {
+            try {
+                s.getVideoTracks().forEach(function(t) {
+                    try {
+                        if (t && t.readyState !== 'ended') {
+                            t.stop();
+                            stopped++;
+                        }
+                    } catch (eT) {}
+                });
+            } catch (eS) {}
+        });
+        return stopped;
+    },
+    /**
+     * Flip preferido en iOS: applyConstraints en el track actual (sin stopTracks / replaceTrack).
+     * @return {Promise<boolean>} true si cambió la cámara
+     */
+    zuitchFlipViaApplyConstraints: async function(wantFaceUser) {
+        var self = this;
+        try {
+            /* Con proxy el track del peer es canvas (sin facingMode): aplicar en la cámara real. */
+            var srcStream = self._zuitchProxyActive && self._zuitchCamStream
+                ? self._zuitchCamStream
+                : self.localStream;
+            if (!srcStream) {
+                return false;
+            }
+            var tracks = srcStream.getVideoTracks();
+            var track = tracks && tracks.length ? tracks[0] : null;
+            if (!track || track.readyState === 'ended' || typeof track.applyConstraints !== 'function') {
+                return false;
+            }
+            var facing = self.zuitchFlipFacingMode(wantFaceUser);
+            await track.applyConstraints({ facingMode: { exact: facing } });
+            self.shouldFaceUser = !!wantFaceUser;
+            try {
+                self.zuitchLiveDiag('info', 'live_camera_flip_apply_ok', 'applyConstraints facingMode', self.live_id, {
+                    facingMode: facing,
+                    proxy: !!self._zuitchProxyActive,
+                    iosWebView: self.zuitchIsIosWebview()
+                });
+            } catch (eLog) {}
+            return true;
+        } catch (e) {
+            try {
+                self.zuitchLiveDiag('info', 'live_camera_flip_apply_fail', String(e && e.message || e), self.live_id, {
+                    name: e && e.name,
+                    iosWebView: self.zuitchIsIosWebview()
+                });
+            } catch (eD) {}
+            return false;
+        }
+    },
+    /**
+     * Elegir otro videoinput por deviceId (fallback iOS tras OverconstrainedError).
+     */
+    zuitchPickOtherCameraDeviceId: async function(currentDeviceId, wantFaceUser) {
+        try {
+            var devices = await navigator.mediaDevices.enumerateDevices();
+            var cams = devices.filter(function(d) {
+                return d.kind === 'videoinput' && d.deviceId;
+            });
+            if (!cams.length) {
+                return null;
+            }
+            var wantBack = !wantFaceUser;
+            var byLabel = cams.find(function(d) {
+                var label = String(d.label || '').toLowerCase();
+                if (currentDeviceId && d.deviceId === currentDeviceId) {
+                    return false;
+                }
+                if (wantBack) {
+                    return /back|rear|environment|trasera|posterior/i.test(label);
+                }
+                return /front|user|face|frontal/i.test(label);
+            });
+            if (byLabel) {
+                return byLabel.deviceId;
+            }
+            var other = cams.find(function(d) {
+                return !currentDeviceId || d.deviceId !== currentDeviceId;
+            });
+            return other ? other.deviceId : null;
+        } catch (e) {
+            return null;
+        }
+    },
+    /**
+     * getUserMedia para flip: facingMode exact + width/height ideal (nunca 640/480 exactos en iOS).
+     * Reintentos: solo facingMode → deviceId.
+     */
+    zuitchGetUserMediaForFlip: async function(wantFaceUser, keepAudio) {
+        var self = this;
+        var facing = self.zuitchFlipFacingMode(wantFaceUser);
+        var currentVidId = null;
+        try {
+            /* Con proxy, localStream es canvas (sin deviceId); leer la cámara real. */
+            var srcForId = (self._zuitchProxyActive && self._zuitchCamStream)
+                ? self._zuitchCamStream
+                : self.localStream;
+            var cur = srcForId && srcForId.getVideoTracks()[0];
+            if (cur && cur.getSettings) {
+                currentVidId = cur.getSettings().deviceId || null;
+            }
+        } catch (eS) {}
+
+        var attempts = [
+            {
+                audio: keepAudio ? false : true,
+                video: {
+                    facingMode: { exact: facing },
+                    width: { ideal: 640 },
+                    height: { ideal: 480 },
+                    frameRate: { ideal: 30, max: 30 }
+                }
+            },
+            {
+                audio: keepAudio ? false : true,
+                video: { facingMode: { exact: facing } }
+            },
+            /* Android a menudo rechaza exact; ideal basta tras liberar el track anterior. */
+            {
+                audio: keepAudio ? false : true,
+                video: { facingMode: facing }
+            }
+        ];
+
+        var lastErr = null;
+        for (var i = 0; i < attempts.length; i++) {
+            try {
+                var stream = await navigator.mediaDevices.getUserMedia(attempts[i]);
+                try {
+                    self.zuitchLiveDiag('info', 'live_camera_flip_gum_ok', 'Flip getUserMedia ok', self.live_id, {
+                        attempt: i,
+                        facingMode: facing,
+                        iosWebView: self.zuitchIsIosWebview()
+                    });
+                } catch (eL) {}
+                return stream;
+            } catch (err) {
+                lastErr = err;
+                try {
+                    self.zuitchLiveDiag('warn', 'live_camera_flip_gum_retry', String(err && err.message || err), self.live_id, {
+                        attempt: i,
+                        name: err && err.name,
+                        facingMode: facing
+                    });
+                } catch (eL2) {}
+            }
+        }
+
+        var otherId = await self.zuitchPickOtherCameraDeviceId(currentVidId, wantFaceUser);
+        if (otherId) {
+            try {
+                var stream2 = await navigator.mediaDevices.getUserMedia({
+                    audio: keepAudio ? false : true,
+                    video: { deviceId: { exact: otherId } }
+                });
+                try {
+                    self.zuitchLiveDiag('info', 'live_camera_flip_gum_ok', 'Flip getUserMedia via deviceId', self.live_id, {
+                        attempt: 'deviceId',
+                        facingMode: facing,
+                        iosWebView: self.zuitchIsIosWebview()
+                    });
+                } catch (eL3) {}
+                return stream2;
+            } catch (err2) {
+                lastErr = err2;
+            }
+        }
+
+        try {
+            self.zuitchLiveDiag('error', 'live_camera_flip_fail', String(lastErr && lastErr.message || lastErr || 'flip failed'), self.live_id, {
+                name: lastErr && lastErr.name,
+                facingMode: facing,
+                iosWebView: self.zuitchIsIosWebview()
+            });
+        } catch (eFail) {}
+        throw lastErr || new Error('camera flip failed');
     },
     removeLiveFrontEnd: function() {
 
@@ -2531,6 +3220,24 @@ $.extend(VY_LIVE_STREAM.prototype, {
                 }
             };
 
+            /* Flip en vivo: solo nueva cámara; conservar el track de audio actual. */
+            var flipKeepAudio = !!(self._zuitchCameraFlip && self.is_live && self.localStream);
+            var oldAudioTracks = [];
+            if (flipKeepAudio) {
+                try {
+                    oldAudioTracks = self.localStream.getAudioTracks().filter(function(t) {
+                        return t && t.readyState !== 'ended';
+                    });
+                } catch (eAud) {
+                    oldAudioTracks = [];
+                }
+                if (oldAudioTracks.length) {
+                    constraints.audio = false;
+                } else {
+                    flipKeepAudio = false;
+                }
+            }
+
             if (mob) {
                 /*
                 constraints.audio = {
@@ -2545,18 +3252,62 @@ $.extend(VY_LIVE_STREAM.prototype, {
                 };
 
                 if (self._is_smartphone() && self.isIosSafari()) {
+                    /* Nunca width/height exactos en iOS: OverconstrainedError al flip a trasera. */
                     constraints.video = {
-                        width: 640,
-                        height: 480,
+                        width: { ideal: 640 },
+                        height: { ideal: 480 },
                         frameRate: { ideal: 30, max: 30 }
                     };
-
                 }
-                constraints.video['facingMode'] = self.shouldFaceUser ? 'user' : 'environment';
+                /* facingMode exact solo en flip; en apertura iOS ideal evita fallos raros. */
+                if (self._zuitchCameraFlip) {
+                    constraints.video['facingMode'] = {
+                        exact: self.shouldFaceUser ? 'user' : 'environment'
+                    };
+                } else {
+                    constraints.video['facingMode'] = self.shouldFaceUser ? 'user' : 'environment';
+                }
             }
 
             self.gl_mdevices.c = constraints;
-            self.localStream = await navigator.mediaDevices.getUserMedia(constraints);
+            var freshStream = await navigator.mediaDevices.getUserMedia(constraints);
+            if (flipKeepAudio && oldAudioTracks.length) {
+                try {
+                    var merged = new MediaStream();
+                    freshStream.getVideoTracks().forEach(function(t) { merged.addTrack(t); });
+                    oldAudioTracks.forEach(function(t) { merged.addTrack(t); });
+                    try { freshStream.getAudioTracks().forEach(function(t) { t.stop(); }); } catch (eX) {}
+                    self.localStream = merged;
+                } catch (eMerge) {
+                    self.localStream = freshStream;
+                }
+            } else {
+                self.localStream = freshStream;
+            }
+
+            /* iOS + Android (client recorder): proxy estable para que el flip no tumbe MediaRecorder/Kurento. */
+            if ((self.isIosSafari() || self.zuitchShouldUseClientRecorder()) && !self._zuitchCameraFlip) {
+                try {
+                    var proxied = await self.zuitchStartCamProxy(self.localStream);
+                    // #region agent log
+                    try {
+                        fetch('/vy-livestream/dbg-cadeb8.php',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'cadeb8'},body:JSON.stringify({sessionId:'cadeb8',runId:'post-fix',hypothesisId:'R1',location:'liveStream.js:requestCam',message:'cam proxy',data:{proxied:!!proxied,android:/Android/i.test(navigator.userAgent||''),proxyActive:!!self._zuitchProxyActive},timestamp:Date.now()}),keepalive:true}).catch(function(){});
+                    } catch (ePxLog) {}
+                    // #endregion
+                    if (!proxied) {
+                        try {
+                            self.zuitchLiveDiag('warn', 'live_cam_proxy_fail', 'captureStream no disponible; sin proxy', self.live_id, {
+                                iosWebView: self.zuitchIsIosWebview(),
+                                android: /Android/i.test(navigator.userAgent || '')
+                            });
+                        } catch (ePf) {}
+                    }
+                } catch (eProxy) {
+                    try {
+                        self.zuitchLiveDiag('warn', 'live_cam_proxy_fail', String(eProxy && eProxy.message || eProxy), self.live_id, {});
+                    } catch (ePf2) {}
+                }
+            }
 
 
 
@@ -2569,10 +3320,10 @@ $.extend(VY_LIVE_STREAM.prototype, {
                         if (!(camera_perm.state === "granted")) {
                             cam_disabled(vy_lvst_lang.cam_disabled);
 
-                        }
-
-                        if (self.is_live) {
-                            self.stopLive(1);
+                            /* Solo terminar el live si el permiso se pierde de verdad (no en flip). */
+                            if (self.is_live && !self._zuitchCameraFlip) {
+                                self.stopLive(1);
+                            }
                         }
 
                     };
@@ -2584,15 +3335,25 @@ $.extend(VY_LIVE_STREAM.prototype, {
             const not_granted = !(await navigator.mediaDevices.enumerateDevices())[0].label;
 
             self.video[0].srcObject = self.localStream;
+            try { self.video[0].setAttribute('playsinline', ''); } catch (ePi) {}
+            try { self.video[0].setAttribute('webkit-playsinline', ''); } catch (ePi2) {}
             await new Promise(r => self.video[0].onloadedmetadata = r);
+            /* WKWebView: sin play() tras srcObject el último frame se queda congelado. */
+            self.zuitchEnsureLivePreviewPlaying();
             a17cam.addClass('__none');
             this.enable_btn();
             if (self.is_live) {
 
                 setTimeout(function() {
                     a17cam.addClass('__none');
+                    self.zuitchEnsureLivePreviewPlaying();
                 }, 1000);
-                self.replaceStreamTracks();
+                /* Con proxy activo el peer ya tiene el track estable: no replaceTrack. */
+                if (!self._zuitchProxyActive) {
+                    try {
+                        await self.replaceStreamTracks(self.localStream);
+                    } catch (eRepCam) {}
+                }
 
             }
             return 1;
@@ -2781,18 +3542,261 @@ $.extend(VY_LIVE_STREAM.prototype, {
             flipBtn.removeClass('__disabled');
 
 
-            flipBtn.off('click').on('click', function(e) {
+            flipBtn.off('click').on('click', async function(e) {
                 self.evstop(e);
 
                 self.playSound('click');
                 if (self.localStream == null) return self.showSwalErr(vy_lvst_lang.device_not_support_flip_mode + '.');
-                // we need to flip, stop everything
-                self.stopTracks();
-                // toggle / flip
-                self.shouldFaceUser = !self.shouldFaceUser;
-                self.requestCam(1, 1);
+                if (self._zuitchFlipBusy) {
+                    return;
+                }
+                /* Debounce: iOS más largo (protege grabación); Android más corto (UX flip). */
+                var isAndroidFlip = /Android/i.test((typeof navigator !== 'undefined' && navigator.userAgent) ? navigator.userAgent : '');
+                var flipDebounceMs = isAndroidFlip ? 900 : 2500;
+                if (self._zuitchLastFlipAt && (Date.now() - self._zuitchLastFlipAt) < flipDebounceMs) {
+                    return;
+                }
+                self._zuitchFlipBusy = true;
+                self._zuitchCameraFlip = true;
+                var wantFaceUser = !self.shouldFaceUser;
+                var isIosClient = !!(self.isIosSafari() || self.zuitchIsIosWebview());
+                // #region agent log
+                try {
+                    var _vid0 = null;
+                    var _cam0 = null;
+                    try { _vid0 = self.localStream.getVideoTracks()[0]; } catch (eV0) {}
+                    try { _cam0 = self._zuitchCamStream && self._zuitchCamStream.getVideoTracks()[0]; } catch (eC0) {}
+                    var _flipClickCtx = {
+                        hypothesisId: 'A1',
+                        runId: 'android-flip',
+                        wantFaceUser: wantFaceUser,
+                        facing: self.zuitchFlipFacingMode(wantFaceUser),
+                        is_live: !!self.is_live,
+                        proxy: !!self._zuitchProxyActive,
+                        proxyMode: self._zuitchProxyMode || null,
+                        isIos: isIosClient,
+                        android: isAndroidFlip,
+                        vidReady: _vid0 ? _vid0.readyState : 'none',
+                        vidLabel: _vid0 ? String(_vid0.label || '').slice(0, 80) : '',
+                        camReady: _cam0 ? _cam0.readyState : 'none',
+                        camLabel: _cam0 ? String(_cam0.label || '').slice(0, 80) : ''
+                    };
+                    self.zuitchLiveDiag('info', 'live_camera_flip_click', 'Flip button tapped', self.live_id, _flipClickCtx);
+                    fetch('/vy-livestream/dbg-cadeb8.php',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'cadeb8'},body:JSON.stringify({sessionId:'cadeb8',runId:'android-flip',hypothesisId:'A1',location:'liveStream.js:flipClick',message:'flip click',data:_flipClickCtx,timestamp:Date.now()}),keepalive:true}).catch(function(){});
+                } catch (eClk) {}
+                // #endregion
+                try {
+                    /* A) Solo iOS: applyConstraints (en Android siempre OverconstrainedError). */
+                    if (isIosClient) {
+                        var applied = await self.zuitchFlipViaApplyConstraints(wantFaceUser);
+                        if (applied) {
+                            self._zuitchLastFlipAt = Date.now();
+                            try {
+                                self.zuitchLiveDiag('info', 'live_camera_flip_ok', 'Flip via applyConstraints', self.live_id, {
+                                    hypothesisId: 'H-B',
+                                    runId: 'post-fix',
+                                    path: 'apply'
+                                });
+                            } catch (eOkA) {}
+                            return;
+                        }
+                    }
 
+                    self.shouldFaceUser = wantFaceUser;
 
+                    /* B) Proxy (iOS videoCapture / Android canvas): cambiar cámara dibujada. */
+                    if (self._zuitchProxyActive) {
+                        var swapped = await self.zuitchProxySwapCamera(wantFaceUser);
+                        if (!swapped) {
+                            try {
+                                self.zuitchLiveDiag('warn', 'live_camera_flip_fail', 'proxy swap failed', self.live_id, {
+                                    iosWebView: self.zuitchIsIosWebview(),
+                                    hypothesisId: 'H-C',
+                                    runId: 'post-fix'
+                                });
+                            } catch (eFl) {}
+                            try {
+                                self.showSwalErr(vy_lvst_lang.device_not_support_flip_mode + '.');
+                            } catch (eSw) {}
+                            return;
+                        }
+                        if (self.video && self.video[0] && self.localStream) {
+                            self.video[0].srcObject = self.localStream;
+                        }
+                        self.zuitchEnsureLivePreviewPlaying();
+                        self._zuitchLastFlipAt = Date.now();
+                        try {
+                            self.zuitchLiveDiag('info', 'live_camera_flip_ok', 'Flip via proxy swap', self.live_id, {
+                                hypothesisId: 'H-C',
+                                runId: 'post-fix',
+                                path: 'proxy'
+                            });
+                        } catch (eOkB) {}
+                        return;
+                    }
+
+                    /* C) Sin proxy (Android / fallback): liberar video → GUM → replaceTrack. */
+                    if (self.is_live) {
+                        var oldVideoTracks = [];
+                        var oldAudioTracks = [];
+                        try {
+                            oldVideoTracks = self.localStream.getVideoTracks().slice();
+                            oldAudioTracks = self.localStream.getAudioTracks().filter(function(t) {
+                                return t && t.readyState !== 'ended';
+                            });
+                        } catch (eOld) {}
+
+                        /* H-A: Android no abre 2 cámaras a la vez → NotReadableError si no liberamos. */
+                        if (!isIosClient) {
+                            var released = self.zuitchReleaseVideoTracksForFlip();
+                            // #region agent log
+                            try {
+                                self.zuitchLiveDiag('info', 'live_camera_flip_release', 'Released video before flip GUM', self.live_id, {
+                                    hypothesisId: 'H-A',
+                                    runId: 'post-fix',
+                                    stopped: released,
+                                    facing: self.zuitchFlipFacingMode(wantFaceUser)
+                                });
+                                fetch('http://localhost:7513/ingest/8e34e2dd-c41b-414a-b93a-885e60cc6800',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'cadeb8'},body:JSON.stringify({sessionId:'cadeb8',location:'liveStream.js:flipRelease',message:'released video tracks',data:{stopped:released,facing:self.zuitchFlipFacingMode(wantFaceUser)},timestamp:Date.now(),hypothesisId:'H-A',runId:'post-fix'})}).catch(function(){});
+                            } catch (eRel) {}
+                            // #endregion
+                        }
+
+                        var freshStream = null;
+                        try {
+                            freshStream = await self.zuitchGetUserMediaForFlip(wantFaceUser, true);
+                        } catch (gumErr) {
+                            // #region agent log
+                            try {
+                                self.zuitchLiveDiag('error', 'live_camera_flip_fail', String(gumErr && gumErr.message || gumErr), self.live_id, {
+                                    name: gumErr && gumErr.name,
+                                    hypothesisId: 'H-A',
+                                    runId: 'post-fix',
+                                    path: 'live-gum',
+                                    releasedFirst: !isIosClient
+                                });
+                            } catch (eFg) {}
+                            // #endregion
+                            await self.requestCam(1, 1);
+                            return;
+                        }
+                        var newVideo = freshStream.getVideoTracks()[0] || null;
+                        if (!newVideo) {
+                            throw new Error('flip: no video track from getUserMedia');
+                        }
+
+                        var mergedLive = null;
+                        try {
+                            mergedLive = new MediaStream();
+                            mergedLive.addTrack(newVideo);
+                            oldAudioTracks.forEach(function(t) { mergedLive.addTrack(t); });
+                        } catch (eMg) {
+                            mergedLive = freshStream;
+                        }
+                        self.localStream = mergedLive;
+                        try { freshStream.getAudioTracks().forEach(function(t) { t.stop(); }); } catch (eXa) {}
+
+                        if (self.video && self.video[0]) {
+                            self.video[0].srcObject = self.localStream;
+                            try { self.video[0].setAttribute('playsinline', ''); } catch (ePi) {}
+                            try { self.video[0].setAttribute('webkit-playsinline', ''); } catch (ePi2) {}
+                            try {
+                                await new Promise(function(r) {
+                                    self.video[0].onloadedmetadata = r;
+                                    setTimeout(r, 800);
+                                });
+                            } catch (eMeta) {}
+                            self.zuitchEnsureLivePreviewPlaying();
+                        }
+
+                        /* Solo video al peer (no re-replace audio). */
+                        var videoOnly = new MediaStream();
+                        videoOnly.addTrack(newVideo);
+                        var replaced = await self.replaceStreamTracks(videoOnly);
+                        if (!replaced) {
+                            try {
+                                self.zuitchLiveDiag('warn', 'live_camera_flip_fail', 'replaceTrack failed; keep existing pipeline', self.live_id, {
+                                    iosWebView: self.zuitchIsIosWebview(),
+                                    hypothesisId: 'H-D',
+                                    runId: 'post-fix'
+                                });
+                            } catch (eFl) {}
+                            try {
+                                self.showSwalErr(vy_lvst_lang.device_not_support_flip_mode + '.');
+                            } catch (eSw) {}
+                            return;
+                        }
+
+                        if (!self._zuitchRetiredTracks) {
+                            self._zuitchRetiredTracks = [];
+                        }
+                        oldVideoTracks.forEach(function(t) {
+                            if (!t || t.readyState === 'ended') return;
+                            var stillActive = false;
+                            try {
+                                stillActive = self.localStream.getVideoTracks().indexOf(t) !== -1;
+                            } catch (eChk) {}
+                            if (!stillActive) {
+                                self._zuitchRetiredTracks.push(t);
+                            }
+                        });
+                        self._zuitchLastFlipAt = Date.now();
+                        // #region agent log
+                        try {
+                            self.zuitchLiveDiag('info', 'live_camera_flip_ok', 'Flip via replaceTrack', self.live_id, {
+                                hypothesisId: 'H-A',
+                                runId: 'post-fix',
+                                path: 'live-replace',
+                                facing: self.zuitchFlipFacingMode(wantFaceUser),
+                                newLabel: String(newVideo.label || '').slice(0, 80),
+                                rec_chunks: (self._recChunks || []).length,
+                                proxy: !!self._zuitchProxyActive
+                            });
+                            fetch('http://localhost:7513/ingest/8e34e2dd-c41b-414a-b93a-885e60cc6800',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'cadeb8'},body:JSON.stringify({sessionId:'cadeb8',location:'liveStream.js:flipOk',message:'flip ok replaceTrack',data:{facing:self.zuitchFlipFacingMode(wantFaceUser),label:String(newVideo.label||'').slice(0,80),recChunks:(self._recChunks||[]).length,proxy:!!self._zuitchProxyActive},timestamp:Date.now(),hypothesisId:'R1',runId:'post-fix'})}).catch(function(){});
+                        } catch (eOkC) {}
+                        // #endregion
+                        return;
+                    }
+
+                    /* D) Solo preview (no live): se puede stop + GUM clásico. */
+                    self.stopTracks();
+                    if (self.isIosSafari() || self.zuitchIsIosWebview()) {
+                        await new Promise(function(r) { setTimeout(r, 280); });
+                    }
+                    var previewStream = null;
+                    try {
+                        previewStream = await self.zuitchGetUserMediaForFlip(wantFaceUser, false);
+                    } catch (gumPrev) {
+                        await self.requestCam(1, 1);
+                        return;
+                    }
+                    self.localStream = previewStream;
+                    if (self.isIosSafari() || self.zuitchIsIosWebview()) {
+                        try {
+                            await self.zuitchStartCamProxy(self.localStream);
+                        } catch (ePx) {}
+                    }
+                    if (self.video && self.video[0]) {
+                        self.video[0].srcObject = self.localStream;
+                        try { self.video[0].setAttribute('playsinline', ''); } catch (ePi3) {}
+                        try { self.video[0].setAttribute('webkit-playsinline', ''); } catch (ePi4) {}
+                        self.zuitchEnsureLivePreviewPlaying();
+                    }
+                    self._zuitchLastFlipAt = Date.now();
+                } catch (flipErr) {
+                    try {
+                        self.zuitchLiveDiag('error', 'live_camera_flip_fail', String(flipErr && flipErr.message || flipErr), self.live_id, {
+                            name: flipErr && flipErr.name,
+                            iosWebView: self.zuitchIsIosWebview()
+                        });
+                    } catch (eD) {}
+                    try {
+                        await self.requestCam(1, 1);
+                    } catch (eReq) {}
+                } finally {
+                    self._zuitchCameraFlip = false;
+                    self._zuitchFlipBusy = false;
+                }
             });
         }
 
@@ -3647,6 +4651,35 @@ $.extend(VY_LIVE_STREAM.prototype, {
             self.broadcastData(self.live_id);
             self.filename = d.filename == 'undefined' ? self.generateToken(36) :  d.filename;
 
+            self.zuitchLiveDiag('info', 'live_golive', 'En vivo iniciado (cliente)', self.live_id, {
+                post_to_timeline: self.post_to_timeline,
+                recording_flag: typeof vy_lv_recording !== 'undefined' ? !!vy_lv_recording : null,
+                broadcast_id: self.broadcast_id,
+                filename: self.filename,
+                obs: !!self.obs_stream,
+                mob: !!mob
+            });
+
+            try {
+                if (vy_lv_recording && self.post_to_timeline == 'yes' && !self.obs_stream && self.zuitchShouldUseClientRecorder()) {
+                    var recStarted = self.zuitchStartClientRecorder();
+                    // #region agent log
+                    try {
+                        self.zuitchLiveDiag('info', 'dbg_client_rec_start', 'Client MediaRecorder start', self.live_id, {
+                            hypothesisId: 'R1',
+                            runId: 'post-fix',
+                            started: !!recStarted,
+                            mime: self._recMime || null,
+                            file_type: self.file_type || null,
+                            android: /Android/i.test(navigator.userAgent || ''),
+                            iosWebView: self.zuitchIsIosWebview()
+                        });
+                        fetch('/vy-livestream/dbg-cadeb8.php',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'cadeb8'},body:JSON.stringify({sessionId:'cadeb8',runId:'post-fix',hypothesisId:'R1',location:'liveStream.js:golive',message:'client rec start',data:{started:!!recStarted,mime:self._recMime||null,pid:self.live_id},timestamp:Date.now()}),keepalive:true}).catch(function(){});
+                    } catch (eRecLog) {}
+                    // #endregion
+                }
+            } catch (eRecStart) {}
+
             if (!mob)
                 self.changeLiveDashboard(self.live_id,function(){
                     if(d.product.id > 0)
@@ -3706,7 +4739,14 @@ $.extend(VY_LIVE_STREAM.prototype, {
                     self.evstop(e);
                     if (document.visibilityState === 'visible') {
                         self.removeAway();
+                        /* Productor: al volver a primer plano, reanudar preview si iOS la pausó. */
+                        try {
+                            if (self.is_live && !self.live_stopped) {
+                                self.zuitchEnsureLivePreviewPlaying();
+                            }
+                        } catch (eVis) {}
                     } else {
+                        /* En WKWebView de la app: no tratar background como fin de live (solo away UI). */
                         self.setAway();
                     }
 
@@ -3719,6 +4759,25 @@ $.extend(VY_LIVE_STREAM.prototype, {
 
                 window.addEventListener("pagehide", function(event) {
                     window.event.cancelBubble = true; // Don't know if this works on iOS but it might!
+                    /* App WKWebView: pagehide sale al flip de cámara / Control Center / minimizar — no stopLive. */
+                    if (self.zuitchIsIosWebview()) {
+                        try {
+                            self.zuitchLiveDiag('info', 'live_pagehide_ignored', 'pagehide ignorado en WKWebView (live sigue)', self.live_id, {
+                                post_to_timeline: self.post_to_timeline,
+                                current_sec: self.current_sec,
+                                live_stopped: !!self.live_stopped,
+                                persisting: !!(event && event.persisted)
+                            }, true);
+                        } catch (ePhIgn) {}
+                        return;
+                    }
+                    try {
+                        self.zuitchLiveDiag('warn', 'live_pagehide_stop', 'pagehide → stopLive (iOS Safari)', self.live_id, {
+                            post_to_timeline: self.post_to_timeline,
+                            current_sec: self.current_sec,
+                            live_stopped: !!self.live_stopped
+                        }, true);
+                    } catch (ePh) {}
                     return self.stopLive(1);
                 });
             } else {
@@ -3863,6 +4922,147 @@ $.extend(VY_LIVE_STREAM.prototype, {
         if (this.mediaRecorder != null && this.mediaRecorder.state == 'recording')
             this.mediaRecorder.stop();
     },
+    /**
+     * iOS WV + Android: grabación local (MediaRecorder). Kurento deja MP4 sin moov tras flips.
+     */
+    zuitchShouldUseClientRecorder: function() {
+        try {
+            if (this.zuitchIsIosWebview()) {
+                return true;
+            }
+            var ua = (typeof navigator !== 'undefined' && navigator.userAgent) ? navigator.userAgent : '';
+            if (/Android/i.test(ua)) {
+                return true;
+            }
+        } catch (eU) {}
+        return false;
+    },
+    zuitchStartClientRecorder: function(opts) {
+        const self = this;
+        opts = opts || {};
+        try {
+            if (self.mediaRecorder || !self.localStream) {
+                return false;
+            }
+            var mime = '';
+            try {
+                if (typeof MediaRecorder !== 'undefined') {
+                    if (MediaRecorder.isTypeSupported('video/mp4')) {
+                        mime = 'video/mp4';
+                    } else if (MediaRecorder.isTypeSupported('video/webm;codecs=vp8,opus')) {
+                        mime = 'video/webm;codecs=vp8,opus';
+                    } else if (MediaRecorder.isTypeSupported('video/webm')) {
+                        mime = 'video/webm';
+                    }
+                }
+            } catch (eMime) {}
+            if (!opts.keepChunks || !Array.isArray(self._recChunks)) {
+                self._recChunks = [];
+            }
+            var recOpts = {
+                audioBitsPerSecond: typeof vy_lv_recording_audio_bits !== 'undefined' ? vy_lv_recording_audio_bits : 128000,
+                videoBitsPerSecond: typeof vy_lv_recording_video_bits !== 'undefined' ? vy_lv_recording_video_bits : 1000000
+            };
+            if (mime) {
+                recOpts.mimeType = mime;
+            }
+            self.mediaRecorder = new MediaRecorder(self.localStream, recOpts);
+            self._recMime = mime || (self.mediaRecorder.mimeType || 'video/mp4');
+            if (String(self._recMime).indexOf('webm') >= 0) {
+                self.file_type = 'webm';
+            } else {
+                self.file_type = 'mp4';
+            }
+            self.mediaRecorder.ondataavailable = function(event) {
+                if (event.data && event.data.size > 0) {
+                    self._recChunks.push(event.data);
+                }
+            };
+            var timeslice = typeof vy_lv_recording_fr_msec !== 'undefined' ? vy_lv_recording_fr_msec : 1000;
+            try {
+                self.mediaRecorder.start(timeslice);
+            } catch (eTs) {
+                /* iOS a veces no acepta timeslice con video/mp4. */
+                self.mediaRecorder.start();
+                timeslice = 0;
+            }
+            return true;
+        } catch (eStart) {
+            self.mediaRecorder = null;
+            return false;
+        }
+    },
+    zuitchUploadClientRecording: function() {
+        const self = this;
+        return new Promise(function(resolve) {
+            try {
+                var chunks = self._recChunks || [];
+                if (!chunks.length) {
+                    resolve({ ok: 0, err: 'no_chunks' });
+                    return;
+                }
+                var mime = self._recMime || 'video/mp4';
+                var blob = new Blob(chunks, { type: mime });
+                var ext = String(mime).indexOf('webm') >= 0 ? 'webm' : 'mp4';
+                var fd = new FormData();
+                fd.append('cmd', 'upload_live_rec');
+                fd.append('filename', self.filename);
+                fd.append('file_type', ext);
+                fd.append('live_id', String(self.live_id || ''));
+                fd.append('video-blob', blob, self.filename + '.' + ext);
+                var xhr = new XMLHttpRequest();
+                xhr.onreadystatechange = function() {
+                    if (xhr.readyState !== 4) {
+                        return;
+                    }
+                    var resp = null;
+                    try {
+                        resp = JSON.parse(xhr.responseText);
+                    } catch (eJ) {
+                        resp = { ok: 0, raw: String(xhr.responseText || '').slice(0, 200) };
+                    }
+                    resolve(resp || { ok: 0 });
+                };
+                xhr.open('POST', self.ajax_url);
+                xhr.send(fd);
+            } catch (eUp) {
+                resolve({ ok: 0, err: String(eUp && eUp.message || eUp) });
+            }
+        });
+    },
+    /**
+     * Vaciar MediaRecorder y conservar chunks locales (upload posterior).
+     */
+    stopMediaRecorderAndFlush: function() {
+        const self = this;
+        return new Promise(function(resolve) {
+            try {
+                if (!self.mediaRecorder || self.mediaRecorder.state !== 'recording') {
+                    resolve({ flushed: 0, state: self.mediaRecorder ? self.mediaRecorder.state : 'none', chunks: (self._recChunks || []).length });
+                    return;
+                }
+                self._recording_finalizing = 1;
+                var gotFinal = 0;
+                var finalSize = 0;
+                self.mediaRecorder.ondataavailable = function(event) {
+                    if (event.data && event.data.size > 0) {
+                        gotFinal = 1;
+                        finalSize = event.data.size;
+                        self._recChunks.push(event.data);
+                    }
+                };
+                self.mediaRecorder.onstop = function() {
+                    self._recording_finalizing = 0;
+                    try { self.mediaRecorder = null; } catch (eNull) {}
+                    resolve({ flushed: gotFinal ? 1 : 0, finalSize: finalSize, chunks: (self._recChunks || []).length });
+                };
+                self.mediaRecorder.stop();
+            } catch (eFlush) {
+                self._recording_finalizing = 0;
+                resolve({ flushed: 0, err: String(eFlush && eFlush.message ? eFlush.message : eFlush) });
+            }
+        });
+    },
     onstreamv2: function() {
 
         const self = this;
@@ -3882,7 +5082,8 @@ $.extend(VY_LIVE_STREAM.prototype, {
         self.mediaRecorder.start(vy_lv_recording_fr_msec);
         self.mediaRecorder.ondataavailable = (event) => {
 
-            if (event.data && event.data.size > 0 && !self.live_stopped) {
+            /* Permitir chunk final durante _recording_finalizing aunque live_stopped=1. */
+            if (event.data && event.data.size > 0 && (!self.live_stopped || self._recording_finalizing)) {
                 self.socket.emit("recording", event.data, vy_lvst_uid, self.filename);
             }
         };
@@ -3911,18 +5112,118 @@ $.extend(VY_LIVE_STREAM.prototype, {
 
 
     },
-    replaceStreamTracks: function(id) {
+    replaceStreamTracks: async function(srcOrStream) {
 
 
         const self = this;
-        if (vy_lvst.webRtcPeer == null) return this.showSwalErr('Error while trying to switch your video source, please try again.');
-        vy_lvst.webRtcPeer.peerConnection.getSenders().map(function(sender) {
-            sender.replaceTrack(self.video[0].srcObject.getTracks().find(function(track) {
-                return track.kind === sender.track.kind;
-            }));
+        if (vy_lvst.webRtcPeer == null) {
+            try {
+                this.showSwalErr('Error while trying to switch your video source, please try again.');
+            } catch (eSw) {}
+            return false;
+        }
+        try {
+            var src = srcOrStream || null;
+            /* Permitir pasar un MediaStreamTrack suelto. */
+            if (src && typeof src.getTracks !== 'function' && src.kind && typeof src.stop === 'function') {
+                var wrap = new MediaStream();
+                wrap.addTrack(src);
+                src = wrap;
+            }
+            if (!src || typeof src.getTracks !== 'function') {
+                src = (self.video && self.video[0] && self.video[0].srcObject)
+                    ? self.video[0].srcObject
+                    : self.localStream;
+            }
+            if (!src || typeof src.getTracks !== 'function') {
+                return false;
+            }
+            var newTracks = src.getTracks().filter(function(t) {
+                return t && t.readyState !== 'ended';
+            });
+            if (!newTracks.length) {
+                return false;
+            }
+            var senders = vy_lvst.webRtcPeer.peerConnection.getSenders();
+            var anyReplaced = false;
+            var allOk = true;
+            for (var i = 0; i < senders.length; i++) {
+                var sender = senders[i];
+                try {
+                    var kind = null;
+                    if (sender.track && sender.track.kind) {
+                        kind = sender.track.kind;
+                    } else if (sender.dtmf != null) {
+                        kind = 'audio';
+                    } else {
+                        kind = 'video';
+                    }
+                    var next = newTracks.find(function(track) {
+                        return track.kind === kind;
+                    });
+                    /* Sin track nuevo de ese kind (p.ej. solo video en flip): dejar el sender. */
+                    if (!next || typeof sender.replaceTrack !== 'function') {
+                        continue;
+                    }
+                    var p = sender.replaceTrack(next);
+                    if (p && typeof p.then === 'function') {
+                        await p;
+                    }
+                    anyReplaced = true;
+                    try {
+                        self.zuitchLiveDiag('info', 'live_replace_track_ok', 'replaceTrack ok', self.live_id, {
+                            kind: kind,
+                            readyState: next.readyState,
+                            iosWebView: self.zuitchIsIosWebview()
+                        });
+                    } catch (eOk) {}
+                } catch (eRep) {
+                    allOk = false;
+                    try {
+                        self.zuitchLiveDiag('warn', 'live_replace_track_failed', String(eRep && eRep.message || eRep), self.live_id, {
+                            iosWebView: self.zuitchIsIosWebview()
+                        });
+                    } catch (eD) {}
+                }
+            }
+            return anyReplaced && allOk;
+        } catch (e) {
+            try {
+                self.zuitchLiveDiag('warn', 'live_replace_track_failed', String(e && e.message || e), self.live_id, {
+                    iosWebView: self.zuitchIsIosWebview()
+                });
+            } catch (eD2) {}
+            return false;
+        }
+
+
+    },
+    /**
+     * NO usar en flip: dispose() para tracks (audio) y reconnect recrea RecorderEndpoint
+     * sobre el mismo MP4 → archivo 0 bytes y viewers muertos. Mantener pipeline.
+     */
+    zuitchRenegotiatePresenterAfterFlip: async function() {
+        var self = this;
+        try {
+            self.zuitchLiveDiag('info', 'live_replace_track_renegotiate_skipped_keep_pipeline',
+                'Skip dispose/reconnect tras flip (protege recorder)', self.live_id, {
+                    iosWebView: self.zuitchIsIosWebview(),
+                    hasLocalStream: !!self.localStream
+                });
+        } catch (eLog) {}
+        return false;
+    },
+    zuitchStopRetiredTracks: function() {
+        var self = this;
+        var list = self._zuitchRetiredTracks || [];
+        self._zuitchRetiredTracks = [];
+        list.forEach(function(t) {
+            try {
+                if (t && t.readyState !== 'ended') {
+                    t.stop();
+                }
+            } catch (eSt) {}
         });
-
-
     },
     broadcastData: async function(live_id, reconnect) {
 
@@ -4643,7 +5944,10 @@ $.extend(VY_LIVE_STREAM.prototype, {
     stopLiveAfterAjax: function() {
         const self = this;
         self.clearVars();
-        self.stopMediaRecorder();
+        /* Recorder ya se vació en stopLive (stopMediaRecorderAndFlush). */
+        if (self.mediaRecorder != null && self.mediaRecorder.state == 'recording') {
+            self.stopMediaRecorder();
+        }
         self.removePopups();
         self.unbindEvents();
         Swal.fire({
@@ -4704,8 +6008,62 @@ $.extend(VY_LIVE_STREAM.prototype, {
 
         // }
 
+        /* Vaciar MediaRecorder (si existe) ANTES de live_stopped. */
+        var recFlush = { flushed: 0, state: 'skip' };
+        var clientRecUpload = { ok: 0, skipped: 1 };
+        try {
+            if (vy_lv_recording && self.post_to_timeline == 'yes' && !self.obs_stream) {
+                recFlush = await self.stopMediaRecorderAndFlush();
+            }
+        } catch (eFlushStop) {
+            recFlush = { flushed: 0, err: 'flush_throw' };
+        }
+
+        /* Cliente (iOS/Android): subir grabación local ANTES de stoplive (Kurento MP4 sin moov). */
+        try {
+            if (
+                !window_unload &&
+                vy_lv_recording &&
+                self.post_to_timeline == 'yes' &&
+                !self.obs_stream &&
+                self.zuitchShouldUseClientRecorder() &&
+                (self._recChunks || []).length > 0
+            ) {
+                clientRecUpload = await self.zuitchUploadClientRecording();
+                // #region agent log
+                try {
+                    fetch('/vy-livestream/dbg-cadeb8.php',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'cadeb8'},body:JSON.stringify({sessionId:'cadeb8',runId:'post-fix',hypothesisId:'R1',location:'liveStream.js:stopLive',message:'client rec upload',data:{ok:!!(clientRecUpload&&clientRecUpload.ok),size:clientRecUpload&&clientRecUpload.size||0,has_moov:clientRecUpload&&clientRecUpload.has_moov,chunks:(self._recChunks||[]).length,pid:self.live_id},timestamp:Date.now()}),keepalive:true}).catch(function(){});
+                } catch (eUpLog) {}
+                // #endregion
+            }
+        } catch (eUpStop) {
+            clientRecUpload = { ok: 0, err: 'upload_throw' };
+        }
+
         self.live_stopped = 1;
+        try { self.zuitchStopRetiredTracks(); } catch (eRet) {}
         self.socket_end_broadcast();
+        /* k_stop solo si Kurento grabó. Si client_rec ok, no sobrescribir el MP4/WebM bueno. */
+        var kStopSent = 0;
+        try {
+            var clientRecOk = !!(clientRecUpload && clientRecUpload.ok);
+            if (
+                !self.obs_stream &&
+                !self.zuitchIsIosWebview() &&
+                !clientRecOk &&
+                !self.zuitchShouldUseClientRecorder() &&
+                typeof vy_lvst !== 'undefined' &&
+                typeof vy_lvst.ws_sendMessage === 'function'
+            ) {
+                vy_lvst.ws_sendMessage({
+                    id: 'stop',
+                    post_id: self.live_id
+                });
+                kStopSent = 1;
+            }
+        } catch (eKStop) {
+            kStopSent = 0;
+        }
         data['cmd'] = 'stoplive';
         data['post_id'] = self.live_id;
         data['broadcast_id'] = self.broadcast_id;
@@ -4713,7 +6071,30 @@ $.extend(VY_LIVE_STREAM.prototype, {
         data['post_to_timeline'] = self.post_to_timeline;
         data['filename'] = self.filename;
         data['file_type'] = self.file_type;
+        if (clientRecUpload && clientRecUpload.ok) {
+            data['client_rec'] = '1';
+        }
 
+        try {
+            self.zuitchLiveDiag(window_unload ? 'warn' : 'info', 'live_stop', window_unload ? 'Cierre live (pagehide/unload)' : 'Cierre live (botón)', self.live_id, {
+                window_unload: !!window_unload,
+                use_beacon: !!(window_unload && 'sendBeacon' in navigator),
+                post_to_timeline: self.post_to_timeline,
+                recording_flag: typeof vy_lv_recording !== 'undefined' ? !!vy_lv_recording : null,
+                current_sec: self.current_sec,
+                broadcast_id: self.broadcast_id,
+                filename: self.filename,
+                file_type: self.file_type,
+                iosWebView: self.zuitchIsIosWebview(),
+                rec_flush: recFlush && recFlush.flushed ? 1 : 0,
+                rec_final_size: recFlush && recFlush.finalSize ? recFlush.finalSize : 0,
+                rec_chunks: recFlush && recFlush.chunks ? recFlush.chunks : 0,
+                rec_state: recFlush && recFlush.state ? recFlush.state : null,
+                k_stop_sent: kStopSent,
+                client_rec_ok: clientRecUpload && clientRecUpload.ok ? 1 : 0,
+                client_rec_moov: clientRecUpload && clientRecUpload.has_moov != null ? clientRecUpload.has_moov : null
+            }, !!window_unload);
+        } catch (eDiag) {}
 
 
 
@@ -5012,6 +6393,11 @@ $.extend(VY_LIVE_STREAM.prototype, {
     openLiveStream: async function(evt, el, id) {
         const self = this;
         self.evstop(evt, 1);
+        // #region agent log
+        try {
+            fetch('/vy-livestream/dbg-cadeb8.php',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'cadeb8'},body:JSON.stringify({sessionId:'cadeb8',runId:'feed-fix',hypothesisId:'F1',location:'liveStream.js:openLiveStream',message:'openLiveStream enter',data:{id:id,hasPeer:!!self.webRtcPeer,feedPid:self._zuitchFeedPreviewPid||null,uid:typeof vy_lvst_uid!=='undefined'?vy_lvst_uid:null},timestamp:Date.now()}),keepalive:true}).catch(function(){});
+        } catch (eOl) {}
+        // #endregion
         //this.responsive();
 
         // prevent multiple clicks
@@ -5026,12 +6412,6 @@ $.extend(VY_LIVE_STREAM.prototype, {
         self.live_id = id;
         self._loading();
 
-        const _delbroad = i =>{
-                self.jajax(self.ajax_url, 'post', {
-                    'cmd': 'delete-crashed',
-                    'id': escape(i)
-                });
-        }
 
         await this.jajax(this.ajax_url, 'post', {
             'cmd': 'join_live',
@@ -5044,8 +6424,15 @@ $.extend(VY_LIVE_STREAM.prototype, {
 
         });
 
+
         if (d.error && d.error_code == 404) {
             self.playSound('openpopup');
+            try {
+                __j('#vylv_feedbroadcast_' + id).find('.vylvelment-1fptdeg-DivLiveTag, [data-e2e="live-tag"]').hide();
+                __j('#vylv_feedbroadcast_' + id).find('.vylvelment-4hl5ml-DivClickTipsText').text('LIVE ended');
+                __j('#vy_lv_feedloadingvd_' + id).hide();
+                __j('#vylvelment_feed_ended_' + id).show();
+            } catch (eDead) {}
             return Swal.fire(
                 vy_lvst_lang.not_found,
                 vy_lvst_lang.the_broadcast_you_try_to_watch_not_found + '.',
@@ -5065,7 +6452,7 @@ $.extend(VY_LIVE_STREAM.prototype, {
         }
         if (d.post['islivenow'] == 'yes') {
 
-            const live_data = await self.beforeOpenLiveStream(id,d.post['obs']);
+            let live_data = await self.beforeOpenLiveStream(id,d.post['obs']);
             _timer = live_data.time;
 
             if (live_data.blocked == 'yes') {
@@ -5084,13 +6471,37 @@ $.extend(VY_LIVE_STREAM.prototype, {
                     self.hidePostCommentBox(id);
                 }, 1100);
             } else if (live_data.terminated) {
-                _delbroad(id);
-                self.playSound('openpopup');
-                return Swal.fire(
-                    vy_lvst_lang.not_found,
-                    vy_lvst_lang.the_broadcast_you_try_to_watch_not_found + '.',
-                    'warning'
-                );
+                /* Tras flip iOS, Node a veces marca terminated aunque PHP islivenow=yes.
+                   No borrar; reintentar y si PHP dice live, continuar al watch. */
+                var phpStillLive = d.post && d.post.islivenow === 'yes' && d.post.ended !== 'yes';
+                if (phpStillLive) {
+                    try {
+                        var recovered = false;
+                        for (var ri = 0; ri < 2 && !recovered; ri++) {
+                            await new Promise(function(r) { setTimeout(r, 800); });
+                            var retryData = await self.beforeOpenLiveStream(id, d.post['obs']);
+                            if (retryData && !retryData.terminated) {
+                                live_data = retryData;
+                                _timer = live_data.time;
+                                recovered = true;
+                            }
+                        }
+                        /* Si sigue terminated pero PHP live: continuar sin Swal ni delete-crashed. */
+                    } catch (eRetry) {}
+                } else {
+                    self.playSound('openpopup');
+                    try {
+                        __j('#vylv_feedbroadcast_' + id).find('.vylvelment-1fptdeg-DivLiveTag, [data-e2e="live-tag"]').hide();
+                        __j('#vylv_feedbroadcast_' + id).find('.vylvelment-4hl5ml-DivClickTipsText').text('LIVE ended');
+                        __j('#vy_lv_feedloadingvd_' + id).hide();
+                        __j('#vylvelment_feed_ended_' + id).show();
+                    } catch (eTerm) {}
+                    return Swal.fire(
+                        'LIVE ended',
+                        vy_lvst_lang.the_broadcast_you_try_to_watch_not_found + '.',
+                        'warning'
+                    );
+                }
             } else if (live_data.reconnecting == 0) {
             setTimeout(function(){
                 self.wait_broadcast(id, 'network_error');
@@ -5148,6 +6559,12 @@ $.extend(VY_LIVE_STREAM.prototype, {
                 }, 500);
             } else {
                 self.cnt.addClass('__ended');
+                try {
+                    __j('#vylv_feedbroadcast_' + id).find('.vylvelment-1fptdeg-DivLiveTag, [data-e2e="live-tag"]').hide();
+                    __j('#vylv_feedbroadcast_' + id).find('.vylvelment-4hl5ml-DivClickTipsText').text('LIVE ended');
+                    __j('#vy_lv_feedloadingvd_' + id).hide();
+                    __j('#vylvelment_feed_ended_' + id).show();
+                } catch (eEnded) {}
             }
 
         }
@@ -5171,7 +6588,19 @@ $.extend(VY_LIVE_STREAM.prototype, {
     },
     sendReaction: function(el, evt) {
 
-        this.evstop(evt, 1);
+        // #region agent log
+        var __dbgSock = this.socket;
+        var __dbgLog = function(p){try{fetch('http://localhost:7513/ingest/8e34e2dd-c41b-414a-b93a-885e60cc6800',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'b1de00'},body:JSON.stringify(p)}).catch(function(){});fetch('/vy-livestream/debug_ingest_b1de00.php',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'b1de00'},body:JSON.stringify(p)}).catch(function(){});}catch(_){}};
+        __dbgLog({sessionId:'b1de00',runId:'pre-fix',hypothesisId:'A_B_E',location:'liveStream.js:sendReaction:entry',message:'sendReaction called',data:{hasEvt:!!evt,clientX:evt&&evt.clientX,clientY:evt&&evt.clientY,socketExists:!!__dbgSock,socketConnected:!!(__dbgSock&&__dbgSock.connected),reactionId:el&&el.getAttribute&&el.getAttribute('data-reaction-id'),postId:el&&el.getAttribute&&el.getAttribute('data-post-id'),floatingType:typeof floating,woRegisterType:typeof Wo_RegisterReaction,likesBarCount:typeof __j==='function'?__j('#likes-bar').length:-1},timestamp:Date.now()});
+        // #endregion
+
+        try {
+            this.evstop(evt, 1);
+        } catch (eStop) {
+            // #region agent log
+            __dbgLog({sessionId:'b1de00',runId:'pre-fix',hypothesisId:'B',location:'liveStream.js:sendReaction:evstop',message:'evstop threw',data:{err:String(eStop&&eStop.message||eStop)},timestamp:Date.now()});
+            // #endregion
+        }
 
         let _el = __j(el),
             _reaction_id = _el.data('reaction-id'),
@@ -5179,19 +6608,43 @@ $.extend(VY_LIVE_STREAM.prototype, {
             content_icon = _el.attr('class'),
             reaction_icon = '<span class="' + content_icon.replace('_64', '_32') + '"></span>';
 
-        this.socket.emit('send_reaction', JSON.stringify({
-            'pointerX': evt.clientX,
-            'pointerY': evt.clientY,
-            'live_id': escape(_post_id),
-            'sender': vy_lvst_user.i,
-            'icon': reaction_icon
-        }));
+        try {
+            if (!this.socket) {
+                // #region agent log
+                __dbgLog({sessionId:'b1de00',runId:'pre-fix',hypothesisId:'A',location:'liveStream.js:sendReaction:nosocket',message:'socket missing before emit',data:{postId:_post_id,reactionId:_reaction_id},timestamp:Date.now()});
+                // #endregion
+            } else {
+                this.socket.emit('send_reaction', JSON.stringify({
+                    'pointerX': evt && evt.clientX,
+                    'pointerY': evt && evt.clientY,
+                    'live_id': escape(_post_id),
+                    'sender': vy_lvst_user.i,
+                    'icon': reaction_icon
+                }));
+                // #region agent log
+                __dbgLog({sessionId:'b1de00',runId:'pre-fix',hypothesisId:'A_C',location:'liveStream.js:sendReaction:emitted',message:'send_reaction emitted',data:{postId:_post_id,reactionId:_reaction_id,socketConnected:!!this.socket.connected,iconClass:content_icon},timestamp:Date.now()});
+                // #endregion
+            }
+        } catch (eEmit) {
+            // #region agent log
+            __dbgLog({sessionId:'b1de00',runId:'pre-fix',hypothesisId:'A',location:'liveStream.js:sendReaction:emitError',message:'emit threw',data:{err:String(eEmit&&eEmit.message||eEmit)},timestamp:Date.now()});
+            // #endregion
+        }
 
         el = __j('#likes-bar').length ? __j('#likes-bar') : el;
         if (!sessionStorage.getItem("reacted_posts_" + _post_id)) {
 
             /*Wo_LikeSystem(_post_id, 'like', el, 'is_ajax');*/
-            Wo_RegisterReaction(el,'',1);
+            try {
+                Wo_RegisterReaction(el,'',1);
+                // #region agent log
+                __dbgLog({sessionId:'b1de00',runId:'pre-fix',hypothesisId:'E',location:'liveStream.js:sendReaction:woRegister',message:'Wo_RegisterReaction called',data:{usedLikesBar:!!__j('#likes-bar').length,elReactionId:__j(el).attr('data-reaction-id'),elPostId:__j(el).attr('data-post-id')},timestamp:Date.now()});
+                // #endregion
+            } catch (eWo) {
+                // #region agent log
+                __dbgLog({sessionId:'b1de00',runId:'pre-fix',hypothesisId:'E',location:'liveStream.js:sendReaction:woRegisterError',message:'Wo_RegisterReaction threw',data:{err:String(eWo&&eWo.message||eWo)},timestamp:Date.now()});
+                // #endregion
+            }
             sessionStorage.setItem("reacted_posts_" + _post_id, _post_id);
         }
 
@@ -5237,6 +6690,227 @@ $.extend(VY_LIVE_STREAM.prototype, {
 
     },
 
+    /**
+     * F7: posts inyectados por AJAX no ejecutan <script> de post_layout.
+     * Boot del preview + click "open live" viven aquí (scan DOM + delegation).
+     */
+    initFeedPreviewWatchers: function() {
+        var self = this;
+        if (self._zuitchFeedWatchersReady) {
+            self.bootAllFeedPreviews();
+            return;
+        }
+        self._zuitchFeedWatchersReady = true;
+
+        try {
+            __j(document).off('click.vylvFeedOpen', '.vy-lv-feed-open-live').on('click.vylvFeedOpen', '.vy-lv-feed-open-live', function(ev) {
+                try {
+                    if (ev && typeof ev.preventDefault === 'function') {
+                        ev.preventDefault();
+                    }
+                    if (ev && typeof ev.stopPropagation === 'function') {
+                        ev.stopPropagation();
+                    }
+                } catch (eEv) {}
+                var $root = __j(this).closest('[data-vylv-feed]');
+                var pid = $root.length ? parseInt($root.attr('data-vylv-pid'), 10) : 0;
+                // #region agent log
+                try {
+                    fetch('/vy-livestream/dbg-cadeb8.php',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'cadeb8'},body:JSON.stringify({sessionId:'cadeb8',runId:'feed-fix',hypothesisId:'F7',location:'liveStream.js:feedOpenClick',message:'delegated open live click',data:{pid:pid,hasGlobal:typeof vy_global_openLiveStream==='function'},timestamp:Date.now()}),keepalive:true}).catch(function(){});
+                } catch (eL) {}
+                // #endregion
+                if (!pid) {
+                    return;
+                }
+                if (typeof vy_global_openLiveStream === 'function') {
+                    vy_global_openLiveStream(ev, this, pid);
+                } else if (typeof self.openLiveStream === 'function') {
+                    self.openLiveStream(ev, this, pid);
+                }
+            });
+        } catch (eDel) {}
+
+        try {
+            var targets = [
+                document.getElementById('posts'),
+                document.getElementById('posts-laoded'),
+                document.body
+            ].filter(Boolean);
+            if (typeof MutationObserver !== 'undefined' && targets.length) {
+                var mo = new MutationObserver(function() {
+                    self.bootAllFeedPreviews();
+                });
+                targets.forEach(function(t) {
+                    try {
+                        mo.observe(t, { childList: true, subtree: true });
+                    } catch (eO) {}
+                });
+                self._zuitchFeedMo = mo;
+            }
+        } catch (eMo) {}
+
+        self.bootAllFeedPreviews();
+        try {
+            setInterval(function() {
+                try { self.bootAllFeedPreviews(); } catch (eI) {}
+            }, 2500);
+        } catch (eInt) {}
+    },
+    bootAllFeedPreviews: function() {
+        var self = this;
+        var nodes = document.querySelectorAll('[data-vylv-feed="1"][data-vylv-booted="0"]');
+        if (!nodes || !nodes.length) {
+            return;
+        }
+        // #region agent log
+        try {
+            fetch('/vy-livestream/dbg-cadeb8.php',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'cadeb8'},body:JSON.stringify({sessionId:'cadeb8',runId:'feed-fix',hypothesisId:'F7',location:'liveStream.js:bootAllFeedPreviews',message:'scan unbooted feeds',data:{count:nodes.length},timestamp:Date.now()}),keepalive:true}).catch(function(){});
+        } catch (eS) {}
+        // #endregion
+        for (var i = 0; i < nodes.length; i++) {
+            var pid = nodes[i].getAttribute('data-vylv-pid');
+            if (pid) {
+                self.bootFeedPreviewCard(pid);
+            }
+        }
+    },
+    bootFeedPreviewCard: function(pid) {
+        var self = this;
+        pid = String(pid || '');
+        if (!pid) {
+            return;
+        }
+        var root = document.getElementById('vylv_feedbroadcast_' + pid);
+        if (!root || root.getAttribute('data-vylv-booted') === '1') {
+            return;
+        }
+        var video = document.getElementById('vylv_feedstream_' + pid);
+        if (!video) {
+            return;
+        }
+        if (typeof self._wss_connect !== 'function' || typeof kurentoUtils === 'undefined') {
+            return;
+        }
+
+        root.setAttribute('data-vylv-booted', '1');
+        var broadcastUid = root.getAttribute('data-vylv-buid') || '';
+        var obsFlag = root.getAttribute('data-vylv-obs') || 'no';
+        var feedMode = obsFlag === 'yes' ? 'dash' : 'webrtc';
+        var $load = __j('#vy_lv_feedloadingvd_' + pid);
+
+        // #region agent log
+        try {
+            fetch('/vy-livestream/dbg-cadeb8.php',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'cadeb8'},body:JSON.stringify({sessionId:'cadeb8',runId:'feed-fix',hypothesisId:'F7',location:'liveStream.js:bootFeedPreviewCard',message:'boot card',data:{pid:pid,mode:feedMode,uid:typeof vy_lvst_uid!=='undefined'?vy_lvst_uid:null,broadcastUid:broadcastUid},timestamp:Date.now()}),keepalive:true}).catch(function(){});
+        } catch (eB) {}
+        // #endregion
+
+        var tryPlay = function() {
+            try {
+                video.setAttribute('playsinline', '');
+                video.setAttribute('webkit-playsinline', '');
+                video.muted = true;
+                var p = video.play();
+                if (p && typeof p.catch === 'function') {
+                    p.catch(function() {});
+                }
+                if (video.srcObject) {
+                    __j(root).find('.vylvelment-uskur1-DivPlayerBackground').hide();
+                    __j(video).css({ visibility: 'visible', opacity: 1, display: 'block' });
+                    $load.hide();
+                }
+            } catch (eP) {}
+        };
+
+        video.addEventListener('playing', function() {
+            tryPlay();
+            $load.hide();
+            // #region agent log
+            try {
+                fetch('/vy-livestream/dbg-cadeb8.php',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'cadeb8'},body:JSON.stringify({sessionId:'cadeb8',runId:'feed-fix',hypothesisId:'F7',location:'liveStream.js:feedPlaying',message:'feed playing',data:{pid:pid,hasSrcObject:!!video.srcObject,readyState:video.readyState},timestamp:Date.now()}),keepalive:true}).catch(function(){});
+            } catch (ePl) {}
+            // #endregion
+        });
+
+        if (feedMode === 'dash') {
+            return;
+        }
+
+        /* Host: mirror local camera if same session; else cover (can't recv own presenter). */
+        if (typeof vy_lvst_uid !== 'undefined' && String(vy_lvst_uid) === String(broadcastUid)) {
+            var hostStream = null;
+            try {
+                hostStream = self.localStream || self._zuitchCamStream || null;
+            } catch (eHs) {}
+            if (hostStream) {
+                video.srcObject = hostStream;
+                tryPlay();
+                return;
+            }
+            $load.hide();
+            // #region agent log
+            try {
+                fetch('/vy-livestream/dbg-cadeb8.php',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'cadeb8'},body:JSON.stringify({sessionId:'cadeb8',runId:'feed-fix',hypothesisId:'F7',location:'liveStream.js:bootFeedPreviewCard',message:'host cover fallback',data:{pid:pid},timestamp:Date.now()}),keepalive:true}).catch(function(){});
+            } catch (eHc) {}
+            // #endregion
+            return;
+        }
+
+        $load.show();
+        (async function() {
+            try {
+                if (!self.config || Object.keys(self.config).length <= 0) {
+                    if (typeof self.getTurnCredentials === 'function') {
+                        await self.getTurnCredentials();
+                    }
+                }
+                self.video = __j(video);
+                self._wss_connect(pid, function() {
+                    if (self.webRtcPeer) {
+                        var peerVideo = self.video && self.video[0] ? self.video[0] : null;
+                        if (String(self._zuitchFeedPreviewPid || '') === String(pid) || peerVideo === video) {
+                            tryPlay();
+                            if (video.srcObject) {
+                                $load.hide();
+                                return;
+                            }
+                            try { self.dispose(); } catch (eD) {}
+                            self._zuitchFeedPreviewPid = null;
+                        } else {
+                            // #region agent log
+                            try {
+                                fetch('/vy-livestream/dbg-cadeb8.php',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'cadeb8'},body:JSON.stringify({sessionId:'cadeb8',runId:'feed-fix',hypothesisId:'F3',location:'liveStream.js:bootFeedPreviewCard',message:'peer busy skip',data:{pid:pid,feedPid:self._zuitchFeedPreviewPid||null},timestamp:Date.now()}),keepalive:true}).catch(function(){});
+                            } catch (eBusy) {}
+                            // #endregion
+                            $load.hide();
+                            return;
+                        }
+                    }
+                    self._zuitchFeedPreviewPid = pid;
+                    self.viewer(pid, function() {
+                        tryPlay();
+                        $load.hide();
+                    });
+                    setTimeout(tryPlay, 400);
+                    setTimeout(function() {
+                        if (video.srcObject) {
+                            tryPlay();
+                        }
+                        if (!video.paused && video.readyState > 2) {
+                            $load.hide();
+                        }
+                    }, 2500);
+                }, Math.floor(Math.random() * 99));
+            } catch (eW) {
+                $load.hide();
+                // #region agent log
+                try {
+                    fetch('/vy-livestream/dbg-cadeb8.php',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'cadeb8'},body:JSON.stringify({sessionId:'cadeb8',runId:'feed-fix',hypothesisId:'F7',location:'liveStream.js:bootFeedPreviewCard',message:'exception',data:{pid:pid,err:String(eW&&eW.message||eW)},timestamp:Date.now()}),keepalive:true}).catch(function(){});
+                } catch (eEx) {}
+                // #endregion
+            }
+        })();
+    },
+
     joinToLive: async function(post_id, reconnect, callback) {
 
         const self = this;
@@ -5248,8 +6922,26 @@ $.extend(VY_LIVE_STREAM.prototype, {
             await this.getTurnCredentials();
 
         }
-        if (reconnect)
-            vy_lvst.webRtcPeer = null;
+        /* F1: el preview del feed deja webRtcPeer (Recvonly) en el <video> del post.
+           Sin liberarlo, viewer() no-op y el watch completo queda en negro. */
+        // #region agent log
+        try {
+            fetch('/vy-livestream/dbg-cadeb8.php',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'cadeb8'},body:JSON.stringify({sessionId:'cadeb8',runId:'feed-fix',hypothesisId:'F1',location:'liveStream.js:joinToLive',message:'joinToLive enter',data:{post_id:post_id,reconnect:!!reconnect,hasPeer:!!vy_lvst.webRtcPeer,feedPid:vy_lvst._zuitchFeedPreviewPid||null,wsState:vy_lvst.ws?vy_lvst.ws.readyState:null},timestamp:Date.now()}),keepalive:true}).catch(function(){});
+        } catch (eJlog) {}
+        // #endregion
+        if (reconnect || vy_lvst.webRtcPeer || vy_lvst._zuitchFeedPreviewPid) {
+            try {
+                if (vy_lvst.webRtcPeer && vy_lvst.ws && vy_lvst.ws.readyState === WebSocket.OPEN) {
+                    vy_lvst.ws_sendMessage({ id: 'stop', post_id: post_id });
+                }
+            } catch (eStop) {}
+            try { vy_lvst.dispose(); } catch (eDisp) {}
+            vy_lvst._zuitchFeedPreviewPid = null;
+            if (vy_lvst.ws) {
+                try { vy_lvst.ws.close(); } catch (eClose) {}
+                vy_lvst.ws = null;
+            }
+        }
 
 
         vy_lvst._wss_connect(post_id, function(){

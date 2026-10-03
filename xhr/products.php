@@ -388,6 +388,7 @@ if ($f == 'products') {
             }
             $data['topup'] = ($wo['user']['wallet'] < $total ? 'show' : 'hide');
         }
+        $data['wallet'] = (float)$wo['user']['wallet'];
         $data['status'] = 200;
         header("Content-type: application/json");
         echo json_encode($data);

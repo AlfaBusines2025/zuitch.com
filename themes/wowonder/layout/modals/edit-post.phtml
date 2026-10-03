@@ -52,6 +52,25 @@
 						</div>
 					</div>
 				    <?php } ?>
+				    <?php
+				    	$edit_cta_wa = !empty($wo['story']['post_whatsapp']) ? $wo['story']['post_whatsapp'] : '';
+				    	$edit_cta_em = !empty($wo['story']['post_email']) ? $wo['story']['post_email'] : '';
+				    	$edit_cta_ph = !empty($wo['story']['post_phone']) ? $wo['story']['post_phone'] : '';
+				    ?>
+				    <div id="edit-post-cta-form" style="padding:12px 15px;border-top:1px dashed #ededed;">
+				    	<?php
+				    	$edit_cta_has = (trim((string) $edit_cta_wa) !== '' || trim((string) $edit_cta_em) !== '' || trim((string) $edit_cta_ph) !== '');
+				    	?>
+				    	<button type="button" class="zuitch-cta-collapse-toggle" aria-expanded="<?php echo $edit_cta_has ? 'true' : 'false'; ?>" onclick="(function(btn){var b=btn.nextElementSibling;if(!b)return;var open=b.style.display!=='none';b.style.display=open?'none':'block';btn.setAttribute('aria-expanded',open?'false':'true');btn.querySelector('.zuitch-cta-chevron').textContent=open?'▸':'▾';})(this);" style="display:flex;align-items:center;justify-content:space-between;width:100%;background:none;border:0;padding:0 0 8px;font-size:13px;font-weight:600;color:#555;cursor:pointer;text-align:left;">
+				    		<span>Contacto (opcional)</span>
+				    		<span class="zuitch-cta-chevron" aria-hidden="true"><?php echo $edit_cta_has ? '▾' : '▸'; ?></span>
+				    	</button>
+				    	<div class="zuitch-cta-collapse-body" style="display:<?php echo $edit_cta_has ? 'block' : 'none'; ?>;">
+				    		<input name="post_cta_whatsapp" type="text" class="form-control" placeholder="WhatsApp (5939xxxxxxx)" value="<?php echo htmlspecialchars($edit_cta_wa, ENT_QUOTES, 'UTF-8'); ?>" autocomplete="off" inputmode="tel" style="margin-bottom:6px;">
+				    		<input name="post_cta_email" type="email" class="form-control" placeholder="Email de contacto" value="<?php echo htmlspecialchars($edit_cta_em, ENT_QUOTES, 'UTF-8'); ?>" autocomplete="off" style="margin-bottom:6px;">
+				    		<input name="post_cta_phone" type="text" class="form-control" placeholder="Teléfono para llamar" value="<?php echo htmlspecialchars($edit_cta_ph, ENT_QUOTES, 'UTF-8'); ?>" autocomplete="off" inputmode="tel">
+				    	</div>
+				    </div>
 				    <input type="hidden" name="post_id" value="<?php echo $wo['story']['id']; ?>">
 				    <input type="hidden" name="all_images" value="0" id="all_images">
 				</div>
@@ -96,6 +115,13 @@
 	        if(data.status == 200) {
 	        	if (data.html != '') {
 	        		post_text.html(data.html);
+	        	}
+	        	if (typeof data.cta_html !== 'undefined') {
+	        		var statBar = post.find('#wo_post_stat_button');
+	        		statBar.find('.post-cta-row').remove();
+	        		if (data.cta_html) {
+	        			statBar.append(data.cta_html);
+	        		}
 	        	}
 	        	if (data.reload == 'reload') {
 	        		location.reload();

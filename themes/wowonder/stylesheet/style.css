@@ -2584,6 +2584,64 @@ svg.feather{vertical-align:middle;margin-top:-4px;width: 19px;height:19px;}
 #wo_post_stat_button .dropdown.open .stat-item,#wo_post_stat_button .stat-item:hover{background-color:rgba(29,33,41,.04)}
 #wo_post_stat_button .stat-item:active,#wo_post_stat_button .stat-item:focus{background-color:rgba(29,33,41,.09)}
 #wo_post_stat_button .stat-item svg{width:18px;height:18px}
+#wo_post_stat_button > .post-cta-row,
+.post .post-cta-row{
+	flex:1 1 100%;
+	width:100%;
+	max-width:100%;
+	display:flex;
+	align-items:stretch;
+	justify-content:stretch;
+	gap:8px;
+	padding:8px 10px 10px;
+	margin:0;
+	box-sizing:border-box;
+	border-top:1px solid #f0f2f5;
+}
+#wo_post_stat_button > .post-cta-row .post-cta-stat,
+.post .post-cta-row .post-cta-stat{
+	flex:1 1 0;
+	min-width:0;
+	display:inline-flex;
+	align-items:center;
+	justify-content:center;
+	gap:6px;
+	padding:10px 8px;
+	margin:0;
+	border:1px solid #e8eaed;
+	border-radius:10px;
+	background:#f8f9fb;
+	box-shadow:none;
+	text-decoration:none;
+	font-size:13px;
+	font-weight:600;
+	line-height:1.2;
+	color:#444;
+	transition:background .15s ease,border-color .15s ease,color .15s ease;
+}
+#wo_post_stat_button > .post-cta-row .post-cta-stat svg,
+.post .post-cta-row .post-cta-stat svg{width:18px;height:18px;flex-shrink:0;}
+#wo_post_stat_button > .post-cta-row .post-cta-stat.page-cta-whatsapp,
+.post .post-cta-row .post-cta-stat.page-cta-whatsapp{color:#fff;border-color:#02806B;background:#02806B;}
+#wo_post_stat_button > .post-cta-row .post-cta-stat.page-cta-email,
+.post .post-cta-row .post-cta-stat.page-cta-email{color:#1a73e8;border-color:#d2e3fc;background:#f0f6ff;}
+#wo_post_stat_button > .post-cta-row .post-cta-stat.page-cta-call,
+.post .post-cta-row .post-cta-stat.page-cta-call{color:#188038;border-color:#ceead6;background:#eef8f0;}
+#wo_post_stat_button > .post-cta-row .post-cta-stat:hover,
+.post .post-cta-row .post-cta-stat:hover{text-decoration:none;filter:brightness(0.97);}
+#wo_post_stat_button > .post-cta-row .post-cta-stat.page-cta-whatsapp:hover,
+.post .post-cta-row .post-cta-stat.page-cta-whatsapp:hover{background:#016656;border-color:#016656;color:#fff;}
+#wo_post_stat_button > .post-cta-row .post-cta-stat.page-cta-email:hover,
+.post .post-cta-row .post-cta-stat.page-cta-email:hover{background:#e8f0fe;border-color:#4285f4;}
+#wo_post_stat_button > .post-cta-row .post-cta-stat.page-cta-call:hover,
+.post .post-cta-row .post-cta-stat.page-cta-call:hover{background:#e6f4ea;border-color:#34a853;}
+.reel-cta-overlay{position:absolute;left:12px;right:12px;bottom:72px;z-index:30;display:flex;flex-wrap:wrap;gap:8px;pointer-events:none;}
+.reel-cta-overlay .reel-cta-pill{pointer-events:auto;display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:24px;background:rgba(0,0,0,.55);color:#fff;font-size:13px;font-weight:600;text-decoration:none;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);box-shadow:0 2px 8px rgba(0,0,0,.25);}
+.reel-cta-overlay .reel-cta-pill:hover,.reel-cta-overlay .reel-cta-pill:focus{color:#fff;text-decoration:none;background:rgba(0,0,0,.72);}
+.reel-cta-overlay .reel-cta-pill svg{width:16px;height:16px;flex-shrink:0;}
+.reel-cta-overlay .reel-cta-pill.page-cta-whatsapp{background:rgba(2,128,107,.92);}
+.reel-cta-overlay .reel-cta-pill.page-cta-email{background:rgba(66,133,244,.9);}
+.reel-cta-overlay .reel-cta-pill.page-cta-call{background:rgba(52,168,83,.9);}
 #wonder-button svg{margin-right:3px}
 .show_post_comm_mobi{display:none}
 .post .post-description .post-actions .stat-item{margin-top:5px!important;background:#fff;box-shadow:none;display: inline-flex;
@@ -5645,6 +5703,7 @@ body .wo_chat_story_innr p {position: absolute;top: 0;right: 0;bottom: 0;left: 0
 .sun_pub_more_items .btn.gif span svg {width: 26px;height: 26px;}
 .sun_pub_more_items .btn.gif span {background-color: rgba(157, 135, 210, 0.15);}
 .sun_pub_more_items .btn.rec span {background-color: rgba(255, 58, 85, 0.15);}
+.sun_pub_more_items .btn.cta span {background-color: rgba(37, 211, 102, 0.15);}
 .sun_pub_more_items .btn.fel span {background-color: rgba(255, 202, 43, 0.15);}
 .sun_pub_more_items .btn.fil span {background-color: rgba(77, 179, 246, 0.15);}
 .sun_pub_more_items .btn.sel span {background-color: rgba(240, 119, 41, 0.15);}
@@ -6629,6 +6688,12 @@ body span.flatpickr-weekday {
 	margin-top: 48px;
     height: calc(100dvh - 48px);z-index: 99;
 }
+/* DaaS FAB above fullscreen reels (z-index 99) */
+.reels-container #daas-widget-root,
+.reels-container .rw-suggest-fab,
+.reels-container .rw-suggest-root {
+	z-index: 2147483000 !important;
+}
 .wo_reels_cont .story-img {
 	transition: all 0.2s;user-select: none;
 }
@@ -6742,13 +6807,33 @@ body span.flatpickr-weekday {
 	justify-content: center;
 	/* Fondo claramente “UI de carga”, no negro plano del reproductor */
 	background:
-		radial-gradient(ellipse 100% 70% at 50% 18%, rgba(94, 179, 255, 0.22) 0%, transparent 55%),
-		linear-gradient(165deg, #2f3d52 0%, #1a2435 38%, #121a28 100%);
+		radial-gradient(ellipse 100% 70% at 50% 18%, rgba(94, 179, 255, 0.28) 0%, transparent 55%),
+		linear-gradient(165deg, #3a4d68 0%, #243044 38%, #1a2435 100%);
 	pointer-events: none;
 	transform: translateZ(0);
 	-webkit-transform: translateZ(0);
 	isolation: isolate;
 	overflow: hidden;
+}
+html.wo-reels-ios-client .wo_reels_cont .plyr > .wo-reel-buffer-overlay,
+html.wo-reels-ios-webview .wo_reels_cont .plyr > .wo-reel-buffer-overlay,
+html.wo-reels-ios-client .reels_list .plyr > .wo-reel-buffer-overlay,
+html.wo-reels-ios-webview .reels_list .plyr > .wo-reel-buffer-overlay {
+	background:
+		radial-gradient(ellipse 100% 70% at 50% 20%, rgba(120, 200, 255, 0.35) 0%, transparent 50%),
+		linear-gradient(165deg, #4a6280 0%, #2a3a52 45%, #1c2838 100%);
+}
+html.wo-reels-ios-client .wo-reel-buffer-overlay__text,
+html.wo-reels-ios-webview .wo-reel-buffer-overlay__text {
+	font-size: 17px !important;
+	font-weight: 700 !important;
+	letter-spacing: 0.02em;
+	text-shadow: 0 1px 3px rgba(0,0,0,0.45);
+}
+html.wo-reels-ios-client .wo-reel-buffer-overlay__hint,
+html.wo-reels-ios-webview .wo-reel-buffer-overlay__hint {
+	font-size: 14px !important;
+	opacity: 0.95 !important;
 }
 /* Brillo suave animado para que se note que “sigue vivo” */
 .wo_reels_cont .plyr > .wo-reel-buffer-overlay::before,
@@ -6842,6 +6927,18 @@ body span.flatpickr-weekday {
 .reels_list .plyr video.wo-reel-buffer-video-hidden {
 	opacity: 0 !important;
 	visibility: hidden !important;
+}
+/* iOS: no visibility:hidden — el hit-test y el frame deben seguir ahí (tap corto + DaaS pick) */
+html.wo-reels-ios-client .wo_reels_cont video.wo-reel-buffer-video-hidden,
+html.wo-reels-ios-client .reels_list video.wo-reel-buffer-video-hidden,
+html.wo-reels-ios-client .wo_reels_cont .plyr video.wo-reel-buffer-video-hidden,
+html.wo-reels-ios-client .reels_list .plyr video.wo-reel-buffer-video-hidden,
+html.wo-reels-ios-webview .wo_reels_cont video.wo-reel-buffer-video-hidden,
+html.wo-reels-ios-webview .reels_list video.wo-reel-buffer-video-hidden,
+html.wo-reels-ios-webview .wo_reels_cont .plyr video.wo-reel-buffer-video-hidden,
+html.wo-reels-ios-webview .reels_list .plyr video.wo-reel-buffer-video-hidden {
+	opacity: 0 !important;
+	visibility: visible !important;
 }
 .wo_reels_cont .sun_img_innr {
 	position: relative;

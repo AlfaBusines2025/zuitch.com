@@ -47,12 +47,57 @@
         }
         return false;
     }
+    /* iPhone/iPad (Safari o WKWebView de la app): jQuery Mobile swipeup dispara varios next/prev. */
+    function woReelsComputeIosClient() {
+        if (typeof window.__ZUITCH_IOS_CLIENT !== 'undefined') {
+            return !!window.__ZUITCH_IOS_CLIENT;
+        }
+        var ua = navigator.userAgent || '';
+        if (/iPhone|iPad|iPod/i.test(ua)) {
+            return true;
+        }
+        if (navigator.platform === 'MacIntel' && (navigator.maxTouchPoints || 0) > 1) {
+            return true;
+        }
+        return false;
+    }
+    function woReelsComputeIosWebview() {
+        if (!woReelsComputeIosClient()) {
+            return false;
+        }
+        if (typeof window.__ZUITCH_IOS_WEBVIEW !== 'undefined') {
+            return !!window.__ZUITCH_IOS_WEBVIEW;
+        }
+        var ua = navigator.userAgent || '';
+        /* App WKWebView: Mobile/… sin "Safari/" al final; Safari de sistema suele llevar Version/… Safari/… */
+        if (/Mobile\//i.test(ua) && !/Safari\//i.test(ua)) {
+            return true;
+        }
+        if (window.webkit && window.webkit.messageHandlers) {
+            return true;
+        }
+        return false;
+    }
     function woReelsApplyAndroidWebviewClass() {
         window.__woReelsAndroidWebview = woReelsComputeAndroidWebview();
+        window.__woReelsIosClient = woReelsComputeIosClient();
+        window.__woReelsIosWebview = woReelsComputeIosWebview();
+        /* Swipe nativo con debounce: Android WebView + todo iOS (evita ráfaga de jQuery Mobile). */
+        window.__woReelsUseNativeSwipe = !!(window.__woReelsAndroidWebview || window.__woReelsIosClient);
         if (window.__woReelsAndroidWebview) {
             document.documentElement.classList.add('wo-reels-android-webview');
         } else {
             document.documentElement.classList.remove('wo-reels-android-webview');
+        }
+        if (window.__woReelsIosClient) {
+            document.documentElement.classList.add('wo-reels-ios-client');
+        } else {
+            document.documentElement.classList.remove('wo-reels-ios-client');
+        }
+        if (window.__woReelsIosWebview) {
+            document.documentElement.classList.add('wo-reels-ios-webview');
+        } else {
+            document.documentElement.classList.remove('wo-reels-ios-webview');
         }
     }
     woReelsApplyAndroidWebviewClass();
@@ -65,30 +110,138 @@
 })();
 window.woReelsHardPauseAll = function (exceptVideoElement) {
     try {
-        document.querySelectorAll('.hidden_reels video, .reels_list video').forEach(function (vid) {
-            if (exceptVideoElement && vid === exceptVideoElement) {
-                return;
+        var lists = document.querySelectorAll('.reels_list');
+        var visIdx = -1;
+        var i;
+        for (i = 0; i < lists.length; i++) {
+            if (!lists[i].classList.contains('hidden')) {
+                visIdx = i;
+                break;
             }
-            try {
-                if (vid._woPlyr && typeof vid._woPlyr.pause === 'function') {
-                    vid._woPlyr.pause();
+        }
+        var start = visIdx < 0 ? 0 : Math.max(0, visIdx - 2);
+        var end = visIdx < 0 ? lists.length - 1 : Math.min(lists.length - 1, visIdx + 2);
+        for (i = start; i <= end; i++) {
+            var vids = lists[i].querySelectorAll('video');
+            for (var v = 0; v < vids.length; v++) {
+                var vid = vids[v];
+                if (exceptVideoElement && vid === exceptVideoElement) {
+                    continue;
                 }
-            } catch (e) {}
-            try {
-                vid.pause();
-            } catch (e2) {}
-        });
+                try {
+                    if (vid._woPlyr && typeof vid._woPlyr.pause === 'function') {
+                        vid._woPlyr.pause();
+                    }
+                } catch (e) {}
+                try {
+                    vid.pause();
+                } catch (e2) {}
+            }
+        }
     } catch (e) {}
 };
-/** Pide preload agresivo en todos los reels del DOM (visible + ocultos) para aliviar saltos al deslizar. */
+/** Preload agresivo solo en reel visible + siguiente; resto metadata para no saturar iOS. */
 window.woReelsWarmNeighbourBuffers = function () {
     try {
-        document.querySelectorAll('.reels_list video').forEach(function (vid) {
+        var lists = document.querySelectorAll('.reels_list');
+        var visIdx = -1;
+        var i;
+        for (i = 0; i < lists.length; i++) {
+            if (!lists[i].classList.contains('hidden')) {
+                visIdx = i;
+                break;
+            }
+        }
+        for (i = 0; i < lists.length; i++) {
+            var vid = lists[i].querySelector('video');
+            if (!vid) {
+                continue;
+            }
             try {
-                vid.setAttribute('preload', 'auto');
+                if (visIdx >= 0 && (i === visIdx || i === visIdx + 1)) {
+                    vid.setAttribute('preload', 'auto');
+                } else {
+                    vid.setAttribute('preload', 'metadata');
+                }
             } catch (e1) {}
-        });
+        }
     } catch (e2) {}
+};
+/** Mantener historial atrás (keepBehind) y pocos adelante (keepAhead); liberar el resto. */
+window.woReelsPruneDomWindow = function (keepBehind, keepAhead) {
+    try {
+        if (typeof keepBehind !== 'number') {
+            keepBehind = 5;
+        }
+        if (typeof keepAhead !== 'number') {
+            keepAhead = 2;
+        }
+        var lists = Array.prototype.slice.call(document.querySelectorAll('.reels_list'));
+        var visIdx = -1;
+        var i;
+        for (i = 0; i < lists.length; i++) {
+            if (!lists[i].classList.contains('hidden')) {
+                visIdx = i;
+                break;
+            }
+        }
+        if (visIdx < 0) {
+            return;
+        }
+        var minKeep = Math.max(0, visIdx - keepBehind);
+        var maxKeep = Math.min(lists.length - 1, visIdx + keepAhead);
+        if (lists.length <= (maxKeep - minKeep + 1)) {
+            return;
+        }
+        for (i = lists.length - 1; i >= 0; i--) {
+            if (i >= minKeep && i <= maxKeep) {
+                continue;
+            }
+            var node = lists[i];
+            var vids = node.querySelectorAll('video');
+            for (var v = 0; v < vids.length; v++) {
+                var vid = vids[v];
+                try {
+                    if (vid._woPlyr && typeof vid._woPlyr.destroy === 'function') {
+                        vid._woPlyr.destroy();
+                    }
+                } catch (eD) {}
+                try {
+                    vid._woPlyr = null;
+                } catch (eN) {}
+                try {
+                    vid.pause();
+                } catch (eP) {}
+                try {
+                    vid.removeAttribute('src');
+                    var sources = vid.querySelectorAll('source');
+                    for (var s = 0; s < sources.length; s++) {
+                        sources[s].removeAttribute('src');
+                    }
+                    vid.load();
+                } catch (eS) {}
+            }
+            try {
+                if (node.parentNode) {
+                    node.parentNode.removeChild(node);
+                }
+            } catch (eR) {}
+        }
+    } catch (e) {}
+};
+/** Diferir prune para no reindexar a mitad de un burst de next/prev. */
+window.woReelsSchedulePruneDomWindow = function (keepBehind, keepAhead) {
+    try {
+        if (window.__woReelsPruneTimer) {
+            clearTimeout(window.__woReelsPruneTimer);
+        }
+        window.__woReelsPruneTimer = setTimeout(function () {
+            window.__woReelsPruneTimer = null;
+            if (typeof window.woReelsPruneDomWindow === 'function') {
+                window.woReelsPruneDomWindow(keepBehind, keepAhead);
+            }
+        }, 550);
+    } catch (e) {}
 };
 </script>
 <script>
@@ -136,6 +289,9 @@ window.woReelsWarmNeighbourBuffers = function () {
             isIOS: isIOS,
             isAndroid: isAndroid,
             isAndroidWebview: !!window.__woReelsAndroidWebview,
+            iosWebView: !!window.__woReelsIosWebview,
+            iosClient: !!window.__woReelsIosClient,
+            useNativeSwipe: !!window.__woReelsUseNativeSwipe,
             clientWebViewFlag: typeof window.__ZUITCH_ANDROID_WEBVIEW !== 'undefined' ? !!window.__ZUITCH_ANDROID_WEBVIEW : null,
             isAppLikely: !!isApp,
             connection: (navigator.connection && navigator.connection.effectiveType) ? String(navigator.connection.effectiveType) : '',
@@ -323,47 +479,204 @@ window.woReelsWarmNeighbourBuffers = function () {
             }, { passive: true, capture: true });
         }
 
-        // Un solo desbloqueo de audio para toda la página /reels/ (evita N listeners y usa el reel visible).
+        // Desbloqueo de audio: un solo gesto, sin bucle mute/unmute (iOS WKWebView).
         if (!window.__woReelsAudioUnlockBound) {
             window.__woReelsAudioUnlockBound = true;
-            function woUnlockVisibleReelAudio() {
+            window.__woReelsSessionUnmuted = false;
+            window.__woReelsAudioUnlockBusy = false;
+            window.__woReelsAudioUnlockAt = 0;
+            window.woUnlockVisibleReelAudio = function woUnlockVisibleReelAudio(fromNav) {
                 try {
+                    if (window.__ZUITCH_DAAS_PICKING
+                        || (document.body && document.body.classList.contains('rw-suggest-picking'))
+                        || (document.documentElement && document.documentElement.classList.contains('rw-suggest-picking'))) {
+                        return;
+                    }
+                    /* Usuario pausó: no play ni unmute agresivo (el tap resume lo hace togglePlayPauseFromScreen). */
+                    if (!fromNav && window.__woReelsUserPausedVisible) {
+                        return;
+                    }
+                    var now = Date.now();
+                    if (!fromNav && (window.__woReelsAudioUnlockBusy || (now - (window.__woReelsAudioUnlockAt || 0) < 800))) {
+                        return;
+                    }
+                    window.__woReelsAudioUnlockBusy = true;
+                    window.__woReelsAudioUnlockAt = now;
+
                     var vis = document.querySelector('.reels_list:not(.hidden)');
+                    var pid = vis && vis.getAttribute('data-id') ? parseInt(vis.getAttribute('data-id'), 10) : 0;
                     if (!vis) {
+                        window.__woReelsAudioUnlockBusy = false;
                         return;
                     }
                     var vid = vis.querySelector('video');
-                    if (!vid || !vid._woPlyr) {
+                    if (!vid) {
+                        window.__woReelsAudioUnlockBusy = false;
                         return;
                     }
                     var p = vid._woPlyr;
-                    var media = p.media;
-                    if (media) {
-                        media.muted = false;
-                        media.defaultMuted = false;
-                        media.volume = 1;
-                    }
-                    if (typeof p.unmute === 'function') {
-                        p.unmute();
-                    }
-                    if (typeof p.setVolume === 'function') {
-                        p.setVolume(1);
-                    }
-                    if (typeof p.play === 'function') {
-                        p.play().catch(function (err) {
-                            if (err && err.name === 'AbortError') {
+                    var media = (p && p.media) ? p.media : vid;
+                    var alreadyPlaying = false;
+                    try {
+                        alreadyPlaying = !!(media && !media.paused && !media.ended);
+                    } catch (eAp) {}
+
+                    function applyUnmute() {
+                        try {
+                            /* No forzar unmute si el overlay sigue ocultando píxeles. */
+                            if (media && media.classList && media.classList.contains('wo-reel-buffer-video-hidden')) {
                                 return;
                             }
-                            if (window.ZuitchReelsDebug) {
-                                window.ZuitchReelsDebug.warn('unlock audio: play() falló', err);
+                            if (media && typeof p !== 'undefined' && p && typeof p._woReelPlaybackReadyForDisplay === 'function'
+                                && !p._woReelPlaybackReadyForDisplay()) {
+                                return;
                             }
+                            if (media) {
+                                media.muted = false;
+                                media.defaultMuted = false;
+                                media.volume = 1;
+                                try { media.removeAttribute('muted'); } catch (eM) {}
+                                try { media.removeAttribute('data-zuitch-tempmute'); } catch (eT) {}
+                            }
+                            if (p && typeof p.unmute === 'function') {
+                                p.unmute();
+                            }
+                            if (p && typeof p.setVolume === 'function') {
+                                p.setVolume(1);
+                            }
+                            window.__woReelsSessionUnmuted = true;
+                        } catch (eUm) {}
+                    }
+
+                    function doneBusy() {
+                        window.__woReelsAudioUnlockBusy = false;
+                    }
+
+                    /* Ya con audio: no-op. */
+                    if (media && !media.muted && media.volume > 0 && alreadyPlaying) {
+                        window.__woReelsSessionUnmuted = true;
+                        doneBusy();
+                        return;
+                    }
+
+                    /* Tras nav: solo unmute; playPauseVideos es dueño del play. */
+                    if (fromNav) {
+                        window.__woReelsSessionUnmuted = true;
+                        applyUnmute();
+                        doneBusy();
+                        return;
+                    }
+
+                    /* Swipe en curso: no reactivar play. */
+                    if (window.__woReelsSwipeActive) {
+                        if (alreadyPlaying) {
+                            applyUnmute();
+                        } else {
+                            window.__woReelsSessionUnmuted = true;
+                        }
+                        doneBusy();
+                        return;
+                    }
+
+                    /* Tras el primer gesto de sesión: NUNCA remutar; solo unmute (+ play si estaba pausado sin pausa de usuario). */
+                    if (window.__woReelsSessionUnmuted) {
+                        applyUnmute();
+                        if (!alreadyPlaying && !window.__woReelsUserPausedVisible && !window.__woReelsSwipeActive) {
+                            try {
+                                var playAgain = (p && typeof p.play === 'function') ? p.play() : media.play();
+                                if (playAgain && typeof playAgain.catch === 'function') {
+                                    playAgain.catch(function () {});
+                                }
+                            } catch (eP2) {}
+                        }
+                        doneBusy();
+                        return;
+                    }
+
+                    if (typeof window.ZuitchReelsServerLog === 'function') {
+                        window.ZuitchReelsServerLog('info', 'reel_audio_unlock_attempt', 'Desbloqueo audio tras gesto', pid, {
+                            muted: media ? !!media.muted : null,
+                            volume: media ? media.volume : null,
+                            alreadyPlaying: alreadyPlaying,
+                            iosWebView: !!window.__woReelsIosWebview
                         });
                     }
-                } catch (e) {}
-            }
-            document.addEventListener('click', woUnlockVisibleReelAudio, { once: true, capture: true });
-            document.addEventListener('touchstart', woUnlockVisibleReelAudio, { once: true, capture: true, passive: true });
-            document.addEventListener('pointerdown', woUnlockVisibleReelAudio, { once: true, capture: true, passive: true });
+
+                    if (alreadyPlaying) {
+                        applyUnmute();
+                        doneBusy();
+                    } else {
+                        /* Primer unlock de la sesión: play muted → unmute una sola vez. */
+                        try {
+                            if (media) {
+                                media.muted = true;
+                            }
+                        } catch (eMute) {}
+                        var playFn = (p && typeof p.play === 'function')
+                            ? function () { return p.play(); }
+                            : function () { return media.play(); };
+                        var playPromise = null;
+                        try {
+                            playPromise = playFn();
+                        } catch (ePlaySync) {
+                            playPromise = null;
+                        }
+                        if (playPromise && typeof playPromise.then === 'function') {
+                            playPromise.then(function () {
+                                applyUnmute();
+                                doneBusy();
+                            }).catch(function (err) {
+                                if (!(err && err.name === 'AbortError')) {
+                                    /* No martillar: marcar sesión y unmute; iOS puede rechazar play. */
+                                    window.__woReelsSessionUnmuted = true;
+                                    applyUnmute();
+                                    if (typeof window.ZuitchReelsServerLog === 'function') {
+                                        window.ZuitchReelsServerLog('warn', 'reel_audio_unlock_play_failed', String(err && err.message || err), pid, {
+                                            name: err && err.name,
+                                            iosWebView: !!window.__woReelsIosWebview
+                                        });
+                                    }
+                                }
+                                doneBusy();
+                            });
+                        } else {
+                            applyUnmute();
+                            doneBusy();
+                        }
+                    }
+
+                    setTimeout(function () {
+                        try {
+                            var vis2 = document.querySelector('.reels_list:not(.hidden)');
+                            var pid2 = vis2 && vis2.getAttribute('data-id') ? parseInt(vis2.getAttribute('data-id'), 10) : 0;
+                            var vid2 = vis2 ? vis2.querySelector('video') : null;
+                            var media2 = (vid2 && vid2._woPlyr && vid2._woPlyr.media) ? vid2._woPlyr.media : vid2;
+                            if (!media2) {
+                                return;
+                            }
+                            if (media2.muted || media2.volume === 0) {
+                                if (typeof window.ZuitchReelsServerLog === 'function') {
+                                    window.ZuitchReelsServerLog('warn', 'reel_audio_still_muted', 'Audio sigue muted ~2s tras gesto', pid2, {
+                                        muted: !!media2.muted,
+                                        volume: media2.volume,
+                                        iosWebView: !!window.__woReelsIosWebview
+                                    });
+                                }
+                            }
+                        } catch (eCheck) {}
+                    }, 2000);
+                } catch (e) {
+                    window.__woReelsAudioUnlockBusy = false;
+                }
+            };
+            /* Un solo listener: pointerdown cubre mouse + touch en WebKit moderno; fallback touchend. */
+            var unlockEvt = ('PointerEvent' in window) ? 'pointerdown' : 'touchend';
+            document.addEventListener(unlockEvt, function (e) {
+                if (e && e.pointerType === 'mouse' && e.button !== 0) {
+                    return;
+                }
+                window.woUnlockVisibleReelAudio(false);
+            }, { capture: true, passive: true });
         }
 
         // Rueda del ratón / trackpad: siguiente/anterior reel (antes solo funcionaba swipe táctil).
@@ -371,6 +684,11 @@ window.woReelsWarmNeighbourBuffers = function () {
             window.__woReelsWheelBound = true;
             var woReelsWheelLock = 0;
             document.addEventListener('wheel', function (e) {
+                if (window.__ZUITCH_DAAS_PICKING
+                    || (document.body && document.body.classList.contains('rw-suggest-picking'))
+                    || (document.documentElement && document.documentElement.classList.contains('rw-suggest-picking'))) {
+                    return;
+                }
                 if (!e.target || !e.target.closest || !e.target.closest('.wo_reels_cont .story-img')) {
                     return;
                 }
@@ -395,13 +713,20 @@ window.woReelsWarmNeighbourBuffers = function () {
             }, { passive: false });
         }
 
-        /* WebView Android: swipe vertical nativo (el video nativo intercepta toques al reproducir; jQuery Mobile no ve el gesto). */
-        if (window.__woReelsAndroidWebview && !window.__woReelsAndroidSwipeBound) {
-            window.__woReelsAndroidSwipeBound = true;
+        /* WebView Android + iOS: swipe vertical nativo con debounce (jQuery Mobile dispara varios next/prev). */
+        if (window.__woReelsUseNativeSwipe && !window.__woReelsNativeSwipeBound) {
+            window.__woReelsNativeSwipeBound = true;
             var woReelsSwipeSx = 0;
             var woReelsSwipeSy = 0;
             var woReelsSwipeActive = false;
             document.addEventListener('touchstart', function (e) {
+                if (window.__ZUITCH_DAAS_PICKING
+                    || (document.body && document.body.classList.contains('rw-suggest-picking'))
+                    || (document.documentElement && document.documentElement.classList.contains('rw-suggest-picking'))) {
+                    woReelsSwipeActive = false;
+                    window.__woReelsSwipeActive = false;
+                    return;
+                }
                 if (!e.touches || !e.touches.length) {
                     return;
                 }
@@ -410,25 +735,37 @@ window.woReelsWarmNeighbourBuffers = function () {
                 }
                 if (!e.target.closest('.wo_reels_cont .story-img')) {
                     woReelsSwipeActive = false;
+                    window.__woReelsSwipeActive = false;
                     return;
                 }
                 if (e.target.closest('.reels-share-btn')) {
                     woReelsSwipeActive = false;
+                    window.__woReelsSwipeActive = false;
                     return;
                 }
                 var t0 = e.touches[0];
                 woReelsSwipeSx = t0.clientX;
                 woReelsSwipeSy = t0.clientY;
                 woReelsSwipeActive = true;
+                window.__woReelsSwipeActive = true;
             }, { passive: true, capture: true });
             document.addEventListener('touchcancel', function () {
                 woReelsSwipeActive = false;
+                window.__woReelsSwipeActive = false;
             }, { passive: true, capture: true });
             document.addEventListener('touchend', function (e) {
+                if (window.__ZUITCH_DAAS_PICKING
+                    || (document.body && document.body.classList.contains('rw-suggest-picking'))
+                    || (document.documentElement && document.documentElement.classList.contains('rw-suggest-picking'))) {
+                    woReelsSwipeActive = false;
+                    window.__woReelsSwipeActive = false;
+                    return;
+                }
                 if (!woReelsSwipeActive) {
                     return;
                 }
                 woReelsSwipeActive = false;
+                window.__woReelsSwipeActive = false;
                 if (!e.changedTouches || !e.changedTouches.length) {
                     return;
                 }
@@ -451,10 +788,11 @@ window.woReelsWarmNeighbourBuffers = function () {
                     return;
                 }
                 var navNow = Date.now();
-                if (navNow - (window.__woReelsTouchNavAt || 0) < 480) {
+                if (navNow - (window.__woReelsTouchNavAt || 0) < 600) {
                     return;
                 }
                 window.__woReelsTouchNavAt = navNow;
+                window.__woReelsIgnoreScreenToggleUntil = navNow + 450;
                 if (dy < 0) {
                     Wo_NextReelVideo();
                 } else {
@@ -469,7 +807,9 @@ window.woReelsWarmNeighbourBuffers = function () {
         if (typeof window.woReelsWarmNeighbourBuffers === 'function') {
             window.woReelsWarmNeighbourBuffers();
         }
-        var v = $(nextElement).find('video')[0];
+        var $el = $(nextElement);
+        var el = $el[0];
+        var v = $el.find('video')[0];
         window.woReelsHardPauseAll(v);
         if (!v) {
             return;
@@ -477,6 +817,22 @@ window.woReelsWarmNeighbourBuffers = function () {
         var p = v._woPlyr;
         window.requestAnimationFrame(function () {
             window.requestAnimationFrame(function () {
+                /* Si el gesto encadenó varios next/prev, este reel ya puede estar .hidden. */
+                try {
+                    if (!el || !el.classList || el.classList.contains('hidden')) {
+                        if (typeof window.ZuitchReelsServerLog === 'function') {
+                            var peSkip = v && v.getAttribute && v.getAttribute('data-post-video');
+                            window.ZuitchReelsServerLog('info', 'play_skipped_hidden_reel', 'play() omitido: reel ya oculto', peSkip ? parseInt(peSkip, 10) || 0 : 0, {
+                                iosWebView: !!window.__woReelsIosWebview
+                            });
+                        }
+                        return;
+                    }
+                    var visNow = document.querySelector('.reels_list:not(.hidden)');
+                    if (visNow && el !== visNow) {
+                        return;
+                    }
+                } catch (eVis) {}
                 var runPlay = p && typeof p.play === 'function' ? function () {
                     return p.play();
                 } : function () {
@@ -494,7 +850,8 @@ window.woReelsWarmNeighbourBuffers = function () {
                         var pid = pe ? parseInt(pe, 10) : 0;
                         if (typeof window.ZuitchReelsServerLog === 'function') {
                             window.ZuitchReelsServerLog('warn', 'play_after_reel_change', String(err && err.message || err), pid, {
-                                name: err && err.name
+                                name: err && err.name,
+                                iosWebView: !!window.__woReelsIosWebview
                             });
                         }
                     } catch (eL) {}
@@ -506,7 +863,7 @@ window.woReelsWarmNeighbourBuffers = function () {
     function woReelsPrefetchNext() {
         $.get(Wo_Ajax_Requests_File(), {f:'get_next_reel_video','reels_user': "<?php echo($wo['reelOwnerName']) ?>"}, function(data) {
             if (data.status == 200) {
-                if (!window.__woReelsAndroidWebview) {
+                if (!window.__woReelsUseNativeSwipe) {
                     $('.story-img').unbind('swipeup', handler);
                     $('.story-img').unbind('swipedown', handler2);
                 }
@@ -514,7 +871,7 @@ window.woReelsWarmNeighbourBuffers = function () {
                 if (typeof window.woReelsWarmNeighbourBuffers === 'function') {
                     window.woReelsWarmNeighbourBuffers();
                 }
-                if (!window.__woReelsAndroidWebview) {
+                if (!window.__woReelsUseNativeSwipe) {
                     $('.story-img').bind('swipeup', handler);
                     $('.story-img').bind('swipedown', handler2);
                 }
@@ -546,8 +903,8 @@ window.woReelsWarmNeighbourBuffers = function () {
 
     /** dir: 'next' | 'prev' — animación tipo TikTok (vertical). */
     function woReelsRunSlideTransition(dir, $out, $in, onDone) {
-        /* En WebView Android: sin animación (más fluido y evita fallos con transitionend). */
-        if (window.__woReelsAndroidWebview) {
+        /* Android WebView + iOS: sin animación (evita ráfagas y fallos con transitionend). */
+        if (window.__woReelsAndroidWebview || window.__woReelsIosClient || window.__woReelsUseNativeSwipe) {
             $out.removeClass('reels-anim-next-exit reels-anim-prev-exit');
             $in.removeClass(
                 'reels-anim-next-enter-prep reels-anim-next-enter-go reels-anim-prev-enter-prep reels-anim-prev-enter-go'
@@ -607,7 +964,36 @@ window.woReelsWarmNeighbourBuffers = function () {
         }, 480);
     }
 
+    function woReelsNavDebounceOk(dir, currentId) {
+        var now = Date.now();
+        if (now - (window.__woReelsNavAt || 0) < 600) {
+            try {
+                if (typeof window.ZuitchReelsServerLog === 'function') {
+                    window.ZuitchReelsServerLog('warn', 'reel_nav_blocked_debounce', 'Nav ignorado: debounce 600ms', currentId || 0, {
+                        dir: dir || '?',
+                        iosWebView: !!window.__woReelsIosWebview
+                    });
+                }
+            } catch (eD) {}
+            return false;
+        }
+        window.__woReelsNavAt = now;
+        window.__woReelsTouchNavAt = now;
+        /* Evitar click sintético iOS que pausa el reel recién activado. */
+        window.__woReelsIgnoreScreenToggleUntil = now + 450;
+        return true;
+    }
+
+    function woReelsIsDaasPicking() {
+        return !!(window.__ZUITCH_DAAS_PICKING
+            || (document.body && document.body.classList.contains('rw-suggest-picking'))
+            || (document.documentElement && document.documentElement.classList.contains('rw-suggest-picking')));
+    }
+
     function Wo_NextReelVideo() {
+        if (woReelsIsDaasPicking()) {
+            return;
+        }
         var currentId = parseInt($('.reels_list:not(.hidden)').data('id'), 10);
         if (window.__woReelsAnimating) {
             try {
@@ -617,17 +1003,32 @@ window.woReelsWarmNeighbourBuffers = function () {
             } catch (eA) {}
             return;
         }
+        if (!woReelsNavDebounceOk('next', currentId)) {
+            return;
+        }
         var $current = $(".reels_list[data-id='" + currentId + "']");
-        var currentIndex = $current.index();
+        var currentIndex = $(".reels_list").index($current);
+        if (currentIndex < 0) {
+            currentIndex = $current.index();
+        }
+        var reelCount = $(".reels_list").length;
         var $next = $(".reels_list").eq(currentIndex + 1);
-        var skipPrefetch = ($(".reels_list[data-id='" + currentId + "']").length > 2);
+        var skipDup = ($(".reels_list[data-id='" + currentId + "']").length > 2);
+        /* Prefetch solo cerca del final (o sin siguiente); evita +3 videos por cada swipe. */
+        var nearEnd = !$next.length || currentIndex >= reelCount - 2;
+        var skipPrefetch = skipDup || !nearEnd;
 
         try {
             if (typeof window.ZuitchReelsServerLog === 'function') {
                 window.ZuitchReelsServerLog('info', 'reel_nav_next', $next.length ? 'Ir a siguiente reel' : 'Sin siguiente; disparar prefetch', currentId || 0, {
                     hasNext: $next.length > 0,
                     skipPrefetch: !!skipPrefetch,
-                    androidWebview: !!window.__woReelsAndroidWebview
+                    nearEnd: !!nearEnd,
+                    currentIndex: currentIndex,
+                    reelCount: reelCount,
+                    androidWebview: !!window.__woReelsAndroidWebview,
+                    iosWebView: !!window.__woReelsIosWebview,
+                    useNativeSwipe: !!window.__woReelsUseNativeSwipe
                 });
             }
         } catch (eN) {}
@@ -639,10 +1040,19 @@ window.woReelsWarmNeighbourBuffers = function () {
 
             woReelsRunSlideTransition('next', $current, $next, function () {
                 window.__woReelsAnimating = false;
+                try { window.__woReelsUserPausedVisible = false; } catch (eClr) {}
                 playPauseVideos($next);
                 window.history.pushState({}, "", $next.attr('data-reel-url'));
+                if (window.__woReelsSessionUnmuted && typeof window.woUnlockVisibleReelAudio === 'function') {
+                    try { window.woUnlockVisibleReelAudio(true); } catch (eU) {}
+                }
+                if (typeof window.woReelsSchedulePruneDomWindow === 'function') {
+                    try { window.woReelsSchedulePruneDomWindow(5, 2); } catch (ePr) {}
+                }
                 if (!skipPrefetch) {
                     woReelsPrefetchNext();
+                } else if (typeof window.woReelsWarmNeighbourBuffers === 'function') {
+                    try { window.woReelsWarmNeighbourBuffers(); } catch (eW) {}
                 }
             });
         } else {
@@ -654,6 +1064,9 @@ window.woReelsWarmNeighbourBuffers = function () {
     }
 
     function Wo_PreviousReelVideo() {
+        if (woReelsIsDaasPicking()) {
+            return;
+        }
         var currentId = parseInt($('.reels_list:not(.hidden)').data('id'), 10);
         if (window.__woReelsAnimating) {
             try {
@@ -663,29 +1076,51 @@ window.woReelsWarmNeighbourBuffers = function () {
             } catch (eB) {}
             return;
         }
+        if (!woReelsNavDebounceOk('prev', currentId)) {
+            return;
+        }
         var $current = $(".reels_list[data-id='" + currentId + "']");
-        var currentIndex = $current.index();
+        var currentIndex = $(".reels_list").index($current);
+        if (currentIndex < 0) {
+            currentIndex = $current.index();
+        }
         var prevIndex = currentIndex > 0 ? currentIndex - 1 : 0;
         var $prev = $(".reels_list").eq(prevIndex);
+        var reelCountPrev = $(".reels_list").length;
+        var canPrev = currentIndex > 0 && $prev.length;
 
         try {
             if (typeof window.ZuitchReelsServerLog === 'function') {
-                window.ZuitchReelsServerLog('info', 'reel_nav_prev', (currentIndex > 0 && $prev.length) ? 'Ir a reel anterior' : 'Sin anterior', currentId || 0, {
+                window.ZuitchReelsServerLog('info', 'reel_nav_prev', canPrev ? 'Ir a reel anterior' : 'Sin anterior', currentId || 0, {
                     currentIndex: currentIndex,
-                    androidWebview: !!window.__woReelsAndroidWebview
+                    reelCount: reelCountPrev,
+                    reason: canPrev ? null : 'at_dom_start',
+                    androidWebview: !!window.__woReelsAndroidWebview,
+                    iosWebView: !!window.__woReelsIosWebview,
+                    useNativeSwipe: !!window.__woReelsUseNativeSwipe
                 });
             }
         } catch (eP2) {}
 
-        if (currentIndex > 0 && $prev.length) {
+        if (canPrev) {
             window.__woReelsAnimating = true;
             window.woReelsHardPauseAll(null);
             $('.loading_reel').html('');
 
             woReelsRunSlideTransition('prev', $current, $prev, function () {
                 window.__woReelsAnimating = false;
+                try { window.__woReelsUserPausedVisible = false; } catch (eClr2) {}
                 playPauseVideos($prev);
                 window.history.pushState({}, "", $prev.attr('data-reel-url'));
+                if (window.__woReelsSessionUnmuted && typeof window.woUnlockVisibleReelAudio === 'function') {
+                    try { window.woUnlockVisibleReelAudio(true); } catch (eU2) {}
+                }
+                if (typeof window.woReelsSchedulePruneDomWindow === 'function') {
+                    try { window.woReelsSchedulePruneDomWindow(5, 2); } catch (ePr2) {}
+                }
+                if (typeof window.woReelsWarmNeighbourBuffers === 'function') {
+                    try { window.woReelsWarmNeighbourBuffers(); } catch (eWp) {}
+                }
             });
         } else {
             $('.loading_reel').html('');
@@ -698,7 +1133,13 @@ window.woReelsWarmNeighbourBuffers = function () {
     function handler2(event) {
     	Wo_PreviousReelVideo();
     }
-    if (!window.__woReelsAndroidWebview) {
+    /* iOS/Android native swipe: forever unbind jQuery Mobile residual handlers. */
+    try {
+        $('.story-img').unbind('swipeup', handler);
+        $('.story-img').unbind('swipedown', handler2);
+        $('.story-img').off('swipeup swipedown');
+    } catch (eUb) {}
+    if (!window.__woReelsUseNativeSwipe) {
         $('.story-img').bind('swipeup', handler);
         $('.story-img').bind('swipedown', handler2);
     }

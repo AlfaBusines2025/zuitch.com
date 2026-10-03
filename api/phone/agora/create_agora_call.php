@@ -114,6 +114,23 @@ if ($type == 'create_agora_call') {
 		    ));
 		    if ($insertData > 0) {
 		        $wo['calling_user'] = Wo_UserData($recipient_id);
+
+		        // Zuitch: ring the callee's iOS devices through PushKit/CallKit.
+		        require_once 'assets/includes/zuitch_voip.php';
+		        $zuitch_caller = Wo_UserData($user_id);
+		        Zuitch_SendVoipCall($recipient_id, array(
+		            'call_id'       => $insertData,
+		            'room_name'     => $room_script,
+		            'call_type'     => $call_type,
+		            'provider'      => 'agora',
+		            'from_id'       => $user_id,
+		            'from_name'     => isset($zuitch_caller['name']) ? $zuitch_caller['name'] : '',
+		            'from_username' => isset($zuitch_caller['username']) ? $zuitch_caller['username'] : '',
+		            'from_avatar'   => isset($zuitch_caller['avatar']) ? $zuitch_caller['avatar'] : '',
+		            'agora_app_id'  => $wo['config']['agora_chat_app_id'],
+		            'agora_token'   => '',
+		        ));
+
                 if (!empty($wo['calling_user']['ios_m_device_id']) && $wo['config']['ios_push_messages'] == 1) {
                     $send_array = array(
                         'send_to' => array(

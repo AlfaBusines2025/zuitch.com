@@ -2,7 +2,8 @@
 $vy_lv22 = new LIVE_STREAM;
 $broadcast_data22 = $vy_lv22->getBroadcastData($current_post['id']); $b_usdt =
 $vy_lv22->lv_getUserDetails($broadcast_data22['user_id']); $broadcast_contain_product =
-$vy_lv22->ifBroadcastHaveProduct($broadcast_data22['id']); ?>
+$vy_lv22->ifBroadcastHaveProduct($broadcast_data22['id']);
+?>
 <?php if( $broadcast_data22['islivenow'] == 'yes'){ ?>
 <div class="vy_lv_feedb1">
   <?php
@@ -13,38 +14,94 @@ $vy_lv22->ifBroadcastHaveProduct($broadcast_data22['id']); ?>
 <script>
   (function () {
     'use strict';
-    let cmd_f =
-        typeof vy_lvst.ajax_url == 'undefined' ? '/vy-livestream-cmd.php' : vy_lvst.ajax_url,
-      pid = "<?php echo $current_post['id'];?>",
+    /* F6: assets.html va al final del body; al parsear el post vy_lvst aún no existe.
+       typeof vy_lvst.ajax_url lanzaba ReferenceError y mataba TODO el preview. */
+    var pid = "<?php echo $current_post['id'];?>",
       bpid = "<?php echo md5($current_post['id']);?>",
-      video = $('#vylv_feedstream_' + pid).get(0),
+      video = null,
       s_url = "<?php echo $GLOBALS['V_Y']['site_url'];?>",
       rtmp_port = "<?php echo $GLOBALS['V_Y']['port']['rtmp_nginx_tls'];?>",
-      direct_u = `${s_url}:${rtmp_port}/dash/${bpid}.mpd`,
-      video_pause_btn = $('#vylv_feedvieocontrol_pause_' + pid),
-      video_play_btn = $('#vylv_feedvieocontrol_play_' + pid),
-      video_unmuted_btn = $('#vylv_feedvieocontrol_unmute_' + pid),
-      video_muted_btn = $('#vylv_feedvieocontrol_mute_' + pid),
-      video_reload = $('#vylv_feedvieocontrol_reload_' + pid),
-      retry_btn = $('#vy_lv_feed_retry_btn_' + pid),
-      retry_cnt = $('#vylement_feed_err_' + pid),
-      broad_ended = $('#vylvelment_feed_ended_' + pid),
-      all_controls = $('#vyelement_feed_allcontrols_' + pid),
-      vd_loading_ic = $('#vy_lv_feedloadingvd_' + pid);
+      direct_u = s_url + ':' + rtmp_port + '/dash/' + bpid + '.mpd',
+      obs_flag = "<?php echo isset($broadcast_data22['obs']) ? $broadcast_data22['obs'] : '';?>",
+      broadcast_uid = "<?php echo isset($broadcast_data22['user_id']) ? $broadcast_data22['user_id'] : '';?>",
+      video_pause_btn = null,
+      video_play_btn = null,
+      video_unmuted_btn = null,
+      video_muted_btn = null,
+      video_reload = null,
+      retry_btn = null,
+      retry_cnt = null,
+      broad_ended = null,
+      all_controls = null,
+      vd_loading_ic = null;
     var d_player = {},
-      _timeout = {};
+      _timeout = {},
+      feed_mode = obs_flag === 'yes' ? 'dash' : 'webrtc';
+    var cmd_f = '/vy-livestream-cmd.php';
+    try {
+      if (typeof vy_lvst !== 'undefined' && vy_lvst && typeof vy_lvst.ajax_url !== 'undefined' && vy_lvst.ajax_url) {
+        cmd_f = vy_lvst.ajax_url;
+      }
+    } catch (eCmd) {}
+
+    // #region agent log
+    const __dbgFeed = (hypothesisId, location, message, data) => {
+      var body = JSON.stringify({sessionId:'cadeb8',runId:'feed-fix',hypothesisId:hypothesisId,location:location,message:message,data:data||{},timestamp:Date.now()});
+      fetch('http://localhost:7513/ingest/8e34e2dd-c41b-414a-b93a-885e60cc6800',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'cadeb8'},body:body}).catch(function(){});
+      fetch((s_url || '')+'/vy-livestream/dbg-cadeb8.php',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'cadeb8'},body:body,keepalive:true}).catch(function(){});
+    };
+    __dbgFeed('F6','post_layout:iife','feed script parsed',{pid:pid,hasVy:typeof vy_lvst!=='undefined',mode:feed_mode,obs:obs_flag});
+    // #endregion
 
     const show_loading = () => {
-      vd_loading_ic.show();
+      if (vd_loading_ic) vd_loading_ic.show();
     };
     const hide_loading = () => {
-      vd_loading_ic.hide();
+      if (vd_loading_ic) vd_loading_ic.hide();
+    };
+    const markFeedEnded = () => {
+      try {
+        hide_loading();
+        destroy_player(pid);
+        if (video) {
+          try { video.pause(); } catch (eP) {}
+          $(video).hide();
+        }
+        broad_ended.show();
+        retry_cnt.hide();
+        all_controls.hide();
+        var $feed = $('#vylv_feedbroadcast_' + pid);
+        $feed.find('.vylvelment-1fptdeg-DivLiveTag, [data-e2e="live-tag"]').hide();
+        $feed.find('.vylvelment-4hl5ml-DivClickTipsText').text('LIVE ended');
+      } catch (eEnd) {}
+    };
+    const revealFeedVideo = () => {
+      try {
+        var $feed = $('#vylv_feedbroadcast_' + pid);
+        $feed.find('.vylvelment-uskur1-DivPlayerBackground').hide();
+        if (video) {
+          $(video).css({ visibility: 'visible', opacity: 1, display: 'block' });
+        }
+      } catch (eRev) {}
     };
     const tryPlayFeed = () => {
       if (!video || typeof video.play !== 'function') return;
+      try {
+        video.setAttribute('playsinline', '');
+        video.setAttribute('webkit-playsinline', '');
+        video.muted = true;
+      } catch (eAttr) {}
       var p = video.play();
       if (p && typeof p.catch === 'function') {
-        p.catch(function () {});
+        p.catch(function () {
+          /* WebRTC: autoplay reject no implica live muerto; DASH sí suele ser fallo real. */
+          if (feed_mode === 'dash') {
+            broadcast_alive(pid);
+          }
+        });
+      }
+      if (video.srcObject || (video.readyState > 1 && !video.paused)) {
+        revealFeedVideo();
       }
     };
     const player_catch_events = e => {
@@ -76,6 +133,7 @@ $vy_lv22->ifBroadcastHaveProduct($broadcast_data22['id']); ?>
       }
     };
     const constructVideo = () => {
+      if (typeof dashjs === 'undefined') return;
       d_player[pid] = dashjs.MediaPlayer().create();
       d_player[pid].initialize(video, direct_u, true);
 
@@ -101,9 +159,134 @@ $vy_lv22->ifBroadcastHaveProduct($broadcast_data22['id']); ?>
     };
     const reload_video = post_id => {
       destroy_player(post_id);
-      /* d_player[post_id].attachSource(direct_u);*/
-      video.pause();
-      constructVideo();
+      if (video) {
+        try { video.pause(); } catch (eR) {}
+      }
+      if (feed_mode === 'dash') {
+        constructVideo();
+      } else {
+        startWebRtcFeed(0);
+      }
+    };
+    const startWebRtcFeed = async attempt => {
+      attempt = attempt || 0;
+      // #region agent log
+      var vyReady = (typeof vy_lvst !== 'undefined' && vy_lvst && typeof vy_lvst._wss_connect === 'function');
+      __dbgFeed('A','post_layout:startWebRtcFeed','webrtc start',{pid:pid,attempt:attempt,hasVy:typeof vy_lvst!=='undefined',vyReady:vyReady,hasKurento:typeof kurentoUtils!=='undefined',uid:typeof vy_lvst_uid!=='undefined'?vy_lvst_uid:null,broadcast_uid:broadcast_uid});
+      // #endregion
+      /* Stub inicial de assets.html es function(){} sin métodos; esperar instancia real. */
+      if (!vyReady || typeof kurentoUtils === 'undefined') {
+        if (attempt < 60) {
+          setTimeout(function () { startWebRtcFeed(attempt + 1); }, 250);
+          return;
+        }
+        // #region agent log
+        __dbgFeed('D','post_layout:startWebRtcFeed','assets missing',{pid:pid,vyReady:vyReady,hasKurento:typeof kurentoUtils!=='undefined'});
+        // #endregion
+        hide_loading();
+        return;
+      }
+      try {
+        if (vy_lvst.ajax_url) {
+          cmd_f = vy_lvst.ajax_url;
+        }
+      } catch (eCmd2) {}
+      video = document.getElementById('vylv_feedstream_' + pid);
+      if (!video) {
+        if (attempt < 40) {
+          setTimeout(function () { startWebRtcFeed(attempt + 1); }, 50);
+          return;
+        }
+        hide_loading();
+        return;
+      }
+      show_loading();
+      try {
+        /* Host: mirror local camera, or show cover (can't recv own Kurento presenter). */
+        if (typeof vy_lvst_uid !== 'undefined' && String(vy_lvst_uid) === String(broadcast_uid)) {
+          var hostStream = null;
+          try {
+            hostStream = vy_lvst.localStream || vy_lvst._zuitchCamStream || null;
+          } catch (eHs) { hostStream = vy_lvst.localStream || null; }
+          if (hostStream) {
+            video.srcObject = hostStream;
+            video.muted = true;
+            tryPlayFeed();
+            revealFeedVideo();
+            hide_loading();
+            // #region agent log
+            __dbgFeed('B','post_layout:startWebRtcFeed','host localStream mirror',{pid:pid,fromCam:!!(vy_lvst._zuitchCamStream && hostStream===vy_lvst._zuitchCamStream)});
+            // #endregion
+            return;
+          }
+          hide_loading();
+          // #region agent log
+          __dbgFeed('B','post_layout:startWebRtcFeed','host cover fallback',{pid:pid});
+          // #endregion
+          return;
+        }
+        if (!vy_lvst.config || Object.keys(vy_lvst.config).length <= 0) {
+          if (typeof vy_lvst.getTurnCredentials === 'function') {
+            await vy_lvst.getTurnCredentials();
+          }
+        }
+        vy_lvst.video = $(video);
+        vy_lvst._wss_connect(
+          pid,
+          function () {
+            // #region agent log
+            __dbgFeed('F1','post_layout:startWebRtcFeed','ws open',{pid:pid,hasPeer:!!vy_lvst.webRtcPeer,feedPid:vy_lvst._zuitchFeedPreviewPid||null,hasSrcObject:!!(video&&video.srcObject)});
+            // #endregion
+            if (vy_lvst.webRtcPeer) {
+              var peerVideo = null;
+              try {
+                peerVideo = vy_lvst.video && vy_lvst.video[0] ? vy_lvst.video[0] : null;
+              } catch (ePv) {}
+              /* Peer del mismo feed: reintentar play. Peer de otro live/presenter: no robar. */
+              if (String(vy_lvst._zuitchFeedPreviewPid || '') === String(pid) || peerVideo === video) {
+                tryPlayFeed();
+                if (video && video.srcObject) {
+                  revealFeedVideo();
+                  hide_loading();
+                  return;
+                }
+                try { vy_lvst.dispose(); } catch (eDispFeed) {}
+                vy_lvst._zuitchFeedPreviewPid = null;
+              } else {
+                // #region agent log
+                __dbgFeed('F3','post_layout:startWebRtcFeed','peer busy skip',{pid:pid,feedPid:vy_lvst._zuitchFeedPreviewPid||null});
+                // #endregion
+                hide_loading();
+                return;
+              }
+            }
+            vy_lvst._zuitchFeedPreviewPid = pid;
+            vy_lvst.viewer(pid, function () {
+              tryPlayFeed();
+              revealFeedVideo();
+              hide_loading();
+            });
+            setTimeout(function () { tryPlayFeed(); }, 400);
+            setTimeout(function () {
+              // #region agent log
+              __dbgFeed('A','post_layout:startWebRtcFeed','state check',{pid:pid,readyState:video.readyState,paused:video.paused,currentTime:video.currentTime,hasSrcObject:!!video.srcObject,loadingVisible:vd_loading_ic?vd_loading_ic.is(':visible'):null});
+              // #endregion
+              if (video && video.srcObject) {
+                revealFeedVideo();
+              }
+              if (video && !video.paused && video.readyState > 2) {
+                hide_loading();
+              }
+            }, 2500);
+          },
+          Math.floor(Math.random() * 99)
+        );
+      } catch (eW) {
+        // #region agent log
+        __dbgFeed('A','post_layout:startWebRtcFeed','exception',{pid:pid,err:String(eW&&eW.message||eW)});
+        // #endregion
+        hide_loading();
+      }
     };
     const rm_stream = id => {
       $.post(
@@ -128,22 +311,19 @@ $vy_lv22->ifBroadcastHaveProduct($broadcast_data22['id']); ?>
               function (data) {
                 hide_loading();
                 if (data <= 0) {
-                  destroy_player(post_id);
-                  reload_video(post_id);
-                  broad_ended.show();
-                  retry_cnt.hide();
-                  all_controls.hide();
-                  $(video).hide();
+                  markFeedEnded();
                 } else {
                   // retry_cnt.show();
                 }
               }
             );
           } else {
+            markFeedEnded();
             rm_stream(post_id);
           }
         },
         error: function (xhr, status, error) {
+          markFeedEnded();
           rm_stream(post_id);
           console.log('Error, no stream: ' + error.message);
         },
@@ -163,7 +343,7 @@ $vy_lv22->ifBroadcastHaveProduct($broadcast_data22['id']); ?>
     const startvlf = async post_id => {
       var timeout_sec = 9000;
       clearTimeout(_timeout[post_id]);
-      if (typeof vy_lvst.getViewers == 'function') {
+      if (typeof vy_lvst !== 'undefined' && typeof vy_lvst.getViewers == 'function') {
         const viewers_count = await vy_lvst.getViewers(post_id, 0, 1);
         $('#vy_lv_feed_2peoplecount_' + post_id).text(viewers_count.viewers.length);
       } else {
@@ -176,12 +356,111 @@ $vy_lv22->ifBroadcastHaveProduct($broadcast_data22['id']); ?>
         }
       }, timeout_sec);
     };
-    constructVideo();
-    startvlf(pid);
-    setTimeout(function () {
-      tryPlayFeed();
-    }, 300);
-    setTimeout(function () {
+    const bindFeedControls = () => {
+      video_pause_btn = $('#vylv_feedvieocontrol_pause_' + pid);
+      video_play_btn = $('#vylv_feedvieocontrol_play_' + pid);
+      video_unmuted_btn = $('#vylv_feedvieocontrol_unmute_' + pid);
+      video_muted_btn = $('#vylv_feedvieocontrol_mute_' + pid);
+      video_reload = $('#vylv_feedvieocontrol_reload_' + pid);
+      retry_btn = $('#vy_lv_feed_retry_btn_' + pid);
+      retry_cnt = $('#vylement_feed_err_' + pid);
+      broad_ended = $('#vylvelment_feed_ended_' + pid);
+      all_controls = $('#vyelement_feed_allcontrols_' + pid);
+      vd_loading_ic = $('#vy_lv_feedloadingvd_' + pid);
+      video_pause_btn.off('click.vylv_pausefeedvideo').on('click.vylv_pausefeedvideo', function (e) {
+        _estop(e);
+        if (video) video.pause();
+      });
+      video_play_btn.off('click.vylv_playsefeedvideo').on('click.vylv_playsefeedvideo', function (e) {
+        _estop(e);
+        if (video) video.play();
+      });
+      retry_btn.off('click.vy_lv_retry_feed').on('click.vy_lv_retry_feed', retry_e);
+      video_reload.off('click.vylv_video_reload').on('click.vylv_video_reload', reload_video);
+      video_unmuted_btn
+        .off('click.vylv_unmutesefeedvideo')
+        .on('click.vylv_unmutesefeedvideo', toggleMute);
+      video_muted_btn.off('click.vylv_mutesefeedvideo').on('click.vylv_mutesefeedvideo', toggleMute);
+      if (!video) return;
+      video.onplay = e => {
+        video_play_btn.hide();
+        video_pause_btn.show();
+      };
+      video.onpause = e => {
+        video_play_btn.show();
+        video_pause_btn.hide();
+      };
+      video.oncanplay = function () {
+        tryPlayFeed();
+      };
+    video.onplaying = function () {
+      hide_loading();
+      revealFeedVideo();
+      // #region agent log
+      __dbgFeed('A','post_layout:onplaying','playing',{pid:pid,mode:feed_mode,readyState:video.readyState,currentTime:video.currentTime,hasSrcObject:!!video.srcObject});
+      // #endregion
+    };
+      video.onended = e => {
+        alert('ended');
+      };
+      video.onvolumechange = e => {
+        if (video.muted) {
+          video_muted_btn.show();
+          video_unmuted_btn.hide();
+        } else {
+          video_muted_btn.hide();
+          video_unmuted_btn.show();
+          if (video.volume < 1) video.volume = 1;
+        }
+      };
+      try {
+        Object.defineProperty(HTMLMediaElement.prototype, 'vylv_playing_' + bpid, {
+          get: function () {
+            return !!(this.currentTime > 0 && !this.paused && !this.ended && this.readyState > 2);
+          },
+          configurable: true,
+        });
+      } catch (eProp) {}
+    };
+    const bootFeedPreview = attempt => {
+      attempt = attempt || 0;
+      video = document.getElementById('vylv_feedstream_' + pid);
+      if (!video) {
+        if (attempt < 40) {
+          setTimeout(function () { bootFeedPreview(attempt + 1); }, 50);
+          return;
+        }
+        return;
+      }
+      bindFeedControls();
+      // #region agent log
+      __dbgFeed('E','post_layout:bootFeedPreview','boot',{pid:pid,obs:obs_flag,mode:feed_mode,hasVideo:!!video,dashjs:typeof dashjs,hasVy:typeof vy_lvst!=='undefined'});
+      // #endregion
+      startvlf(pid);
+      if (feed_mode === 'dash') {
+        constructVideo();
+        setTimeout(function () { tryPlayFeed(); }, 300);
+      } else {
+        startWebRtcFeed(0);
+      }
+      /* Si en ~12s no hay playing, comprobar si el live murió (evita spinner eterno). */
+      setTimeout(function () {
+        try {
+          if (!video || video['vylv_playing_' + bpid] || (video.srcObject && !video.paused && video.readyState > 1)) {
+            return;
+          }
+          if (broad_ended && broad_ended.is(':visible')) {
+            return;
+          }
+          if (feed_mode === 'webrtc' && video.srcObject) {
+            tryPlayFeed();
+            return;
+          }
+          broadcast_alive(pid);
+        } catch (eTo) {
+          broadcast_alive(pid);
+        }
+      }, 12000);
       try {
         var feedRoot = document.getElementById('vylv_feedbroadcast_' + pid);
         if (feedRoot && typeof IntersectionObserver !== 'undefined') {
@@ -209,62 +488,42 @@ $vy_lv22->ifBroadcastHaveProduct($broadcast_data22['id']); ?>
         $root
           .off('click.vylvopenlive')
           .on('click.vylvopenlive', '.vy-lv-feed-open-live', function (ev) {
-            if (typeof vy_global_openLiveStream === 'function') {
-              vy_global_openLiveStream(ev, this, parseInt(pid, 10));
-            }
+            var openLive = function (attempt) {
+              if (typeof vy_global_openLiveStream === 'function') {
+                vy_global_openLiveStream(ev, this, parseInt(pid, 10));
+                return;
+              }
+              if (attempt < 20) {
+                var selfEl = this;
+                setTimeout(function () {
+                  openLive.call(selfEl, attempt + 1);
+                }, 100);
+                return;
+              }
+              /* Assets no listos: no dejar el card en limbo. */
+              broadcast_alive(pid);
+            };
+            openLive.call(this, 0);
           });
       }
-    }, 0);
-    video_pause_btn.off('click.vylv_pausefeedvideo').on('click.vylv_pausefeedvideo', function (e) {
-      _estop(e);
-      video.pause();
-    });
-    video_play_btn.off('click.vylv_playsefeedvideo').on('click.vylv_playsefeedvideo', function (e) {
-      _estop(e);
-      video.play();
-    });
-    retry_btn.off('click.vy_lv_retry_feed').on('click.vy_lv_retry_feed', retry_e);
-    video_reload.off('click.vylv_video_reload').on('click.vylv_video_reload', reload_video);
-    video_unmuted_btn
-      .off('click.vylv_unmutesefeedvideo')
-      .on('click.vylv_unmutesefeedvideo', toggleMute);
-    video_muted_btn.off('click.vylv_mutesefeedvideo').on('click.vylv_mutesefeedvideo', toggleMute);
-    video.onplay = e => {
-      video_play_btn.hide();
-      video_pause_btn.show();
     };
-    video.onpause = e => {
-      video_play_btn.show();
-      video_pause_btn.hide();
-    };
-    video.oncanplay = function () {
-      tryPlayFeed();
-    };
-    video.onplaying = function () {
-      hide_loading();
-    };
-    video.onended = e => {
-      alert('ended');
-    };
-    video.onvolumechange = e => {
-      if (video.muted) {
-        video_muted_btn.show();
-        video_unmuted_btn.hide();
-      } else {
-        video_muted_btn.hide();
-        video_unmuted_btn.show();
-        if (video.volume < 1) video.volume = 1;
+    /* Script is before <video> in markup; wait a tick so the element exists.
+       F7: posts AJAX (prepend/html) NO ejecutan este script — liveStream.js + MutationObserver es el path real. */
+    setTimeout(function () {
+      if (typeof vy_lvst !== 'undefined' && vy_lvst && typeof vy_lvst.bootFeedPreviewCard === 'function') {
+        vy_lvst.bootFeedPreviewCard(pid);
+        return;
       }
-    };
-    Object.defineProperty(HTMLMediaElement.prototype, 'vylv_playing_' + bpid, {
-      get: function () {
-        return !!(this.currentTime > 0 && !this.paused && !this.ended && this.readyState > 2);
-      },
-      configurable: true,
-    });
+      bootFeedPreview(0);
+    }, 0);
   })();
 </script>
-<div class="vylv_feedbroadcast" id="vylv_feedbroadcast_<?php echo $current_post['id'];?>">
+<div class="vylv_feedbroadcast" id="vylv_feedbroadcast_<?php echo $current_post['id'];?>"
+  data-vylv-feed="1"
+  data-vylv-pid="<?php echo (int) $current_post['id'];?>"
+  data-vylv-buid="<?php echo isset($broadcast_data22['user_id']) ? (int) $broadcast_data22['user_id'] : 0;?>"
+  data-vylv-obs="<?php echo isset($broadcast_data22['obs']) && $broadcast_data22['obs'] === 'yes' ? 'yes' : 'no';?>"
+  data-vylv-booted="0">
   <div class="vylvelment-k5klkh-DivSwiperContent e7kdtp33">
     <div class="vylvelment-13g49ks-DivLiveContainer e14c6d571">
       <div class="vylvelment-1wtb8fn-DivLiveContent e14c6d572">

@@ -339,12 +339,16 @@
 				<div class="ch_total_price">
 					<div class="divider border-bottom"></div>
 					<?php if ($wo['topup'] == 'show') { ?>
-						<div class='alert alert-danger wallet_alert'><i class='fa fa-info-circle'></i> <a href='<?php echo $wo['config']['site_url'].'/wallet';?>' target="_blank"><?php echo $wo["lang"]["please_top_up_wallet"]?></a></div>
+						<div class='alert alert-danger wallet_alert'><i class='fa fa-info-circle'></i> <a href='<?php echo $wo['config']['site_url'].'/wallet';?>'><?php echo $wo["lang"]["please_top_up_wallet"]?></a></div>
 					<?php } ?>
 					<h4><?php echo $wo['lang']['total'] ?></h4>
 					<p><?php echo $wo['config']['currency_symbol_array'][$wo['config']['currency']]; ?><?php echo $wo['total']; ?></p>
 					<div class="divider border-bottom"></div>
-					<button type="button" class="btn btn-success btn-mat buy_button" onclick="BuyProducts('hide','<?php echo $wo['total']; ?>')" <?php if ($wo['topup'] == 'show' || empty($wo['addresses'])) { ?>disabled="true"<?php } ?>><?php echo $wo['lang']['buy'] ?></button>
+					<?php if ($wo['topup'] == 'show') { ?>
+					<a href="<?php echo $wo['config']['site_url'].'/wallet';?>" class="btn btn-success btn-mat buy_button"><?php echo !empty($wo['lang']['please_top_up_wallet']) ? 'Recargar billetera' : 'Recargar billetera'; ?></a>
+					<?php } else { ?>
+					<button type="button" class="btn btn-success btn-mat buy_button" onclick="BuyProducts('hide','<?php echo $wo['total']; ?>')" <?php if (empty($wo['addresses'])) { ?>disabled="true"<?php } ?>><?php echo $wo['lang']['buy'] ?></button>
+					<?php } ?>
 					<svg width="371" height="218" viewBox="0 0 371 218" fill="none" xmlns="http://www.w3.org/2000/svg"><path opacity="0.4" d="M275.008 41.3416C307.369 28.1561 375.43 47.6713 391.786 57.0941L410.44 43.2371L532.518 -219.202L71.3192 -143.669C60.4225 -120.263 39.7451 -60.5365 44.2096 -8.88462C49.7902 55.6802 112.183 99.047 174.223 94.1242C232.5 89.5 234.557 57.8234 275.008 41.3416Z" fill="#48B774" stroke="white"/><path d="M300.467 72.6242C332.827 59.4387 663.274 90.2678 679.63 99.6906L766.842 -127.791L557.976 -187.919L96.7778 -112.387C85.881 -88.9802 65.2036 -29.2539 69.6681 22.398C75.2487 86.9628 136.92 125.407 199.682 125.407C262.5 125.407 260.016 89.1061 300.467 72.6242Z" stroke="#48B774" stroke-width="6"/></svg>
 				</div>
 			</div>
@@ -399,7 +403,16 @@ $(document).ready(function() {
             if (data.status == 200) {
                 if (data.topup == 'hide') {
                     $('.wallet_alert').remove();
-                    $('.buy_button').removeAttr('disabled');
+                    var $btn = $('.buy_button');
+                    if ($btn.is('a')) {
+                      var totalTxt = ($('.ch_total_price p').first().text() || '').replace(/[^\d.,\-]/g,'');
+                      $btn.replaceWith('<button type="button" class="btn btn-success btn-mat buy_button" onclick="BuyProducts(\'hide\',\'' + (window.__dhlCartGrandTotal || <?php echo json_encode((float)$wo['total']); ?>) + '\')"><?php echo $wo['lang']['buy']; ?></button>');
+                    } else {
+                      $btn.removeAttr('disabled');
+                    }
+                    if (typeof ZUITCH_WALLET_BALANCE !== 'undefined' && data.wallet != null) {
+                      ZUITCH_WALLET_BALANCE = Number(data.wallet) || ZUITCH_WALLET_BALANCE;
+                    }
                     clearInterval(check_wallet);
                 }
             }
@@ -409,6 +422,10 @@ $(document).ready(function() {
 </script>
 
 <!-- JS: cotización DHL por producto + total (suma = subtotal productos + envío DHL) -->
+<script>
+var ZUITCH_WALLET_BALANCE = <?php echo json_encode((float)($wo['user']['wallet'] ?? 0)); ?>;
+var ZUITCH_WALLET_URL = <?php echo json_encode($wo['config']['site_url'] . '/wallet'); ?>;
+</script>
 <script>
 (function () {
   'use strict';
@@ -544,8 +561,29 @@ $(document).ready(function() {
   function setCartTotal(amount) {
     if (!totalBox) return;
     const safe = isNaN(amount) ? 0 : Number(amount);
+    window.__dhlCartGrandTotal = safe;
     const p = totalBox.querySelector('p'); if (p) p.textContent = '$' + safe.toFixed(2);
-    const btn = totalBox.querySelector('.buy_button'); if (btn) btn.setAttribute('onclick', `BuyProducts('hide','${safe.toFixed(2)}')`);
+    const btn = totalBox.querySelector('.buy_button');
+    if (!btn) return;
+    const walletBal = Number(typeof ZUITCH_WALLET_BALANCE !== 'undefined' ? ZUITCH_WALLET_BALANCE : 0) || 0;
+    const needsTopUp = walletBal < safe;
+    const dhlErr = Number(window.__dhlQuoteErrors || 0) > 0;
+    if (btn.tagName === 'A') {
+      btn.setAttribute('href', (typeof ZUITCH_WALLET_URL !== 'undefined' ? ZUITCH_WALLET_URL : '/wallet'));
+      return;
+    }
+    if (dhlErr) {
+      btn.setAttribute('disabled', 'true');
+      btn.setAttribute('onclick', `BuyProducts('hide','${safe.toFixed(2)}')`);
+      return;
+    }
+    if (needsTopUp) {
+      btn.removeAttribute('disabled');
+      btn.setAttribute('onclick', `BuyProducts('hide','${safe.toFixed(2)}')`);
+    } else {
+      btn.removeAttribute('disabled');
+      btn.setAttribute('onclick', `BuyProducts('hide','${safe.toFixed(2)}')`);
+    }
   }
 
   function ensureRow(id, label) {
@@ -683,6 +721,7 @@ $(document).ready(function() {
       })));
 
       // Render por producto (muestra valor adicional si aplica)
+      let quoteErrors = 0;
       (json.items||[]).forEach(it => {
         const item = document.querySelector(`input[name="dhl_meta[${it.productId}][product_id]"]`)?.closest('.ch_main_items');
         if (!item) return;
@@ -696,19 +735,24 @@ $(document).ready(function() {
           slot.innerHTML = `Envío DHL: <b>$${unit.toFixed(2)}</b> <span style="color:#999">/u</span> × <b>${qty}</b>` +
                            (extra>0 ? ` + <b>$${extra.toFixed(2)}</b> <span style="color:#999">/u extra</span>` : '') +
                            ` = <b>$${total.toFixed(2)}</b>`;
-          // Resaltar sólo si hay valor adicional por envío (extraPerUnit > 0)
           markExtraBadge(slot, extra > 0);
         } else {
-          const dhlMsg = it.debug?.data?.reasons?.[0]?.msg || '';
-          let msg = 'sin datos';
-          if (/invalid credentials/i.test(dhlMsg) || it.http === 401) msg = 'credenciales DHL inválidas';
-          else if (it.reason === 'missing_fields') msg = 'faltan campos requeridos';
-          else if (it.http === 404) msg = 'sin servicio para esta ruta/ZIP';
-          else if (it.reason === 'dhl_error') msg = `error DHL (HTTP ${it.http||'?'})`;
-          slot.innerHTML = `<span style="color:#c43">DHL: ${msg}</span>`;
+          quoteErrors++;
+          const detail = it.userMessage || it.message || '';
+          let msg = 'No se pudo calcular el envío de este producto';
+          if (it.reason === 'missing_fields') msg = 'Faltan datos de envío en el producto (origen, peso o medidas)';
+          else if (it.http === 401) msg = 'Credenciales DHL inválidas (contacte al administrador)';
+          else if (it.http === 404) msg = 'DHL no tiene servicio para esta ruta o código postal';
+          else if (it.http === 400 && detail) msg = detail;
+          else if (it.http === 400) msg = 'Datos de envío inválidos (revise origen, peso y medidas del producto)';
+          else if (it.reason === 'dhl_error' && detail) msg = detail;
+          else if (it.reason === 'dhl_error') msg = 'No se pudo cotizar el envío DHL. Intente más tarde o revise los datos del producto';
+          slot.innerHTML = `<span style="color:#c43">${msg}</span>`;
           markExtraBadge(slot, false);
         }
       });
+      window.__dhlQuoteErrors = quoteErrors;
+      window.__dhlTotal = Number(json?.totals?.dhlTotal || 0);
 
       // Mensajes de credenciales/servicio
       (json.items||[]).forEach(it => {
@@ -776,7 +820,6 @@ $(document).ready(function() {
 
 <script>
 function BuyProducts(type = 'show', price, dhl) {
-  // --- helpers locales ---
   function parseMoney(str){
     if (!str) return 0;
     let s = String(str).replace(/\s+/g,'').replace(/[^\d,.\-]/g,'');
@@ -803,8 +846,20 @@ function BuyProducts(type = 'show', price, dhl) {
     const cell = row.querySelector('div:last-child') || row;
     return parseMoney(cell.textContent);
   }
+  function setPayModalInsufficient() {
+    const $btn = $('#buy_product_modal').find('.btn-mat');
+    const $alert = $('#buy_product_modal .modal_product_pay_alert');
+    $alert.find('.alert-danger').remove();
+    $alert.append(
+      "<div class='alert alert-danger bg-danger'><i class='fa fa-info-circle'></i> " +
+      <?php echo json_encode($wo['lang']['please_top_up_wallet'] ?? 'No tiene suficiente saldo para comprar, por favor, recargue su billetera.'); ?> +
+      "</div>"
+    );
+    $btn.removeAttr('disabled')
+      .html("Recargar billetera")
+      .attr('onclick', 'window.location.href=' + JSON.stringify(ZUITCH_WALLET_URL));
+  }
 
-  // --- validaciones originales ---
   if ($('.payment_address').length < 1) {
     $('.checkout_alert').html("<div class='alert alert-danger bg-danger'><i class='fa fa-info-circle'></i> <?php echo($wo['lang']['please_add_address']); ?></div>");
     return false;
@@ -813,25 +868,20 @@ function BuyProducts(type = 'show', price, dhl) {
     $('.checkout_alert').html("<div class='alert alert-danger bg-danger'><i class='fa fa-info-circle'></i> <?php echo($wo['lang']['please_select_address']); ?></div>");
     return false;
   }
+  if (window.__dhlQuoteErrors && window.__dhlQuoteErrors > 0) {
+    $('.checkout_alert').html("<div class='alert alert-danger bg-danger'><i class='fa fa-info-circle'></i> No se pudo calcular el envío DHL de uno o más productos. Revise el carrito antes de pagar.</div>");
+    return false;
+  }
 
   var address_id = $('input[name=choose-address]:checked').val();
-
-  // ---- totales (sumamos DHL al precio) ----
-  var productsSubtotal = Math.max(0, Number(price)||0); // lo que te llega actualmente
+  var productsSubtotal = Math.max(0, Number(price)||0);
   var dhl_total        = getDhlFromUI(0);
-  var grand_total      = productsSubtotal; // por compatibilidad con tu flujo actual que ya actualiza price
-  // Si quieres forzar suma aquí independientemente de setCartTotal, descomenta:
-  // grand_total = productsSubtotal + dhl_total;
-
+  var grand_total      = productsSubtotal;
   var subtotal = Math.max(0, grand_total - dhl_total);
+  var walletBal = Number(ZUITCH_WALLET_BALANCE) || 0;
+  var needsTopUp = walletBal < grand_total;
 
   if (type == 'hide') {
-    // Botón del modal con total final
-    $('#buy_product_modal').find('.btn-mat')
-      .html("<?php echo $wo['lang']['pay'].' '.$wo['config']['currency_symbol_array'][$wo['config']['currency']]; ?>" + grand_total.toFixed(2))
-      .attr('onclick', "BuyProducts('show','" + grand_total.toFixed(2) + "','" + dhl_total.toFixed(2) + "')");
-
-    // Desglose visible
     const $alert = $('#buy_product_modal .modal_product_pay_alert');
     const htmlBD = `
       <div class="modal_product_pay_breakdown" style="margin-bottom:8px">
@@ -843,18 +893,32 @@ function BuyProducts(type = 'show', price, dhl) {
     const $bd = $('#buy_product_modal .modal_product_pay_breakdown');
     if ($bd.length) { $bd.replaceWith(htmlBD); } else { $alert.before(htmlBD); }
 
+    if (needsTopUp) {
+      setPayModalInsufficient();
+    } else {
+      $alert.find('.alert-danger').remove();
+      $('#buy_product_modal').find('.btn-mat')
+        .removeAttr('disabled')
+        .html("<?php echo $wo['lang']['pay'].' '.$wo['config']['currency_symbol_array'][$wo['config']['currency']]; ?>" + grand_total.toFixed(2))
+        .attr('onclick', "BuyProducts('show','" + grand_total.toFixed(2) + "','" + dhl_total.toFixed(2) + "')");
+    }
+
     $('#buy_product_modal').modal('show');
     return false;
   }
 
-  // type == 'show'  → compra real (+ envío + wallet)
+  if (needsTopUp) {
+    setPayModalInsufficient();
+    window.location.href = ZUITCH_WALLET_URL;
+    return false;
+  }
+
   $('#buy_product_modal').find('.btn-mat').html("<?php echo($wo['lang']['please_wait']) ?>").attr('disabled', "true");
 
   $.post(
     Wo_Ajax_Requests_File() + '?f=products&s=buy&hash=' + $('.main_session').val(),
     {
       address_id: address_id,
-      // --- NUEVO: mandamos desglose para que el backend descuente wallet por el total ---
       dhl_total: dhl_total.toFixed(2),
       subtotal: subtotal.toFixed(2),
       total_amount: grand_total.toFixed(2)
@@ -873,8 +937,13 @@ function BuyProducts(type = 'show', price, dhl) {
           location.href = "<?php echo $wo['config']['site_url'];?>/purchased";
         }, 2000);
       } else {
-        $('#buy_product_modal').find('.modal_product_pay_alert')
-          .html("<div class='alert alert-danger bg-danger'><i class='fa fa-info-circle'></i> " + data.message + "</div>");
+        var msg = (data && data.message) ? String(data.message) : '';
+        if (/billetera|wallet|saldo|top.?up|recarg/i.test(msg)) {
+          setPayModalInsufficient();
+        } else {
+          $('#buy_product_modal').find('.modal_product_pay_alert')
+            .html("<div class='alert alert-danger bg-danger'><i class='fa fa-info-circle'></i> " + msg + "</div>");
+        }
       }
     }
   );

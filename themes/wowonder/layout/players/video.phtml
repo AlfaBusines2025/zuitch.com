@@ -16,7 +16,7 @@ $wo_video_preload_attr = $wo_vertical_reel_feed ? 'auto' : 'metadata';
 <video id="video--<?php echo $wo['media']['storyId']; ?>"
        class="plyrr-<?php echo $wo['media']['storyId'].$rand ; ?> <?php echo($wo['rvad_con']); ?> video-container" playsinline
        preload="<?php echo htmlspecialchars($wo_video_preload_attr, ENT_QUOTES, 'UTF-8'); ?>" poster="<?php echo $wo['media']['video_thumb']; ?>" data-setup="{}"
-       data-post-video="<?php echo $wo['media']['storyId']; ?>" autoplay<?php if(!(isset($wo['page']) && $wo['page'] == 'reels')){ ?> muted<?php } ?> >
+       data-post-video="<?php echo $wo['media']['storyId']; ?>" autoplay<?php if(!(isset($wo['page']) && $wo['page'] == 'reels')){ ?> muted<?php } ?><?php if (!empty($wo_vertical_reel_feed)) { ?> loop<?php } ?> >
     <?php if (empty($wo['story']['240p_video']) && empty($wo['story']['360p_video']) && empty($wo['story']['480p_video']) && empty($wo['story']['720p_video']) && empty($wo['story']['1080p_video']) && empty($wo['story']['2048p_video']) && empty($wo['story']['4096p_video'])) { ?>
         <source src="<?php echo $wo['media']['filename']; ?>" type='video/mp4'>
     <?php } else { ?>
@@ -260,7 +260,10 @@ if ($wo_reel_is_reel_view && !empty($wo_reel_view_tags)) { ?>
     	fullscreen: {
     		iosNative: true
     	},
-    	resetOnEnd: true,
+    	resetOnEnd: <?php echo !empty($wo_vertical_reel_feed) ? 'false' : 'true'; ?>,
+    	<?php if (!empty($wo_vertical_reel_feed)) { ?>
+    	loop: { active: true },
+    	<?php } ?>
     	<?php /* En /reels/ muchos <video> en DOM: autoplay Plyr + pause() global → AbortError; play solo si el reel está visible */ ?>
     	autoplay: <?php echo (isset($wo['page']) && $wo['page'] == 'reels') ? 'false' : 'true'; ?>,
     muted: <?php echo (isset($wo['page']) && $wo['page'] == 'reels') ? 'false' : 'true'; ?>,
@@ -464,6 +467,13 @@ if ($wo_reel_is_reel_view && !empty($wo_reel_view_tags)) { ?>
                 try {
                     media.classList.add('wo-reel-buffer-video-hidden');
                 } catch (eV) {}
+                /* Mientras no hay píxeles: mutear para no oír el siguiente reel antes de verlo. */
+                try {
+                    if (media && !media.paused) {
+                        media.muted = true;
+                        try { media.setAttribute('data-zuitch-tempmute', '1'); } catch (eTm) {}
+                    }
+                } catch (eMuteOv) {}
                 try {
                     requestAnimationFrame(function () {
                         applyOverlayBackdrop();
@@ -488,6 +498,15 @@ if ($wo_reel_is_reel_view && !empty($wo_reel_view_tags)) { ?>
             try {
                 media.classList.remove('wo-reel-buffer-video-hidden');
             } catch (eH) {}
+            /* Restaurar audio solo cuando el frame ya es visible. */
+            try {
+                if (media && media.getAttribute && media.getAttribute('data-zuitch-tempmute')) {
+                    media.removeAttribute('data-zuitch-tempmute');
+                    if (window.__woReelsSessionUnmuted && !woReelUserChosePause && woReelReelCardVisible()) {
+                        forceReelsAudioOn();
+                    }
+                }
+            } catch (eUmOv) {}
         }
 
         function abortStallRecovery() {
@@ -497,10 +516,15 @@ if ($wo_reel_is_reel_view && !empty($wo_reel_view_tags)) { ?>
         }
 
         players._woReelAbortStall = abortStallRecovery;
+        players._woReelPlaybackReadyForDisplay = woReelPlaybackReadyForDisplay;
 
         /** No quitar "Cargando" hasta que haya píxeles reales: si no, queda negro tras readyState/buffer. */
         function woReelPlaybackReadyForDisplay() {
-            if (!media || media.ended) {
+            if (!media) {
+                return false;
+            }
+            /* Con loop el clip no debe quedar “ended”; si lo está un instante, no bloquear display. */
+            if (media.ended && !media.loop) {
                 return false;
             }
             try {
@@ -512,6 +536,11 @@ if ($wo_reel_is_reel_view && !empty($wo_reel_view_tags)) { ?>
             }
             var ahead = woReelBufferedAheadSeconds(media);
             var rs = media.readyState;
+            /* iOS WKWebView: exigir frame + un poco de buffer (evita “negro” sin overlay). */
+            var isIos = false;
+            try {
+                isIos = !!(window.__woReelsIosClient || /iPhone|iPad|iPod/i.test(navigator.userAgent || ''));
+            } catch (eI) {}
             if (rs < 3) {
                 return false;
             }
@@ -520,6 +549,9 @@ if ($wo_reel_is_reel_view && !empty($wo_reel_view_tags)) { ?>
                     return ahead >= 0.12 || rs >= 4;
                 }
             } catch (eDur) {}
+            if (isIos) {
+                return ahead >= 0.7 || rs >= 4;
+            }
             return ahead >= 0.55 || rs >= 4;
         }
 
@@ -564,10 +596,17 @@ if ($wo_reel_is_reel_view && !empty($wo_reel_view_tags)) { ?>
                     return;
                 }
                 woReelTryHideLoadingOverlay();
-                /* Mientras no haya frame decodificable + buffer: mostrar overlay (también en pausa al inicio;
-                   antes solo mirábamos readyState/buffer y quedaba pantalla negra sin “Cargando”). */
                 var displayReady = woReelPlaybackReadyForDisplay();
-                if (!displayReady) {
+                var plyrLoading = false;
+                try {
+                    var cont = players.elements && players.elements.container;
+                    plyrLoading = !!(cont && cont.classList && cont.classList.contains('plyr--loading'));
+                } catch (ePl) {}
+                var rsLow = false;
+                try {
+                    rsLow = media.readyState < 3;
+                } catch (eRs) {}
+                if (!displayReady || plyrLoading || rsLow) {
                     showOverlay();
                 } else if (!stallRecovery) {
                     hideOverlay();
@@ -588,6 +627,9 @@ if ($wo_reel_is_reel_view && !empty($wo_reel_view_tags)) { ?>
 
         function maybeResume() {
             if (!stallRecovery || !wantedResume) {
+                return;
+            }
+            if (woReelUserChosePause || window.__woReelsUserPausedVisible) {
                 return;
             }
             if (!woReelReelCardVisible()) {
@@ -617,6 +659,17 @@ if ($wo_reel_is_reel_view && !empty($wo_reel_view_tags)) { ?>
             if (media.ended) {
                 return;
             }
+            /* Usuario pausó: no overlay de stall ni pause forzado. */
+            if (woReelUserChosePause || window.__woReelsUserPausedVisible) {
+                return;
+            }
+            /* Tras resume por tap: no pelear con pause forzado ~1.5s. */
+            try {
+                if (window.__woReelsUserResumeAt && (Date.now() - window.__woReelsUserResumeAt) < 1500) {
+                    scheduleSyncLoadingUi();
+                    return;
+                }
+            } catch (eGr) {}
             var ahead = woReelBufferedAheadSeconds(media);
             if (!media.paused && ahead >= SPURIOUS_WAIT_MAX_AHEAD) {
                 scheduleSyncLoadingUi();
@@ -824,9 +877,36 @@ if ($wo_reel_is_reel_view && !empty($wo_reel_view_tags)) { ?>
             if (!players || !players.media) {
                 return;
             }
-            var wasPlaying = !!(players.playing || (players.media && !players.media.paused));
-            if (wasPlaying) {
+            var playersPlaying = !!(players.playing);
+            var mediaPaused = true;
+            try {
+                mediaPaused = !!(players.media.paused || players.media.ended);
+            } catch (eMp) {}
+            var wasPlaying = !!(playersPlaying || !mediaPaused);
+            var userIntentPaused = !!(woReelUserChosePause || window.__woReelsUserPausedVisible);
+            var action = 'pause';
+
+            function doResume(fromIntent) {
+                action = fromIntent ? 'resume_intent' : 'resume';
+                woReelUserChosePause = false;
+                try { window.__woReelsUserPausedVisible = false; } catch (eGp2) {}
+                try { window.__woReelsUserResumeAt = Date.now(); } catch (eRa) {}
+                reelsForcePause = false;
+                if (window.woReelsHardPauseAll && players.media) {
+                    window.woReelsHardPauseAll(players.media);
+                }
+                woSafePlayPlyr(players, woReelPostId);
+                try {
+                    if (typeof players._woReelSyncLoadingUi === 'function') {
+                        players._woReelSyncLoadingUi();
+                    }
+                } catch (eSynTap) {}
+            }
+
+            function doPause() {
+                action = 'pause';
                 woReelUserChosePause = true;
+                try { window.__woReelsUserPausedVisible = true; } catch (eGp) {}
                 try {
                     if (typeof players._woReelAbortStall === 'function') {
                         players._woReelAbortStall();
@@ -848,19 +928,17 @@ if ($wo_reel_is_reel_view && !empty($wo_reel_view_tags)) { ?>
                         $('video').trigger('pause');
                     } catch (e2) {}
                 }
-            } else {
-                woReelUserChosePause = false;
-                reelsForcePause = false;
-                if (window.woReelsHardPauseAll && players.media) {
-                    window.woReelsHardPauseAll(players.media);
-                }
-                woSafePlayPlyr(players, woReelPostId);
-                try {
-                    if (typeof players._woReelSyncLoadingUi === 'function') {
-                        players._woReelSyncLoadingUi();
-                    }
-                } catch (eSynTap) {}
             }
+
+            /* Intent-first: si el usuario pausó, el tap siempre reanuda (ignora wasPlaying). */
+            if (userIntentPaused) {
+                doResume(true);
+            } else if (wasPlaying) {
+                doPause();
+            } else {
+                doResume(false);
+            }
+
             try {
                 var now = Date.now();
                 var tk = 'taplog_' + woReelPostId;
@@ -869,8 +947,13 @@ if ($wo_reel_is_reel_view && !empty($wo_reel_view_tags)) { ?>
                 }
                 if (!window.__woReelsTapLogAt[tk] || now - window.__woReelsTapLogAt[tk] > 2800) {
                     window.__woReelsTapLogAt[tk] = now;
-                    woReelsRemoteLog('info', 'reel_screen_tap_toggle', wasPlaying ? 'Usuario: pausar' : 'Usuario: reproducir', {
-                        wasPlaying: wasPlaying
+                    var msg = (action === 'pause') ? 'Usuario: pausar' : 'Usuario: reproducir';
+                    woReelsRemoteLog('info', 'reel_screen_tap_toggle', msg, {
+                        wasPlaying: wasPlaying,
+                        userIntentPaused: userIntentPaused,
+                        mediaPaused: mediaPaused,
+                        playersPlaying: playersPlaying,
+                        action: action
                     });
                 }
             } catch (eTap) {}
@@ -885,8 +968,23 @@ if ($wo_reel_is_reel_view && !empty($wo_reel_view_tags)) { ?>
 
         var screenClickHandler = function(e) {
             try {
+                if (window.__ZUITCH_DAAS_PICKING
+                    || (document.body && document.body.classList.contains('rw-suggest-picking'))
+                    || (document.documentElement && document.documentElement.classList.contains('rw-suggest-picking'))) {
+                    return;
+                }
                 if (reelsIgnoreScreenToggle) {
                     reelsIgnoreScreenToggle = false;
+                    return;
+                }
+                /* Click sintético iOS tras swipe/nav: no pausar el reel que acaba de arrancar. */
+                if (window.__woReelsAnimating) {
+                    return;
+                }
+                if (Date.now() < (window.__woReelsIgnoreScreenToggleUntil || 0)) {
+                    return;
+                }
+                if (Date.now() - (window.__woReelsTouchNavAt || 0) < 400) {
                     return;
                 }
                 // Si el click fue dentro del botón de sonido, no hacemos toggle de play/pause.
@@ -957,9 +1055,6 @@ if ($wo_reel_is_reel_view && !empty($wo_reel_view_tags)) { ?>
 
     // Detectar clic en el botón de play para desmutear automáticamente
     players.on('play', (event) => {
-        try {
-            woReelUserChosePause = false;
-        } catch (eUp) {}
         if (isReelsPage) {
             var playFromUserGesture = false;
             try {
@@ -967,6 +1062,30 @@ if ($wo_reel_is_reel_view && !empty($wo_reel_view_tags)) { ?>
             } catch (eTr) {}
             if (!playFromUserGesture && reelsUserClickedPlyrPlay) {
                 playFromUserGesture = true;
+            }
+            /* Solo gesto explícito limpia pausa de usuario. Play incidental (unlock/nav/stall) no. */
+            var userWantsPaused = false;
+            try {
+                userWantsPaused = !!(woReelUserChosePause || window.__woReelsUserPausedVisible);
+            } catch (eUw) {}
+            if (playFromUserGesture || !userWantsPaused) {
+                try {
+                    woReelUserChosePause = false;
+                    try { window.__woReelsUserPausedVisible = false; } catch (eGp3) {}
+                } catch (eUp) {}
+            } else {
+                /* Usuario pausó: un play programático no debe ganar; volver a pausa. */
+                try {
+                    if (typeof players.pause === 'function') {
+                        players.pause();
+                    }
+                } catch (e) {}
+                try {
+                    if (players.media && typeof players.media.pause === 'function') {
+                        players.media.pause();
+                    }
+                } catch (e2) {}
+                return;
             }
             var listForPlay = null;
             try {
@@ -1010,12 +1129,52 @@ if ($wo_reel_is_reel_view && !empty($wo_reel_view_tags)) { ?>
             try {
                 reelsAudioRetryTimers.forEach(function(t){ clearTimeout(t); });
                 reelsAudioRetryTimers = [];
-                forceReelsAudioOn();
-                reelsAudioRetryTimers.push(setTimeout(forceReelsAudioOn, 50));
-                reelsAudioRetryTimers.push(setTimeout(forceReelsAudioOn, 150));
-                reelsAudioRetryTimers.push(setTimeout(forceReelsAudioOn, 300));
+                var displayReady = false;
+                try {
+                    if (typeof players._woReelPlaybackReadyForDisplay === 'function') {
+                        displayReady = !!players._woReelPlaybackReadyForDisplay();
+                    }
+                } catch (eDr) {}
+                if (displayReady) {
+                    forceReelsAudioOn();
+                    reelsAudioRetryTimers.push(setTimeout(forceReelsAudioOn, 50));
+                    reelsAudioRetryTimers.push(setTimeout(forceReelsAudioOn, 150));
+                    reelsAudioRetryTimers.push(setTimeout(forceReelsAudioOn, 300));
+                } else {
+                    /* Nav/buffer: play muted hasta que hideOverlay / sync quite el overlay. */
+                    try {
+                        if (players.media) {
+                            players.media.muted = true;
+                            players.media.setAttribute('data-zuitch-tempmute', '1');
+                        }
+                    } catch (eMutePlay) {}
+                    try {
+                        if (typeof players._woReelSyncLoadingUi === 'function') {
+                            players._woReelSyncLoadingUi();
+                        }
+                    } catch (eSynPlay) {}
+                    /* Reintentar unmute solo cuando ya hay frame. */
+                    function maybeUnmuteWhenReady() {
+                        try {
+                            if (woReelUserChosePause || window.__woReelsUserPausedVisible) {
+                                return;
+                            }
+                            if (typeof players._woReelPlaybackReadyForDisplay === 'function'
+                                && players._woReelPlaybackReadyForDisplay()) {
+                                forceReelsAudioOn();
+                                return;
+                            }
+                        } catch (eMu) {}
+                    }
+                    reelsAudioRetryTimers.push(setTimeout(maybeUnmuteWhenReady, 120));
+                    reelsAudioRetryTimers.push(setTimeout(maybeUnmuteWhenReady, 320));
+                    reelsAudioRetryTimers.push(setTimeout(maybeUnmuteWhenReady, 700));
+                }
             } catch (e) {}
         } else {
+            try {
+                woReelUserChosePause = false;
+            } catch (eUp2) {}
             // Si no es reels, mantener comportamiento anterior.
             if (!isFirstAutoplay || players.media.muted) {
                 woPlyrSafeUnmute(players);

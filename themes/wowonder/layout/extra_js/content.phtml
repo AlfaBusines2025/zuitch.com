@@ -561,8 +561,8 @@ function Wo_RegisterWonder(post_id) {
   });
 }
 function Wo_IsLangValid(lang){
-  var langs = [ "en", "tr","fr","es","nl","de","it","pt","ru","ar"];
-  if (lang && langs.indexOf(lang) != -1) {
+  var langs = [ "en", "tr","fr","es","nl","de","it","pt","ru","ar","zh","ja","ko","hi","sv","da","fi","pl","uk","vi","id","th","he","fa","bn","ur","fil","hr","cs"];
+  if (lang && langs.indexOf(String(lang).toLowerCase().slice(0, 2)) != -1) {
     return true;
   }
   else{
@@ -578,69 +578,121 @@ function Wo_DetectTextLang(text){
   }
   return lcode;
 }
-function Wo_Translate(id,lang){
-  if (!id || !lang && Wo_IsLangValid(lang)) {
-    return false;
-  }else{
-    <?php if ($wo['config']['google_translate'] != 1 && $wo['config']['yandex_translate'] != 1) { ?>
-      return false;
-    <?php } ?>
-	  //console.log("this is the id_for_translate: "+id);
-    var translatable_text = $("[data-translate-text="+id+"]").text();
-    if (lang == Wo_DetectTextLang(translatable_text)) {
-      // $("[data-trans-btn=" + id + "]").removeAttr('onclick')
-      // return false;
-    }
-    $("[data-trans-btn="+id+"]").text("<?php echo($wo['lang']['loading']); ?>");
-    if ($("[data-translate-text="+id+"]").parents('.post-description').find('.data_translated').length > 0) {
-      let tx = $("[data-translate-text="+id+"]").parents('.post-description').find('.data_translated').text();
-      $("[data-translate-text="+id+"]").parents('.post-description').find('.data_translated').remove();
-      $("[data-translate-text="+id+"]").text(tx);
-      $("[data-trans-btn="+id+"]").text("<?php echo($wo['lang']['translate']); ?>");
-      return false;
-    }
-    $("[data-translate-text="+id+"]").parents('.post-description').append('<span class="hidden data_translated">'+translatable_text+'</span>');
-    //console.log("this is the translatable_text: "+translatable_text);
-    <?php if ($wo['config']['google_translate'] == 1) { ?>
-      let url = "https://translation.googleapis.com/language/translate/v2?key=<?php echo($wo['config']['google_translation_api']); ?>";
-      let method = "POST";
-      let r_data = {
-          q:String(translatable_text),
-          target:String(lang)
-      };
-    <?php }else if($wo['config']['yandex_translate'] == 1){ ?>
-      let url = "https://translate.yandex.net/api/v1.5/tr.json/translate";
-      let method = "GET";
-      let r_data = {
-          key:'<?php echo $wo['config']['yandex_translation_api']; ?>',
-          text:String(translatable_text),
-          lang:String(lang)
-      };
-    <?php } ?>
-    $.ajax({
-      url: url,
-      type: method,
-      dataType: 'json',
-      data: r_data
-    }).done(function(data) {
-      <?php if ($wo['config']['google_translate'] == 1) { ?>
-      let translation = data.data.translations[0].translatedText;
-		//console.log("this is the translation: "+translation);
-      $("[data-translate-text="+id+"]").text(translation)
-      <?php }else if($wo['config']['yandex_translate'] == 1){ ?>
-      if (data.code == 200) {
-        $("[data-translate-text="+id+"]").text(data.text[0])
-      }
-    <?php } ?>
-    $("[data-trans-btn="+id+"]").text("<?php echo($wo['lang']['show_original']); ?>");
-    }).fail(function() {
-      let tx = $("[data-translate-text="+id+"]").parents('.post-description').find('.data_translated').text();
-      $("[data-translate-text="+id+"]").parents('.post-description').find('.data_translated').remove();
-      $("[data-translate-text="+id+"]").text(tx);
-      $("[data-trans-btn="+id+"]").text("<?php echo($wo['lang']['translate']); ?>");
-      console.log("translation error");
-    })
+function Wo_ResolveTranslateTarget(lang) {
+  var cand = (lang && String(lang)) || '';
+  cand = cand.toLowerCase().slice(0, 2);
+  if (Wo_IsLangValid(cand)) {
+    return cand;
   }
+  try {
+    var htmlLang = (document.documentElement.getAttribute('lang') || '').toLowerCase().slice(0, 2);
+    if (Wo_IsLangValid(htmlLang)) {
+      return htmlLang;
+    }
+  } catch (e1) {}
+  try {
+    var nav = (navigator.language || navigator.userLanguage || '').toLowerCase().slice(0, 2);
+    if (Wo_IsLangValid(nav)) {
+      return nav;
+    }
+  } catch (e2) {}
+  return '<?php echo addslashes(DetermineUserLang()); ?>' || 'es';
+}
+function Wo_Translate(id,lang){
+  if (!id) {
+    return false;
+  }
+  <?php if ($wo['config']['google_translate'] != 1 && $wo['config']['yandex_translate'] != 1) { ?>
+    return false;
+  <?php } ?>
+  var targetLang = Wo_ResolveTranslateTarget(lang);
+  var $text = $('[data-translate-text="' + id + '"]');
+  var $btn = $('[data-trans-btn="' + id + '"]');
+  if (!$text.length) {
+    return false;
+  }
+  var $desc = $text.closest('.post-description');
+  if (!$desc.length) {
+    $desc = $text.parent();
+  }
+  var labelTranslate = $btn.attr('data-label-translate') || (' - <i class="fa fa-language"></i> <?php echo addslashes($wo['lang']['translate']); ?>');
+  var labelOriginal = '<?php echo addslashes($wo['lang']['show_original']); ?>';
+  if (!$btn.attr('data-label-translate')) {
+    $btn.attr('data-label-translate', $btn.html());
+    labelTranslate = $btn.attr('data-label-translate');
+  }
+
+  var $orig = $desc.find('.data_translated');
+  var $cache = $desc.find('.data_translation_cache');
+  /* Toggle: si ya hay original + traducción cacheada */
+  if ($orig.length && $cache.length) {
+    if ($btn.attr('data-showing') === 'translated') {
+      $text.text($orig.text());
+      $btn.attr('data-showing', 'original').html(labelTranslate);
+    } else {
+      $text.text($cache.text());
+      $btn.attr('data-showing', 'translated').text(labelOriginal);
+    }
+    return false;
+  }
+
+  var translatable_text = $.trim($text.text());
+  if (!translatable_text) {
+    return false;
+  }
+  $btn.text("<?php echo($wo['lang']['loading']); ?>");
+  if (!$orig.length) {
+    $desc.append($('<span class="hidden data_translated"></span>').text(translatable_text));
+  }
+  <?php if ($wo['config']['google_translate'] == 1) { ?>
+    var url = "https://translation.googleapis.com/language/translate/v2?key=<?php echo($wo['config']['google_translation_api']); ?>";
+    var method = "POST";
+    var r_data = {
+        q: String(translatable_text),
+        target: String(targetLang)
+    };
+  <?php }else if($wo['config']['yandex_translate'] == 1){ ?>
+    var url = "https://translate.yandex.net/api/v1.5/tr.json/translate";
+    var method = "GET";
+    var r_data = {
+        key:'<?php echo $wo['config']['yandex_translation_api']; ?>',
+        text: String(translatable_text),
+        lang: String(targetLang)
+    };
+  <?php } ?>
+  $.ajax({
+    url: url,
+    type: method,
+    dataType: 'json',
+    data: r_data
+  }).done(function(data) {
+    var translation = '';
+    <?php if ($wo['config']['google_translate'] == 1) { ?>
+    try {
+      translation = data.data.translations[0].translatedText;
+    } catch (eG) {}
+    <?php }else if($wo['config']['yandex_translate'] == 1){ ?>
+    if (data.code == 200) {
+      translation = data.text[0];
+    }
+    <?php } ?>
+    if (!translation) {
+      $text.text($desc.find('.data_translated').text() || translatable_text);
+      $btn.html(labelTranslate);
+      return;
+    }
+    $desc.find('.data_translation_cache').remove();
+    $desc.append($('<span class="hidden data_translation_cache"></span>').text(translation));
+    $text.text(translation);
+    $btn.attr('data-showing', 'translated').text(labelOriginal);
+  }).fail(function() {
+    var tx = $desc.find('.data_translated').text();
+    if (tx) {
+      $text.text(tx);
+    }
+    $btn.html(labelTranslate).attr('data-showing', 'original');
+    console.log("translation error");
+  });
 }
 
 $(document).on('click', '#night_mode_toggle', function(event) {

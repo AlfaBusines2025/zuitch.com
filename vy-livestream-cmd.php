@@ -96,6 +96,10 @@ try {
 	case 'record':
 	$live->recording();
 	break;
+	case 'upload_live_rec':
+	header('Content-Type: application/json; charset=utf-8');
+	echo $live->uploadLiveRec();
+	break;
 	case 'rename-obs-file':
 	$live->renameObsFile();
 	break;

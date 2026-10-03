@@ -1,0 +1,199 @@
+<?php
+if (!Wo_IsAdmin()) {
+    echo '<div class="alert alert-danger">Solo el superadministrador puede ver la documentación para desarrolladores.</div>';
+    return;
+}
+$site = !empty($wo['config']['site_url']) ? rtrim($wo['config']['site_url'], '/') : 'https://zuitch.com';
+?>
+<style>
+#zuitch-dev-docs { max-width: 920px; }
+#zuitch-dev-docs .dd-hero {
+  background: linear-gradient(135deg, #0d3b5c 0%, #72b0be 48%, #235777 100%);
+  color: #fff; border-radius: 12px; padding: 22px 24px; margin-bottom: 18px;
+}
+#zuitch-dev-docs .dd-hero h3 { margin: 0 0 8px; font-weight: 700; }
+#zuitch-dev-docs .dd-hero p { margin: 0; opacity: .92; }
+#zuitch-dev-docs .dd-toc {
+  display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 18px;
+}
+#zuitch-dev-docs .dd-toc a {
+  font-size: 12px; font-weight: 600; padding: 5px 10px; border-radius: 999px;
+  background: #e8f0f6; color: #235777; text-decoration: none; border: 1px solid #dce3ec;
+}
+#zuitch-dev-docs .dd-card {
+  background: #fff; border: 1px solid #dce3ec; border-radius: 12px;
+  padding: 18px 20px; margin-bottom: 14px;
+}
+#zuitch-dev-docs .dd-card h4 {
+  margin: 0 0 10px; color: #235777; font-size: 1.05rem;
+  padding-bottom: 8px; border-bottom: 2px solid #e8f0f6;
+}
+#zuitch-dev-docs .dd-card h5 { margin: 14px 0 6px; font-size: .95rem; color: #1a2332; }
+#zuitch-dev-docs .dd-card p, #zuitch-dev-docs .dd-card li { color: #5c6575; font-size: .92rem; line-height: 1.55; }
+#zuitch-dev-docs code, #zuitch-dev-docs .dd-path {
+  font-family: ui-monospace, Consolas, monospace; font-size: .85em;
+  background: #e8f0f6; padding: 1px 6px; border-radius: 4px; color: #0d3b5c;
+}
+#zuitch-dev-docs ul { padding-left: 18px; margin: 6px 0 0; }
+#zuitch-dev-docs table { width: 100%; border-collapse: collapse; font-size: .88rem; margin-top: 8px; }
+#zuitch-dev-docs th, #zuitch-dev-docs td {
+  border: 1px solid #dce3ec; padding: 8px 10px; text-align: left; vertical-align: top;
+}
+#zuitch-dev-docs th { background: #e8f0f6; color: #235777; }
+#zuitch-dev-docs .dd-warn {
+  border-left: 4px solid #c98a1a; background: #fff8eb; padding: 10px 12px;
+  border-radius: 8px; margin-top: 10px; color: #5c6575; font-size: .9rem;
+}
+</style>
+
+<div id="zuitch-dev-docs">
+  <div class="dd-hero">
+    <h3>Documentación para desarrolladores — Zuitch</h3>
+    <p>
+      Guía básica para entender y gestionar <strong>zuitch.com</strong> (WoWonder personalizado).
+      Visible solo para superadministrador. No incluye secretos ni claves API.
+    </p>
+  </div>
+
+  <nav class="dd-toc">
+    <a href="#dd-stack">Stack</a>
+    <a href="#dd-repo">Repo</a>
+    <a href="#dd-entradas">Entradas</a>
+    <a href="#dd-config">Config</a>
+    <a href="#dd-git">Git</a>
+    <a href="#dd-checkout">Checkout / wallet</a>
+    <a href="#dd-dhl">DHL</a>
+    <a href="#dd-daas">DaaS</a>
+    <a href="#dd-security">Seguridad</a>
+    <a href="#dd-admin">Nueva página admin</a>
+  </nav>
+
+  <section class="dd-card" id="dd-stack">
+    <h4>1. Stack</h4>
+    <ul>
+      <li><strong>App:</strong> WoWonder (PHP) + tema <code>wowonder</code></li>
+      <li><strong>Hosting:</strong> Plesk · nginx + PHP-FPM (sitio en PHP 7.4)</li>
+      <li><strong>Realtime / live:</strong> Node (chat / livestream según módulos activos)</li>
+      <li><strong>Edge:</strong> Cloudflare delante del dominio</li>
+      <li><strong>Admin:</strong> <a href="<?php echo $site; ?>/admin-cp" target="_blank" rel="noopener"><?php echo $site; ?>/admin-cp</a></li>
+    </ul>
+  </section>
+
+  <section class="dd-card" id="dd-repo">
+    <h4>2. Layout del repositorio (<code>httpdocs/</code>)</h4>
+    <table>
+      <thead><tr><th>Ruta</th><th>Para qué sirve</th></tr></thead>
+      <tbody>
+        <tr><td><code>index.php</code></td><td>Front controller web</td></tr>
+        <tr><td><code>requests.php</code> → <code>xhr/</code></td><td>AJAX / acciones (login, products, wallet…)</td></tr>
+        <tr><td><code>api/</code>, <code>api-v2.php</code></td><td>API móvil / v2</td></tr>
+        <tr><td><code>themes/wowonder/</code></td><td>Layouts UI (checkout, posts, modales)</td></tr>
+        <tr><td><code>admin-panel/</code></td><td>Panel Admin CP</td></tr>
+        <tr><td><code>assets/includes/</code></td><td>Funciones core, helpers</td></tr>
+        <tr><td><code>dhl/</code></td><td>Proxy cotización MyDHL</td></tr>
+        <tr><td><code>documentos/</code></td><td>Propuestas / actas HTML (no es runtime)</td></tr>
+        <tr><td><code>upload/</code></td><td>Media de usuarios (no versionar)</td></tr>
+        <tr><td><code>config.php</code></td><td>Secretos DB / site (fuera de Git)</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="dd-card" id="dd-entradas">
+    <h4>3. Entradas principales</h4>
+    <ul>
+      <li><code>index.php</code> — páginas públicas y rutas <code>?link1=…</code></li>
+      <li><code>requests.php</code> — <code>?f=…&amp;s=…</code> hacia archivos en <code>xhr/</code></li>
+      <li><code>admincp.php</code> / URL <code>/admin-cp</code> — panel; páginas en <code>admin-panel/pages/{slug}/content.phtml</code></li>
+    </ul>
+  </section>
+
+  <section class="dd-card" id="dd-config">
+    <h4>4. Configuración y secretos</h4>
+    <ul>
+      <li><strong>Nunca</strong> subir a Git: <code>config.php</code>, <code>.env</code>, dumps <code>*.sql</code>, zips de backup, carpetas <code>upload/</code> con media.</li>
+      <li>El <code>.gitignore</code> del proyecto ya excluye varios de esos patrones; reforzar si aparecen nuevos secretos.</li>
+      <li>Credenciales DHL viven en el servidor (archivo de rate / env). No pegar keys en esta página ni en commits.</li>
+    </ul>
+    <div class="dd-warn">
+      Si encontrás un zip/SQL en el webroot, moverlo fuera de <code>httpdocs</code> o bloquearlo por HTTP (ver acta de seguridad).
+    </div>
+  </section>
+
+  <section class="dd-card" id="dd-git">
+    <h4>5. Git y deploy</h4>
+    <ul>
+      <li>Remoto: <a href="https://github.com/AlfaBusines2025/zuitch.com" target="_blank" rel="noopener">github.com/AlfaBusines2025/zuitch.com</a></li>
+      <li>Flujo: rama → cambios → merge a la rama estable → desplegar en Plesk (<code>httpdocs</code>)</li>
+      <li>Antes de deploy: backup DB, smoke (home, login, checkout si tocaste tienda, admin)</li>
+    </ul>
+  </section>
+
+  <section class="dd-card" id="dd-checkout">
+    <h4>6. Checkout, billetera y alerta de pago</h4>
+    <h5>Flujo</h5>
+    <ol>
+      <li>Usuario arma carrito → <code>/checkout</code> (<code>sources/checkout.php</code> + <code>themes/wowonder/layout/checkout/</code>)</li>
+      <li>Si hay productos con envío DHL, el JS cotiza vía <code>/dhl/dhl_rate.php</code></li>
+      <li>“Comprar” abre el modal <code>#buy_product_modal</code> (alerta de pago)</li>
+      <li>Si <code>wallet &lt; total (productos + DHL)</code>: CTA <strong>Recargar billetera</strong> → <code>/wallet</code></li>
+      <li>Si hay saldo: <code>xhr/products.php?s=buy</code> descuenta wallet e incluye <code>dhl_total</code></li>
+    </ol>
+    <h5>Archivos clave</h5>
+    <ul>
+      <li><code>themes/wowonder/layout/checkout/content.phtml</code> — UI + JS DHL + <code>BuyProducts</code></li>
+      <li><code>themes/wowonder/layout/checkout/item.phtml</code> — meta DHL por producto</li>
+      <li><code>xhr/products.php</code> — <code>buy</code>, <code>check_wallet</code></li>
+      <li><code>sources/ads/wallet.php</code> + layout wallet — recarga</li>
+    </ul>
+  </section>
+
+  <section class="dd-card" id="dd-dhl">
+    <h4>7. DHL</h4>
+    <ul>
+      <li>Proxy: <code>dhl/dhl_rate.php</code> (POST JSON → MyDHL <code>/rates</code>, cuenta primaria + fallback)</li>
+      <li>Producto con envío DHL: campo perfil <code>fid_1 === '1'</code> + origen/peso/medidas (<code>fid_3</code>…<code>fid_9</code>)</li>
+      <li>Errores de cotización se muestran por ítem en el carrito (mensaje claro; no solo “HTTP 400”)</li>
+      <li>Si un ítem DHL falla la cotización, el checkout bloquea el pago hasta corregir datos o quitar el producto</li>
+    </ul>
+    <div class="dd-warn">
+      Un HTTP 400 suele ser país/CP origen-destino, peso o medidas inválidos en el producto. Revisar campos del producto en Admin → Products.
+    </div>
+  </section>
+
+  <section class="dd-card" id="dd-daas">
+    <h4>8. Pedidos UX / DaaS</h4>
+    <ul>
+      <li>FAB en el sitio (solo admin): <code>themes/wowonder/layout/extra/daas-widget.phtml</code> + <code>assets/js/daas-widget.js</code></li>
+      <li>Panel: <a href="<?php echo Wo_LoadAdminLinkSettings('daas'); ?>">Pedidos UX/UI (DaaS)</a></li>
+      <li>Portal externo: daas.alfabusiness.app (keys en env DaaS, no aquí)</li>
+    </ul>
+  </section>
+
+  <section class="dd-card" id="dd-security">
+    <h4>9. Seguridad (resumen)</h4>
+    <ul>
+      <li>Cloudflare (WAF / bots) delante del dominio</li>
+      <li>reCAPTCHA en formularios públicos (Admin → General Settings)</li>
+      <li>Headers (HSTS, X-Frame-Options, nosniff) en nginx / .htaccess</li>
+      <li>Acta de entrega:
+        <a href="<?php echo $site; ?>/documentos/acta_entrega.html" target="_blank" rel="noopener"><?php echo $site; ?>/documentos/acta_entrega.html</a>
+      </li>
+    </ul>
+  </section>
+
+  <section class="dd-card" id="dd-admin">
+    <h4>10. Cómo añadir una página en Admin CP</h4>
+    <ol>
+      <li>Crear <code>admin-panel/pages/{slug}/content.phtml</code></li>
+      <li>Al inicio: <code>if (!Wo_IsAdmin()) { … return; }</code> si es solo superadmin</li>
+      <li>Registrar el slug en el array <code>$pages</code> de <code>admin-panel/autoload.php</code></li>
+      <li>Agregar link en el menú lateral (mismo archivo, cerca de DaaS / System Status)</li>
+      <li>Abrir: <code><?php echo $site; ?>/admin-cp/{slug}</code></li>
+    </ol>
+    <p>Esta página (<code>dev-docs</code>) es el ejemplo vivo de ese patrón.</p>
+  </section>
+
+  <p style="color:#5c6575;font-size:.85rem;margin-top:8px;">
+    Zuitch · Documentación desarrolladores · solo superadmin · no incluye secretos
+  </p>
+</div>
