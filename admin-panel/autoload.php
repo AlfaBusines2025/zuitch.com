@@ -20,6 +20,7 @@ $pages = array(
     'add-language',
     'edit-lang',
     'manage-users',
+    'user-activity',
     'manage-stories',
     'manage-profile-fields',
     'add-new-profile-field',
@@ -141,6 +142,7 @@ if ($wo['user']['id'] != 1) {
 		'add-language',
 		'edit-lang',
 		'manage-users',
+		'user-activity',
 		'manage-stories',
 		'manage-profile-fields',
 		'add-new-profile-field',
@@ -1195,7 +1197,7 @@ if (!empty($_COOKIE['mode']) && $_COOKIE['mode'] == 'night') {
                     </li>
                     <?php } ?>
                     <?php if ($is_admin || ($is_moderoter && ($wo['user']['permission']['manage-users'] == 1 || $wo['user']['permission']['manage-stories'] == 1 || $wo['user']['permission']['manage-profile-fields'] == 1 || $wo['user']['permission']['add-new-profile-field'] == 1 || $wo['user']['permission']['manage-verification-reqeusts'] == 1 || $wo['user']['permission']['affiliates-settings'] == 1 || $wo['user']['permission']['payment-reqeuests'] == 1 || $wo['user']['permission']['referrals-list'] == 1 || $wo['user']['permission']['online-users'] == 1 || $wo['user']['permission']['manage-genders'] == 1))) { ?>
-                    <li  <?php echo ($page == 'manage-users' || $page == 'manage-stories' || $page == 'manage-profile-fields' || $page == 'add-new-profile-field' || $page == 'edit-profile-field' || $page == 'manage-verification-reqeusts' || $page == 'affiliates-settings' || $page == 'payment-reqeuests' || $page == 'referrals-list' || $page == 'online-users' || $page == 'manage-genders') ? 'class="open"' : ''; ?>>
+                    <li  <?php echo ($page == 'manage-users' || $page == 'user-activity' || $page == 'manage-stories' || $page == 'manage-profile-fields' || $page == 'add-new-profile-field' || $page == 'edit-profile-field' || $page == 'manage-verification-reqeusts' || $page == 'affiliates-settings' || $page == 'payment-reqeuests' || $page == 'referrals-list' || $page == 'online-users' || $page == 'manage-genders') ? 'class="open"' : ''; ?>>
                         <a href="#">
                             <span class="nav-link-icon">
                                 <i class="material-icons">account_circle</i>
@@ -1206,6 +1208,11 @@ if (!empty($_COOKIE['mode']) && $_COOKIE['mode'] == 'night') {
                             <?php if ($is_admin || ($is_moderoter && $wo['user']['permission']['manage-users'] == 1)) { ?>
                             <li>
                                 <a <?php echo ($page == 'manage-users') ? 'class="active"' : ''; ?> href="<?php echo Wo_LoadAdminLinkSettings('manage-users'); ?>" data-ajax="?path=manage-users">Manage Users</a>
+                            </li>
+                            <?php } ?>
+                            <?php if ($is_admin) { ?>
+                            <li>
+                                <a <?php echo ($page == 'user-activity') ? 'class="active"' : ''; ?> href="<?php echo Wo_LoadAdminLinkSettings('user-activity'); ?>" data-ajax="?path=user-activity">User Activity Audit</a>
                             </li>
                             <?php } ?>
                             <?php if ($is_admin || ($is_moderoter && $wo['user']['permission']['online-users'] == 1)) { ?>

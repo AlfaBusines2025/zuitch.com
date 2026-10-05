@@ -25,6 +25,7 @@ require_once('assets/libraries/DB/vendor/joshcam/mysqli-database-class/MySQL-Mar
 require_once('includes/cache.php');
 require_once('includes/functions_general.php');
 require_once('includes/tabels.php');
+require_once('includes/user_activity_audit.php');
 require_once('includes/functions_one.php');
 require_once('includes/functions_two.php');
 require_once('includes/functions_three.php');

@@ -72,6 +72,13 @@ class LIVE_STREAM extends VY_LIVESTREAM_CORE
         $r = $q->fetch_array(MYSQLI_ASSOC);
 
         if (isset($r["user_id"]) && $r["user_id"] == $this->userid) {
+            if (function_exists('Wo_RegisterUserAuditLog')) {
+                Wo_RegisterUserAuditLog((int) $this->userid, 'live', 'delete', array(
+                    'post_id' => (int) $post_id,
+                    'ref_id' => (int) $broadcast_id,
+                    'meta' => array('via' => 'deleteShortVideos'),
+                ));
+            }
             // delete post
             $delete_post = $this->deletePost($post_id);
             // delete broadcast
@@ -157,7 +164,12 @@ class LIVE_STREAM extends VY_LIVESTREAM_CORE
         return true;
     }
     public function delete_stream($id = 0){
-
+        if (function_exists('Wo_RegisterUserAuditLog')) {
+            Wo_RegisterUserAuditLog((int) $this->userid, 'live', 'delete', array(
+                'post_id' => (int) $id,
+                'meta' => array('via' => 'delete_stream'),
+            ));
+        }
         $this->deleteBroadCast($id);
         $this->deletePost($id);
         $this->deleteComments($id);
@@ -630,6 +642,17 @@ class LIVE_STREAM extends VY_LIVESTREAM_CORE
             $this->generateBlankCover($insert);
             // send notification
             Wo_notifyUsersLive($insert);
+            if (function_exists('Wo_RegisterUserAuditLog')) {
+                Wo_RegisterUserAuditLog((int) $this->userid, 'live', 'start', array(
+                    'post_id' => (int) $insert,
+                    'ref_id' => (int) $add_broadcast,
+                    'meta' => array(
+                        'obs' => (string) $obs,
+                        'privacy' => (string) $privacy,
+                        'has_product' => $contain_product ? 1 : 0,
+                    ),
+                ));
+            }
         }
 
         echo $this->jencode([
@@ -905,6 +928,20 @@ class LIVE_STREAM extends VY_LIVESTREAM_CORE
             'via_likely_beacon' => $via_beacon ? 1 : 0,
             'http_user_agent' => isset($_SERVER['HTTP_USER_AGENT']) ? substr((string) $_SERVER['HTTP_USER_AGENT'], 0, 400) : '',
         ]);
+        if (function_exists('Wo_RegisterUserAuditLog')) {
+            Wo_RegisterUserAuditLog((int) $this->userid, 'live', 'stop', array(
+                'post_id' => (int) $post_id,
+                'ref_id' => (int) $broadcast_id,
+                'meta' => array(
+                    'decision' => $decision,
+                    'post_to_timeline' => (string) $post_to_timeline,
+                    'time_sec' => (string) $time,
+                    'client_rec' => $client_rec,
+                    'mp4_exists' => $mp4_exists,
+                    'mp4_has_moov' => isset($mp4_has_moov) ? $mp4_has_moov : null,
+                ),
+            ));
+        }
 
         // re-generate the stream keys for OBS
         $this->generateUniqueStreamKey();
@@ -1044,6 +1081,13 @@ class LIVE_STREAM extends VY_LIVESTREAM_CORE
         );
 
         if ($query) {
+            if (function_exists('Wo_RegisterUserAuditLog')) {
+                Wo_RegisterUserAuditLog((int) $this->userid, 'live', 'comment', array(
+                    'post_id' => (int) $post_id,
+                    'ref_id' => (int) $query,
+                    'meta' => array('text_len' => strlen((string) $text)),
+                ));
+            }
             return true;
         } else {
             return false;
@@ -1196,6 +1240,17 @@ class LIVE_STREAM extends VY_LIVESTREAM_CORE
         $data["post"] = $rows;
         $data["post"]["stream_name"] = $rows["stream_name"];
         $data["comments"] = $comments;
+
+        if (function_exists('Wo_RegisterUserAuditLog') && !empty($this->userid)) {
+            Wo_RegisterUserAuditLog((int) $this->userid, 'live', 'join', array(
+                'post_id' => (int) $post_id,
+                'ref_id' => !empty($rows['id']) ? (int) $rows['id'] : 0,
+                'meta' => array(
+                    'mobile' => (string) $mobile,
+                    'host_id' => !empty($rows['user_id']) ? (int) $rows['user_id'] : 0,
+                ),
+            ));
+        }
 
         echo $this->jencode($data);
     }

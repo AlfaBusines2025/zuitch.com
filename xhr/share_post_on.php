@@ -70,6 +70,14 @@ if ($f == 'share_post_on') {
             Wo_RegisterNotification($notification_data_array);
         }
         $data['status'] = 200;
+        if (!empty($post['is_reel']) && (int) $post['is_reel'] === 1
+            && function_exists('Wo_RegisterUserAuditLog')) {
+            Wo_RegisterUserAuditLog((int) $wo['user']['user_id'], 'reels', 'share', array(
+                'post_id' => (int) $post['id'],
+                'ref_id' => (int) $result,
+                'meta' => array('via' => 'share_post_on', 'target' => (string) $s),
+            ));
+        }
     }
     else{
         $data['status'] = 400;

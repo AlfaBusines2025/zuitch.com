@@ -60,6 +60,12 @@ if ($f == 'live') {
             Wo_notifyUsersLive($post_id);
             $data['status']  = 200;
             $data['post_id'] = $post_id;
+            if (function_exists('Wo_RegisterUserAuditLog')) {
+                Wo_RegisterUserAuditLog((int) $wo['user']['id'], 'live', 'start', array(
+                    'post_id' => (int) $post_id,
+                    'meta' => array('via' => 'agora', 'stream_name' => (string) $_POST['stream_name']),
+                ));
+            }
         }
         header("Content-type: application/json");
         echo json_encode($data);
@@ -178,6 +184,12 @@ if ($f == 'live') {
                                     'time' => time(),
                                     'is_watching' => 0
                                 ));
+                                if (function_exists('Wo_RegisterUserAuditLog')) {
+                                    Wo_RegisterUserAuditLog((int) $wo['user']['id'], 'live', 'join', array(
+                                        'post_id' => (int) $post_id,
+                                        'meta' => array('via' => 'agora', 'host_id' => (int) $post_data->user_id),
+                                    ));
+                                }
                             }
                         }
                     }
@@ -197,6 +209,15 @@ if ($f == 'live') {
     }
     if ($s == 'delete') {
         if (!empty($_POST['post_id']) && is_numeric($_POST['post_id']) && $_POST['post_id'] > 0) {
+            if (function_exists('Wo_RegisterUserAuditLog')) {
+                Wo_RegisterUserAuditLog((int) $wo['user']['id'], 'live', 'stop', array(
+                    'post_id' => (int) $_POST['post_id'],
+                    'meta' => array(
+                        'via' => 'agora',
+                        'live_video_save' => isset($wo['config']['live_video_save']) ? (int) $wo['config']['live_video_save'] : 0,
+                    ),
+                ));
+            }
             $db->where('post_id', Wo_Secure($_POST['post_id']))->where('user_id', $wo['user']['id'])->update(T_POSTS, array(
                 'live_ended' => 1
             ));

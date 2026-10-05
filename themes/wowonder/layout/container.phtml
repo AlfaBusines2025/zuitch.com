@@ -190,11 +190,24 @@
     }
   </style>
 
+  <?php
+  $zuitch_theme_fs_head = dirname(__DIR__);
+  $zuitch_style_mtime = (is_file($zuitch_theme_fs_head . '/stylesheet/style.css')) ? filemtime($zuitch_theme_fs_head . '/stylesheet/style.css') : time();
+  $zuitch_dark_mtime = (is_file($zuitch_theme_fs_head . '/stylesheet/dark.css')) ? filemtime($zuitch_theme_fs_head . '/stylesheet/dark.css') : time();
+  ?>
   <?php if ($wo['page'] == 'welcome') { ?>
     <link rel="stylesheet" href="<?php echo $wo['config']['theme_url']; ?>/stylesheet/welcome.css<?php echo $wo['update_cache']; ?>?version=<?php echo $wo['config']['version']; ?>">
   <?php } else { ?>
     <script src="<?php echo $wo['config']['theme_url']; ?>/javascript/twilio-video.min.js?version=<?php echo $wo['config']['version']; ?>"></script>
-    <link rel="stylesheet" href="<?php echo $wo['config']['theme_url']; ?>/stylesheet/style.css<?php echo $wo['update_cache']; ?>?version=<?php echo $wo['config']['version']; ?>">
+    <link rel="stylesheet" href="<?php echo $wo['config']['theme_url']; ?>/stylesheet/style.css<?php echo $wo['update_cache']; ?>?version=<?php echo $wo['config']['version']; ?>&amp;m=<?php echo (int) $zuitch_style_mtime; ?>">
+    <style id="zuitch-cta-whatsapp-color">
+      /* Critical: bypass CDN/WebView cache of style.css for WhatsApp CTA color */
+      #wo_post_stat_button > .post-cta-row .post-cta-stat.page-cta-whatsapp,
+      .post .post-cta-row .post-cta-stat.page-cta-whatsapp{color:#fff!important;border-color:#02806B!important;background:#02806B!important;}
+      #wo_post_stat_button > .post-cta-row .post-cta-stat.page-cta-whatsapp:hover,
+      .post .post-cta-row .post-cta-stat.page-cta-whatsapp:hover{background:#016656!important;border-color:#016656!important;color:#fff!important;}
+      .reel-cta-overlay .reel-cta-pill.page-cta-whatsapp{background:rgba(2,128,107,.92)!important;}
+    </style>
   <?php } ?>
   <link rel="stylesheet" href="<?php echo $wo['config']['theme_url']; ?>/stylesheet/font-awesome-4.7.0/css/font-awesome.min.css<?php echo $wo['update_cache']; ?>?version=<?php echo $wo['config']['version']; ?>">
 
@@ -554,7 +567,7 @@
   <?php } ?>
 
   <?php if ($_COOKIE['mode'] == 'night') { ?>
-    <link rel="stylesheet" href="<?php echo $wo['config']['theme_url']; ?>/stylesheet/dark.css<?php echo $wo['update_cache']; ?>?version=<?php echo $wo['config']['version']; ?>" id="night-mode-css">
+    <link rel="stylesheet" href="<?php echo $wo['config']['theme_url']; ?>/stylesheet/dark.css<?php echo $wo['update_cache']; ?>?version=<?php echo $wo['config']['version']; ?>&amp;m=<?php echo (int) (isset($zuitch_dark_mtime) ? $zuitch_dark_mtime : time()); ?>" id="night-mode-css">
   <?php } ?>
   <?php if ($wo['config']['googleLogin'] != 0): ?>
     <script src="https://accounts.google.com/gsi/client" async defer></script>

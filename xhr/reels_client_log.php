@@ -110,6 +110,19 @@ if ($f == 'reels_client_log') {
         }
         if ($line !== false) {
             $lines[] = $line;
+            if (function_exists('Wo_RegisterUserAuditLog')) {
+                Wo_RegisterUserAuditLog((int) $wo['user']['user_id'], 'reels', 'client.' . $type, array(
+                    'post_id' => $post_id,
+                    'level' => $level,
+                    'meta' => array(
+                        'message' => $msg,
+                        'client' => $client,
+                        'context' => $ctx,
+                    ),
+                    'ip' => $truncate($ip, 45),
+                    'ua' => $truncate($ua_server, 500),
+                ));
+            }
         }
     }
 

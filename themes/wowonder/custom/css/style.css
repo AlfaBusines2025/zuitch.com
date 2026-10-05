@@ -8,3 +8,26 @@ Add here your custom css styles Example: p { text-align: center; color: red; }
 .cc-window {
   margin: 0px 20px 70px !important; /* top, sides, bottom */
 }
+
+/* Left sidebar: icon + label flush left (not centered) */
+.leftcol .left-sidebar,
+.leftcol .left-sidebar ul,
+.leftcol .left-sidebar ul li {
+  text-align: left !important;
+}
+.leftcol .left-sidebar > ul > li > a {
+  display: flex !important;
+  align-items: center;
+  justify-content: flex-start;
+  text-align: left !important;
+}
+.leftcol .left-sidebar > ul > li > a > img,
+.leftcol .left-sidebar > ul > li > a > svg {
+  flex-shrink: 0;
+  margin-right: 10px;
+  margin-left: 0;
+}
+.leftcol .left-sidebar .wow_side_post_fltr > a {
+  flex: 1 1 auto;
+  justify-content: flex-start;
+}

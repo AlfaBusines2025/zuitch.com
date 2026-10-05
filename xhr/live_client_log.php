@@ -149,6 +149,19 @@ if ($f == 'live_client_log') {
         }
         if ($line !== false) {
             $lines[] = $line;
+            if (function_exists('Wo_RegisterUserAuditLog')) {
+                Wo_RegisterUserAuditLog($uid, 'live', 'client.' . $type, array(
+                    'post_id' => $post_id,
+                    'level' => $level,
+                    'meta' => array(
+                        'message' => $msg,
+                        'client' => $client,
+                        'context' => $ctx,
+                    ),
+                    'ip' => $truncate($ip, 45),
+                    'ua' => $truncate($ua_server, 500),
+                ));
+            }
             // #region agent log
             /* Dual-write flip/debug events for Cursor session cadeb8 (mobile cannot reach localhost:7513). */
             if (strpos($type, 'live_camera_flip') === 0 || $type === 'live_golive') {

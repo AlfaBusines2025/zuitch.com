@@ -1192,6 +1192,12 @@ if ($f == 'posts') {
         if (!empty($id)) {
             if ($is_reel == 1) {
                 $db->where('name','have_reels')->update(T_CONFIG,['value' => 1]);
+                if (function_exists('Wo_RegisterUserAuditLog')) {
+                    Wo_RegisterUserAuditLog((int) $wo['user']['user_id'], 'reels', 'create', array(
+                        'post_id' => (int) $id,
+                        'meta' => array('source' => 'insert_new_post'),
+                    ));
+                }
             }
             Wo_CleanCache();
             Wo_UpdateUserDetails($wo['user'], true, false, false, true);
@@ -1460,6 +1466,15 @@ if ($f == 'posts') {
                             ));
                         }
                         $match_i++;
+                    }
+                    if (!empty($wo['story']['is_reel']) && (int) $wo['story']['is_reel'] === 1
+                        && function_exists('Wo_RegisterUserAuditLog')) {
+                        Wo_RegisterUserAuditLog((int) $wo['user']['user_id'], 'reels', 'delete', array(
+                            'post_id' => (int) $wo['story']['id'],
+                            'meta' => array(
+                                'owner_id' => isset($wo['story']['user_id']) ? (int) $wo['story']['user_id'] : 0,
+                            ),
+                        ));
                     }
                 }
                 $wo['user_profile'] = Wo_UserData($wo['story']['user_id']);
@@ -1915,7 +1930,8 @@ if ($f == 'posts') {
     }
     if ($s == 'register_like') {
         if (!empty($_GET['post_id']) && Wo_CheckMainSession($hash_id) === true) {
-            if (Wo_AddLikes($_GET['post_id']) == 'unliked') {
+            $like_result = Wo_AddLikes($_GET['post_id']);
+            if ($like_result == 'unliked') {
                 $data = array(
                     'status' => 300,
                     'likes' => Wo_CountLikes($_GET['post_id']),
@@ -1938,6 +1954,13 @@ if ($f == 'posts') {
                 $data['dislike']              = 1;
                 $data['default_lang_like']    = $wo['lang']['like'];
                 $data['default_lang_dislike'] = $wo['lang']['dislike'];
+            }
+            if (function_exists('Wo_IsReelPostId') && Wo_IsReelPostId($_GET['post_id'])
+                && function_exists('Wo_RegisterUserAuditLog')) {
+                Wo_RegisterUserAuditLog((int) $wo['user']['user_id'], 'reels',
+                    ($like_result == 'unliked') ? 'unlike' : 'like',
+                    array('post_id' => (int) $_GET['post_id'])
+                );
             }
         }
         header("Content-type: application/json");
@@ -1994,6 +2017,13 @@ if ($f == 'posts') {
                 );
                 if (Wo_CanSenEmails()) {
                     $data['can_send'] = 1;
+                }
+                if (function_exists('Wo_IsReelPostId') && Wo_IsReelPostId($_GET['post_id'])
+                    && function_exists('Wo_RegisterUserAuditLog')) {
+                    Wo_RegisterUserAuditLog((int) $wo['user']['user_id'], 'reels', 'react', array(
+                        'post_id' => (int) $_GET['post_id'],
+                        'meta' => array('reaction' => (string) $_GET['reaction']),
+                    ));
                 }
             }
             $data['dislike'] = 0;
@@ -2073,7 +2103,8 @@ if ($f == 'posts') {
     }
     if ($s == 'register_share') {
         if (!empty($_GET['post_id']) && Wo_CheckMainSession($hash_id) === true) {
-            if (Wo_AddShare($_GET['post_id']) == 'unshare') {
+            $share_result = Wo_AddShare($_GET['post_id']);
+            if ($share_result == 'unshare') {
                 $data = array(
                     'status' => 300,
                     'shares' => Wo_CountShares($_GET['post_id'])
@@ -2086,6 +2117,13 @@ if ($f == 'posts') {
                 if (Wo_CanSenEmails()) {
                     $data['can_send'] = 1;
                 }
+            }
+            if (function_exists('Wo_IsReelPostId') && Wo_IsReelPostId($_GET['post_id'])
+                && function_exists('Wo_RegisterUserAuditLog')) {
+                Wo_RegisterUserAuditLog((int) $wo['user']['user_id'], 'reels',
+                    ($share_result == 'unshare') ? 'unshare' : 'share',
+                    array('post_id' => (int) $_GET['post_id'])
+                );
             }
         }
         header("Content-type: application/json");
@@ -2141,6 +2179,14 @@ if ($f == 'posts') {
             $wo['comment'] = Wo_GetPostComment($R_Comment);
             $wo['story']   = Wo_PostData($_POST['post_id']);
             if (!empty($wo['comment'])) {
+                if (!empty($wo['story']['is_reel']) && (int) $wo['story']['is_reel'] === 1
+                    && function_exists('Wo_RegisterUserAuditLog')) {
+                    Wo_RegisterUserAuditLog((int) $wo['user']['user_id'], 'reels', 'comment', array(
+                        'post_id' => (int) $_POST['post_id'],
+                        'ref_id' => (int) $R_Comment,
+                        'meta' => array('has_text' => !empty($text_comment) ? 1 : 0),
+                    ));
+                }
                 $html          = Wo_LoadPage('comment/content');
                 $data          = array(
                     'status' => 200,
@@ -2890,6 +2936,11 @@ if ($f == 'posts') {
         if ($post_views && is_numeric($post_views)) {
             $data['status'] = 200;
             $data['views']  = $post_views;
+            if (!empty($wo['loggedin']) && $wo['loggedin'] == true
+                && function_exists('Wo_IsReelPostId') && Wo_IsReelPostId($post_id)
+                && function_exists('Wo_RegisterUserAuditReelView')) {
+                Wo_RegisterUserAuditReelView((int) $wo['user']['user_id'], (int) $post_id);
+            }
         }
         header("Content-type: application/json");
         echo json_encode($data);
@@ -2915,6 +2966,13 @@ if ($f == 'posts') {
         $owner   = Wo_Secure($_GET['usr']);
         if (Wo_SharePost($post_id, $owner)) {
             $data['status'] = 200;
+            if (function_exists('Wo_IsReelPostId') && Wo_IsReelPostId($post_id)
+                && function_exists('Wo_RegisterUserAuditLog')) {
+                Wo_RegisterUserAuditLog((int) $wo['user']['user_id'], 'reels', 'share', array(
+                    'post_id' => (int) $post_id,
+                    'meta' => array('owner' => (int) $owner, 'via' => 'share-post'),
+                ));
+            }
         }
         header("Content-type: application/json");
         echo json_encode($data);
