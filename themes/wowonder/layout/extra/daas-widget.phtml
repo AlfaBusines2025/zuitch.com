@@ -1,6 +1,7 @@
 <?php
 /**
  * Official DaaS FAB (rw-suggest-fab / Alfa logo) — superadmin only, site-wide.
+ * Always loads widget.js from the DaaS hub so UI/flags track hub updates.
  */
 if (empty($wo['loggedin']) || !function_exists('Wo_IsAdmin') || !Wo_IsAdmin()) {
     return;
@@ -25,12 +26,8 @@ $requesterEmail = !empty($wo['user']['email']) ? $wo['user']['email'] : '';
 $requesterId = !empty($wo['user']['user_id']) ? ('user:' . $wo['user']['user_id']) : '';
 $logoUrl = $daasUrl . '/landing/assets/brand/alfa-mark-white.png';
 $storeUrl = $daasUrl . '/api/v1/orders';
-$localWidget = $wo['config']['site_url'] . '/assets/js/daas-widget.js';
-$localPath = $httpdocs . '/assets/js/daas-widget.js';
-if (is_file($localPath)) {
-    $localWidget .= '?v=' . (int) filemtime($localPath);
-}
-$remoteWidget = $daasUrl . '/widget.js';
+// Hub widget only — never host a local copy (stale UI ignores widget_queue_only / plan flags).
+$widgetSrc = $daasUrl . '/widget.js?v=20261005-hub';
 ?>
 <div id="daas-widget-root"
      data-daas-widget
@@ -41,25 +38,4 @@ $remoteWidget = $daasUrl . '/widget.js';
      data-requester-external-id="<?php echo htmlspecialchars($requesterId, ENT_QUOTES, 'UTF-8'); ?>"
      data-logo-url="<?php echo htmlspecialchars($logoUrl, ENT_QUOTES, 'UTF-8'); ?>"
      data-store-url="<?php echo htmlspecialchars($storeUrl, ENT_QUOTES, 'UTF-8'); ?>"></div>
-<script>
-(function () {
-  if (window.__zuitchDaasWidgetLoading) return;
-  window.__zuitchDaasWidgetLoading = true;
-  var remote = <?php echo json_encode($remoteWidget); ?>;
-  var local = <?php echo json_encode($localWidget); ?>;
-  function load(src, fallback) {
-    var s = document.createElement('script');
-    s.src = src;
-    s.async = true;
-    s.setAttribute('data-zuitch-daas-widget', '1');
-    s.onerror = function () {
-      if (fallback) load(fallback, null);
-    };
-    document.body.appendChild(s);
-  }
-  if (!document.querySelector('script[data-zuitch-daas-widget]')) {
-    /* Prefer local (reels iOS pick / site customizations); remote only as fallback. */
-    load(local, remote);
-  }
-})();
-</script>
+<script src="<?php echo htmlspecialchars($widgetSrc, ENT_QUOTES, 'UTF-8'); ?>" defer></script>

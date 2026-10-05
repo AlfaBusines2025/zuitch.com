@@ -163,7 +163,7 @@ $site = !empty($wo['config']['site_url']) ? rtrim($wo['config']['site_url'], '/'
   <section class="dd-card" id="dd-daas">
     <h4>8. Pedidos UX / DaaS</h4>
     <ul>
-      <li>FAB en el sitio (solo admin): <code>themes/wowonder/layout/extra/daas-widget.phtml</code> + <code>assets/js/daas-widget.js</code></li>
+      <li>FAB en el sitio (solo admin): <code>themes/wowonder/layout/extra/daas-widget.phtml</code> carga <code>https://daas.alfabusiness.app/widget.js</code> (sin copia local)</li>
       <li>Panel: <a href="<?php echo Wo_LoadAdminLinkSettings('daas'); ?>">Pedidos UX/UI (DaaS)</a></li>
       <li>Portal externo: daas.alfabusiness.app (keys en env DaaS, no aquí)</li>
     </ul>
