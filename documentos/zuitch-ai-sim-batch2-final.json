@@ -1,0 +1,845 @@
+{
+    "at": "2026-10-20T21:53:50+02:00",
+    "pass": "20\/20",
+    "avg": 4.9,
+    "results": {
+        "C01": {
+            "score": 4,
+            "verdict": "PASS",
+            "notes": [
+                "T1 soporte vacío"
+            ],
+            "turns": [
+                {
+                    "user": "quiero una guía de Zuitch",
+                    "intent": "soporte",
+                    "answer": "No encontré coincidencias en Zuitch. ¿Podrías proporcionar un dato más específico sobre lo que necesitas?",
+                    "cards": [],
+                    "error": null
+                },
+                {
+                    "user": "y cómo cambio la contraseña?",
+                    "intent": "soporte",
+                    "answer": "Para cambiar la contraseña, sigue estos pasos:\n\n1. Abre Ajustes \/ Configuración de cuenta.\n2. Contraseña: escribe la actual, la nueva, confírmala y guarda.\n3. Revisa la privacidad si deseas ajustar quién ve tu perfil y publicaciones.",
+                    "cards": [
+                        {
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        },
+                        {
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        },
+                        {
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        }
+                    ],
+                    "error": null
+                }
+            ]
+        },
+        "C02": {
+            "score": 5,
+            "verdict": "PASS",
+            "notes": [],
+            "turns": [
+                {
+                    "user": "cómo edito mi foto de perfil?",
+                    "intent": "soporte",
+                    "answer": "Para editar tu foto de perfil en Zuitch, sigue estos pasos:\n\n1. Entra a Zuitch con tu cuenta.\n2. Abre tu perfil (avatar) o ve a Ajustes \/ Editar perfil.\n3. Actualiza tu foto.\n4. Guarda los cambios. La nueva foto se verá en tu perfil.",
+                    "cards": [
+                        {
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        },
+                        {
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        },
+                        {
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        }
+                    ],
+                    "error": null
+                },
+                {
+                    "user": "y la portada?",
+                    "intent": "soporte",
+                    "answer": "Para editar tu portada en Zuitch, sigue estos pasos:\n\n1. Entra a Zuitch con tu cuenta.\n2. Abre tu perfil (avatar) o ve a Ajustes \/ Editar perfil.\n3. Actualiza la portada.\n4. Guarda los cambios. La nueva portada se verá en tu perfil.",
+                    "cards": [
+                        {
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        },
+                        {
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        },
+                        {
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        }
+                    ],
+                    "error": null
+                }
+            ]
+        },
+        "C03": {
+            "score": 5,
+            "verdict": "PASS",
+            "notes": [],
+            "turns": [
+                {
+                    "user": "cómo publico un producto",
+                    "intent": "soporte",
+                    "answer": "Para publicar un producto, sigue estos pasos:\n\n1. Ve a Mercado \/ Crear producto \/ Mis productos.\n2. Sube fotos, escribe nombre, precio y descripción del producto.\n3. Elige categoría, ubicación si aplica, y publica el producto.\n4. El producto aparecerá en el mercado de Zuitch y en Mis productos.\n5. Puedes editar el producto después desde Editar producto.",
+                    "cards": [
+                        {
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        },
+                        {
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        },
+                        {
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        }
+                    ],
+                    "error": null
+                },
+                {
+                    "user": "qué fotos debo subir?",
+                    "intent": "soporte",
+                    "answer": "Debes subir fotos claras y de buena calidad del producto que estás publicando. Asegúrate de incluir:\n\n1. Una imagen principal que muestre el producto completo.\n2. Fotos adicionales que muestren diferentes ángulos o detalles importantes.\n3. Imágenes que muestren el uso del producto, si es relevante.\n\nEsto ayudará a que los compradores tengan una mejor idea de lo que ofreces.",
+                    "cards": [
+                        {
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        },
+                        {
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        },
+                        {
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        }
+                    ],
+                    "error": null
+                }
+            ]
+        },
+        "C04": {
+            "score": 5,
+            "verdict": "PASS",
+            "notes": [],
+            "turns": [
+                {
+                    "user": "dónde veo mis pedidos de venta?",
+                    "intent": "soporte",
+                    "answer": "Puedes ver tus pedidos de venta en \"Pedidos \/ Órdenes\". Allí aparecerán los detalles de cada pedido.",
+                    "cards": [
+                        {
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        },
+                        {
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        },
+                        {
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        }
+                    ],
+                    "error": null
+                },
+                {
+                    "user": "puedo cambiar el estado?",
+                    "intent": "soporte",
+                    "answer": "Sí, puedes cambiar el estado del pedido. Abre el detalle del pedido y actualiza el estado a \"preparando\", \"enviado\" o \"completado\" según corresponda.",
+                    "cards": [
+                        {
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        },
+                        {
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        }
+                    ],
+                    "error": null
+                }
+            ]
+        },
+        "C05": {
+            "score": 5,
+            "verdict": "PASS",
+            "notes": [],
+            "turns": [
+                {
+                    "user": "cómo compro en el mercado?",
+                    "intent": "soporte",
+                    "answer": "Para comprar en el mercado de Zuitch, sigue estos pasos:\n\n1. Abre Mercado \/ Productos (menú o carrito del header).\n2. Busca por nombre o categoría y abre el producto.\n3. Añádelo al carrito y ve a Checkout \/ Pagar.\n4. Completa dirección y envío (puede haber opciones como DHL).\n5. Confirma. Revisa compras en Comprados \/ Pedidos del cliente.",
+                    "cards": [
+                        {
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        },
+                        {
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        },
+                        {
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        }
+                    ],
+                    "error": null
+                },
+                {
+                    "user": "dónde veo mis compras?",
+                    "intent": "soporte",
+                    "answer": "Puedes ver tus compras en la sección \"Comprados \/ Pedidos del cliente\". Ahí encontrarás el historial de tus pedidos.",
+                    "cards": [
+                        {
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        }
+                    ],
+                    "error": null
+                }
+            ]
+        },
+        "C06": {
+            "score": 5,
+            "verdict": "PASS",
+            "notes": [],
+            "turns": [
+                {
+                    "user": "quiero algo para comer",
+                    "intent": "producto",
+                    "answer": "Encontré estos productos en Zuitch:\n• Sopa de pata — precio 1 — https:\/\/zuitch.com\/post\/26266\n• Hamburguesa — precio 1 — https:\/\/zuitch.com\/post\/14674\n• Cacao — precio 380 — https:\/\/zuitch.com\/post\/1812\n• Choclo y pincho — precio 2.5 — https:\/\/zuitch.com\/post\/14675\n¿Te sirve alguno o quieres buscar con otra palabra?",
+                    "cards": [
+                        {
+                            "title": "Sopa de pata",
+                            "price": "1",
+                            "url": "https:\/\/zuitch.com\/post\/26266"
+                        },
+                        {
+                            "title": "Hamburguesa",
+                            "price": "1",
+                            "url": "https:\/\/zuitch.com\/post\/14674"
+                        },
+                        {
+                            "title": "Cacao",
+                            "price": "380",
+                            "url": "https:\/\/zuitch.com\/post\/1812"
+                        },
+                        {
+                            "title": "Choclo y pincho",
+                            "price": "2.5",
+                            "url": "https:\/\/zuitch.com\/post\/14675"
+                        }
+                    ],
+                    "error": null
+                },
+                {
+                    "user": "tienes hamburguesa?",
+                    "intent": "producto",
+                    "answer": "Encontré estos productos en Zuitch:\n• Hamburguesa — precio 1 — https:\/\/zuitch.com\/post\/14674\n¿Te sirve alguno o quieres buscar con otra palabra?",
+                    "cards": [
+                        {
+                            "title": "Hamburguesa",
+                            "price": "1",
+                            "url": "https:\/\/zuitch.com\/post\/14674"
+                        }
+                    ],
+                    "error": null
+                }
+            ]
+        },
+        "C07": {
+            "score": 5,
+            "verdict": "PASS",
+            "notes": [],
+            "turns": [
+                {
+                    "user": "busco algo para tomar",
+                    "intent": "producto",
+                    "answer": "Encontré estos productos en Zuitch:\n• Whisky Swing — precio 50 — https:\/\/zuitch.com\/post\/42909\n• Agua — precio 1 — https:\/\/zuitch.com\/post\/14204\n• Agua — precio 1 — https:\/\/zuitch.com\/post\/290\n• Cola — precio 0.5 — https:\/\/zuitch.com\/post\/279\n¿Te sirve alguno o quieres buscar con otra palabra?",
+                    "cards": [
+                        {
+                            "title": "Whisky Swing",
+                            "price": "50",
+                            "url": "https:\/\/zuitch.com\/post\/42909"
+                        },
+                        {
+                            "title": "Agua",
+                            "price": "1",
+                            "url": "https:\/\/zuitch.com\/post\/14204"
+                        },
+                        {
+                            "title": "Agua",
+                            "price": "1",
+                            "url": "https:\/\/zuitch.com\/post\/290"
+                        },
+                        {
+                            "title": "Cola",
+                            "price": "0.5",
+                            "url": "https:\/\/zuitch.com\/post\/279"
+                        }
+                    ],
+                    "error": null
+                },
+                {
+                    "user": "whisky",
+                    "intent": "producto",
+                    "answer": "Encontré estos productos en Zuitch:\n• Whisky Swing — precio 50 — https:\/\/zuitch.com\/post\/42909\n¿Te sirve alguno o quieres buscar con otra palabra?",
+                    "cards": [
+                        {
+                            "title": "Whisky Swing",
+                            "price": "50",
+                            "url": "https:\/\/zuitch.com\/post\/42909"
+                        }
+                    ],
+                    "error": null
+                }
+            ]
+        },
+        "C08": {
+            "score": 5,
+            "verdict": "PASS",
+            "notes": [],
+            "turns": [
+                {
+                    "user": "busco cacao",
+                    "intent": "producto",
+                    "answer": "Encontré estos productos en Zuitch:\n• Cacao — precio 380 — https:\/\/zuitch.com\/post\/1812\n¿Te sirve alguno o quieres buscar con otra palabra?",
+                    "cards": [
+                        {
+                            "title": "Cacao",
+                            "price": "380",
+                            "url": "https:\/\/zuitch.com\/post\/1812"
+                        }
+                    ],
+                    "error": null
+                },
+                {
+                    "user": "cuál es el precio?",
+                    "intent": "producto",
+                    "answer": "El precio del cacao es 380. ¿Necesitas más información?",
+                    "cards": [],
+                    "error": null
+                }
+            ]
+        },
+        "C09": {
+            "score": 5,
+            "verdict": "PASS",
+            "notes": [],
+            "turns": [
+                {
+                    "user": "busco celular",
+                    "intent": "producto",
+                    "answer": "Encontré estos productos en Zuitch:\n• Celular Honor 365 — precio 120 — https:\/\/zuitch.com\/post\/14755\n• Celular Infinix Note — precio 135 — https:\/\/zuitch.com\/post\/14756\n¿Te sirve alguno o quieres buscar con otra palabra?",
+                    "cards": [
+                        {
+                            "title": "Celular Honor 365",
+                            "price": "120",
+                            "url": "https:\/\/zuitch.com\/post\/14755"
+                        },
+                        {
+                            "title": "Celular Infinix Note",
+                            "price": "135",
+                            "url": "https:\/\/zuitch.com\/post\/14756"
+                        }
+                    ],
+                    "error": null
+                },
+                {
+                    "user": "hay honor?",
+                    "intent": "producto",
+                    "answer": "Encontré estos productos en Zuitch:\n• Celular Honor 365 — precio 120 — https:\/\/zuitch.com\/post\/14755\n¿Te sirve alguno o quieres buscar con otra palabra?",
+                    "cards": [
+                        {
+                            "title": "Celular Honor 365",
+                            "price": "120",
+                            "url": "https:\/\/zuitch.com\/post\/14755"
+                        }
+                    ],
+                    "error": null
+                }
+            ]
+        },
+        "C10": {
+            "score": 5,
+            "verdict": "PASS",
+            "notes": [],
+            "turns": [
+                {
+                    "user": "páginas de comida",
+                    "intent": "pagina",
+                    "answer": "Encontré estos páginas en Zuitch:\n• Guía de la misión del comerciant — https:\/\/zuitch.com\/gua_de_la_misin_del_co_004207bd\n• Los nerfeos secretos de Silksong — https:\/\/zuitch.com\/los_nerfeos_secretos_d_659e48c5\n¿Te sirve alguno o quieres buscar con otra palabra?",
+                    "cards": [
+                        {
+                            "title": "Guía de la misión del comerciant",
+                            "price": "",
+                            "url": "https:\/\/zuitch.com\/gua_de_la_misin_del_co_004207bd"
+                        },
+                        {
+                            "title": "Los nerfeos secretos de Silksong",
+                            "price": "",
+                            "url": "https:\/\/zuitch.com\/los_nerfeos_secretos_d_659e48c5"
+                        }
+                    ],
+                    "error": null
+                },
+                {
+                    "user": "cómo creo una página?",
+                    "intent": "soporte",
+                    "answer": "Para crear una página en Zuitch, sigue estos pasos:\n\n1. Entra a Zuitch con tu cuenta.\n2. Ve a Crear página \/ Mis páginas (menú o Directorio).\n3. Completa nombre, categoría y descripción; opcional foto y portada.\n4. Guarda. Otros pueden darle Me gusta.\n5. Administra en Ajustes de página: info, roles, posts y mensajes.",
+                    "cards": [
+                        {
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        },
+                        {
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        },
+                        {
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        }
+                    ],
+                    "error": null
+                }
+            ]
+        },
+        "C11": {
+            "score": 5,
+            "verdict": "PASS",
+            "notes": [],
+            "turns": [
+                {
+                    "user": "grupos de emprendimiento",
+                    "intent": "grupo",
+                    "answer": "No encontré coincidencias en Zuitch sobre grupos de emprendimiento. ¿Podrías proporcionar un dato más específico?",
+                    "cards": [],
+                    "error": null
+                },
+                {
+                    "user": "cómo me uno a un grupo?",
+                    "intent": "soporte",
+                    "answer": "Para unirte a un grupo en Zuitch: 1) Busca grupos en Explorar, Mis grupos o el Directorio. 2) Abre el grupo y pulsa Unirse (libre o con aprobación). 3) Dentro puedes publicar y conversar con los miembros.",
+                    "cards": [
+                        {
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        },
+                        {
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        },
+                        {
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        }
+                    ],
+                    "error": null
+                }
+            ]
+        },
+        "C12": {
+            "score": 5,
+            "verdict": "PASS",
+            "notes": [],
+            "turns": [
+                {
+                    "user": "cómo hago un live",
+                    "intent": "soporte",
+                    "answer": "Para hacer un live en Zuitch, sigue estos pasos:\n\n1. Abre el publicador del feed o ve a \/live (En vivo).\n2. Pulsa En vivo \/ Transmitir (si tu cuenta tiene permiso).\n3. Concede cámara y micrófono cuando el navegador lo pida.\n4. Empieza; tus seguidores verán y comentarán el live.\n5. Al terminar, cierra; puede quedar un resumen en el feed.",
+                    "cards": [
+                        {
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        },
+                        {
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        }
+                    ],
+                    "error": null
+                },
+                {
+                    "user": "necesito cámara?",
+                    "intent": "soporte",
+                    "answer": "Sí: para el live Zuitch pide permiso de cámara y micrófono en el navegador. Sin cámara no podrás transmitir vídeo; el micrófono hace falta para el audio.",
+                    "cards": [
+                        {
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        },
+                        {
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        }
+                    ],
+                    "error": null
+                }
+            ]
+        },
+        "C13": {
+            "score": 5,
+            "verdict": "PASS",
+            "notes": [],
+            "turns": [
+                {
+                    "user": "cómo subo un reel",
+                    "intent": "soporte",
+                    "answer": "Para subir un Reel, sigue estos pasos:\n\n1. Abre Reels en el menú o header para vídeos cortos verticales.\n2. Utiliza el publicador o editor de Reels; elige el vídeo y texto que deseas incluir.\n3. Publica tu Reel.\n\n¡Listo! Tu Reel estará disponible para que otros lo vean.",
+                    "cards": [
+                        {
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        },
+                        {
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        }
+                    ],
+                    "error": null
+                },
+                {
+                    "user": "y las historias?",
+                    "intent": "soporte",
+                    "answer": "Para usar historias, sigue estos pasos:\n\n1. En el feed, arriba, está la barra de Historias \/ Status.\n2. Toca tu círculo o \"Crear historia \/ Crear status\".\n3. Sube una foto o vídeo corto (que durará unas 24 horas).\n4. Para ver otras historias, toca su círculo en la barra.\n5. Recuerda que las historias caducan solas y no quedan fijas como un post.",
+                    "cards": [
+                        {
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        }
+                    ],
+                    "error": null
+                }
+            ]
+        },
+        "C14": {
+            "score": 5,
+            "verdict": "PASS",
+            "notes": [],
+            "turns": [
+                {
+                    "user": "cómo envío un mensaje",
+                    "intent": "soporte",
+                    "answer": "Para enviar un mensaje, sigue estos pasos:\n\n1. Abre Mensajes desde el header o el menú.\n2. Elige un contacto o busca usuario\/página y escribe tu mensaje.\n3. También puedes usar el mini-chat flotante.\n4. En la conversación, puedes hacer una llamada de audio o vídeo si está activo.\n5. Acepta el acceso al micrófono\/cámara para las llamadas.",
+                    "cards": [
+                        {
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        },
+                        {
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        },
+                        {
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        }
+                    ],
+                    "error": null
+                },
+                {
+                    "user": "puedo hacer videollamada?",
+                    "intent": "soporte",
+                    "answer": "Sí, puedes hacer videollamadas si la opción está activa. Simplemente abre una conversación y selecciona la opción de videollamada. Asegúrate de aceptar el acceso a la cámara y el micrófono.",
+                    "cards": [],
+                    "error": null
+                }
+            ]
+        },
+        "C15": {
+            "score": 5,
+            "verdict": "PASS",
+            "notes": [],
+            "turns": [
+                {
+                    "user": "cómo recargo el monedero",
+                    "intent": "soporte",
+                    "answer": "Para recargar el monedero, sigue estos pasos:\n\n1. Abre Monedero \/ Wallet en el menú de tu avatar.\n2. Revisa saldo e historial.\n3. Recarga con el método de pago disponible en tu región.\n\nSi necesitas más información, no dudes en preguntar.",
+                    "cards": [
+                        {
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        }
+                    ],
+                    "error": null
+                },
+                {
+                    "user": "puedo enviar dinero?",
+                    "intent": "soporte",
+                    "answer": "Puedes enviar dinero a otro usuario si la opción \"Enviar dinero\" está disponible en el monedero. Si necesitas más detalles, házmelo saber.",
+                    "cards": [
+                        {
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        },
+                        {
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        }
+                    ],
+                    "error": null
+                }
+            ]
+        },
+        "C16": {
+            "score": 5,
+            "verdict": "PASS",
+            "notes": [],
+            "turns": [
+                {
+                    "user": "cómo creo un evento",
+                    "intent": "soporte",
+                    "answer": "Para crear un evento, sigue estos pasos:\n\n1. Abre \"Eventos\" en el menú o el \"Directorio\".\n2. Selecciona \"Crear evento\".\n3. Ingresa el nombre, fecha, lugar o enlace, y una descripción.\n4. Guarda los cambios.\n5. Comparte en el feed o invita amigos.\n\n¡Listo! Tu evento estará creado.",
+                    "cards": [
+                        {
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        },
+                        {
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        }
+                    ],
+                    "error": null
+                },
+                {
+                    "user": "dónde veo eventos?",
+                    "intent": "soporte",
+                    "answer": "Puedes ver eventos abriendo \"Eventos\" en el menú o en el \"Directorio\". Allí podrás explorar los eventos disponibles y ver detalles sobre ellos.",
+                    "cards": [
+                        {
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        },
+                        {
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        }
+                    ],
+                    "error": null
+                }
+            ]
+        },
+        "C17": {
+            "score": 5,
+            "verdict": "PASS",
+            "notes": [],
+            "turns": [
+                {
+                    "user": "cómo busco empleo en Zuitch",
+                    "intent": "soporte",
+                    "answer": "Para buscar empleo o publicar una vacante en Zuitch: 1) Abre Empleos \/ Jobs en el menú o el Directorio. 2) Busca vacantes por título o ubicación. 3) Para publicar: crea el empleo con cargo, descripción, requisitos y contacto.",
+                    "cards": [
+                        {
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        },
+                        {
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        }
+                    ],
+                    "error": null
+                },
+                {
+                    "user": "puedo publicar una vacante?",
+                    "intent": "soporte",
+                    "answer": "Para buscar empleo o publicar una vacante en Zuitch: 1) Abre Empleos \/ Jobs en el menú o el Directorio. 2) Busca vacantes por título o ubicación. 3) Para publicar: crea el empleo con cargo, descripción, requisitos y contacto.",
+                    "cards": [
+                        {
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        },
+                        {
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        },
+                        {
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        }
+                    ],
+                    "error": null
+                }
+            ]
+        },
+        "C18": {
+            "score": 4,
+            "verdict": "PASS",
+            "notes": [
+                "T2 intent chat≠producto"
+            ],
+            "turns": [
+                {
+                    "user": "mercedes",
+                    "intent": "producto",
+                    "answer": "No encontré coincidencias en Zuitch. ¿Podrías proporcionar más detalles o especificar lo que buscas?",
+                    "cards": [],
+                    "error": null
+                },
+                {
+                    "user": "es un auto?",
+                    "intent": "chat",
+                    "answer": "No encontré coincidencias en Zuitch. ¿Podrías proporcionar más detalles o especificar lo que buscas sobre el auto?",
+                    "cards": [],
+                    "error": null
+                }
+            ]
+        },
+        "C19": {
+            "score": 5,
+            "verdict": "PASS",
+            "notes": [],
+            "turns": [
+                {
+                    "user": "pásame el link de amazon",
+                    "intent": "chat",
+                    "answer": "Solo puedo ayudar con el mercado de Zuitch. No puedo proporcionar enlaces externos. ¿En qué más puedo asistirte?",
+                    "cards": [],
+                    "error": null
+                },
+                {
+                    "user": "mejor de mercadolibre",
+                    "intent": "chat",
+                    "answer": "Solo puedo ayudar con el mercado de Zuitch. No puedo proporcionar enlaces externos. ¿En qué más puedo asistirte?",
+                    "cards": [],
+                    "error": null
+                }
+            ]
+        },
+        "C20": {
+            "score": 5,
+            "verdict": "PASS",
+            "notes": [],
+            "turns": [
+                {
+                    "user": "hola",
+                    "intent": "chat",
+                    "answer": "¡Hola! ¿En qué puedo ayudarte hoy?",
+                    "cards": [],
+                    "error": null
+                },
+                {
+                    "user": "busco lámpara",
+                    "intent": "producto",
+                    "answer": "Encontré estos productos en Zuitch:\n• Lámpara — precio 1 — https:\/\/zuitch.com\/post\/14667\n• Lámpara blue tooth — precio 12 — https:\/\/zuitch.com\/post\/14250\n• Lámpara blue tooth — precio 12 — https:\/\/zuitch.com\/post\/14242\n• Lampra blue tooth — precio 12 — https:\/\/zuitch.com\/post\/14243\n¿Te sirve alguno o quieres buscar con otra palabra?",
+                    "cards": [
+                        {
+                            "title": "Lámpara",
+                            "price": "1",
+                            "url": "https:\/\/zuitch.com\/post\/14667"
+                        },
+                        {
+                            "title": "Lámpara blue tooth",
+                            "price": "12",
+                            "url": "https:\/\/zuitch.com\/post\/14250"
+                        },
+                        {
+                            "title": "Lámpara blue tooth",
+                            "price": "12",
+                            "url": "https:\/\/zuitch.com\/post\/14242"
+                        },
+                        {
+                            "title": "Lampra blue tooth",
+                            "price": "12",
+                            "url": "https:\/\/zuitch.com\/post\/14243"
+                        }
+                    ],
+                    "error": null
+                },
+                {
+                    "user": "cómo publico un producto?",
+                    "intent": "soporte",
+                    "answer": "Para publicar un producto en Zuitch, sigue estos pasos:\n\n1. Ve a Mercado \/ Crear producto \/ Mis productos.\n2. Sube fotos, escribe nombre, precio y descripción del producto.\n3. Elige categoría, ubicación si aplica, y publica el producto.\n4. El producto aparecerá en el mercado de Zuitch y en Mis productos.\n5. Puedes editar el producto después desde Editar producto.\n\nSi necesitas más ayuda, ¡dímelo!",
+                    "cards": [
+                        {
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        },
+                        {
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        },
+                        {
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        }
+                    ],
+                    "error": null
+                }
+            ]
+        }
+    }
+}

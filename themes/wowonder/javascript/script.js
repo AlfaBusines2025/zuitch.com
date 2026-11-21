@@ -2890,7 +2890,7 @@ function Wo_OpenAlbumLightBox(image_id, type) {
   });
 }
 function Wo_CloseLightbox() {
-  // Función auxiliar para detener un video completamente
+  // Solo detener videos DENTRO del lightbox (no los del feed).
   function stopVideoCompletely(video) {
     if (!video) return;
     try {
@@ -2898,12 +2898,10 @@ function Wo_CloseLightbox() {
       video.currentTime = 0;
       video.muted = true;
       video.volume = 0;
-      // Limpiar la fuente del video
       if (video.src) {
         video.src = '';
         video.load();
       }
-      // Limpiar los sources
       var sources = video.querySelectorAll('source');
       sources.forEach(function(source) {
         if (source.src) {
@@ -2914,51 +2912,41 @@ function Wo_CloseLightbox() {
       console.log('Error al detener video:', e);
     }
   }
-  
-  // Pausar específicamente videos de historias PRIMERO
+
+  var $lb = $('.lightbox-container');
+  if ($lb.length) {
+    $lb.find('video').each(function() {
+      stopVideoCompletely(this);
+    });
+    if (typeof mejs !== 'undefined') {
+      $lb.find('video').each(function() {
+        var player = $(this).data('mediaelementplayer');
+        if (player && player.media) {
+          try {
+            player.pause();
+            player.setCurrentTime(0);
+            player.setMuted(true);
+            player.setVolume(0);
+          } catch(e) {
+            console.log('Error al pausar MediaElementPlayer:', e);
+          }
+        }
+      });
+    }
+  }
+
+  // Historias fuera del lightbox (si quedaron abiertas)
   var storyVideos = document.querySelectorAll('video[data-story-video], #video_story, .story-image-wrapper video, .story-video video');
   storyVideos.forEach(function(video) {
-    stopVideoCompletely(video);
-  });
-  
-  // Pausar y detener TODOS los videos en la página
-  var allVideos = document.querySelectorAll('video');
-  allVideos.forEach(function(video) {
-    if (video) {
-      stopVideoCompletely(video);
+    if (!$lb.length || !$lb[0].contains(video)) {
+      try {
+        video.pause();
+      } catch (eP) {}
     }
   });
-  
-  // Pausar videos de MediaElementPlayer si están activos
-  if (typeof mejs !== 'undefined') {
-    $('video').each(function() {
-      var player = $(this).data('mediaelementplayer');
-      if (player && player.media) {
-        try {
-          player.pause();
-          player.setCurrentTime(0);
-          player.setMuted(true);
-          player.setVolume(0);
-        } catch(e) {
-          console.log('Error al pausar MediaElementPlayer:', e);
-        }
-      }
-    });
-  }
-  
-  // Remover el contenedor del lightbox
+
   $('.lightbox-container').remove();
   document.body.style.overflow = 'auto';
-  
-  // Forzar una última verificación después de un breve delay
-  setTimeout(function() {
-    var remainingVideos = document.querySelectorAll('video:not([paused])');
-    remainingVideos.forEach(function(video) {
-      if (video && !video.paused) {
-        stopVideoCompletely(video);
-      }
-    });
-  }, 100);
 }
 /** Refuerzo para WebView / caché: fuerza contenedor a pantalla completa si el HTML trae image-reels-mode */
 function Wo_FinalizeImageReelsLightbox() {

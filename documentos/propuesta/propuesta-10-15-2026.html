@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Propuesta Zuitch — Android + Zuitch AI | 15–30 oct 2026</title>
+  <meta name="description" content="Propuesta comercial para Zuitch: 4 correcciones Android (Play Store + llamadas) y Zuitch AI. Entrega en 15 días.">
+  <link rel="shortcut icon" type="image/png" href="/themes/wowonder/img/icon.png">
+  <style>
+    :root {
+      --text: #1a2332;
+      --muted: #5c6575;
+      --border: #dce3ec;
+      --card: #ffffff;
+      --bg: #ebf3f5;
+      --accent: #235777;
+      --brand: #72b0be;
+      --brand-dark: #0d3b5c;
+      --ok: #0d6b3d;
+      --soft: #e8f0f6;
+      --warn: #8a5a00;
+      --radius: 12px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;
+      font-size: 15px;
+      line-height: 1.55;
+      color: var(--text);
+      background: var(--bg);
+    }
+    a { color: var(--accent); }
+    code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.88em;
+      background: var(--soft);
+      padding: 1px 6px;
+      border-radius: 4px;
+    }
+    .wrap {
+      max-width: 920px;
+      margin: 0 auto;
+      padding: 28px 20px 56px;
+    }
+    header.doc {
+      background: linear-gradient(135deg, var(--brand-dark) 0%, var(--brand) 48%, var(--accent) 100%);
+      color: #fff;
+      border-radius: var(--radius);
+      padding: 32px 34px;
+      margin-bottom: 20px;
+      box-shadow: 0 8px 28px rgba(13, 59, 92, 0.22);
+    }
+    header.doc .eyebrow {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      opacity: 0.9;
+      background: rgba(255,255,255,0.16);
+      padding: 5px 10px;
+      border-radius: 999px;
+      margin-bottom: 12px;
+    }
+    header.doc h1 {
+      margin: 0 0 10px;
+      font-size: 1.5rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.25;
+    }
+    header.doc .subtitle {
+      margin: 0;
+      opacity: 0.92;
+      font-size: 0.98rem;
+      max-width: 64ch;
+    }
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-top: 22px;
+      padding-top: 18px;
+      border-top: 1px solid rgba(255,255,255,0.22);
+    }
+    @media (max-width: 720px) {
+      .meta-grid { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 420px) {
+      .meta-grid { grid-template-columns: 1fr; }
+    }
+    .meta-grid dt {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      opacity: 0.75;
+      margin: 0 0 4px;
+    }
+    .meta-grid dd {
+      margin: 0;
+      font-weight: 650;
+      font-size: 0.95rem;
+    }
+    section.block {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 22px 26px;
+      margin-bottom: 16px;
+      box-shadow: 0 2px 10px rgba(26, 35, 50, 0.04);
+    }
+    section.block h2 {
+      margin: 0 0 12px;
+      font-size: 1.08rem;
+      color: var(--accent);
+      padding-bottom: 10px;
+      border-bottom: 2px solid var(--soft);
+    }
+    section.block h3 {
+      margin: 18px 0 8px;
+      font-size: 0.95rem;
+      color: var(--text);
+    }
+    p.lead {
+      margin: 0 0 10px;
+      color: var(--muted);
+    }
+    ul.clean {
+      margin: 8px 0 0;
+      padding: 0;
+      list-style: none;
+    }
+    ul.clean li {
+      position: relative;
+      padding: 7px 0 7px 26px;
+      border-bottom: 1px solid #f0f3f7;
+    }
+    ul.clean li:last-child { border-bottom: none; }
+    ul.clean li::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 14px;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--brand);
+    }
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 8px;
+    }
+    @media (max-width: 720px) {
+      .two-col { grid-template-columns: 1fr; }
+    }
+    .feature-card {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+      background: #fafcfd;
+    }
+    .feature-card .tag {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--accent);
+      background: var(--soft);
+      padding: 3px 8px;
+      border-radius: 999px;
+      margin-bottom: 8px;
+    }
+    .feature-card h3 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+    }
+    .feature-card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+    .pill-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .pill {
+      font-size: 12px;
+      font-weight: 600;
+      padding: 5px 10px;
+      border-radius: 999px;
+      background: var(--soft);
+      color: var(--accent);
+      border: 1px solid var(--border);
+    }
+    .pill.ok {
+      background: #e8f8ee;
+      color: #0b6b36;
+      border-color: #b6e6c8;
+    }
+    table.deliver {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.92rem;
+      margin-top: 6px;
+    }
+    table.deliver th,
+    table.deliver td {
+      border: 1px solid var(--border);
+      padding: 10px 12px;
+      vertical-align: top;
+      text-align: left;
+    }
+    table.deliver th {
+      background: var(--soft);
+      color: var(--accent);
+      font-weight: 700;
+    }
+    table.deliver tr.total td {
+      font-weight: 700;
+      background: #f3faf6;
+      color: var(--ok);
+    }
+    table.deliver tr.entry td {
+      background: #f8fbfd;
+    }
+    .price-box {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      background: linear-gradient(135deg, #f3faf6, #e8f0f6);
+      border: 1px solid #c5e6d2;
+      border-radius: var(--radius);
+      padding: 20px 22px;
+      margin-top: 14px;
+    }
+    .price-box .amount {
+      font-size: 1.85rem;
+      font-weight: 800;
+      color: var(--ok);
+      letter-spacing: -0.03em;
+      line-height: 1.15;
+    }
+    .price-box .amount small {
+      display: block;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--muted);
+      letter-spacing: 0;
+      margin-top: 6px;
+    }
+    .price-box .note {
+      flex: 1;
+      min-width: 220px;
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+    .out {
+      color: var(--muted);
+      font-size: 0.9rem;
+      margin: 0;
+    }
+    .out ul {
+      margin: 8px 0 0;
+      padding-left: 18px;
+      color: var(--muted);
+    }
+    footer.doc {
+      margin-top: 8px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+    .sign {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 28px;
+      margin-top: 22px;
+    }
+    @media (max-width: 640px) {
+      .sign { grid-template-columns: 1fr; }
+    }
+    .sign-box {
+      border-top: 1px solid var(--border);
+      padding-top: 10px;
+      color: var(--muted);
+      font-size: 0.9rem;
+      min-height: 72px;
+    }
+    .print-bar {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 12px;
+    }
+    .print-bar button {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .print-bar button:hover { background: var(--brand-dark); }
+    .benefit-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 12px;
+    }
+    @media (max-width: 720px) {
+      .benefit-grid { grid-template-columns: 1fr; }
+    }
+    .benefit-item {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 16px;
+      background: linear-gradient(180deg, #fafcfd 0%, #f3f8fa 100%);
+    }
+    .benefit-item strong {
+      display: block;
+      color: var(--accent);
+      font-size: 0.95rem;
+      margin-bottom: 6px;
+    }
+    .benefit-item p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+    .flow {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      margin: 14px 0 4px;
+    }
+    .flow .step {
+      background: var(--soft);
+      border: 1px solid var(--border);
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 700;
+      padding: 8px 12px;
+      border-radius: 8px;
+    }
+    .flow .arrow {
+      color: var(--muted);
+      font-weight: 700;
+      font-size: 14px;
+    }
+    .prompt-box {
+      margin-top: 10px;
+      padding: 14px 16px;
+      background: #0d3b5c;
+      color: #e8f0f6;
+      border-radius: 10px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.78rem;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      overflow-x: auto;
+    }
+    .timeline {
+      margin: 12px 0 0;
+      padding: 0;
+      list-style: none;
+      border-left: 3px solid var(--brand);
+    }
+    .timeline li {
+      position: relative;
+      padding: 0 0 16px 18px;
+    }
+    .timeline li:last-child { padding-bottom: 0; }
+    .timeline li::before {
+      content: "";
+      position: absolute;
+      left: -7px;
+      top: 6px;
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      background: var(--accent);
+      border: 2px solid #fff;
+      box-shadow: 0 0 0 1px var(--brand);
+    }
+    .timeline strong {
+      display: block;
+      color: var(--brand-dark);
+      font-size: 0.95rem;
+    }
+    .timeline span {
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+    .callout {
+      margin-top: 14px;
+      padding: 14px 16px;
+      border-radius: 10px;
+      border-left: 4px solid var(--brand);
+      background: var(--soft);
+    }
+    .callout.warn {
+      border-left-color: #d4a017;
+      background: #fff8e8;
+    }
+    .callout h3 {
+      margin: 0 0 6px;
+      font-size: 0.95rem;
+      color: var(--brand-dark);
+    }
+    .callout p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+    .ol-tight {
+      margin: 8px 0 0;
+      padding-left: 20px;
+      color: var(--muted);
+    }
+    .ol-tight li { margin-bottom: 6px; }
+    .num-list {
+      margin: 10px 0 0;
+      padding: 0;
+      list-style: none;
+      counter-reset: item;
+    }
+    .num-list li {
+      position: relative;
+      padding: 12px 12px 12px 48px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      margin-bottom: 10px;
+      background: #fafcfd;
+    }
+    .num-list li:last-child { margin-bottom: 0; }
+    .num-list li::before {
+      counter-increment: item;
+      content: counter(item);
+      position: absolute;
+      left: 12px;
+      top: 12px;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 26px;
+      text-align: center;
+    }
+    .num-list strong {
+      display: block;
+      color: var(--brand-dark);
+      margin-bottom: 4px;
+    }
+    .num-list p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+    @media print {
+      body { background: #fff; }
+      .wrap { padding: 0; max-width: 100%; }
+      .print-bar { display: none; }
+      header.doc, section.block { box-shadow: none; break-inside: avoid; }
+      .prompt-box { background: #f3f8fa; color: var(--text); border: 1px solid var(--border); }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="print-bar">
+      <button type="button" onclick="window.print()">Imprimir / PDF</button>
+    </div>
+
+    <header class="doc">
+      <div class="eyebrow">Propuesta comercial · Zuitch</div>
+      <h1>Android + Zuitch AI</h1>
+      <p class="subtitle">
+        Cuatro correcciones de la app Android (incluye actualización para Play Store y revisión de llamadas / videollamadas)
+        más el asistente Zuitch AI en la plataforma web. Entrega en 15 días.
+      </p>
+      <dl class="meta-grid">
+        <div>
+          <dt>Cliente</dt>
+          <dd>Zuitch.com</dd>
+        </div>
+        <div>
+          <dt>Proyecto</dt>
+          <dd>Android + Zuitch AI</dd>
+        </div>
+        <div>
+          <dt>Inicio</dt>
+          <dd>15/10/2026</dd>
+        </div>
+        <div>
+          <dt>Cierre / pago final</dt>
+          <dd>30/10/2026</dd>
+        </div>
+      </dl>
+    </header>
+
+    <section class="block">
+      <h2>1. Objetivo</h2>
+      <p class="lead">
+        Unificar en un solo acuerdo dos entregables para Zuitch: dejar la app Android alineada con los pendientes
+        del cliente (y publicar la actualización que pide Play Store), y poner en marcha Zuitch AI en zuitch.com
+        con chat flotante, búsqueda inteligente, soporte documentado y correcciones del superadmin.
+      </p>
+      <div class="pill-row">
+        <span class="pill">4 correcciones Android</span>
+        <span class="pill">Play Store</span>
+        <span class="pill">Llamadas / videollamadas</span>
+        <span class="pill">Zuitch AI</span>
+        <span class="pill ok">15 días · 15–30 oct</span>
+        <span class="pill ok">Total USD 390</span>
+      </div>
+    </section>
+
+    <section class="block">
+      <h2>2. Alcance A — App Android (USD 90)</h2>
+      <p class="lead">
+        Solo pendientes de Android del
+        <a href="https://link.alfabusiness.app/webs/zuitch.com/documento_nuevo_correcciones/" target="_blank" rel="noopener">documento de correcciones</a>.
+        Los ítems de iOS (buscar personas, historial del WebView, autologin en <code>/welcome</code> y badges de iOS) quedan fuera de este acuerdo.
+      </p>
+
+      <ol class="num-list">
+        <li>
+          <strong>Cerrar imagen o video abierto en el chat</strong>
+          <p>Tras abrir un medio enviado en el chat, el usuario puede cerrar el visor con una X visible y con el botón Atrás del sistema, y vuelve al chat sin quedarse atrapado.</p>
+        </li>
+        <li>
+          <strong>Badges de no leídos en Chats y Llamadas</strong>
+          <p>Burbuja roja con conteo en Chats (mensajes no leídos) y en Llamadas (perdidas / no abiertas), con la misma lógica que en iOS.</p>
+        </li>
+        <li>
+          <strong>Login de Facebook con la misma app Meta que iOS</strong>
+          <p>App ID <code>1634903691711053</code>, actualizar <code>facebook_client_token</code> desde el dashboard de Meta, alinear scheme / AndroidManifest. El App Secret permanece solo en el servidor; nunca en el APK.</p>
+        </li>
+        <li>
+          <strong>Intro de Android igual a la de iOS</strong>
+          <p>Marca, layout y assets de arranque alineados con la intro de iOS para que el primer pantallazo sea el mismo en ambas plataformas.</p>
+        </li>
+      </ol>
+
+      <div class="callout">
+        <h3>Actualización para Play Store</h3>
+        <p>
+          Dentro de estas cuatro correcciones entra la <strong>versión nueva de la app</strong> lista para publicar en Play Store,
+          con los cambios anteriores incluidos. Es la actualización que solicitó la tienda.
+        </p>
+      </div>
+
+      <div class="callout warn">
+        <h3>Llamadas y videollamadas en Android</h3>
+        <p>
+          En el mismo paquete se <strong>revisa y corrige</strong> el flujo de llamadas y videollamadas en Android,
+          tomando como referencia que en web e iOS sí funciona. El entregable es dejar operativo el sistema de llamadas
+          que ya existe en la app. No incluye un producto de llamadas nuevo.
+        </p>
+      </div>
+
+      <h3>Criterios de aceptación (Android)</h3>
+      <ul class="clean">
+        <li>El visor de imagen/video del chat se cierra con X y con Atrás.</li>
+        <li>Badges con conteo visibles en Chats y Llamadas.</li>
+        <li>Facebook Login usa la misma app Meta que iOS (App ID indicado).</li>
+        <li>La intro de Android coincide visualmente con la de iOS.</li>
+        <li>Build / AAB listo para subir a Play Store con estas correcciones.</li>
+        <li>Llamadas y videollamadas reproducibles en Android con el flujo actual (misma referencia que web/iOS).</li>
+      </ul>
+    </section>
+
+    <section class="block">
+      <h2>3. Alcance B — Zuitch AI (USD 300)</h2>
+      <p class="lead">
+        Incorporar un asistente conversacional en zuitch.com que ayude a encontrar productos, páginas y grupos,
+        responda dudas de uso con documentación controlada, y permita al superadmin (Aldo) revisar conversaciones
+        y corregir respuestas sin reentrenar un modelo desde cero.
+      </p>
+
+      <div class="two-col">
+        <div class="feature-card">
+          <span class="tag">Usuario</span>
+          <h3>Asistente flotante</h3>
+          <p>Botón abajo a la derecha (sesión iniciada). Abre el chat, lista conversaciones, crea chat nuevo, borra uno o borra todo el historial.</p>
+        </div>
+        <div class="feature-card">
+          <span class="tag">Intención</span>
+          <h3>Clasifica antes de buscar</h3>
+          <p>Primero decide: producto, página, grupo, soporte o chat. Solo consulta lo preciso. Si es charla o duda sin catálogo, la IA responde sin tocar MySQL de mercado.</p>
+        </div>
+        <div class="feature-card">
+          <span class="tag">Catálogo</span>
+          <h3>Recomendaciones reales</h3>
+          <p>Como máximo 6 fichas (nombre, precio si aplica, una línea, enlace). No se mete el catálogo entero en el prompt.</p>
+        </div>
+        <div class="feature-card">
+          <span class="tag">Admin</span>
+          <h3>Panel Zuitch AI</h3>
+          <p>Prompts editables, documentación de soporte, seguimiento de chats, calificación de usuarios y OK / Corregir solo para el superadmin.</p>
+        </div>
+      </div>
+
+      <h3>Arquitectura</h3>
+      <p class="lead">
+        Modelo vía API de ChatGPT (compatible con <code>chat/completions</code>). Zuitch ya tiene <code>openai_token</code> en AI Settings.
+        La URL del cliente es configurable para apuntar después a un modelo propio sin reescribir el widget.
+      </p>
+      <div class="flow">
+        <span class="step">Usuario escribe</span>
+        <span class="arrow">→</span>
+        <span class="step">Prompt de intención</span>
+        <span class="arrow">→</span>
+        <span class="step">Consulta solo 1 fuente</span>
+        <span class="arrow">→</span>
+        <span class="step">Prompt de respuesta</span>
+        <span class="arrow">→</span>
+        <span class="step">Chat + fichas</span>
+      </div>
+
+      <ul class="clean">
+        <li><strong>producto / pagina / grupo</strong> — consulta solo esa tabla; máximo 6 fichas.</li>
+        <li><strong>soporte</strong> — documentación de funciones en admin-cp; máximo 3 trozos.</li>
+        <li><strong>chat</strong> — no consulta base ni docs; responde con el prompt.</li>
+      </ul>
+
+      <div class="benefit-grid">
+        <div class="benefit-item">
+          <strong>Presupuesto de tokens</strong>
+          <p>Sistema ~400 · últimos 6 mensajes ~1.200 · fichas (si hay) ~600 · pregunta. Si no hay coincidencias, las fichas no se envían.</p>
+        </div>
+        <div class="benefit-item">
+          <strong>Búsqueda sin matar CPU</strong>
+          <p>MySQL rankea; solo se envían hasta 6 fichas cortas. Presupuesto fijo por mensaje aunque el catálogo crezca.</p>
+        </div>
+      </div>
+
+      <h3>Calificación y corrección</h3>
+      <div class="two-col">
+        <div class="feature-card">
+          <span class="tag">Cualquier usuario</span>
+          <h3>Útil / No útil + comentario</h3>
+          <p>Se guarda y se lista en admin-cp. No se inyecta al modelo. Sirve para que Aldo decida qué corregir.</p>
+        </div>
+        <div class="feature-card">
+          <span class="tag">Solo superadmin</span>
+          <h3>OK / Corregir</h3>
+          <p>Marca la respuesta como ejemplo o escribe lo que debió decir. Eso sí entra en {correcciones} en preguntas parecidas.</p>
+        </div>
+      </div>
+
+      <h3>Roles</h3>
+      <div class="two-col">
+        <div class="feature-card">
+          <span class="tag">Desarrollo</span>
+          <h3>Integrar Zuitch AI</h3>
+          <p>Widget, búsqueda, prompts, admin-cp, seguimiento y circuito de corrección. Aplica la primera ronda de ajustes con las correcciones de Aldo.</p>
+        </div>
+        <div class="feature-card">
+          <span class="tag">Aldo · Superadmin</span>
+          <h3>Probar y corregir</h3>
+          <p>Usa el asistente, revisa chats en admin-cp y corrige con OK / “debió decir”. No desarrolla código.</p>
+        </div>
+      </div>
+
+      <h3>OpenAI y rondas de corrección</h3>
+      <p class="lead">
+        El consumo del modelo lo paga la cuenta de Zuitch. Al arrancar se recargan <strong>USD 10</strong> en OpenAI
+        (aparte de los USD 300 de este alcance). Cuando se agoten, la recarga es de Zuitch.
+      </p>
+      <table class="deliver">
+        <thead>
+          <tr>
+            <th>Concepto</th>
+            <th>Detalle</th>
+            <th>Precio</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Recarga inicial OpenAI</td>
+            <td>Cuenta ligada a Zuitch; uso optimizado de tokens</td>
+            <td>USD 10 (cuenta Zuitch)</td>
+          </tr>
+          <tr>
+            <td>Primera corrección</td>
+            <td>Aldo corrige 5 días tras el 1.er entregable; desarrollo aplica el primer ajuste. No es fine-tuning.</td>
+            <td>Incluida</td>
+          </tr>
+          <tr>
+            <td>Rondas siguientes</td>
+            <td>~20 mensajes de corrección ≈ 1 hora de trabajo</td>
+            <td>USD 18 / hora</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>Criterios de aceptación (Zuitch AI)</h3>
+      <ul class="clean">
+        <li>Chat flotante usable con historial, chat nuevo y borrado.</li>
+        <li>Clasificador distingue producto / página / grupo / soporte / chat.</li>
+        <li>Máximo 6 fichas de catálogo o 3 trozos de documentación cuando aplica.</li>
+        <li>Página Zuitch AI en admin-cp: prompts, docs, seguimiento, OK / Corregir.</li>
+        <li>Primera ronda de corrección aplicada tras los 5 días de prueba de Aldo.</li>
+      </ul>
+    </section>
+
+    <section class="block">
+      <h2>4. Precio y forma de pago</h2>
+      <table class="deliver">
+        <thead>
+          <tr>
+            <th>Bloque</th>
+            <th>Monto</th>
+            <th>Entrada (al aceptar)</th>
+            <th>Saldo (30/10/2026)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="entry">
+            <td>A — App Android (4 correcciones + Play Store + revisión de llamadas)</td>
+            <td>USD 90</td>
+            <td>USD 90 (100 %)</td>
+            <td>—</td>
+          </tr>
+          <tr class="entry">
+            <td>B — Zuitch AI</td>
+            <td>USD 300</td>
+            <td>USD 150 (50 %)</td>
+            <td>USD 150 (50 %)</td>
+          </tr>
+          <tr class="total">
+            <td>Total del trabajo</td>
+            <td>USD 390</td>
+            <td>USD 240</td>
+            <td>USD 150</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="price-box">
+        <div class="amount">
+          USD 390
+          <small>entrada USD 240 · saldo USD 150 al 30/10/2026</small>
+        </div>
+        <p class="note">
+          Los <strong>USD 10</strong> de recarga OpenAI y las rondas de corrección posteriores a USD 18/h
+          <strong>no</strong> forman parte de estos USD 390.
+        </p>
+      </div>
+    </section>
+
+    <section class="block">
+      <h2>5. Cronograma (15 días · 15–30 octubre 2026)</h2>
+      <ul class="timeline">
+        <li>
+          <strong>15 oct · Aceptación e inicio</strong>
+          <span>Pago de entrada: USD 240 (Android 90 + 50 % de IA). Arranque de ambos bloques en paralelo.</span>
+        </li>
+        <li>
+          <strong>15–22 oct · Desarrollo</strong>
+          <span>Android: las 4 correcciones, build para Play Store y diagnóstico/corrección de llamadas. IA: chat usable, búsqueda, admin-cp y seguimiento (~18 h de desarrollo del asistente).</span>
+        </li>
+        <li>
+          <strong>22 oct · Primer entregable IA</strong>
+          <span>Asistente operable para que Aldo pruebe y corrija desde el panel.</span>
+        </li>
+        <li>
+          <strong>23–27 oct · Aldo corrige (5 días)</strong>
+          <span>Prueba real, OK / Corregir en admin-cp. En paralelo se cierra el ciclo Android (validación en dispositivo y listo para Play Store).</span>
+        </li>
+        <li>
+          <strong>28–30 oct · Primera corrección IA incluida</strong>
+          <span>Desarrollo aplica el primer ajuste con lo que Aldo dejó en esos 5 días.</span>
+        </li>
+        <li>
+          <strong>30 oct · Cierre y pago final</strong>
+          <span>Entrega de ambos alcances. Saldo IA: USD 150. Rondas posteriores de IA: USD 18/h.</span>
+        </li>
+      </ul>
+    </section>
+
+    <section class="block">
+      <h2>6. Fuera de alcance (este ciclo)</h2>
+      <div class="out">
+        <ul>
+          <li>Pendientes de iOS del documento de correcciones (buscar personas, historial WebView, autologin /welcome, badges iOS)</li>
+          <li>Producto nuevo de llamadas / videollamadas; solo revisión y corrección del flujo Android existente</li>
+          <li>Fine-tuning o entrenamiento de un modelo propio en estos 15 días</li>
+          <li>Meter el catálogo o el manual enteros en el prompt</li>
+          <li>Que un comentario de usuario reescriba solo la respuesta (solo el superadmin)</li>
+          <li>Leer mensajes privados, pedidos o billetera; comprar o publicar en nombre del usuario</li>
+          <li>WhatsApp / app nativa del asistente</li>
+          <li>Buscar entre los posts del feed</li>
+          <li>Recargas de OpenAI después de los USD 10 iniciales</li>
+          <li>PDF/Office e índice FULLTEXT (fases posteriores)</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="block">
+      <h2>7. Aceptación</h2>
+      <p class="lead">
+        Al firmar, se acuerda el alcance de este documento (Android + Zuitch AI), el cronograma 15–30 oct 2026,
+        el pago de entrada de USD 240 y el saldo de USD 150 al cierre, la recarga inicial de USD 10 en OpenAI a cargo de Zuitch,
+        la primera corrección de IA incluida tras 5 días de trabajo de Aldo, y las rondas posteriores a USD 18/hora.
+      </p>
+      <div class="sign">
+        <div class="sign-box">
+          Por Zuitch / Aldo<br>
+          Nombre: _______________________<br>
+          Fecha: ________________________
+        </div>
+        <div class="sign-box">
+          Por desarrollo<br>
+          Nombre: _______________________<br>
+          Fecha: ________________________
+        </div>
+      </div>
+    </section>
+
+    <footer class="doc">
+      Zuitch · Propuesta Android + Zuitch AI · 15/10/2026 · Entrega 30/10/2026
+    </footer>
+  </div>
+</body>
+</html>

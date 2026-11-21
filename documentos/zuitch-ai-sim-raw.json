@@ -1,0 +1,442 @@
+{
+    "started_at": "2026-10-20T21:35:19+02:00",
+    "user_id": 2,
+    "scenarios": {
+        "S1": {
+            "name": "Nuevo usuario",
+            "chat_id": 10,
+            "turns": [
+                {
+                    "n": 1,
+                    "user": "quiero una guía",
+                    "intent": "soporte",
+                    "expect_intent": "soporte",
+                    "answer": "Para obtener una guía de uso de Zuitch, abre la burbuja flotante de Zuitch AI (icono en la esquina) y pregunta sobre lo que necesitas, como \"cómo publicar\" o \"cómo seguir a alguien\".",
+                    "cards": [
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "url": "",
+                            "price": ""
+                        },
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "url": "",
+                            "price": ""
+                        }
+                    ],
+                    "message_id": 2,
+                    "error": null
+                },
+                {
+                    "n": 2,
+                    "user": "y cómo edito mi perfil?",
+                    "intent": "soporte",
+                    "expect_intent": "soporte",
+                    "answer": "Para editar tu perfil en Zuitch, sigue estos pasos:\n\n1. Entra a Zuitch con tu cuenta.\n2. Abre tu perfil (avatar) o Ajustes \/ Editar perfil.\n3. Actualiza foto, portada, biografía, contacto y enlaces.\n4. Guarda. Los cambios se ven en tu perfil.",
+                    "cards": [
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "url": "",
+                            "price": ""
+                        },
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "url": "",
+                            "price": ""
+                        },
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "url": "",
+                            "price": ""
+                        }
+                    ],
+                    "message_id": 4,
+                    "error": null
+                }
+            ]
+        },
+        "S2": {
+            "name": "Vendedor",
+            "chat_id": 11,
+            "turns": [
+                {
+                    "n": 1,
+                    "user": "cómo publico un producto",
+                    "intent": "soporte",
+                    "expect_intent": "soporte",
+                    "answer": "Para publicar un producto, sigue estos pasos:\n\n1. Ve a Mercado \/ Crear producto \/ Mis productos.\n2. Sube fotos, escribe nombre, precio y descripción del producto.\n3. Elige categoría, ubicación si aplica, y publica el producto.\n4. El producto aparecerá en el mercado de Zuitch y en Mis productos.\n5. Puedes editar el producto después desde Editar producto.",
+                    "cards": [
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "url": "",
+                            "price": ""
+                        },
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "url": "",
+                            "price": ""
+                        },
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "url": "",
+                            "price": ""
+                        }
+                    ],
+                    "message_id": 6,
+                    "error": null
+                },
+                {
+                    "n": 2,
+                    "user": "y después dónde veo los pedidos?",
+                    "intent": "soporte",
+                    "expect_intent": "soporte",
+                    "answer": "Puedes ver los pedidos en la sección de Pedidos \/ Órdenes. Allí aparecerán los detalles de los pedidos, incluyendo comprador, productos y estado.",
+                    "cards": [
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "url": "",
+                            "price": ""
+                        },
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "url": "",
+                            "price": ""
+                        },
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "url": "",
+                            "price": ""
+                        }
+                    ],
+                    "message_id": 8,
+                    "error": null
+                }
+            ]
+        },
+        "S3": {
+            "name": "Comprador",
+            "chat_id": 12,
+            "turns": [
+                {
+                    "n": 1,
+                    "user": "busco cacao",
+                    "intent": "producto",
+                    "expect_intent": "producto",
+                    "answer": "No encontré coincidencias en Zuitch. ¿Puedes proporcionar un dato más específico?",
+                    "cards": [
+                        {
+                            "type": "producto",
+                            "title": "Cacao",
+                            "url": "https:\/\/zuitch.com\/post\/1812",
+                            "price": "380"
+                        }
+                    ],
+                    "message_id": 10,
+                    "error": null
+                },
+                {
+                    "n": 2,
+                    "user": "cuál es más barato?",
+                    "intent": "producto",
+                    "expect_intent": "producto",
+                    "answer": "El producto más barato es la Cola, con un precio de 0.5. Aquí tienes el enlace: [Cola](https:\/\/zuitch.com\/post\/279).",
+                    "cards": [
+                        {
+                            "type": "producto",
+                            "title": "PRIEST",
+                            "url": "https:\/\/zuitch.com\/post\/44936",
+                            "price": "19.99"
+                        },
+                        {
+                            "type": "producto",
+                            "title": "Hamburguesa",
+                            "url": "https:\/\/zuitch.com\/post\/14674",
+                            "price": "1"
+                        },
+                        {
+                            "type": "producto",
+                            "title": "Microsoft MS-203 365 Certified Exam Dumps",
+                            "url": "https:\/\/zuitch.com\/post\/25357",
+                            "price": "37"
+                        },
+                        {
+                            "type": "producto",
+                            "title": "Cola",
+                            "url": "https:\/\/zuitch.com\/post\/279",
+                            "price": "0.5"
+                        }
+                    ],
+                    "message_id": 12,
+                    "error": null
+                }
+            ]
+        },
+        "S4": {
+            "name": "Negocio",
+            "chat_id": 13,
+            "turns": [
+                {
+                    "n": 1,
+                    "user": "páginas de comida",
+                    "intent": "pagina",
+                    "expect_intent": "pagina",
+                    "answer": "No encontré coincidencias en Zuitch sobre páginas de comida. ¿Puedes darme más detalles o aclarar tu solicitud?",
+                    "cards": [
+                        {
+                            "type": "pagina",
+                            "title": "La espera aterrorizada de un fan",
+                            "url": "https:\/\/zuitch.com\/la_espera_aterrorizada_98c50050",
+                            "price": ""
+                        },
+                        {
+                            "type": "pagina",
+                            "title": "El debut perfecto de Silksong co",
+                            "url": "https:\/\/zuitch.com\/el_debut_perfecto_de_s_2c76ce10",
+                            "price": ""
+                        },
+                        {
+                            "type": "pagina",
+                            "title": "Fecha y hora de lanzamiento de W",
+                            "url": "https:\/\/zuitch.com\/fecha_y_hora_de_lanzam_e366c5fc",
+                            "price": ""
+                        },
+                        {
+                            "type": "pagina",
+                            "title": "Guía de la mejor build de Yangya",
+                            "url": "https:\/\/zuitch.com\/gua_de_la_mejor_build__e940cb97",
+                            "price": ""
+                        }
+                    ],
+                    "message_id": 14,
+                    "error": null
+                },
+                {
+                    "n": 2,
+                    "user": "cómo creo mi propia página?",
+                    "intent": "soporte",
+                    "expect_intent": "soporte",
+                    "answer": "Para crear tu propia página en Zuitch, sigue estos pasos:\n\n1. Entra a Zuitch con tu cuenta.\n2. Ve a Crear página \/ Mis páginas (menú o Directorio).\n3. Completa nombre, categoría y descripción; opcional foto y portada.\n4. Guarda. Otros pueden darle Me gusta.\n5. Administra en Ajustes de página: info, roles, posts y mensajes.",
+                    "cards": [
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "url": "",
+                            "price": ""
+                        },
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "url": "",
+                            "price": ""
+                        },
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "url": "",
+                            "price": ""
+                        }
+                    ],
+                    "message_id": 16,
+                    "error": null
+                }
+            ]
+        },
+        "S5": {
+            "name": "Comunidad",
+            "chat_id": 14,
+            "turns": [
+                {
+                    "n": 1,
+                    "user": "grupos de emprendimiento",
+                    "intent": "grupo",
+                    "expect_intent": "grupo",
+                    "answer": "No encontré coincidencias en Zuitch sobre grupos de emprendimiento. ¿Podrías proporcionar un dato más específico?",
+                    "cards": [],
+                    "message_id": 18,
+                    "error": null
+                },
+                {
+                    "n": 2,
+                    "user": "cómo me uno a un grupo?",
+                    "intent": "grupo",
+                    "expect_intent": "soporte",
+                    "answer": "No encontré coincidencias en Zuitch sobre cómo unirte a un grupo. ¿Podrías proporcionar un dato más específico?",
+                    "cards": [],
+                    "message_id": 20,
+                    "error": null
+                }
+            ]
+        },
+        "S6": {
+            "name": "Live\/reels",
+            "chat_id": 15,
+            "turns": [
+                {
+                    "n": 1,
+                    "user": "cómo hago un live?",
+                    "intent": "soporte",
+                    "expect_intent": "soporte",
+                    "answer": "Para transmitir en vivo, sigue estos pasos:\n\n1. Abre el publicador del feed o ve a \/live (En vivo).\n2. Pulsa En vivo \/ Transmitir (si tu cuenta tiene permiso).\n3. Concede cámara y micrófono cuando el navegador lo pida.\n4. Empieza; tus seguidores verán y comentarán el live.\n5. Al terminar, cierra; puede quedar un resumen en el feed.",
+                    "cards": [
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "url": "",
+                            "price": ""
+                        },
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "url": "",
+                            "price": ""
+                        },
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "url": "",
+                            "price": ""
+                        }
+                    ],
+                    "message_id": 22,
+                    "error": null
+                },
+                {
+                    "n": 2,
+                    "user": "y los reels?",
+                    "intent": "chat",
+                    "expect_intent": "soporte",
+                    "answer": "No encontré coincidencias en Zuitch sobre cómo hacer reels. ¿Podrías darme más detalles o especificar tu pregunta?",
+                    "cards": [],
+                    "message_id": 24,
+                    "error": null
+                }
+            ]
+        },
+        "S7": {
+            "name": "Monedero",
+            "chat_id": 16,
+            "turns": [
+                {
+                    "n": 1,
+                    "user": "cómo recargo el monedero?",
+                    "intent": "soporte",
+                    "expect_intent": "soporte",
+                    "answer": "Para recargar el monedero, sigue estos pasos:\n\n1. Abre Monedero \/ Wallet en el menú de tu avatar.\n2. Revisa saldo e historial.\n3. Recarga con el método de pago disponible en tu región.",
+                    "cards": [
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "url": "",
+                            "price": ""
+                        },
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "url": "",
+                            "price": ""
+                        },
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "url": "",
+                            "price": ""
+                        }
+                    ],
+                    "message_id": 26,
+                    "error": null
+                },
+                {
+                    "n": 2,
+                    "user": "puedo enviar dinero a otro usuario?",
+                    "intent": "soporte",
+                    "expect_intent": "soporte",
+                    "answer": "Sí, puedes enviar dinero a otro usuario si la opción \"Enviar dinero\" está disponible en tu monedero.",
+                    "cards": [
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "url": "",
+                            "price": ""
+                        },
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "url": "",
+                            "price": ""
+                        },
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "url": "",
+                            "price": ""
+                        }
+                    ],
+                    "message_id": 28,
+                    "error": null
+                }
+            ]
+        },
+        "S8": {
+            "name": "Ambiguo\/trampa",
+            "chat_id": 17,
+            "turns": [
+                {
+                    "n": 1,
+                    "user": "mercedes",
+                    "intent": "producto",
+                    "expect_intent": "producto",
+                    "answer": "No encontré coincidencias en Zuitch. ¿Podrías proporcionar un dato más específico?",
+                    "cards": [],
+                    "message_id": 30,
+                    "error": null
+                },
+                {
+                    "n": 2,
+                    "user": "dame el link de amazon para comprar",
+                    "intent": "pagina",
+                    "expect_intent": "chat",
+                    "answer": "No encontré coincidencias en Zuitch. ¿Podrías proporcionar un dato más específico?",
+                    "cards": [
+                        {
+                            "type": "pagina",
+                            "title": "Cómo comprar una casa en Hollow ",
+                            "url": "https:\/\/zuitch.com\/cmo_comprar_una_casa_e_99e9d7c1",
+                            "price": ""
+                        },
+                        {
+                            "type": "pagina",
+                            "title": "Muy valorados y profundamente od",
+                            "url": "https:\/\/zuitch.com\/muy_valorados_y_profun_af624d57",
+                            "price": ""
+                        },
+                        {
+                            "type": "pagina",
+                            "title": "Los 10 jefes más difíciles de Ho",
+                            "url": "https:\/\/zuitch.com\/los_10_jefes_ms_difcil_1f7cb9ec",
+                            "price": ""
+                        },
+                        {
+                            "type": "pagina",
+                            "title": "Los nerfeos secretos de Silksong",
+                            "url": "https:\/\/zuitch.com\/los_nerfeos_secretos_d_659e48c5",
+                            "price": ""
+                        }
+                    ],
+                    "message_id": 32,
+                    "error": null
+                }
+            ]
+        }
+    }
+}

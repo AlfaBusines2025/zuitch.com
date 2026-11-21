@@ -696,6 +696,7 @@ $wo['encryptedKeys'] = [
         'tiktok_client_secret',
         'WordPressAppkey',
         'openai_token',
+        'zuitch_ai_api_key',
         'replicate_token',
         'vision_api_key',
         'agora_app_certificate',

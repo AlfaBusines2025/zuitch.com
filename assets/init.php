@@ -29,6 +29,7 @@ require_once('includes/user_activity_audit.php');
 require_once('includes/functions_one.php');
 require_once('includes/functions_two.php');
 require_once('includes/functions_three.php');
+require_once('includes/zuitch_cta.php');
 if (file_exists(getcwd() . '/assets/vaneayoung/LiveStream/classes/class.LiveStream.php')) {
     require_once('vaneayoung/LiveStream/classes/class.LiveStream.php');
 }

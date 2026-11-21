@@ -9,7 +9,8 @@
  *   1) Parchamos `HTMLMediaElement.prototype.play` SINCRONAMENTE en <head>, antes de que
  *      Plyr o cualquier código pueda invocarlo. En cada play() reaplicamos
  *      `playsinline / webkit-playsinline / x5-playsinline` y, mientras el usuario no
- *      haya interactuado con la página teniendo videos presentes, forzamos `muted=true`.
+ *      haya interactuado con la página teniendo videos presentes, forzamos `muted=true`
+ *      (sin bajar `volume` a 0, para que al desmutear se oiga).
  *      iOS necesita o bien un gesto explícito o bien un video muted para reproducir
  *      inline; en cualquier otro caso lo manda a fullscreen.
  *   2) Bloqueamos el `play()` de los `<video>` que estén dentro de un reel oculto
@@ -17,7 +18,7 @@
  *      reel precargado dispara 4 plays simultáneos al cargar /reels/ y se montan como
  *      ventanas fullscreen apiladas.
  *   3) Desmuteamos automáticamente los videos forzados a muted cuando el usuario
- *      interactúa por primera vez (touchstart/click/etc.) en la página.
+ *      interactúa por primera vez (touchstart/click/etc.) y restauramos `volume=1`.
  *   4) Bloqueamos PiP a nivel de prototipo (`webkitSetPresentationMode`,
  *      `requestPictureInPicture`) y por CSS sobre los controles de Plyr/Video.js.
  *
@@ -128,6 +129,8 @@
                 try {
                     vids[i].muted = false;
                     vids[i].defaultMuted = false;
+                    try { vids[i].volume = 1; } catch (eVol) {}
+                    try { vids[i].removeAttribute('muted'); } catch (eAttr) {}
                     vids[i].removeAttribute('data-zuitch-tempmute');
                     stats.autoUnmutes++;
                 } catch (e) {}
@@ -203,12 +206,14 @@
                         /* (c) Forzar muted=true mientras el usuario no haya
                               interactuado con la página (con videos presentes).
                               iOS exige o bien gesto activo o bien muted para
-                              reproducir inline; sin nada de eso, fullscreen. */
+                              reproducir inline; sin nada de eso, fullscreen.
+                              No bajamos volume a 0: al desmutear debe oírse. */
                         try {
-                            if (!sessionUserUnmuted && !this.muted) {
+                            if (!sessionUserUnmuted
+                                && !this.muted
+                                && this.getAttribute('data-zuitch-user-unmuted') !== '1') {
                                 this.muted = true;
                                 this.defaultMuted = true;
-                                try { this.volume = 0; } catch (eV) {}
                                 try { this.setAttribute('muted', ''); } catch (eA) {}
                                 this.setAttribute('data-zuitch-tempmute', '1');
                                 stats.forcedMutes++;

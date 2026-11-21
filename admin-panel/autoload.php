@@ -125,6 +125,7 @@ $pages = array(
     'system_status',
     'daas',
     'dev-docs',
+    'zuitch-ai',
     "upload-to-storage",
     "ai-settings",
     "manage-content-monetization",
@@ -782,6 +783,11 @@ if (!empty($_COOKIE['mode']) && $_COOKIE['mode'] == 'night') {
                             <?php if (($is_admin || ($is_moderoter && $wo['user']['permission']['ai-settings'] == 1)) && $wo['user']['id'] == 1) { ?>
                             <li>
                                 <a <?php echo ($page == 'ai-settings') ? 'class="active"' : ''; ?> href="<?php echo Wo_LoadAdminLinkSettings('ai-settings'); ?>" data-ajax="?path=ai-settings">AI Settings</a>
+                            </li>
+                            <?php } ?>
+                            <?php if ($wo['user']['id'] == 1) { ?>
+                            <li>
+                                <a <?php echo ($page == 'zuitch-ai') ? 'class="active"' : ''; ?> href="<?php echo Wo_LoadAdminLinkSettings('zuitch-ai'); ?>" data-ajax="?path=zuitch-ai">Zuitch AI</a>
                             </li>
                             <?php } ?>
 

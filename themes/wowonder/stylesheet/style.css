@@ -348,10 +348,12 @@ textarea.postText{border:none;padding-top:12px;padding-left:50px;height:45px;box
     height: 22px;
     margin: -1px 0;
 }
-.navbar-default .sixteen-font-size .fa.wow_hdr_nav_fa {
+.navbar-default .sixteen-font-size .fa.wow_hdr_nav_fa,
+.navbar-default .sixteen-font-size svg.wow_hdr_nav_fa {
 	font-size: 18px;
 	line-height: 1;
 	width: 22px;
+	height: 22px;
 	text-align: center;
 	display: inline-block;
 	vertical-align: middle;
@@ -426,7 +428,8 @@ textarea.postText{border:none;padding-top:12px;padding-left:50px;height:45px;box
 		display: flex !important;
 		align-items: center;
 	}
-	#head_menu_rght .wow_hdr_market_link .fa.wow_hdr_nav_fa {
+	#head_menu_rght .wow_hdr_market_link .fa.wow_hdr_nav_fa,
+	#head_menu_rght .wow_hdr_market_link svg.wow_hdr_nav_fa {
 		font-size: 24px;
 		width: 24px;
 		line-height: 24px;

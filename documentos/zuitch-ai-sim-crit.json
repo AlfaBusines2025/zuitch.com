@@ -1,0 +1,889 @@
+{
+    "at": "2026-10-20T22:49:10+02:00",
+    "scenarios": {
+        "D01": {
+            "name": "typo comida",
+            "chat_id": 88,
+            "turns": [
+                {
+                    "user": "nesecito komida barata",
+                    "intent": "producto",
+                    "answer": "No encontré coincidencias en Zuitch. ¿Podrías darme más detalles sobre lo que buscas?",
+                    "cards": [],
+                    "message_id": 307,
+                    "error": null
+                },
+                {
+                    "user": "la hamburguesa esta?",
+                    "intent": "producto",
+                    "answer": "Encontré estos productos en Zuitch:\n• Hamburguesa — precio 1 — https:\/\/zuitch.com\/post\/14674\n¿Te sirve alguno o quieres buscar con otra palabra?",
+                    "cards": [
+                        {
+                            "type": "producto",
+                            "title": "Hamburguesa",
+                            "price": "1",
+                            "url": "https:\/\/zuitch.com\/post\/14674",
+                            "snippet": "Hamburguesa completa - prueba"
+                        }
+                    ],
+                    "message_id": 309,
+                    "error": null
+                }
+            ]
+        },
+        "D02": {
+            "name": "typo whisky",
+            "chat_id": 89,
+            "turns": [
+                {
+                    "user": "tienes wisky?",
+                    "intent": "producto",
+                    "answer": "No encontré coincidencias en Zuitch. ¿Podrías proporcionar un dato más específico?",
+                    "cards": [],
+                    "message_id": 311,
+                    "error": null
+                },
+                {
+                    "user": "cuanto cuesta?",
+                    "intent": "producto",
+                    "answer": "No encontré coincidencias en Zuitch. ¿Podrías proporcionar un dato más específico?",
+                    "cards": [],
+                    "message_id": 313,
+                    "error": null
+                }
+            ]
+        },
+        "D03": {
+            "name": "perfume",
+            "chat_id": 90,
+            "turns": [
+                {
+                    "user": "busco perfume",
+                    "intent": "producto",
+                    "answer": "Encontré estos productos en Zuitch:\n• Perfume — precio 10 — https:\/\/zuitch.com\/post\/52422\n¿Te sirve alguno o quieres buscar con otra palabra?",
+                    "cards": [
+                        {
+                            "type": "producto",
+                            "title": "Perfume",
+                            "price": "10",
+                            "url": "https:\/\/zuitch.com\/post\/52422",
+                            "snippet": "Perfume duradero  4"
+                        }
+                    ],
+                    "message_id": 315,
+                    "error": null
+                },
+                {
+                    "user": "hay mas barato?",
+                    "intent": "producto",
+                    "answer": "Encontré estos productos en Zuitch:\n• Perfume — precio 10 — https:\/\/zuitch.com\/post\/52422\n¿Te sirve alguno o quieres buscar con otra palabra?",
+                    "cards": [
+                        {
+                            "type": "producto",
+                            "title": "Perfume",
+                            "price": "10",
+                            "url": "https:\/\/zuitch.com\/post\/52422",
+                            "snippet": "Perfume duradero  4"
+                        }
+                    ],
+                    "message_id": 317,
+                    "error": null
+                }
+            ]
+        },
+        "D04": {
+            "name": "casa",
+            "chat_id": 91,
+            "turns": [
+                {
+                    "user": "venden casas?",
+                    "intent": "producto",
+                    "answer": "Nota: \"casas\" se tomó como \"casa\"\n\nEncontré estos productos en Zuitch:\n• Casa Grande — precio 500000 — https:\/\/zuitch.com\/post\/87\n¿Te sirve alguno o quieres buscar con otra palabra?",
+                    "cards": [
+                        {
+                            "type": "producto",
+                            "title": "Casa Grande",
+                            "price": "500000",
+                            "url": "https:\/\/zuitch.com\/post\/87",
+                            "snippet": "Casa Grade con Jardin, Piscina y domotizada"
+                        }
+                    ],
+                    "message_id": 319,
+                    "error": null
+                },
+                {
+                    "user": "cuanto pide la casa grande?",
+                    "intent": "producto",
+                    "answer": "Encontré estos productos en Zuitch:\n• Casa Grande — precio 500000 — https:\/\/zuitch.com\/post\/87\n¿Te sirve alguno o quieres buscar con otra palabra?",
+                    "cards": [
+                        {
+                            "type": "producto",
+                            "title": "Casa Grande",
+                            "price": "500000",
+                            "url": "https:\/\/zuitch.com\/post\/87",
+                            "snippet": "Casa Grade con Jardin, Piscina y domotizada"
+                        }
+                    ],
+                    "message_id": 321,
+                    "error": null
+                }
+            ]
+        },
+        "D05": {
+            "name": "funding",
+            "chat_id": 92,
+            "turns": [
+                {
+                    "user": "cómo creo una recaudación",
+                    "intent": "soporte",
+                    "answer": "Para crear una recaudación, sigue estos pasos:\n\n1. Abre Funding \/ Recaudación en el menú o el Directorio.\n2. Selecciona \"Crear funding\".\n3. Establece una meta y un monto objetivo.\n4. Agrega imágenes relevantes.\n5. Publica y comparte el enlace en tu feed o mensajes.\n\n¡Listo! Ahora puedes seguir el avance en Mis funding \/ Mis campañas.",
+                    "cards": [
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": "",
+                            "snippet": "# Cómo usar funding o recaudación\n1. Abre Funding \/ Recaudación en el menú o el "
+                        }
+                    ],
+                    "message_id": 323,
+                    "error": null
+                },
+                {
+                    "user": "puedo apoyar una campaña?",
+                    "intent": "soporte",
+                    "answer": "Sí, puedes apoyar una campaña. Solo sigue estos pasos:\n\n1. Abre Funding \/ Recaudación en el menú o el Directorio.\n2. Explora las campañas disponibles.\n3. Apoya con el monto que desees.\n\n¡Así de fácil!",
+                    "cards": [
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": "",
+                            "snippet": "# Cómo usar funding o recaudación\n1. Abre Funding \/ Recaudación en el menú o el "
+                        }
+                    ],
+                    "message_id": 325,
+                    "error": null
+                }
+            ]
+        },
+        "D06": {
+            "name": "anuncios",
+            "chat_id": 93,
+            "turns": [
+                {
+                    "user": "cómo creo un anuncio pagado",
+                    "intent": "soporte",
+                    "answer": "Para crear un anuncio pagado en Zuitch, sigue estos pasos:\n\n1. Ve a Anuncios \/ Publicidad (Advertise).\n2. Crea el anuncio: incluye título, texto, destino y presupuesto si aplica.\n3. Elige la audiencia o duración en el formulario.\n4. Publica el anuncio y revisa su rendimiento en el panel o gráficos.\n5. Puedes editar o pausar el anuncio desde Mis anuncios.",
+                    "cards": [
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": "",
+                            "snippet": "# Cómo crear anuncios\n1. Ve a Anuncios \/ Publicidad (Advertise).\n2. Crea anuncio"
+                        }
+                    ],
+                    "message_id": 327,
+                    "error": null
+                },
+                {
+                    "user": "dónde veo el rendimiento?",
+                    "intent": "soporte",
+                    "answer": "Puedes ver el rendimiento de tus anuncios en el panel o gráficos dentro de la sección de Anuncios \/ Publicidad (Advertise) en Zuitch.",
+                    "cards": [
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": "",
+                            "snippet": "# Cómo crear anuncios\n1. Ve a Anuncios \/ Publicidad (Advertise).\n2. Crea anuncio"
+                        }
+                    ],
+                    "message_id": 329,
+                    "error": null
+                }
+            ]
+        },
+        "D07": {
+            "name": "blogs",
+            "chat_id": 94,
+            "turns": [
+                {
+                    "user": "cómo publico un blog",
+                    "intent": "soporte",
+                    "answer": "No encontré coincidencias en Zuitch sobre cómo publicar un blog. ¿Podrías darme más detalles o especificar qué necesitas?",
+                    "cards": [
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": "",
+                            "snippet": "# Cómo publicar en el feed\n1. Ve a Inicio \/ Noticias (feed).\n2. En la caja escri"
+                        },
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": "",
+                            "snippet": "# Cómo publicar un producto\n1. Para publicar un producto ve a Mercado \/ Crear pr"
+                        },
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": "",
+                            "snippet": "# Cómo buscar empleo o publicar una vacante\n1. Abre Empleos \/ Jobs en el menú o "
+                        }
+                    ],
+                    "message_id": 331,
+                    "error": null
+                },
+                {
+                    "user": "puedo usar IA para el blog?",
+                    "intent": "soporte",
+                    "answer": "Sí, puedes usar la opción \"Crear blog con IA\" si aparece al momento de crear tu blog.",
+                    "cards": [
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": "",
+                            "snippet": "# Cómo usar blogs\n1. Abre Blogs en el menú o el Directorio.\n2. Lee artículos por"
+                        },
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": "",
+                            "snippet": "# Cómo usar historias\n1. En el feed, arriba, está la barra de Historias \/ Status"
+                        },
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": "",
+                            "snippet": "# Cómo encontrar amigos y usar el directorio\n1. Usa Buscar en el header: persona"
+                        }
+                    ],
+                    "message_id": 333,
+                    "error": null
+                }
+            ]
+        },
+        "D08": {
+            "name": "álbum",
+            "chat_id": 95,
+            "turns": [
+                {
+                    "user": "cómo creo un álbum de fotos",
+                    "intent": "soporte",
+                    "answer": "Para crear un álbum de fotos, sigue estos pasos:\n\n1. Ve a Álbumes \/ Crear álbum en el menú o tu perfil.\n2. Pon un nombre y sube varias fotos.\n3. Guarda; el álbum quedará en tu perfil y en Mis álbumes.\n4. Puedes añadir fotos o editar la portada después.\n5. Comparte el álbum o fotos en el feed si quieres más alcance.",
+                    "cards": [
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": "",
+                            "snippet": "# Cómo crear álbumes de fotos\n1. Ve a Álbumes \/ Crear álbum en el menú o tu perf"
+                        },
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": "",
+                            "snippet": "# Cómo publicar en el feed\n1. Ve a Inicio \/ Noticias (feed).\n2. En la caja escri"
+                        },
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": "",
+                            "snippet": "# Cómo publicar un producto\n1. Para publicar un producto ve a Mercado \/ Crear pr"
+                        }
+                    ],
+                    "message_id": 335,
+                    "error": null
+                },
+                {
+                    "user": "dónde lo veo?",
+                    "intent": "soporte",
+                    "answer": "Puedes ver tus álbumes de fotos en tu perfil, en la sección de Álbumes o en Mis álbumes. Ahí encontrarás todos los álbumes que has creado.",
+                    "cards": [
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": "",
+                            "snippet": "# Cómo crear o unirse a un grupo\n1. Busca grupos en Explorar, Mis grupos o el Di"
+                        },
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": "",
+                            "snippet": "# Cómo usar blogs\n1. Abre Blogs en el menú o el Directorio.\n2. Lee artículos por"
+                        },
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": "",
+                            "snippet": "# Cómo usar el asistente Zuitch AI\n1. Abre la burbuja flotante de Zuitch AI (ico"
+                        }
+                    ],
+                    "message_id": 337,
+                    "error": null
+                }
+            ]
+        },
+        "D09": {
+            "name": "ofertas",
+            "chat_id": 96,
+            "turns": [
+                {
+                    "user": "qué son las ofertas en Zuitch",
+                    "intent": "chat",
+                    "answer": "No encontré coincidencias en Zuitch sobre \"ofertas\". ¿Podrías proporcionar un dato más específico?",
+                    "cards": [],
+                    "message_id": 339,
+                    "error": null
+                },
+                {
+                    "user": "cómo creo una oferta?",
+                    "intent": "soporte",
+                    "answer": "Para crear una oferta en Zuitch, sigue estos pasos:\n\n1. Abre Ofertas en el menú o el Directorio.\n2. Crea la oferta con un título, descuento, vigencia y condiciones.\n3. Comparte la oferta en el feed para atraer clientes.\n4. Ten en cuenta que las ofertas caducan según la fecha al crearlas.",
+                    "cards": [
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": "",
+                            "snippet": "# Cómo usar ofertas y promociones\n1. Abre Ofertas en el menú o el Directorio.\n2."
+                        },
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": "",
+                            "snippet": "# Cómo buscar empleo o publicar una vacante\n1. Abre Empleos \/ Jobs en el menú o "
+                        }
+                    ],
+                    "message_id": 341,
+                    "error": null
+                }
+            ]
+        },
+        "D10": {
+            "name": "nearby",
+            "chat_id": 97,
+            "turns": [
+                {
+                    "user": "cómo encuentro amigos cerca",
+                    "intent": "soporte",
+                    "answer": "Para encontrar amigos cerca, sigue estos pasos:\n\n1. Usa la opción \"Amigos cercanos\" o \"Encontrar amigos\".\n2. Si se te solicita, permite que acceda a tu ubicación.\n3. Explora las sugerencias de personas cercanas.\n\n¡Así podrás descubrir gente nueva en tu área!",
+                    "cards": [
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": "",
+                            "snippet": "# Cómo encontrar amigos y usar el directorio\n1. Usa Buscar en el header: persona"
+                        },
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": "",
+                            "snippet": "# Cómo cambiar la contraseña y la privacidad\n1. Abre Ajustes \/ Configuración de "
+                        },
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": "",
+                            "snippet": "# Cómo publicar en el feed\n1. Ve a Inicio \/ Noticias (feed).\n2. En la caja escri"
+                        }
+                    ],
+                    "message_id": 343,
+                    "error": null
+                },
+                {
+                    "user": "qué es el directorio?",
+                    "intent": "soporte",
+                    "answer": "El Directorio es una sección en Zuitch donde puedes encontrar diferentes categorías, como blogs, eventos y ofertas. Te permite explorar contenido y descubrir nuevas publicaciones, actividades y promociones de manera organizada.",
+                    "cards": [
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": "",
+                            "snippet": "# Cómo usar blogs\n1. Abre Blogs en el menú o el Directorio.\n2. Lee artículos por"
+                        },
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": "",
+                            "snippet": "# Cómo crear y unirse a eventos\n1. Abre Eventos en el menú o el Directorio.\n2. E"
+                        },
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": "",
+                            "snippet": "# Cómo usar ofertas y promociones\n1. Abre Ofertas en el menú o el Directorio.\n2."
+                        }
+                    ],
+                    "message_id": 345,
+                    "error": null
+                }
+            ]
+        },
+        "D11": {
+            "name": "monetización",
+            "chat_id": 98,
+            "turns": [
+                {
+                    "user": "cómo activo monetización",
+                    "intent": "soporte",
+                    "answer": "Para activar la monetización, sigue estos pasos:\n\n1. Si eres creador, abre Ajustes → Monetización.\n2. Activa el precio de suscripción y describe el contenido de pago.\n3. Los fans se suscriben desde tu perfil o la página de monetización.\n4. Revisa suscriptores y pagos en Suscripciones \/ Monetización.\n5. Publica contenido exclusivo solo según las reglas de Zuitch.",
+                    "cards": [
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": "",
+                            "snippet": "# Cómo usar monetización y suscripciones\n1. Si eres creador, abre Ajustes → Mone"
+                        },
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": "",
+                            "snippet": "# Cómo enviar mensajes y llamar\n1. Abre Mensajes desde el header o el menú.\n2. E"
+                        }
+                    ],
+                    "message_id": 347,
+                    "error": null
+                },
+                {
+                    "user": "qué son las suscripciones?",
+                    "intent": "soporte",
+                    "answer": "Las suscripciones son una forma de monetización en Zuitch donde los fans pueden pagar para acceder a contenido exclusivo de un creador. Los creadores establecen un precio y describen el contenido que ofrecerán a sus suscriptores.",
+                    "cards": [
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": "",
+                            "snippet": "# Cómo usar monetización y suscripciones\n1. Si eres creador, abre Ajustes → Mone"
+                        },
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": "",
+                            "snippet": "# Cómo encontrar amigos y usar el directorio\n1. Usa Buscar en el header: persona"
+                        }
+                    ],
+                    "message_id": 349,
+                    "error": null
+                }
+            ]
+        },
+        "D12": {
+            "name": "multi-ask",
+            "chat_id": 99,
+            "turns": [
+                {
+                    "user": "busco cacao y también un celular",
+                    "intent": "producto",
+                    "answer": "Encontré estos productos en Zuitch:\n• Celular Honor 365 — precio 120 — https:\/\/zuitch.com\/post\/14755\n• Cacao — precio 380 — https:\/\/zuitch.com\/post\/1812\n• Celular Infinix Note — precio 135 — https:\/\/zuitch.com\/post\/14756\n¿Te sirve alguno o quieres buscar con otra palabra?",
+                    "cards": [
+                        {
+                            "type": "producto",
+                            "title": "Celular Honor 365",
+                            "price": "120",
+                            "url": "https:\/\/zuitch.com\/post\/14755",
+                            "snippet": "Celular Honor 365"
+                        },
+                        {
+                            "type": "producto",
+                            "title": "Cacao",
+                            "price": "380",
+                            "url": "https:\/\/zuitch.com\/post\/1812",
+                            "snippet": "Cacao fino de aroma"
+                        },
+                        {
+                            "type": "producto",
+                            "title": "Celular Infinix Note",
+                            "price": "135",
+                            "url": "https:\/\/zuitch.com\/post\/14756",
+                            "snippet": "elular Infinix ultimo modelo"
+                        }
+                    ],
+                    "message_id": 351,
+                    "error": null
+                },
+                {
+                    "user": "cuál me recomendas primero?",
+                    "intent": "chat",
+                    "answer": "Te recomiendo el \"Celular Honor 365\" por su buen precio y características. Puedes verlo aquí: https:\/\/zuitch.com\/post\/14755. ¿Te gustaría más información sobre este celular?",
+                    "cards": [],
+                    "message_id": 353,
+                    "error": null
+                }
+            ]
+        },
+        "D13": {
+            "name": "vacío raro",
+            "chat_id": 100,
+            "turns": [
+                {
+                    "user": "asdfgh",
+                    "intent": "chat",
+                    "answer": "No encontré coincidencias en Zuitch. ¿Podrías darme un dato más específico?",
+                    "cards": [],
+                    "message_id": 355,
+                    "error": null
+                },
+                {
+                    "user": "???",
+                    "intent": "chat",
+                    "answer": "No encontré coincidencias en Zuitch. ¿Podrías darme un dato más específico?",
+                    "cards": [],
+                    "message_id": 357,
+                    "error": null
+                }
+            ]
+        },
+        "D14": {
+            "name": "inglés",
+            "chat_id": 101,
+            "turns": [
+                {
+                    "user": "how do I create a page",
+                    "intent": "soporte",
+                    "answer": "No encontré coincidencias en Zuitch sobre cómo crear una página. ¿Podrías darme un dato más específico o aclarar tu pregunta?",
+                    "cards": [
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": "",
+                            "snippet": "# Qué es Zuitch guía de la plataforma\nZuitch es una red social y mercado en líne"
+                        },
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": "",
+                            "snippet": "# Cómo transmitir en vivo\n1. Abre el publicador del feed o ve a \/live (En vivo)."
+                        },
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": "",
+                            "snippet": "# Cómo publicar un producto\n1. Para publicar un producto ve a Mercado \/ Crear pr"
+                        }
+                    ],
+                    "message_id": 359,
+                    "error": null
+                },
+                {
+                    "user": "I want food products",
+                    "intent": "producto",
+                    "answer": "No encontré coincidencias en Zuitch sobre productos alimenticios. ¿Podrías darme un dato más específico o aclarar tu solicitud?",
+                    "cards": [],
+                    "message_id": 361,
+                    "error": null
+                }
+            ]
+        },
+        "D15": {
+            "name": "privacidad",
+            "chat_id": 102,
+            "turns": [
+                {
+                    "user": "cómo oculto mi perfil",
+                    "intent": "soporte",
+                    "answer": "Para cambiar la privacidad de tu perfil en Zuitch, sigue estos pasos:\n\n1. Abre Ajustes \/ Configuración de cuenta.\n2. En la sección de privacidad, ajusta quién puede ver tu perfil, publicaciones, amigos o quién te escribe.\n3. Guarda los cambios.\n\nAsí podrás ocultar tu perfil según tus preferencias.",
+                    "cards": [
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": "",
+                            "snippet": "# Cómo editar el perfil\n1. Entra a Zuitch con tu cuenta.\n2. Abre tu perfil (avat"
+                        },
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": "",
+                            "snippet": "# Qué es Zuitch guía de la plataforma\nZuitch es una red social y mercado en líne"
+                        },
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": "",
+                            "snippet": "# Cómo cambiar la contraseña y la privacidad\n1. Abre Ajustes \/ Configuración de "
+                        }
+                    ],
+                    "message_id": 363,
+                    "error": null
+                },
+                {
+                    "user": "quién puede enviarme mensajes?",
+                    "intent": "soporte",
+                    "answer": "En Zuitch, puedes ajustar quién puede enviarte mensajes desde la configuración de privacidad. Generalmente, puedes permitir que:\n\n1. Todos los usuarios te envíen mensajes.\n2. Solo tus amigos o contactos.\n3. Nadie.\n\nRevisa tus ajustes de privacidad para personalizar esta opción.",
+                    "cards": [
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": "",
+                            "snippet": "# Cómo enviar mensajes y llamar\n1. Abre Mensajes desde el header o el menú.\n2. E"
+                        },
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": "",
+                            "snippet": "# Cómo crear una página\n1. Entra a Zuitch con tu cuenta.\n2. Ve a Crear página \/ "
+                        },
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": "",
+                            "snippet": "# Qué es Zuitch guía de la plataforma\nZuitch es una red social y mercado en líne"
+                        }
+                    ],
+                    "message_id": 365,
+                    "error": null
+                }
+            ]
+        },
+        "D16": {
+            "name": "watch",
+            "chat_id": 103,
+            "turns": [
+                {
+                    "user": "qué es Watch en Zuitch",
+                    "intent": "soporte",
+                    "answer": "Watch en Zuitch es una sección donde puedes ver más vídeos. Se accede desde el menú y permite interactuar con los contenidos a través de likes, comentarios y comparticiones.",
+                    "cards": [
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": "",
+                            "snippet": "# Cómo usar Reels y Watch\n1. Abre Reels en el menú o header para vídeos cortos v"
+                        }
+                    ],
+                    "message_id": 367,
+                    "error": null
+                },
+                {
+                    "user": "cómo subo un vídeo largo?",
+                    "intent": "soporte",
+                    "answer": "No encontré coincidencias en Zuitch sobre cómo subir un vídeo largo. ¿Podrías darme más detalles o especificar lo que necesitas?",
+                    "cards": [
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": "",
+                            "snippet": "# Cómo usar Reels y Watch\n1. Abre Reels en el menú o header para vídeos cortos v"
+                        },
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": "",
+                            "snippet": "# Cómo publicar en el feed\n1. Ve a Inicio \/ Noticias (feed).\n2. En la caja escri"
+                        },
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": "",
+                            "snippet": "# Cómo usar historias\n1. En el feed, arriba, está la barra de Historias \/ Status"
+                        }
+                    ],
+                    "message_id": 369,
+                    "error": null
+                }
+            ]
+        },
+        "D17": {
+            "name": "checkout DHL",
+            "chat_id": 104,
+            "turns": [
+                {
+                    "user": "cómo funciona el envío DHL",
+                    "intent": "soporte",
+                    "answer": "No tengo información específica sobre el envío DHL. Te recomiendo que revises las opciones de envío disponibles durante el proceso de compra en Zuitch. ¿Te gustaría saber cómo comprar en el mercado?",
+                    "cards": [
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": "",
+                            "snippet": "# Cómo comprar en el mercado\n1. Abre Mercado \/ Productos (menú o carrito del hea"
+                        }
+                    ],
+                    "message_id": 371,
+                    "error": null
+                },
+                {
+                    "user": "dónde pongo mi dirección?",
+                    "intent": "soporte",
+                    "answer": "Debes completar tu dirección durante el proceso de Checkout \/ Pagar, después de añadir los productos al carrito. Si necesitas más ayuda, házmelo saber.",
+                    "cards": [
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": "",
+                            "snippet": "# Cómo comprar en el mercado\n1. Abre Mercado \/ Productos (menú o carrito del hea"
+                        }
+                    ],
+                    "message_id": 373,
+                    "error": null
+                }
+            ]
+        },
+        "D18": {
+            "name": "insulto\/borde",
+            "chat_id": 105,
+            "turns": [
+                {
+                    "user": "eres inútil",
+                    "intent": "chat",
+                    "answer": "Lamento que te sientas así. Estoy aquí para ayudarte. ¿En qué puedo asistirte?",
+                    "cards": [],
+                    "message_id": 375,
+                    "error": null
+                },
+                {
+                    "user": "ok entonces busco cola",
+                    "intent": "producto",
+                    "answer": "Encontré estos productos en Zuitch:\n• Cola — precio 0.5 — https:\/\/zuitch.com\/post\/279\n¿Te sirve alguno o quieres buscar con otra palabra?",
+                    "cards": [
+                        {
+                            "type": "producto",
+                            "title": "Cola",
+                            "price": "0.5",
+                            "url": "https:\/\/zuitch.com\/post\/279",
+                            "snippet": "Colas de todos los sabores"
+                        }
+                    ],
+                    "message_id": 377,
+                    "error": null
+                }
+            ]
+        },
+        "D19": {
+            "name": "competencia",
+            "chat_id": 106,
+            "turns": [
+                {
+                    "user": "mejor compro en facebook marketplace",
+                    "intent": "chat",
+                    "answer": "Solo puedo ayudarte con el mercado de Zuitch. Si necesitas información sobre productos o servicios en Zuitch, házmelo saber.",
+                    "cards": [],
+                    "message_id": 379,
+                    "error": null
+                },
+                {
+                    "user": "ok entonces whisky en zuitch",
+                    "intent": "producto",
+                    "answer": "Encontré estos productos en Zuitch:\n• Whisky Swing — precio 50 — https:\/\/zuitch.com\/post\/42909\n¿Te sirve alguno o quieres buscar con otra palabra?",
+                    "cards": [
+                        {
+                            "type": "producto",
+                            "title": "Whisky Swing",
+                            "price": "50",
+                            "url": "https:\/\/zuitch.com\/post\/42909",
+                            "snippet": "Whisky Swing"
+                        }
+                    ],
+                    "message_id": 381,
+                    "error": null
+                }
+            ]
+        },
+        "D20": {
+            "name": "seguimiento largo",
+            "chat_id": 107,
+            "turns": [
+                {
+                    "user": "hola",
+                    "intent": "chat",
+                    "answer": "¡Hola! ¿En qué puedo ayudarte hoy?",
+                    "cards": [],
+                    "message_id": 383,
+                    "error": null
+                },
+                {
+                    "user": "busco lámpara",
+                    "intent": "producto",
+                    "answer": "Encontré estos productos en Zuitch:\n• Lámpara — precio 1 — https:\/\/zuitch.com\/post\/14667\n• Lámpara blue tooth — precio 12 — https:\/\/zuitch.com\/post\/14250\n• Lámpara blue tooth — precio 12 — https:\/\/zuitch.com\/post\/14242\n• Lampra blue tooth — precio 12 — https:\/\/zuitch.com\/post\/14243\n¿Te sirve alguno o quieres buscar con otra palabra?",
+                    "cards": [
+                        {
+                            "type": "producto",
+                            "title": "Lámpara",
+                            "price": "1",
+                            "url": "https:\/\/zuitch.com\/post\/14667",
+                            "snippet": "Lámparas luz blanca"
+                        },
+                        {
+                            "type": "producto",
+                            "title": "Lámpara blue tooth",
+                            "price": "12",
+                            "url": "https:\/\/zuitch.com\/post\/14250",
+                            "snippet": "Lámpara luz blanca con blue tooth"
+                        },
+                        {
+                            "type": "producto",
+                            "title": "Lámpara blue tooth",
+                            "price": "12",
+                            "url": "https:\/\/zuitch.com\/post\/14242",
+                            "snippet": "Lámpara luz blanca con blue  tooth"
+                        },
+                        {
+                            "type": "producto",
+                            "title": "Lampra blue tooth",
+                            "price": "12",
+                            "url": "https:\/\/zuitch.com\/post\/14243",
+                            "snippet": "Lámpara con blue tooth"
+                        }
+                    ],
+                    "message_id": 385,
+                    "error": null
+                },
+                {
+                    "user": "la bluetooth",
+                    "intent": "producto",
+                    "answer": "Encontré estos productos relacionados con \"lámpara bluetooth\" en Zuitch:\n• Lámpara blue tooth — precio 12 — https:\/\/zuitch.com\/post\/14250\n• Lámpara blue tooth — precio 12 — https:\/\/zuitch.com\/post\/14242\n• Lampra blue tooth — precio 12 — https:\/\/zuitch.com\/post\/14243\n\n¿Te interesa alguno de estos?",
+                    "cards": [],
+                    "message_id": 387,
+                    "error": null
+                },
+                {
+                    "user": "y cómo la compro?",
+                    "intent": "soporte",
+                    "answer": "Para comprar en Zuitch, sigue estos pasos:\n\n1. Selecciona el producto que deseas.\n2. Haz clic en el botón de compra.\n3. Completa la información requerida para el pago y envío.\n4. Confirma tu pedido.\n\nSi necesitas más ayuda, házmelo saber.",
+                    "cards": [],
+                    "message_id": 389,
+                    "error": null
+                }
+            ]
+        }
+    }
+}

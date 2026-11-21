@@ -1,0 +1,217 @@
+{
+    "at": "2026-10-20T21:40:15+02:00",
+    "pass": "5\/6",
+    "results": {
+        "S1": {
+            "pass": true,
+            "turns": [
+                {
+                    "intent": "soporte",
+                    "answer": "Para empezar en Zuitch: 1) Crea cuenta o inicia sesión. 2) Completa tu perfil (foto y biografía). 3) Explora el feed, el Mercado y el Directorio. 4) Si necesitas ayuda, abre el asistente Zuitch AI. Puedes pedir productos, páginas, grupos o cómo usar cada función.",
+                    "cards": [
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "url": "",
+                            "price": ""
+                        },
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "url": "",
+                            "price": ""
+                        }
+                    ],
+                    "message_id": 34
+                },
+                {
+                    "intent": "soporte",
+                    "answer": "Para editar tu perfil en Zuitch: 1) Entra a Zuitch con tu cuenta. 2) Abre tu perfil (avatar) o Ajustes \/ Editar perfil. 3) Actualiza foto, portada, biografía, contacto y enlaces. 4) Guarda. Los cambios se verán en tu perfil.",
+                    "cards": [
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "url": "",
+                            "price": ""
+                        },
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "url": "",
+                            "price": ""
+                        },
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "url": "",
+                            "price": ""
+                        }
+                    ],
+                    "message_id": 36
+                }
+            ]
+        },
+        "S3": {
+            "pass": false,
+            "turns": [
+                {
+                    "intent": "producto",
+                    "answer": "Encontré esto en el mercado de Zuitch: Cacao (precio 380). Enlace: https:\/\/zuitch.com\/post\/1812. ¿Buscas otro tipo de cacao o un precio distinto?",
+                    "cards": [
+                        {
+                            "type": "producto",
+                            "title": "Cacao",
+                            "url": "https:\/\/zuitch.com\/post\/1812",
+                            "price": "380"
+                        }
+                    ],
+                    "message_id": 38
+                },
+                {
+                    "intent": "chat",
+                    "answer": "Sobre cacao en Zuitch, el resultado disponible es Cacao a 380: https:\/\/zuitch.com\/post\/1812. No hay otro cacao más barato en los resultados actuales. ¿Quieres que busque otra palabra o categoría?",
+                    "cards": [],
+                    "message_id": 40
+                }
+            ]
+        },
+        "S4": {
+            "pass": true,
+            "turns": [
+                {
+                    "intent": "pagina",
+                    "answer": "No encontré coincidencias en Zuitch sobre páginas de comida. ¿Podrías darme un dato más específico?",
+                    "cards": [],
+                    "message_id": 42
+                },
+                {
+                    "intent": "soporte",
+                    "answer": "Para crear tu propia página en Zuitch:  \n1. Entra a Zuitch con tu cuenta.  \n2. Ve a Crear página \/ Mis páginas (menú o Directorio).  \n3. Completa nombre, categoría y descripción; opcional foto y portada.  \n4. Guarda. Otros pueden darle Me gusta.  \n5. Administra en Ajustes de página: info, roles, posts y mensajes.",
+                    "cards": [
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "url": "",
+                            "price": ""
+                        },
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "url": "",
+                            "price": ""
+                        },
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "url": "",
+                            "price": ""
+                        }
+                    ],
+                    "message_id": 44
+                }
+            ]
+        },
+        "S5": {
+            "pass": true,
+            "turns": [
+                {
+                    "intent": "grupo",
+                    "answer": "Para unirte a un grupo en Zuitch: 1) Busca grupos en Explorar, Mis grupos o el Directorio. 2) Abre el grupo y pulsa Unirse (libre o con aprobación). 3) Dentro puedes publicar y conversar con los miembros.",
+                    "cards": [],
+                    "message_id": 46
+                },
+                {
+                    "intent": "soporte",
+                    "answer": "Para unirte a un grupo en Zuitch: 1) Busca grupos en Explorar, Mis grupos o el Directorio. 2) Abre el grupo y pulsa Unirse (libre o con aprobación). 3) Dentro puedes publicar y conversar con los miembros.",
+                    "cards": [
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "url": "",
+                            "price": ""
+                        },
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "url": "",
+                            "price": ""
+                        },
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "url": "",
+                            "price": ""
+                        }
+                    ],
+                    "message_id": 48
+                }
+            ]
+        },
+        "S6": {
+            "pass": true,
+            "turns": [
+                {
+                    "intent": "soporte",
+                    "answer": "Para transmitir en vivo en Zuitch: 1) Abre el publicador del feed o ve a \/live (En vivo). 2) Pulsa En vivo \/ Transmitir (si tu cuenta tiene permiso). 3) Concede cámara y micrófono cuando el navegador lo pida. 4) Empieza; tus seguidores ven y comentan el live. 5) Al terminar, cierra; puede quedar un resumen en el feed.",
+                    "cards": [
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "url": "",
+                            "price": ""
+                        },
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "url": "",
+                            "price": ""
+                        },
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "url": "",
+                            "price": ""
+                        }
+                    ],
+                    "message_id": 50
+                },
+                {
+                    "intent": "soporte",
+                    "answer": "Para Reels en Zuitch: 1) Abre Reels en el menú o header. 2) Para subir, usa el publicador o editor de Reels, elige el vídeo y publica. 3) Puedes dar like, comentar y compartir.",
+                    "cards": [
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "url": "",
+                            "price": ""
+                        },
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "url": "",
+                            "price": ""
+                        }
+                    ],
+                    "message_id": 52
+                }
+            ]
+        },
+        "S8": {
+            "pass": true,
+            "turns": [
+                {
+                    "intent": "producto",
+                    "answer": "Solo puedo ayudarte con el mercado y contenidos de Zuitch.com. No puedo dar links de Amazon ni de otras tiendas externas. Si quieres comprar aquí, dime qué producto buscas en Zuitch.",
+                    "cards": [],
+                    "message_id": 54
+                },
+                {
+                    "intent": "chat",
+                    "answer": "Solo puedo ayudarte con el mercado y contenidos de Zuitch.com. No puedo dar links de Amazon ni de otras tiendas externas. Si quieres comprar aquí, dime qué producto buscas en Zuitch.",
+                    "cards": [],
+                    "message_id": 56
+                }
+            ]
+        }
+    }
+}

@@ -144,19 +144,62 @@ $redirect_used = ($url_redirect === $default_redirect) ? 'defecto' : 'parametro'
 
 // ================== LOGIN + COOKIE + REDIRECT ==================
 
-if (!empty(Wo_GetUserFromSessionID($_GET['access_token']))) {
+if (!empty($_GET['access_token']) && !empty(Wo_GetUserFromSessionID($_GET['access_token']))) {
     $cookie = Wo_Secure($_GET['access_token']);
     $_SESSION['user_id'] = $cookie;
 
-    // 20 años
-    setcookie("user_id", $cookie, time() + (20 * 365 * 24 * 60 * 60));
+    $dest = zuitch_normalize_app_redirect($url_redirect, $lang);
 
-    // Añadimos lang NOMBRE COMPLETO a la URL de redirección
-    if (!empty($lang)) {
-        $separator = (parse_url($url_redirect, PHP_URL_QUERY) ? '&' : '?');
-        $url_redirect .= $separator . 'lang=' . urlencode($lang);
-    }
+    // WKWebView en iOS ignora Set-Cookie cuando viaja en un 302.
+    // Una respuesta 200 sí guarda la cookie; el HTML abre el sitio después.
+    // Path=/ hace falta: sin path el navegador la limita a /api y la web no entra.
+    setcookie('user_id', $cookie, array(
+        'expires'  => time() + (20 * 365 * 24 * 60 * 60),
+        'path'     => '/',
+        'secure'   => true,
+        'httponly' => false,
+        'samesite' => 'None',
+    ));
 
-    header("Location: " . $url_redirect);
+    header_remove('Content-Type');
+    header('Content-Type: text/html; charset=UTF-8');
+    http_response_code(200);
+
+    $safe = htmlspecialchars($dest, ENT_QUOTES, 'UTF-8');
+    $js   = json_encode($dest);
+    echo '<!DOCTYPE html><html><head><meta charset="utf-8">';
+    echo '<meta http-equiv="refresh" content="0;url=' . $safe . '">';
+    echo '<title>Zuitch</title></head><body>';
+    echo '<script>location.replace(' . $js . ');</script>';
+    echo '</body></html>';
     exit();
+}
+
+function zuitch_normalize_app_redirect($url, $lang)
+{
+    $parts = parse_url($url);
+    if ($parts === false || empty($parts['scheme']) || empty($parts['host'])) {
+        $parts = parse_url('https://zuitch.com/');
+    }
+    $path = isset($parts['path']) ? $parts['path'] : '';
+    // La app de iOS vuelve a pedir set-browser-cookie si el destino es la raíz.
+    if ($path === '' || $path === '/') {
+        $path = '/home';
+    }
+    $query = array();
+    if (!empty($parts['query'])) {
+        parse_str($parts['query'], $query);
+    }
+    if (!empty($lang)) {
+        $query['lang'] = $lang;
+    }
+    $rebuilt = $parts['scheme'] . '://' . $parts['host'];
+    if (!empty($parts['port'])) {
+        $rebuilt .= ':' . $parts['port'];
+    }
+    $rebuilt .= $path;
+    if (!empty($query)) {
+        $rebuilt .= '?' . http_build_query($query);
+    }
+    return $rebuilt;
 }

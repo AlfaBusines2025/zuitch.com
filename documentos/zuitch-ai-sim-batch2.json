@@ -1,0 +1,957 @@
+{
+    "at": "2026-10-20T21:48:58+02:00",
+    "scenarios": {
+        "C01": {
+            "name": "Nuevo",
+            "chat_id": 33,
+            "turns": [
+                {
+                    "user": "quiero una guía de Zuitch",
+                    "intent": "soporte",
+                    "answer": "Zuitch es una red social y mercado en línea. Aquí tienes una guía rápida para empezar:\n\n1. **Crea cuenta o inicia sesión.**\n2. **Completa tu perfil.**\n3. **Explora el feed, el Mercado y el Directorio.**\n4. **Si necesitas ayuda, abre el asistente Zuitch AI (burbuja flotante).**\n\nEn Zuitch puedes pedir recomendaciones de productos, páginas o grupos, o preguntar cómo usar cada función.",
+                    "cards": [
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        },
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        },
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        }
+                    ],
+                    "message_id": 104,
+                    "error": null
+                },
+                {
+                    "user": "y cómo cambio la contraseña?",
+                    "intent": "soporte",
+                    "answer": "Para cambiar la contraseña, sigue estos pasos:\n\n1. Abre Ajustes \/ Configuración de cuenta.\n2. En la sección de Contraseña, escribe la actual, la nueva, confírmala y guarda.\n3. Revisa la configuración de privacidad si lo deseas.\n\n¡Listo! Tu contraseña estará actualizada.",
+                    "cards": [
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        },
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        },
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        }
+                    ],
+                    "message_id": 106,
+                    "error": null
+                }
+            ]
+        },
+        "C02": {
+            "name": "Perfil",
+            "chat_id": 34,
+            "turns": [
+                {
+                    "user": "cómo edito mi foto de perfil?",
+                    "intent": "soporte",
+                    "answer": "Para editar tu foto de perfil en Zuitch, sigue estos pasos:\n\n1. Entra a Zuitch con tu cuenta.\n2. Abre tu perfil (avatar) o ve a Ajustes \/ Editar perfil.\n3. Actualiza tu foto.\n4. Guarda los cambios. \n\nTu nueva foto se verá en tu perfil.",
+                    "cards": [
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        },
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        },
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        }
+                    ],
+                    "message_id": 108,
+                    "error": null
+                },
+                {
+                    "user": "y la portada?",
+                    "intent": "soporte",
+                    "answer": "Para editar tu portada en Zuitch, sigue estos pasos:\n\n1. Entra a Zuitch con tu cuenta.\n2. Abre tu perfil (avatar) o ve a Ajustes \/ Editar perfil.\n3. Actualiza la portada.\n4. Guarda los cambios.\n\nLa nueva portada se mostrará en tu perfil.",
+                    "cards": [
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        },
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        },
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        }
+                    ],
+                    "message_id": 110,
+                    "error": null
+                }
+            ]
+        },
+        "C03": {
+            "name": "Vender",
+            "chat_id": 35,
+            "turns": [
+                {
+                    "user": "cómo publico un producto",
+                    "intent": "soporte",
+                    "answer": "Para publicar un producto en Zuitch, sigue estos pasos:\n\n1. Ve a Mercado \/ Crear producto \/ Mis productos.\n2. Sube fotos, escribe el nombre, precio y descripción del producto.\n3. Elige la categoría y ubicación si aplica, y publica el producto.\n4. El producto aparecerá en el mercado de Zuitch y en Mis productos.\n5. Puedes editar el producto después desde Editar producto.",
+                    "cards": [
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        },
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        },
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        }
+                    ],
+                    "message_id": 112,
+                    "error": null
+                },
+                {
+                    "user": "qué fotos debo subir?",
+                    "intent": "soporte",
+                    "answer": "Debes subir fotos claras y de buena calidad del producto que deseas publicar. Asegúrate de incluir:\n\n1. Una imagen principal que muestre el producto de frente.\n2. Fotos adicionales que muestren diferentes ángulos o detalles importantes.\n3. Imágenes que muestren el uso del producto, si es relevante.\n\nEsto ayudará a que los compradores tengan una mejor idea de lo que ofreces.",
+                    "cards": [
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        },
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        },
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        }
+                    ],
+                    "message_id": 114,
+                    "error": null
+                }
+            ]
+        },
+        "C04": {
+            "name": "Pedidos",
+            "chat_id": 36,
+            "turns": [
+                {
+                    "user": "dónde veo mis pedidos de venta?",
+                    "intent": "soporte",
+                    "answer": "Puedes ver tus pedidos de venta en la sección \"Pedidos \/ Órdenes\" de tu cuenta. Ahí podrás ver el detalle de cada pedido, incluyendo comprador, productos y estado.",
+                    "cards": [
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        },
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        },
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        }
+                    ],
+                    "message_id": 116,
+                    "error": null
+                },
+                {
+                    "user": "puedo cambiar el estado?",
+                    "intent": "soporte",
+                    "answer": "Sí, puedes cambiar el estado del pedido. Debes actualizarlo a \"preparando\", \"enviado\" o \"completado\" según corresponda.",
+                    "cards": [
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        },
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        }
+                    ],
+                    "message_id": 118,
+                    "error": null
+                }
+            ]
+        },
+        "C05": {
+            "name": "Comprar",
+            "chat_id": 37,
+            "turns": [
+                {
+                    "user": "cómo compro en el mercado?",
+                    "intent": "soporte",
+                    "answer": "Para comprar en el mercado de Zuitch, sigue estos pasos:\n\n1. Abre Mercado \/ Productos (menú o carrito del header).\n2. Busca por nombre o categoría y abre el producto.\n3. Añádelo al carrito y ve a Checkout \/ Pagar.\n4. Completa dirección y envío (puede haber opciones como DHL).\n5. Confirma. Revisa compras en Comprados \/ Pedidos del cliente.",
+                    "cards": [
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        },
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        },
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        }
+                    ],
+                    "message_id": 120,
+                    "error": null
+                },
+                {
+                    "user": "dónde veo mis compras?",
+                    "intent": "soporte",
+                    "answer": "Puedes ver tus compras en la sección \"Comprados\" o \"Pedidos del cliente\" dentro de tu cuenta en Zuitch.",
+                    "cards": [
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        }
+                    ],
+                    "message_id": 122,
+                    "error": null
+                }
+            ]
+        },
+        "C06": {
+            "name": "Comida",
+            "chat_id": 38,
+            "turns": [
+                {
+                    "user": "quiero algo para comer",
+                    "intent": "producto",
+                    "answer": "En el mercado de Zuitch encontré productos para comer:\n\n- Sopa de pata (precio 1): [Rica sopa de pata](https:\/\/zuitch.com\/post\/26266)\n- Hamburguesa (precio 1): [Hamburguesa completa - prueba](https:\/\/zuitch.com\/post\/14674)\n- Cacao (precio 380): [Cacao fino de aroma](https:\/\/zuitch.com\/post\/1812)\n- Choclo y pincho (precio 2.5): [Combo pincho](https:\/\/zuitch.com\/post\/14675)\n\n¿Buscas algo más concreto (hamburguesa, sopa, etc.)?",
+                    "cards": [
+                        {
+                            "type": "producto",
+                            "title": "Sopa de pata",
+                            "price": "1",
+                            "url": "https:\/\/zuitch.com\/post\/26266"
+                        },
+                        {
+                            "type": "producto",
+                            "title": "Hamburguesa",
+                            "price": "1",
+                            "url": "https:\/\/zuitch.com\/post\/14674"
+                        },
+                        {
+                            "type": "producto",
+                            "title": "Cacao",
+                            "price": "380",
+                            "url": "https:\/\/zuitch.com\/post\/1812"
+                        },
+                        {
+                            "type": "producto",
+                            "title": "Choclo y pincho",
+                            "price": "2.5",
+                            "url": "https:\/\/zuitch.com\/post\/14675"
+                        }
+                    ],
+                    "message_id": 124,
+                    "error": null
+                },
+                {
+                    "user": "tienes hamburguesa?",
+                    "intent": "producto",
+                    "answer": "Sí, tengo una hamburguesa disponible:\n\n- **Hamburguesa completa - prueba**: precio 1. Puedes verla [aquí](https:\/\/zuitch.com\/post\/14674).\n\n¿Te gustaría saber más o necesitas algo diferente?",
+                    "cards": [
+                        {
+                            "type": "producto",
+                            "title": "Hamburguesa",
+                            "price": "1",
+                            "url": "https:\/\/zuitch.com\/post\/14674"
+                        }
+                    ],
+                    "message_id": 126,
+                    "error": null
+                }
+            ]
+        },
+        "C07": {
+            "name": "Bebida",
+            "chat_id": 39,
+            "turns": [
+                {
+                    "user": "busco algo para tomar",
+                    "intent": "producto",
+                    "answer": "No encontré coincidencias en Zuitch. ¿Podrías darme un dato más específico sobre lo que buscas?",
+                    "cards": [],
+                    "message_id": 128,
+                    "error": null
+                },
+                {
+                    "user": "whisky",
+                    "intent": "producto",
+                    "answer": "Sí. En Zuitch está este whisky:\n\n- Whisky Swing (precio 50): [Whisky Swing](https:\/\/zuitch.com\/post\/42909)\n\n¿Te sirve o buscas otra bebida?",
+                    "cards": [
+                        {
+                            "type": "producto",
+                            "title": "Whisky Swing",
+                            "price": "50",
+                            "url": "https:\/\/zuitch.com\/post\/42909"
+                        }
+                    ],
+                    "message_id": 130,
+                    "error": null
+                }
+            ]
+        },
+        "C08": {
+            "name": "Cacao",
+            "chat_id": 40,
+            "turns": [
+                {
+                    "user": "busco cacao",
+                    "intent": "producto",
+                    "answer": "Encontré esto en el mercado de Zuitch: Cacao (precio 380). Enlace: https:\/\/zuitch.com\/post\/1812. ¿Buscas otro tipo de cacao o un precio distinto?",
+                    "cards": [
+                        {
+                            "type": "producto",
+                            "title": "Cacao",
+                            "price": "380",
+                            "url": "https:\/\/zuitch.com\/post\/1812"
+                        }
+                    ],
+                    "message_id": 132,
+                    "error": null
+                },
+                {
+                    "user": "cuál es el precio?",
+                    "intent": "producto",
+                    "answer": "El precio del cacao es 380. ¿Necesitas más información o algún otro producto?",
+                    "cards": [],
+                    "message_id": 134,
+                    "error": null
+                }
+            ]
+        },
+        "C09": {
+            "name": "Celular",
+            "chat_id": 41,
+            "turns": [
+                {
+                    "user": "busco celular",
+                    "intent": "producto",
+                    "answer": "He encontrado dos opciones de celulares en Zuitch:\n\n1. **Celular Honor 365**\n   - Precio: 120\n   - [Ver más](https:\/\/zuitch.com\/post\/14755)\n\n2. **Celular Infinix Note**\n   - Precio: 135\n   - [Ver más](https:\/\/zuitch.com\/post\/14756)\n\n¿Te gustaría más información sobre alguno de estos?",
+                    "cards": [
+                        {
+                            "type": "producto",
+                            "title": "Celular Honor 365",
+                            "price": "120",
+                            "url": "https:\/\/zuitch.com\/post\/14755"
+                        },
+                        {
+                            "type": "producto",
+                            "title": "Celular Infinix Note",
+                            "price": "135",
+                            "url": "https:\/\/zuitch.com\/post\/14756"
+                        }
+                    ],
+                    "message_id": 136,
+                    "error": null
+                },
+                {
+                    "user": "hay honor?",
+                    "intent": "chat",
+                    "answer": "He encontrado una opción de celular Honor en Zuitch:\n\n- **Celular Honor 365**\n  - Precio: 120\n  - [Ver más](https:\/\/zuitch.com\/post\/14755)\n\n¿Te gustaría más información sobre este producto?",
+                    "cards": [],
+                    "message_id": 138,
+                    "error": null
+                }
+            ]
+        },
+        "C10": {
+            "name": "Página",
+            "chat_id": 42,
+            "turns": [
+                {
+                    "user": "páginas de comida",
+                    "intent": "producto",
+                    "answer": "No encontré coincidencias específicas sobre páginas de comida en Zuitch. ¿Podrías darme más detalles sobre lo que buscas?",
+                    "cards": [
+                        {
+                            "type": "producto",
+                            "title": "Sopa de pata",
+                            "price": "1",
+                            "url": "https:\/\/zuitch.com\/post\/26266"
+                        },
+                        {
+                            "type": "producto",
+                            "title": "Hamburguesa",
+                            "price": "1",
+                            "url": "https:\/\/zuitch.com\/post\/14674"
+                        },
+                        {
+                            "type": "producto",
+                            "title": "Cacao",
+                            "price": "380",
+                            "url": "https:\/\/zuitch.com\/post\/1812"
+                        },
+                        {
+                            "type": "producto",
+                            "title": "Choclo y pincho",
+                            "price": "2.5",
+                            "url": "https:\/\/zuitch.com\/post\/14675"
+                        }
+                    ],
+                    "message_id": 140,
+                    "error": null
+                },
+                {
+                    "user": "cómo creo una página?",
+                    "intent": "soporte",
+                    "answer": "Para crear una página en Zuitch, sigue estos pasos:\n\n1. Entra a Zuitch con tu cuenta.\n2. Ve a Crear página \/ Mis páginas (menú o Directorio).\n3. Completa nombre, categoría y descripción; opcional foto y portada.\n4. Guarda. Otros pueden darle Me gusta.\n5. Administra en Ajustes de página: info, roles, posts y mensajes.",
+                    "cards": [
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        },
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        },
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        }
+                    ],
+                    "message_id": 142,
+                    "error": null
+                }
+            ]
+        },
+        "C11": {
+            "name": "Grupo",
+            "chat_id": 43,
+            "turns": [
+                {
+                    "user": "grupos de emprendimiento",
+                    "intent": "grupo",
+                    "answer": "No encontré coincidencias en Zuitch sobre grupos de emprendimiento. ¿Podrías darme un dato más específico?",
+                    "cards": [],
+                    "message_id": 144,
+                    "error": null
+                },
+                {
+                    "user": "cómo me uno a un grupo?",
+                    "intent": "soporte",
+                    "answer": "Para unirte a un grupo en Zuitch: 1) Busca grupos en Explorar, Mis grupos o el Directorio. 2) Abre el grupo y pulsa Unirse (libre o con aprobación). 3) Dentro puedes publicar y conversar con los miembros.",
+                    "cards": [
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        },
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        },
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        }
+                    ],
+                    "message_id": 146,
+                    "error": null
+                }
+            ]
+        },
+        "C12": {
+            "name": "Live",
+            "chat_id": 44,
+            "turns": [
+                {
+                    "user": "cómo hago un live",
+                    "intent": "soporte",
+                    "answer": "Para transmitir en vivo en Zuitch, sigue estos pasos:\n\n1. Abre el publicador del feed o ve a \/live (En vivo).\n2. Pulsa En vivo \/ Transmitir (si tu cuenta tiene permiso).\n3. Concede cámara y micrófono cuando el navegador lo pida.\n4. Empieza; tus seguidores verán y comentarán el live.\n5. Al terminar, cierra; puede quedar un resumen en el feed.",
+                    "cards": [
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        },
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        },
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        }
+                    ],
+                    "message_id": 148,
+                    "error": null
+                },
+                {
+                    "user": "necesito cámara?",
+                    "intent": "producto",
+                    "answer": "Sí, necesitas una cámara para realizar un live en Zuitch. También se requiere un micrófono para que los espectadores puedan escucharte.",
+                    "cards": [],
+                    "message_id": 150,
+                    "error": null
+                }
+            ]
+        },
+        "C13": {
+            "name": "Reels",
+            "chat_id": 45,
+            "turns": [
+                {
+                    "user": "cómo subo un reel",
+                    "intent": "soporte",
+                    "answer": "Para subir un Reel, sigue estos pasos:\n\n1. Abre Reels en el menú o header para vídeos cortos verticales.\n2. Usa el publicador o editor de Reels; elige el vídeo y texto que deseas incluir.\n3. Publica tu Reel.\n\n¡Listo! Tu Reel estará disponible para los demás.",
+                    "cards": [
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        },
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        },
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        }
+                    ],
+                    "message_id": 152,
+                    "error": null
+                },
+                {
+                    "user": "y las historias?",
+                    "intent": "soporte",
+                    "answer": "Para usar historias, sigue estos pasos:\n\n1. En el feed, arriba, está la barra de Historias \/ Status.\n2. Toca tu círculo o \"Crear historia \/ Crear status\".\n3. Sube una foto o vídeo corto (que durará unas 24 horas).\n4. Para ver otras historias, toca su círculo en la barra.\n\nRecuerda que las historias caducan solas y no quedan fijas como un post.",
+                    "cards": [
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        }
+                    ],
+                    "message_id": 154,
+                    "error": null
+                }
+            ]
+        },
+        "C14": {
+            "name": "Mensajes",
+            "chat_id": 46,
+            "turns": [
+                {
+                    "user": "cómo envío un mensaje",
+                    "intent": "soporte",
+                    "answer": "Para enviar un mensaje, sigue estos pasos:\n\n1. Abre Mensajes desde el header o el menú.\n2. Elige un contacto o busca usuario\/página y escribe tu mensaje.\n3. También puedes usar el mini-chat flotante.\n4. En la conversación, puedes hacer una llamada de audio o vídeo si está activo.\n5. Acepta el acceso al micrófono\/cámara para las llamadas.",
+                    "cards": [
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        },
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        },
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        }
+                    ],
+                    "message_id": 156,
+                    "error": null
+                },
+                {
+                    "user": "puedo hacer videollamada?",
+                    "intent": "soporte",
+                    "answer": "Sí, puedes hacer videollamadas si la función está activa. Solo necesitas abrir una conversación y seleccionar la opción de videollamada. Asegúrate de aceptar el acceso a la cámara y micrófono.",
+                    "cards": [],
+                    "message_id": 158,
+                    "error": null
+                }
+            ]
+        },
+        "C15": {
+            "name": "Monedero",
+            "chat_id": 47,
+            "turns": [
+                {
+                    "user": "cómo recargo el monedero",
+                    "intent": "soporte",
+                    "answer": "Para recargar el monedero, sigue estos pasos:\n\n1. Abre Monedero \/ Wallet en el menú de tu avatar.\n2. Revisa tu saldo e historial.\n3. Recarga utilizando el método de pago disponible en tu región. \n\nSi necesitas más ayuda, házmelo saber.",
+                    "cards": [
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        },
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        },
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        }
+                    ],
+                    "message_id": 160,
+                    "error": null
+                },
+                {
+                    "user": "puedo enviar dinero?",
+                    "intent": "soporte",
+                    "answer": "Sí, puedes enviar dinero a otro usuario si la opción \"Enviar dinero\" está disponible en tu monedero. Si necesitas más información sobre cómo hacerlo, házmelo saber.",
+                    "cards": [
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        },
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        }
+                    ],
+                    "message_id": 162,
+                    "error": null
+                }
+            ]
+        },
+        "C16": {
+            "name": "Eventos",
+            "chat_id": 48,
+            "turns": [
+                {
+                    "user": "cómo creo un evento",
+                    "intent": "soporte",
+                    "answer": "Para crear un evento, sigue estos pasos:\n\n1. Abre \"Eventos\" en el menú o el Directorio.\n2. Haz clic en \"Crear evento\".\n3. Ingresa el nombre, fecha, lugar o enlace, y una descripción.\n4. Guarda los cambios.\n5. Comparte en el feed o invita amigos.\n\n¡Listo! Tu evento estará creado.",
+                    "cards": [
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        },
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        },
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        }
+                    ],
+                    "message_id": 164,
+                    "error": null
+                },
+                {
+                    "user": "dónde veo eventos?",
+                    "intent": "soporte",
+                    "answer": "Puedes ver eventos abriendo \"Eventos\" en el menú o en el Directorio. Allí podrás explorar los eventos disponibles y marcar si asistirás o si estás interesado.",
+                    "cards": [
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        },
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        }
+                    ],
+                    "message_id": 166,
+                    "error": null
+                }
+            ]
+        },
+        "C17": {
+            "name": "Empleos",
+            "chat_id": 49,
+            "turns": [
+                {
+                    "user": "cómo busco empleo en Zuitch",
+                    "intent": "soporte",
+                    "answer": "No encontré información específica sobre cómo buscar empleo en Zuitch. ¿Podrías darme más detalles o especificar qué tipo de empleo buscas?",
+                    "cards": [
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        },
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        },
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        }
+                    ],
+                    "message_id": 168,
+                    "error": null
+                },
+                {
+                    "user": "puedo publicar una vacante?",
+                    "intent": "soporte",
+                    "answer": "No encontré información específica sobre cómo publicar una vacante en Zuitch. ¿Te gustaría que te ayude con algo más relacionado?",
+                    "cards": [
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        },
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        },
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        }
+                    ],
+                    "message_id": 170,
+                    "error": null
+                }
+            ]
+        },
+        "C18": {
+            "name": "Ambiguo",
+            "chat_id": 50,
+            "turns": [
+                {
+                    "user": "mercedes",
+                    "intent": "producto",
+                    "answer": "No encontré coincidencias en Zuitch. ¿Podrías proporcionar un dato más específico?",
+                    "cards": [],
+                    "message_id": 172,
+                    "error": null
+                },
+                {
+                    "user": "es un auto?",
+                    "intent": "chat",
+                    "answer": "No encontré coincidencias en Zuitch. ¿Podrías proporcionar un dato más específico sobre lo que buscas relacionado con \"Mercedes\"?",
+                    "cards": [],
+                    "message_id": 174,
+                    "error": null
+                }
+            ]
+        },
+        "C19": {
+            "name": "Trampa",
+            "chat_id": 51,
+            "turns": [
+                {
+                    "user": "pásame el link de amazon",
+                    "intent": "chat",
+                    "answer": "Solo puedo ayudar con el mercado de Zuitch. No puedo proporcionar enlaces externos. Si necesitas algo específico de Zuitch, házmelo saber.",
+                    "cards": [],
+                    "message_id": 176,
+                    "error": null
+                },
+                {
+                    "user": "mejor de mercadolibre",
+                    "intent": "chat",
+                    "answer": "Solo puedo ayudar con el mercado de Zuitch. No puedo proporcionar enlaces externos. Si necesitas información sobre productos en Zuitch, por favor indícame.",
+                    "cards": [],
+                    "message_id": 178,
+                    "error": null
+                }
+            ]
+        },
+        "C20": {
+            "name": "Mixto",
+            "chat_id": 52,
+            "turns": [
+                {
+                    "user": "hola",
+                    "intent": "chat",
+                    "answer": "¡Hola! ¿En qué puedo ayudarte hoy?",
+                    "cards": [],
+                    "message_id": 180,
+                    "error": null
+                },
+                {
+                    "user": "busco lámpara",
+                    "intent": "producto",
+                    "answer": "Aquí tienes algunas opciones de lámparas disponibles en Zuitch:\n\n1. **Lámpara**  \n   Precio: $1  \n   [Ver producto](https:\/\/zuitch.com\/post\/14667) - Lámparas luz blanca\n\n2. **Lámpara blue tooth**  \n   Precio: $12  \n   [Ver producto](https:\/\/zuitch.com\/post\/14250) - Lámpara luz blanca con blue tooth\n\n3. **Lámpara blue tooth**  \n   Precio: $12  \n   [Ver producto](https:\/\/zuitch.com\/post\/14242) - Lámpara luz blanca con blue tooth\n\n4. **Lampra blue tooth**  \n   Precio: $12  \n   [Ver producto](https:\/\/zuitch.com\/post\/14243) - Lámpara con blue tooth\n\nSi necesitas más información o algo específico, házmelo saber.",
+                    "cards": [
+                        {
+                            "type": "producto",
+                            "title": "Lámpara",
+                            "price": "1",
+                            "url": "https:\/\/zuitch.com\/post\/14667"
+                        },
+                        {
+                            "type": "producto",
+                            "title": "Lámpara blue tooth",
+                            "price": "12",
+                            "url": "https:\/\/zuitch.com\/post\/14250"
+                        },
+                        {
+                            "type": "producto",
+                            "title": "Lámpara blue tooth",
+                            "price": "12",
+                            "url": "https:\/\/zuitch.com\/post\/14242"
+                        },
+                        {
+                            "type": "producto",
+                            "title": "Lampra blue tooth",
+                            "price": "12",
+                            "url": "https:\/\/zuitch.com\/post\/14243"
+                        }
+                    ],
+                    "message_id": 182,
+                    "error": null
+                },
+                {
+                    "user": "cómo publico un producto?",
+                    "intent": "soporte",
+                    "answer": "Para publicar un producto en Zuitch, sigue estos pasos:\n\n1. Ve a **Mercado \/ Crear producto \/ Mis productos**.\n2. Sube fotos, escribe el nombre, precio y descripción del producto.\n3. Elige la categoría, ubicación si aplica, y publica el producto.\n4. El producto aparecerá en el mercado de Zuitch y en Mis productos.\n5. Puedes editar el producto después desde **Editar producto**.\n\nSi necesitas más ayuda, no dudes en preguntar.",
+                    "cards": [
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        },
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        },
+                        {
+                            "type": "doc",
+                            "title": "Documentación",
+                            "price": "",
+                            "url": ""
+                        }
+                    ],
+                    "message_id": 184,
+                    "error": null
+                }
+            ]
+        }
+    }
+}

@@ -1,0 +1,348 @@
+<?php
+require_once dirname(dirname(dirname(__DIR__))) . '/assets/includes/zuitch_ai.php';
+if (!zuitch_ai_is_superadmin()) {
+    echo '<div class="alert alert-danger">Solo el superadministrador puede gestionar Zuitch AI.</div>';
+    return;
+}
+$cfg = function ($k, $d = '') use ($wo) {
+    return isset($wo['config'][$k]) ? $wo['config'][$k] : $d;
+};
+$hash = Wo_CreateSession();
+$intentPrompt = $cfg('zuitch_ai_intent_prompt', '');
+$replyPrompt = $cfg('zuitch_ai_reply_prompt', '');
+$docs = $cfg('zuitch_ai_docs', '');
+if ($intentPrompt === '') {
+    $intentPrompt = zuitch_ai_default_intent_prompt();
+}
+if ($replyPrompt === '') {
+    $replyPrompt = zuitch_ai_default_reply_prompt();
+}
+?>
+<div class="container-fluid">
+  <div>
+    <h3>Zuitch AI</h3>
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="#">Home</a></li>
+        <li class="breadcrumb-item"><a href="#">Settings</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Zuitch AI</li>
+      </ol>
+    </nav>
+  </div>
+
+  <div class="row">
+    <div class="col-lg-6 col-md-6">
+      <div class="card">
+        <div class="card-body">
+          <h6 class="card-title">Activación y modelo</h6>
+          <form class="zai-settings" method="POST">
+            <div class="float-left">
+              <label class="main-label" for="zuitch_ai">Activar Zuitch AI</label>
+              <br><small class="admin-info">Botón flotante para usuarios con sesión.</small>
+            </div>
+            <div class="form-group float-right switcher">
+              <input type="hidden" name="zuitch_ai" value="0" />
+              <input type="checkbox" name="zuitch_ai" id="chck-zuitch_ai" value="1" <?php echo ($cfg('zuitch_ai','0') == 1) ? 'checked' : ''; ?>>
+              <label for="chck-zuitch_ai" class="check-trail"><span class="check-handler"></span></label>
+            </div>
+            <div class="clearfix"></div>
+            <hr>
+            <div class="form-group form-float">
+              <div class="form-line">
+                <label class="form-label">URL base API</label>
+                <input type="text" name="zuitch_ai_api_url" class="form-control" value="<?php echo htmlspecialchars($cfg('zuitch_ai_api_url', 'https://api.openai.com/v1')); ?>">
+                <small class="admin-info">Por defecto OpenAI. Más adelante puedes poner la URL de un modelo propio compatible.</small>
+              </div>
+            </div>
+            <div class="form-group form-float">
+              <div class="form-line">
+                <label class="form-label">Modelo</label>
+                <input type="text" name="zuitch_ai_model" class="form-control" value="<?php echo htmlspecialchars($cfg('zuitch_ai_model', 'gpt-4o-mini')); ?>">
+              </div>
+            </div>
+            <div class="form-group form-float">
+              <div class="form-line">
+                <label class="form-label">Organization ID</label>
+                <input type="text" name="zuitch_ai_org_id" class="form-control" value="<?php echo htmlspecialchars($cfg('zuitch_ai_org_id', '')); ?>">
+              </div>
+            </div>
+            <div class="form-group form-float">
+              <div class="form-line">
+                <label class="form-label">API key dedicada (opcional)</label>
+                <input type="password" name="zuitch_ai_api_key" class="form-control" value="" placeholder="Vacío = usa openai_token de AI Settings">
+                <small class="admin-info">Déjalo vacío para usar la clave de OpenAI Settings. Si escribes una nueva, se cifra al guardar.</small>
+              </div>
+            </div>
+            <div class="form-group form-float">
+              <div class="form-line">
+                <label class="form-label">Máximo de fichas</label>
+                <input type="number" name="zuitch_ai_max_cards" class="form-control" value="<?php echo htmlspecialchars($cfg('zuitch_ai_max_cards', '6')); ?>">
+              </div>
+            </div>
+            <div class="form-group form-float">
+              <div class="form-line">
+                <label class="form-label">Tope de mensajes / usuario / día</label>
+                <input type="number" name="zuitch_ai_daily_limit" class="form-control" value="<?php echo htmlspecialchars($cfg('zuitch_ai_daily_limit', '40')); ?>">
+              </div>
+            </div>
+            <input type="hidden" name="hash_id" value="<?php echo $hash; ?>">
+          </form>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-body">
+          <h6 class="card-title">Imágenes, archivos y voz</h6>
+          <form class="zai-settings" method="POST">
+            <div class="float-left">
+              <label class="main-label">Recibir imágenes</label>
+              <br><small class="admin-info">Máx. 4 MB · jpg, png, webp</small>
+            </div>
+            <div class="form-group float-right switcher">
+              <input type="hidden" name="zuitch_ai_images" value="0" />
+              <input type="checkbox" name="zuitch_ai_images" id="chck-zuitch_ai_images" value="1" <?php echo ($cfg('zuitch_ai_images','0') == 1) ? 'checked' : ''; ?>>
+              <label for="chck-zuitch_ai_images" class="check-trail"><span class="check-handler"></span></label>
+            </div>
+            <div class="clearfix"></div>
+            <div class="form-group form-float">
+              <div class="form-line">
+                <label class="form-label">Extensiones de imagen</label>
+                <input type="text" name="zuitch_ai_image_ext" class="form-control" value="<?php echo htmlspecialchars($cfg('zuitch_ai_image_ext', 'jpg,jpeg,png,webp')); ?>">
+              </div>
+            </div>
+            <div class="float-left">
+              <label class="main-label">Recibir archivos</label>
+              <br><small class="admin-info">Máx. 2 MB · texto/CSV/MD/PDF</small>
+            </div>
+            <div class="form-group float-right switcher">
+              <input type="hidden" name="zuitch_ai_files" value="0" />
+              <input type="checkbox" name="zuitch_ai_files" id="chck-zuitch_ai_files" value="1" <?php echo ($cfg('zuitch_ai_files','0') == 1) ? 'checked' : ''; ?>>
+              <label for="chck-zuitch_ai_files" class="check-trail"><span class="check-handler"></span></label>
+            </div>
+            <div class="clearfix"></div>
+            <div class="form-group form-float">
+              <div class="form-line">
+                <label class="form-label">Extensiones de archivo</label>
+                <input type="text" name="zuitch_ai_file_ext" class="form-control" value="<?php echo htmlspecialchars($cfg('zuitch_ai_file_ext', 'txt,csv,md,pdf')); ?>">
+              </div>
+            </div>
+            <hr>
+            <div class="float-left">
+              <label class="main-label">Notas de voz (Whisper)</label>
+              <br><small class="admin-info">Micrófono → transcripción → respuesta del chat. Máx. ~60 s.</small>
+            </div>
+            <div class="form-group float-right switcher">
+              <input type="hidden" name="zuitch_ai_voice" value="0" />
+              <input type="checkbox" name="zuitch_ai_voice" id="chck-zuitch_ai_voice" value="1" <?php echo ($cfg('zuitch_ai_voice','0') == 1) ? 'checked' : ''; ?>>
+              <label for="chck-zuitch_ai_voice" class="check-trail"><span class="check-handler"></span></label>
+            </div>
+            <div class="clearfix"></div>
+            <div class="float-left">
+              <label class="main-label">Leer respuestas en voz (TTS)</label>
+              <br><small class="admin-info">Usa la voz del navegador / WebView (español).</small>
+            </div>
+            <div class="form-group float-right switcher">
+              <input type="hidden" name="zuitch_ai_tts" value="0" />
+              <input type="checkbox" name="zuitch_ai_tts" id="chck-zuitch_ai_tts" value="1" <?php echo ($cfg('zuitch_ai_tts','1') == 1) ? 'checked' : ''; ?>>
+              <label for="chck-zuitch_ai_tts" class="check-trail"><span class="check-handler"></span></label>
+            </div>
+            <div class="clearfix"></div>
+            <div class="form-group form-float">
+              <div class="form-line">
+                <label class="form-label">Modelo de transcripción</label>
+                <input type="text" name="zuitch_ai_whisper_model" class="form-control" value="<?php echo htmlspecialchars($cfg('zuitch_ai_whisper_model', 'whisper-1')); ?>">
+              </div>
+            </div>
+            <input type="hidden" name="hash_id" value="<?php echo $hash; ?>">
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6 col-md-6">
+      <div class="card">
+        <div class="card-body">
+          <h6 class="card-title">Prompts y documentación</h6>
+          <form class="zai-settings" method="POST">
+            <div class="form-group form-float">
+              <div class="form-line">
+                <label class="form-label">Prompt de intención</label>
+                <textarea name="zuitch_ai_intent_prompt" class="form-control" rows="8"><?php echo htmlspecialchars($intentPrompt); ?></textarea>
+              </div>
+            </div>
+            <div class="form-group form-float">
+              <div class="form-line">
+                <label class="form-label">Prompt de respuesta</label>
+                <textarea name="zuitch_ai_reply_prompt" class="form-control" rows="10"><?php echo htmlspecialchars($replyPrompt); ?></textarea>
+                <small class="admin-info">Usa {contexto} y {correcciones}.</small>
+              </div>
+            </div>
+            <div class="form-group form-float">
+              <div class="form-line">
+                <label class="form-label">Documentación de soporte</label>
+                <textarea name="zuitch_ai_docs" class="form-control" rows="12"><?php echo htmlspecialchars($docs); ?></textarea>
+                <small class="admin-info">Separa secciones con títulos # Título</small>
+              </div>
+            </div>
+            <input type="hidden" name="hash_id" value="<?php echo $hash; ?>">
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-lg-12">
+      <div class="card">
+        <div class="card-body">
+          <h6 class="card-title">Seguimiento de conversaciones</h6>
+          <div class="input-group mb-3" style="max-width:420px;">
+            <input type="text" id="zai-admin-q" class="form-control" placeholder="Buscar usuario o texto…">
+            <div class="input-group-append">
+              <button class="btn btn-primary" type="button" id="zai-admin-search">Buscar</button>
+            </div>
+          </div>
+          <div class="table-responsive">
+            <table class="table table-striped table-bordered" id="zai-admin-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Usuario</th>
+                  <th>Título</th>
+                  <th>Msgs</th>
+                  <th>Último</th>
+                  <th>Actualizado</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <div id="zai-admin-thread" style="display:none; margin-top:18px; border-top:1px solid #e5e7eb; padding-top:14px;">
+            <h6>Hilo <span id="zai-admin-thread-id"></span></h6>
+            <div id="zai-admin-msgs" style="max-height:420px; overflow:auto; background:#f7fafc; padding:12px; border-radius:8px;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+jQuery(function ($) {
+  var hash_id = $('input[name=hash_id]').first().val();
+  var ajaxFile = Wo_Ajax_Requests_File();
+
+  function saveField($el) {
+    var name = $el.attr('name');
+    if (!name || name === 'hash_id') return;
+    var obj = { hash_id: hash_id };
+    if ($el.attr('type') === 'checkbox') {
+      obj[name] = $el.is(':checked') ? 1 : 0;
+    } else {
+      var v = $el.val();
+      if (name === 'zuitch_ai_api_key' && (!v || !String(v).trim())) {
+        return;
+      }
+      obj[name] = v;
+    }
+    $el.addClass('warning');
+    $.post(ajaxFile + '?f=admin_setting&s=update_general_setting', obj, function (data) {
+      $el.removeClass('warning');
+      if (data.status == 200) $el.addClass('success');
+      else $el.addClass('error');
+      setTimeout(function () { $el.removeClass('success error'); }, 1500);
+    });
+  }
+
+  $('.zai-settings input[type=checkbox]').on('change', function () { saveField($(this)); });
+  $('.zai-settings input[type=text], .zai-settings input[type=number], .zai-settings input[type=password], .zai-settings textarea').on('change blur', function () { saveField($(this)); });
+
+  function loadChats(q) {
+    var fd = new FormData();
+    fd.append('hash', hash_id);
+    fd.append('q', q || '');
+    fetch(ajaxFile + '?f=zuitch_ai&s=admin_list', {
+      method: 'POST', body: fd, credentials: 'same-origin',
+      headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    }).then(function (r) { return r.json(); }).then(function (res) {
+      var tb = $('#zai-admin-table tbody');
+      tb.empty();
+      if (res.status !== 200) return;
+      (res.chats || []).forEach(function (c) {
+        var last = (c.last_message || '').toString().slice(0, 80);
+        var when = c.updated_at ? new Date(Number(c.updated_at) * 1000).toLocaleString() : '';
+        var tr = $('<tr/>');
+        tr.append('<td>' + c.id + '</td>');
+        tr.append('<td>' + (c.username || c.user_id) + '</td>');
+        tr.append('<td>' + $('<div/>').text(c.title || '').html() + '</td>');
+        tr.append('<td>' + (c.msg_count || 0) + '</td>');
+        tr.append('<td>' + $('<div/>').text(last).html() + '</td>');
+        tr.append('<td>' + when + '</td>');
+        var btn = $('<button type="button" class="btn btn-sm btn-info">Abrir</button>');
+        btn.on('click', function () { openThread(c.id); });
+        tr.append($('<td/>').append(btn));
+        tb.append(tr);
+      });
+    });
+  }
+
+  function escapeHtml(s) {
+    return $('<div/>').text(s || '').html();
+  }
+
+  function openThread(id) {
+    var fd = new FormData();
+    fd.append('hash', hash_id);
+    fd.append('chat_id', id);
+    fetch(ajaxFile + '?f=zuitch_ai&s=get_chat', {
+      method: 'POST', body: fd, credentials: 'same-origin',
+      headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    }).then(function (r) { return r.json(); }).then(function (res) {
+      if (res.status !== 200) return;
+      $('#zai-admin-thread').show();
+      $('#zai-admin-thread-id').text('#' + id);
+      var box = $('#zai-admin-msgs');
+      box.empty();
+      (res.messages || []).forEach(function (m) {
+        var who = m.role === 'user' ? 'Usuario' : 'IA';
+        var block = $('<div style="margin-bottom:12px;padding:10px;background:#fff;border-radius:8px;border:1px solid #e5e7eb;"/>');
+        block.append('<div style="font-size:11px;color:#64748b;margin-bottom:4px;">' + who + ' · #' + m.id + (m.intent ? ' · ' + m.intent : '') + '</div>');
+        block.append('<div style="white-space:pre-wrap;">' + escapeHtml(m.content) + '</div>');
+        if (m.role === 'assistant') {
+          var rating = m.rating || {};
+          var tools = $('<div style="margin-top:8px;"/>');
+          tools.append('<div style="font-size:12px;color:#64748b;">Rating usuario: ' + escapeHtml(rating.rating || '—') + ' · ' + escapeHtml(rating.comment || '') + '</div>');
+          var okBtn = $('<button type="button" class="btn btn-sm btn-success" style="margin-right:6px;">OK</button>');
+          var corr = $('<textarea class="form-control" rows="2" style="margin-top:6px;" placeholder="Corrección…">' + escapeHtml(rating.admin_correction || '') + '</textarea>');
+          var saveCorr = $('<button type="button" class="btn btn-sm btn-warning" style="margin-top:6px;">Guardar corrección</button>');
+          okBtn.on('click', function () {
+            var f = new FormData();
+            f.append('hash', hash_id);
+            f.append('message_id', m.id);
+            f.append('admin_ok', '1');
+            f.append('admin_correction', '');
+            fetch(ajaxFile + '?f=zuitch_ai&s=admin_correct', { method:'POST', body:f, credentials:'same-origin', headers:{'X-Requested-With':'XMLHttpRequest'} })
+              .then(function(r){return r.json();}).then(function(){ alert('Marcado OK'); });
+          });
+          saveCorr.on('click', function () {
+            var f = new FormData();
+            f.append('hash', hash_id);
+            f.append('message_id', m.id);
+            f.append('admin_ok', '0');
+            f.append('admin_correction', corr.val() || '');
+            fetch(ajaxFile + '?f=zuitch_ai&s=admin_correct', { method:'POST', body:f, credentials:'same-origin', headers:{'X-Requested-With':'XMLHttpRequest'} })
+              .then(function(r){return r.json();}).then(function(){ alert('Corrección guardada'); });
+          });
+          tools.append(okBtn).append(corr).append(saveCorr);
+          block.append(tools);
+        }
+        box.append(block);
+      });
+    });
+  }
+
+  $('#zai-admin-search').on('click', function () { loadChats($('#zai-admin-q').val()); });
+  loadChats('');
+});
+</script>

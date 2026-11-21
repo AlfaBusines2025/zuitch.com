@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Zuitch AI — Planificación | Zuitch</title>
+  <meta name="description" content="Planificación de Zuitch AI: asistente flotante con ChatGPT, búsqueda inteligente, correcciones del superadmin y cronograma de 14 días.">
+  <link rel="shortcut icon" type="image/png" href="/themes/wowonder/img/icon.png">
+  <style>
+    :root {
+      --text: #1a2332;
+      --muted: #5c6575;
+      --border: #dce3ec;
+      --card: #ffffff;
+      --bg: #ebf3f5;
+      --accent: #235777;
+      --brand: #72b0be;
+      --brand-dark: #0d3b5c;
+      --ok: #0d6b3d;
+      --soft: #e8f0f6;
+      --warn: #8a5a00;
+      --radius: 12px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;
+      font-size: 15px;
+      line-height: 1.55;
+      color: var(--text);
+      background: var(--bg);
+    }
+    a { color: var(--accent); }
+    .wrap {
+      max-width: 920px;
+      margin: 0 auto;
+      padding: 28px 20px 56px;
+    }
+    header.doc {
+      background: linear-gradient(135deg, var(--brand-dark) 0%, var(--brand) 48%, var(--accent) 100%);
+      color: #fff;
+      border-radius: var(--radius);
+      padding: 32px 34px;
+      margin-bottom: 20px;
+      box-shadow: 0 8px 28px rgba(13, 59, 92, 0.22);
+    }
+    header.doc .eyebrow {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      opacity: 0.9;
+      background: rgba(255,255,255,0.16);
+      padding: 5px 10px;
+      border-radius: 999px;
+      margin-bottom: 12px;
+    }
+    header.doc h1 {
+      margin: 0 0 10px;
+      font-size: 1.5rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.25;
+    }
+    header.doc .subtitle {
+      margin: 0;
+      opacity: 0.92;
+      font-size: 0.98rem;
+      max-width: 64ch;
+    }
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-top: 22px;
+      padding-top: 18px;
+      border-top: 1px solid rgba(255,255,255,0.22);
+    }
+    @media (max-width: 720px) {
+      .meta-grid { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 420px) {
+      .meta-grid { grid-template-columns: 1fr; }
+    }
+    .meta-grid dt {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      opacity: 0.75;
+      margin: 0 0 4px;
+    }
+    .meta-grid dd {
+      margin: 0;
+      font-weight: 650;
+      font-size: 0.95rem;
+    }
+    section.block {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 22px 26px;
+      margin-bottom: 16px;
+      box-shadow: 0 2px 10px rgba(26, 35, 50, 0.04);
+    }
+    section.block h2 {
+      margin: 0 0 12px;
+      font-size: 1.08rem;
+      color: var(--accent);
+      padding-bottom: 10px;
+      border-bottom: 2px solid var(--soft);
+    }
+    section.block h3 {
+      margin: 18px 0 8px;
+      font-size: 0.95rem;
+      color: var(--text);
+    }
+    p.lead {
+      margin: 0 0 10px;
+      color: var(--muted);
+    }
+    ul.clean {
+      margin: 8px 0 0;
+      padding: 0;
+      list-style: none;
+    }
+    ul.clean li {
+      position: relative;
+      padding: 7px 0 7px 26px;
+      border-bottom: 1px solid #f0f3f7;
+    }
+    ul.clean li:last-child { border-bottom: none; }
+    ul.clean li::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 14px;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--brand);
+    }
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 8px;
+    }
+    @media (max-width: 720px) {
+      .two-col { grid-template-columns: 1fr; }
+    }
+    .feature-card {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+      background: #fafcfd;
+    }
+    .feature-card .tag {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--accent);
+      background: var(--soft);
+      padding: 3px 8px;
+      border-radius: 999px;
+      margin-bottom: 8px;
+    }
+    .feature-card h3 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+    }
+    .feature-card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+    .pill-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .pill {
+      font-size: 12px;
+      font-weight: 600;
+      padding: 5px 10px;
+      border-radius: 999px;
+      background: var(--soft);
+      color: var(--accent);
+      border: 1px solid var(--border);
+    }
+    .pill.ok {
+      background: #e8f8ee;
+      color: #0b6b36;
+      border-color: #b6e6c8;
+    }
+    table.deliver {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.92rem;
+      margin-top: 6px;
+    }
+    table.deliver th,
+    table.deliver td {
+      border: 1px solid var(--border);
+      padding: 10px 12px;
+      vertical-align: top;
+      text-align: left;
+    }
+    table.deliver th {
+      background: var(--soft);
+      color: var(--accent);
+      font-weight: 700;
+    }
+    table.deliver tr.total td {
+      font-weight: 700;
+      background: #f3faf6;
+      color: var(--ok);
+    }
+    .price-box {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      background: linear-gradient(135deg, #f3faf6, #e8f0f6);
+      border: 1px solid #c5e6d2;
+      border-radius: var(--radius);
+      padding: 20px 22px;
+      margin-top: 14px;
+    }
+    .price-box .amount {
+      font-size: 1.85rem;
+      font-weight: 800;
+      color: var(--ok);
+      letter-spacing: -0.03em;
+      line-height: 1.15;
+    }
+    .price-box .amount small {
+      display: block;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--muted);
+      letter-spacing: 0;
+      margin-top: 6px;
+    }
+    .price-box .note {
+      flex: 1;
+      min-width: 220px;
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+    .out {
+      color: var(--muted);
+      font-size: 0.9rem;
+      margin: 0;
+    }
+    .out ul {
+      margin: 8px 0 0;
+      padding-left: 18px;
+      color: var(--muted);
+    }
+    footer.doc {
+      margin-top: 8px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+    .sign {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 28px;
+      margin-top: 22px;
+    }
+    @media (max-width: 640px) {
+      .sign { grid-template-columns: 1fr; }
+    }
+    .sign-box {
+      border-top: 1px solid var(--border);
+      padding-top: 10px;
+      color: var(--muted);
+      font-size: 0.9rem;
+      min-height: 72px;
+    }
+    .print-bar {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 12px;
+    }
+    .print-bar button {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .print-bar button:hover { background: var(--brand-dark); }
+    .benefit-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 12px;
+    }
+    @media (max-width: 720px) {
+      .benefit-grid { grid-template-columns: 1fr; }
+    }
+    .benefit-item {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 16px;
+      background: linear-gradient(180deg, #fafcfd 0%, #f3f8fa 100%);
+    }
+    .benefit-item strong {
+      display: block;
+      color: var(--accent);
+      font-size: 0.95rem;
+      margin-bottom: 6px;
+    }
+    .benefit-item p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+    .flow {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      margin: 14px 0 4px;
+    }
+    .flow .step {
+      background: var(--soft);
+      border: 1px solid var(--border);
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 700;
+      padding: 8px 12px;
+      border-radius: 8px;
+    }
+    .flow .arrow {
+      color: var(--muted);
+      font-weight: 700;
+      font-size: 14px;
+    }
+    .prompt-box {
+      margin-top: 10px;
+      padding: 14px 16px;
+      background: #0d3b5c;
+      color: #e8f0f6;
+      border-radius: 10px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.78rem;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      overflow-x: auto;
+    }
+    .timeline {
+      margin: 12px 0 0;
+      padding: 0;
+      list-style: none;
+      border-left: 3px solid var(--brand);
+    }
+    .timeline li {
+      position: relative;
+      padding: 0 0 16px 18px;
+    }
+    .timeline li:last-child { padding-bottom: 0; }
+    .timeline li::before {
+      content: "";
+      position: absolute;
+      left: -7px;
+      top: 6px;
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      background: var(--accent);
+      border: 2px solid #fff;
+      box-shadow: 0 0 0 1px var(--brand);
+    }
+    .timeline strong {
+      display: block;
+      color: var(--brand-dark);
+      font-size: 0.95rem;
+    }
+    .timeline span {
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+    .callout {
+      margin-top: 14px;
+      padding: 14px 16px;
+      border-radius: 10px;
+      border-left: 4px solid var(--brand);
+      background: var(--soft);
+    }
+    .callout.warn {
+      border-left-color: #d4a017;
+      background: #fff8e8;
+    }
+    .callout h3 {
+      margin: 0 0 6px;
+      font-size: 0.95rem;
+      color: var(--brand-dark);
+    }
+    .callout p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+    .ol-tight {
+      margin: 8px 0 0;
+      padding-left: 20px;
+      color: var(--muted);
+    }
+    .ol-tight li { margin-bottom: 6px; }
+    @media print {
+      body { background: #fff; }
+      .wrap { padding: 0; max-width: 100%; }
+      .print-bar { display: none; }
+      header.doc, section.block { box-shadow: none; break-inside: avoid; }
+      .prompt-box { background: #f3f8fa; color: var(--text); border: 1px solid var(--border); }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="print-bar">
+      <button type="button" onclick="window.print()">Imprimir / PDF</button>
+    </div>
+
+    <header class="doc">
+      <div class="eyebrow">Planificación · Producto IA</div>
+      <h1>Zuitch AI — Asistente virtual dentro de la plataforma</h1>
+      <p class="subtitle">
+        Botón flotante con chat, recomendaciones de productos / páginas / grupos, soporte basado en documentación,
+        seguimiento en admin-cp y correcciones del superadmin. Modelo ChatGPT ahora; URL preparada para un modelo propio después.
+      </p>
+      <dl class="meta-grid">
+        <div>
+          <dt>Cliente</dt>
+          <dd>Zuitch.com</dd>
+        </div>
+        <div>
+          <dt>Proyecto</dt>
+          <dd>Zuitch AI</dd>
+        </div>
+        <div>
+          <dt>Inicio</dt>
+          <dd>15/10/2026</dd>
+        </div>
+        <div>
+          <dt>Cierre / pago</dt>
+          <dd>29/10/2026</dd>
+        </div>
+      </dl>
+    </header>
+
+    <section class="block">
+      <h2>1. Objetivo</h2>
+      <p class="lead">
+        Incorporar un asistente conversacional en zuitch.com que ayude a los usuarios a encontrar productos, páginas y grupos,
+        responda dudas de uso con documentación controlada, y permita al superadmin (Aldo) revisar conversaciones y corregir respuestas
+        sin reentrenar un modelo desde cero.
+      </p>
+      <div class="pill-row">
+        <span class="pill">Chat flotante</span>
+        <span class="pill">Historial y borrar</span>
+        <span class="pill">Búsqueda top 6</span>
+        <span class="pill">Soporte documentado</span>
+        <span class="pill">Admin-cp Zuitch AI</span>
+        <span class="pill ok">14 días · 15–29 oct</span>
+      </div>
+    </section>
+
+    <section class="block">
+      <h2>2. Qué se entrega</h2>
+      <div class="two-col">
+        <div class="feature-card">
+          <span class="tag">Usuario</span>
+          <h3>Asistente flotante</h3>
+          <p>Botón abajo a la derecha (sesión iniciada). Abre el chat, lista conversaciones, crea chat nuevo, borra uno o borra todo el historial.</p>
+        </div>
+        <div class="feature-card">
+          <span class="tag">Intención</span>
+          <h3>Clasifica antes de buscar</h3>
+          <p>Primero decide: producto, página, grupo, soporte o chat. Solo consulta lo preciso. Si es charla o duda sin catálogo, la IA responde sin tocar MySQL de mercado.</p>
+        </div>
+        <div class="feature-card">
+          <span class="tag">Catálogo</span>
+          <h3>Recomendaciones reales</h3>
+          <p>Como máximo 6 fichas (nombre, precio si aplica, una línea, enlace). No se mete el catálogo entero en el prompt. Funciona hoy (28 productos) y a 10.000 filas.</p>
+        </div>
+        <div class="feature-card">
+          <span class="tag">Admin</span>
+          <h3>Panel Zuitch AI</h3>
+          <p>Prompts editables, documentación de soporte, seguimiento de todos los chats, calificación de usuarios y OK / Corregir solo para el superadmin.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="block">
+      <h2>3. Arquitectura (cómo funciona)</h2>
+      <p class="lead">
+        El modelo es la API de ChatGPT (compatible con <code>chat/completions</code>). Zuitch ya tiene <code>openai_token</code> en AI Settings.
+        El cliente llama a una URL configurable: mañana puede apuntar a un servidor propio (vLLM, Ollama u otro) sin reescribir el widget.
+      </p>
+
+      <div class="flow">
+        <span class="step">Usuario escribe</span>
+        <span class="arrow">→</span>
+        <span class="step">Prompt de intención</span>
+        <span class="arrow">→</span>
+        <span class="step">Consulta solo 1 fuente</span>
+        <span class="arrow">→</span>
+        <span class="step">Prompt de respuesta</span>
+        <span class="arrow">→</span>
+        <span class="step">Chat + fichas</span>
+      </div>
+
+      <h3>Etiquetas de intención</h3>
+      <ul class="clean">
+        <li><strong>producto / pagina / grupo</strong> — consulta solo esa tabla; máximo 6 fichas.</li>
+        <li><strong>soporte</strong> — busca en la documentación de funciones (admin-cp); máximo 3 trozos.</li>
+        <li><strong>chat</strong> — no consulta base ni docs; responde con el prompt.</li>
+      </ul>
+
+      <h3>Ejemplos</h3>
+      <ul class="clean">
+        <li>“busco un auto mercedes benz a10” → <strong>producto</strong></li>
+        <li>“hay alguna página de concesionarios” → <strong>pagina</strong></li>
+        <li>“grupos para hablar de autos” → <strong>grupo</strong></li>
+        <li>“cómo publico un producto” → <strong>soporte</strong></li>
+        <li>“hola” / opinión suelta → <strong>chat</strong></li>
+      </ul>
+
+      <div class="callout">
+        <h3>Volumen actual de la plataforma</h3>
+        <p>~28 productos · ~382 páginas · 1 grupo · ~12.500 posts · ~45.000 usuarios. Los posts no entran en la búsqueda del asistente.</p>
+      </div>
+    </section>
+
+    <section class="block">
+      <h2>4. Búsqueda inteligente sin matar tokens, RAM ni CPU</h2>
+      <p class="lead">
+        Con 10.000 productos la IA no los “lee”. MySQL rankea y solo se envían hasta 6 fichas cortas. Presupuesto fijo por mensaje aunque el catálogo crezca.
+      </p>
+
+      <div class="benefit-grid">
+        <div class="benefit-item">
+          <strong>Presupuesto de tokens</strong>
+          <p>Sistema ~400 · últimos 6 mensajes ~1.200 · fichas (si hay) ~600 · pregunta del usuario. Si no hay coincidencias, las fichas no se envían.</p>
+        </div>
+        <div class="benefit-item">
+          <strong>Caso Mercedes “a10”</strong>
+          <p>Limpia la frase, prueba equivalentes cortos (auto→carro/coche), rankea por palabras en nombre/descripción y, solo si una palabra no existe, corrige entre ~20 candidatos (a10→a180).</p>
+        </div>
+      </div>
+
+      <ol class="ol-tight">
+        <li>Limpieza en PHP (minúsculas, sin tildes, quitar “busco”, “un”).</li>
+        <li>Lista corta de equivalentes (no un diccionario enorme).</li>
+        <li>Una consulta rankeada; top 6.</li>
+        <li>Corrección de tipografía solo si hace falta; no se recorre el catálogo en memoria.</li>
+        <li>Al crecer el catálogo: índice FULLTEXT (fase posterior). El tope sigue siendo 6.</li>
+      </ol>
+    </section>
+
+    <section class="block">
+      <h2>5. Prompts editables (admin-cp)</h2>
+      <p class="lead">Dos prompts + documentación de soporte. El admin los cambia sin tocar código.</p>
+
+      <h3>Prompt de intención</h3>
+      <div class="prompt-box">Eres el clasificador de Zuitch AI. Lee el mensaje del usuario y responde una sola palabra, sin explicación:
+- producto: quiere comprar, ver precio o que le recomienden un artículo del mercado.
+- pagina: busca una página, negocio, tienda o perfil de página.
+- grupo: busca un grupo o comunidad.
+- soporte: pregunta cómo se usa Zuitch (cuenta, contraseña, publicar, comprar, páginas, grupos u otra función de la plataforma).
+- chat: saludo, opinión o charla que no pide catálogo ni ayuda de uso.
+Si pide más de una cosa, elige la principal. No inventes otra etiqueta.</div>
+
+      <h3>Prompt de respuesta</h3>
+      <div class="prompt-box">Eres Zuitch AI, el asistente de zuitch.com. Responde en el idioma del usuario, breve y claro.
+Si {correcciones} trae una respuesta aprobada por el superadmin y la pregunta se parece, usa esa respuesta. Esa versión manda sobre tu criterio.
+Si {contexto} está vacío, responde con la conversación. No inventes productos, páginas, grupos, precios ni pasos que no estén en la documentación.
+Si {contexto} trae fichas de catálogo, recomienda solo esas. Di el nombre, el precio si viene y el enlace. Si una palabra se corrigió, menciónalo en una frase.
+Si {contexto} trae documentación, explica solo con esos pasos. No completes con funciones que no aparezcan ahí.
+No leas mensajes privados, pedidos ni datos de otros usuarios. No publiques ni compres por el usuario.</div>
+
+      <h3>Documentación de soporte</h3>
+      <p class="lead" style="margin-top:10px;">
+        Texto en admin-cp, partido por títulos (cómo crear página, publicar producto, etc.). En soporte se rankean trozos y entran 3.
+        No se lee el código ni las publicaciones del feed.
+      </p>
+    </section>
+
+    <section class="block">
+      <h2>6. Calificación, corrección y seguimiento</h2>
+
+      <div class="two-col">
+        <div class="feature-card">
+          <span class="tag">Cualquier usuario</span>
+          <h3>Útil / No útil + comentario</h3>
+          <p>Se guarda y se lista en admin-cp. No se inyecta al modelo. Sirve para que Aldo decida qué corregir.</p>
+        </div>
+        <div class="feature-card">
+          <span class="tag">Solo superadmin</span>
+          <h3>OK / Corregir</h3>
+          <p>Marca la respuesta como ejemplo o escribe lo que debió decir. Eso sí entra en {correcciones} en preguntas parecidas y manda sobre el modelo.</p>
+        </div>
+      </div>
+
+      <h3>Seguimiento de conversaciones</h3>
+      <p class="lead">
+        En admin-cp, solo el superadmin ve todos los chats de Zuitch AI (no mensajes privados entre usuarios):
+        usuario, fecha, cantidad de chats, recorte del último mensaje; al abrir, el hilo completo con calificaciones y botones OK / Corregir.
+        Buscador por nombre o palabra. Si el usuario borra un chat, también sale del panel.
+      </p>
+    </section>
+
+    <section class="block">
+      <h2>7. Configuración en admin-cp</h2>
+      <p class="lead">
+        Página nueva <strong>Zuitch AI</strong> (junto a AI Settings), sin mezclarse con la IA que genera posts, blogs o avatares.
+      </p>
+      <ul class="clean">
+        <li>Activar Zuitch AI</li>
+        <li>URL base (por defecto <code>https://api.openai.com/v1</code>) — lista para modelo propio</li>
+        <li>Modelo (p. ej. <code>gpt-4o-mini</code>)</li>
+        <li>Clave: la de <code>openai_token</code> o una clave dedicada</li>
+        <li>Prompt de intención, prompt de respuesta y documentación de soporte</li>
+        <li>Seguimiento de chats + OK / Corregir</li>
+        <li>Imágenes on/off (jpg, png, webp) y lista de formatos de archivo</li>
+        <li>Máximo de fichas (6) y tope de mensajes por usuario al día</li>
+      </ul>
+      <div class="callout warn">
+        <h3>Imágenes y archivos en el primer ciclo</h3>
+        <p>
+          La configuración de imágenes/formatos queda en el panel. PDF y Office (extracción de texto) e índice FULLTEXT
+          no entran en las ~18 h del primer ciclo; se dejan para después. La URL del modelo propio sí queda desde el día uno.
+        </p>
+      </div>
+    </section>
+
+    <section class="block">
+      <h2>8. Roles</h2>
+      <div class="two-col">
+        <div class="feature-card">
+          <span class="tag">Desarrollo</span>
+          <h3>Integrar Zuitch AI</h3>
+          <p>Widget, búsqueda, prompts, admin-cp, seguimiento y circuito de corrección. Aplica la primera ronda de ajustes con las correcciones de Aldo.</p>
+        </div>
+        <div class="feature-card">
+          <span class="tag">Aldo · Superadmin</span>
+          <h3>Probar y corregir</h3>
+          <p>Usa el asistente, revisa chats en admin-cp y corrige con OK / “debió decir”. No desarrolla código.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="block">
+      <h2>9. Costos OpenAI y rondas de corrección</h2>
+      <p class="lead">
+        El consumo del modelo lo paga la cuenta de Zuitch, no el desarrollo. Al arrancar se recargan <strong>USD 10</strong> en OpenAI.
+        El diseño (clasificar → una fuente → top 6) evita consultas grandes. Cuando se agoten los USD 10, la recarga es de Zuitch.
+      </p>
+
+      <table class="deliver">
+        <thead>
+          <tr>
+            <th>Concepto</th>
+            <th>Detalle</th>
+            <th>Precio</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Recarga inicial OpenAI</td>
+            <td>Cuenta ligada a Zuitch; uso optimizado de tokens</td>
+            <td>USD 10 (cuenta Zuitch)</td>
+          </tr>
+          <tr>
+            <td>Primera corrección</td>
+            <td>Aldo corrige 5 días tras el 1.er entregable; desarrollo aplica el primer ajuste (OK/Corregir → prompts / docs / {correcciones}). No es fine-tuning.</td>
+            <td>Incluida</td>
+          </tr>
+          <tr>
+            <td>Rondas siguientes</td>
+            <td>~20 mensajes de corrección ≈ 1 hora de trabajo</td>
+            <td>USD 18 / hora</td>
+          </tr>
+          <tr class="total">
+            <td colspan="2">Si una ronda supera ~20 correcciones o 1 h</td>
+            <td>Por horas a USD 18/h</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="price-box">
+        <div class="amount">
+          USD 18/h
+          <small>después de la 1.ª corrección incluida</small>
+        </div>
+        <p class="note">
+          El “primer entrenamiento” de este plan es aplicar las correcciones de Aldo al asistente.
+          No incluye entrenar un modelo propio ni fine-tuning en estos 14 días.
+        </p>
+      </div>
+    </section>
+
+    <section class="block">
+      <h2>10. Cronograma (14 días · 15–29 octubre 2026)</h2>
+      <ul class="timeline">
+        <li>
+          <strong>15–22 oct · Desarrollo + primer entregable</strong>
+          <span>Jueves 22: chat usable, búsqueda inteligente, admin-cp, seguimiento. ~18 h de desarrollo (~10 h núcleo + ~8 h calificación, OK/Corregir y vista de chats).</span>
+        </li>
+        <li>
+          <strong>23–27 oct · Aldo corrige (5 días)</strong>
+          <span>Prueba, conversa y deja OK / Corregir en el panel sobre las conversaciones reales.</span>
+        </li>
+        <li>
+          <strong>28–29 oct · Primera corrección incluida (hasta 2 días)</strong>
+          <span>Desarrollo aplica el primer ajuste con todo lo que Aldo dejó en esos 5 días.</span>
+        </li>
+        <li>
+          <strong>29 oct · Pago final</strong>
+          <span>Cierre al completar las 2 semanas. Rondas posteriores: USD 18/h.</span>
+        </li>
+      </ul>
+    </section>
+
+    <section class="block">
+      <h2>11. Fuera de alcance (este ciclo)</h2>
+      <div class="out">
+        <ul>
+          <li>Fine-tuning o entrenamiento de un modelo propio en estos 14 días</li>
+          <li>Meter el catálogo o el manual enteros en el prompt</li>
+          <li>Que un comentario de usuario reescriba solo la respuesta (solo el superadmin)</li>
+          <li>Leer mensajes privados, pedidos o billetera</li>
+          <li>Comprar o publicar en nombre del usuario</li>
+          <li>WhatsApp / app nativa</li>
+          <li>Buscar entre los ~12.500 posts del feed</li>
+          <li>Recargas de OpenAI después de los USD 10 iniciales</li>
+          <li>PDF/Office e índice FULLTEXT (fases posteriores)</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="block">
+      <h2>12. Visión a escalar</h2>
+      <ul class="clean">
+        <li><strong>Catálogo grande:</strong> FULLTEXT; el tope sigue siendo 6 fichas y 3 trozos de docs.</li>
+        <li><strong>Archivos:</strong> extracción de PDF en servidor; imágenes vía visión del modelo si está activo.</li>
+        <li><strong>Modelo propio en otro IP/servidor:</strong> cambiar URL, modelo y clave en admin-cp; apagar visión si el modelo no la tiene.</li>
+        <li><strong>Más rondas de ajuste:</strong> USD 18/h según la tabla de la sección 9.</li>
+      </ul>
+    </section>
+
+    <section class="block">
+      <h2>13. Aceptación</h2>
+      <p class="lead">
+        Al firmar, se acuerda el alcance de este documento, el cronograma 15–29 oct 2026, la recarga inicial de USD 10 en OpenAI a cargo de Zuitch,
+        la primera corrección incluida tras 5 días de trabajo de Aldo, y las rondas posteriores a USD 18/hora.
+      </p>
+      <div class="sign">
+        <div class="sign-box">
+          Por Zuitch / Aldo<br>
+          Nombre: _______________________<br>
+          Fecha: ________________________
+        </div>
+        <div class="sign-box">
+          Por desarrollo<br>
+          Nombre: _______________________<br>
+          Fecha: ________________________
+        </div>
+      </div>
+    </section>
+
+    <footer class="doc">
+      Zuitch AI · Planificación · Documento generado para zuitch.com · 15/10/2026
+    </footer>
+  </div>
+</body>
+</html>

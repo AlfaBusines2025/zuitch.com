@@ -110,6 +110,19 @@
 							}
 						}
 					?>
+					<?php
+						$cta_wa_val = '';
+						$cta_em_val = '';
+						$cta_ph_val = '';
+						if (!empty($wo['page_profile']['page_id'])) {
+							$cta_wa_val = !empty($wo['page_profile']['whatsapp']) ? $wo['page_profile']['whatsapp'] : '';
+							$cta_em_val = !empty($wo['page_profile']['page_email']) ? $wo['page_profile']['page_email'] : '';
+							$cta_ph_val = !empty($wo['page_profile']['phone']) ? $wo['page_profile']['phone'] : '';
+						}
+						$cta_form_id = 'product-cta-form';
+						$cta_wrap_class = '';
+						echo Wo_LoadPage('story/includes/cta-contact-form');
+					?>
 					<div class="wow_form_fields mb-0">
 						<label for="photos"><?php echo $wo['lang']['photos']; ?></label>
 					</div>

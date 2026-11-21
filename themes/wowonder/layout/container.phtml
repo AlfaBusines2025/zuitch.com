@@ -207,6 +207,29 @@
       #wo_post_stat_button > .post-cta-row .post-cta-stat.page-cta-whatsapp:hover,
       .post .post-cta-row .post-cta-stat.page-cta-whatsapp:hover{background:#016656!important;border-color:#016656!important;color:#fff!important;}
       .reel-cta-overlay .reel-cta-pill.page-cta-whatsapp{background:rgba(2,128,107,.92)!important;}
+      /* Publisher / edit contact CTA (#203/#206 — azul Zuitch) */
+      .zuitch-cta-form{display:block;padding:12px 15px 4px;border-top:1px dashed #ededed;}
+      .zuitch-cta-collapse-toggle{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;margin:0 0 10px;padding:10px 14px;border:1px solid rgba(33,150,243,.4);border-radius:10px;background:linear-gradient(180deg,rgba(66,165,245,.14),rgba(33,150,243,.04));color:#2196F3;font-size:13px;font-weight:700;line-height:1.2;cursor:pointer;text-align:left;transition:background .15s ease,border-color .15s ease,box-shadow .15s ease;}
+      .zuitch-cta-collapse-toggle:hover,.zuitch-cta-collapse-toggle.is-open,.zuitch-cta-collapse-toggle[aria-expanded="true"]{background:linear-gradient(180deg,rgba(66,165,245,.22),rgba(33,150,243,.08));border-color:rgba(33,150,243,.65);box-shadow:0 1px 0 rgba(33,150,243,.18);color:#1E88E5;}
+      .zuitch-cta-toggle-label{display:inline-flex;align-items:center;gap:8px;}
+      .zuitch-cta-toggle-icon{flex-shrink:0;opacity:.95;}
+      .zuitch-cta-chevron{font-size:14px;opacity:.8;min-width:1em;text-align:center;}
+      .zuitch-cta-fields{display:grid;grid-template-columns:1fr;gap:10px;padding-bottom:6px;}
+      @media (min-width:600px){.zuitch-cta-fields{grid-template-columns:1fr 1fr;}}
+      @media (min-width:992px){.zuitch-cta-fields{grid-template-columns:1fr 1fr 1fr;}}
+      .zuitch-cta-field{display:flex;align-items:stretch;margin:0;border:1px solid #e6e6e6;border-radius:10px;background:#fafafa;overflow:hidden;transition:border-color .15s ease,box-shadow .15s ease;}
+      .zuitch-cta-field:focus-within{border-color:rgba(33,150,243,.55);box-shadow:0 0 0 3px rgba(33,150,243,.12);background:#fff;}
+      .zuitch-cta-field-icon{display:flex;align-items:center;justify-content:center;width:40px;flex-shrink:0;color:#8a8a8a;background:rgba(0,0,0,.03);}
+      .zuitch-cta-field-wa .zuitch-cta-field-icon{color:#02806B;background:rgba(2,128,107,.08);}
+      .zuitch-cta-field-em .zuitch-cta-field-icon{color:#2196F3;background:rgba(33,150,243,.08);}
+      .zuitch-cta-field-ph .zuitch-cta-field-icon{color:#3d6ea8;background:rgba(61,110,168,.08);}
+      .zuitch-cta-field .form-control{border:0!important;box-shadow:none!important;background:transparent!important;border-radius:0!important;height:42px;padding:8px 12px 8px 0;font-size:13px;}
+      .zuitch-cta-field .form-control:focus{outline:0;}
+      #create-product-modal .zuitch-cta-form,#edit-product-cta-form.zuitch-cta-form{border-top:1px dashed #e0e0e0;padding:14px 0 8px;margin-top:8px;}
+      /* Product WhatsApp (#204) */
+      a.contact.btn.zuitch-product-wa,button.contact.btn.zuitch-product-wa{color:#fff!important;background:#02806B!important;border-color:#02806B!important;}
+      a.contact.btn.zuitch-product-wa:hover,button.contact.btn.zuitch-product-wa:hover{background:#016656!important;border-color:#016656!important;color:#fff!important;}
+      .wow_main_prod_foot a.zuitch-product-wa{display:inline-flex;align-items:center;justify-content:center;}
     </style>
   <?php } ?>
   <link rel="stylesheet" href="<?php echo $wo['config']['theme_url']; ?>/stylesheet/font-awesome-4.7.0/css/font-awesome.min.css<?php echo $wo['update_cache']; ?>?version=<?php echo $wo['config']['version']; ?>">
@@ -985,6 +1008,10 @@
     if ($wo['loggedin'] == true) {
       echo Wo_LoadPage('extra/daas-widget');
     }
+    // Zuitch AI floating assistant (logged-in users when enabled in admin-cp)
+    if ($wo['loggedin'] == true) {
+      echo Wo_LoadPage('extra/zuitch-ai-widget');
+    }
     ?>
     <div class="second-footer" style="<?php echo (in_array($wo['page'], $wo['footer_pages']) ? '' : 'display: none;'); ?> ">
       <?php
@@ -1101,10 +1128,12 @@
           }
           video.style.display = 'block';
           
-          // Prevenir autoplay silencioso (requiere interacción del usuario)
-          // Esto es importante para cumplir con políticas de navegadores.
-          // EXCEPCION: en reels no forzamos muted para permitir audio cuando el usuario da play.
-          if (!isReelsPage && video.hasAttribute('autoplay') && !video.hasAttribute('muted')) {
+          // Prevenir autoplay silencioso (requiere interacción del usuario).
+          // EXCEPCION: reels, y videos que el usuario ya desmuteó a mano.
+          if (!isReelsPage
+              && video.hasAttribute('autoplay')
+              && !video.hasAttribute('muted')
+              && video.getAttribute('data-zuitch-user-unmuted') !== '1') {
               if (!video.muted) {
                   video.muted = true;
               }
@@ -1401,9 +1430,11 @@
   $zuitch_script_mtime = (is_file($zuitch_theme_fs . '/javascript/script.js')) ? filemtime($zuitch_theme_fs . '/javascript/script.js') : time();
   $zuitch_zfb_mtime = (is_file($zuitch_theme_fs . '/javascript/zuitch-reel-share-fallback.js')) ? filemtime($zuitch_theme_fs . '/javascript/zuitch-reel-share-fallback.js') : time();
   $zuitch_ios_maps_mtime = (is_file($zuitch_theme_fs . '/javascript/zuitch-ios-maps.js')) ? filemtime($zuitch_theme_fs . '/javascript/zuitch-ios-maps.js') : time();
+  $zuitch_wa_wv_mtime = (is_file($zuitch_theme_fs . '/javascript/zuitch-whatsapp-webview.js')) ? filemtime($zuitch_theme_fs . '/javascript/zuitch-whatsapp-webview.js') : time();
   ?>
   <script type="text/javascript" src="<?php echo $wo['config']['theme_url']; ?>/javascript/script.js<?php echo $wo['update_cache']; ?>?version=<?php echo $wo['config']['version']; ?>&amp;m=<?php echo (int) $zuitch_script_mtime; ?>"></script>
   <script type="text/javascript" src="<?php echo $wo['config']['theme_url']; ?>/javascript/zuitch-reel-share-fallback.js<?php echo $wo['update_cache']; ?>?version=<?php echo $wo['config']['version']; ?>&amp;m=<?php echo (int) $zuitch_zfb_mtime; ?>"></script>
+  <script type="text/javascript" src="<?php echo $wo['config']['theme_url']; ?>/javascript/zuitch-whatsapp-webview.js<?php echo $wo['update_cache']; ?>?version=<?php echo $wo['config']['version']; ?>&amp;m=<?php echo (int) $zuitch_wa_wv_mtime; ?>"></script>
   <script type="text/javascript" src="<?php echo $wo['config']['theme_url']; ?>/javascript/zuitch-ios-maps.js<?php echo $wo['update_cache']; ?>?version=<?php echo $wo['config']['version']; ?>&amp;m=<?php echo (int) $zuitch_ios_maps_mtime; ?>"></script>
   <?php if ($wo['loggedin'] == true) { ?>
     <?php if ($wo['config']['google_map'] == 1) { ?>

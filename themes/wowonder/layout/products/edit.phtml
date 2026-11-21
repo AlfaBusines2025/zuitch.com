@@ -103,6 +103,26 @@
 							}
 						}
 						?>
+					<?php
+						$cta_wa_val = '';
+						$cta_em_val = '';
+						$cta_ph_val = '';
+						$edit_prod_post_id = !empty($wo['product']['post_id']) ? (int) $wo['product']['post_id'] : 0;
+						if ($edit_prod_post_id <= 0 && !empty($wo['product']['id']) && function_exists('Wo_GetPostIDFromProdcutID')) {
+							$edit_prod_post_id = (int) Wo_GetPostIDFromProdcutID($wo['product']['id']);
+						}
+						if ($edit_prod_post_id > 0 && function_exists('Wo_PostData')) {
+							$edit_prod_post = Wo_PostData($edit_prod_post_id);
+							if (!empty($edit_prod_post) && is_array($edit_prod_post)) {
+								$cta_wa_val = !empty($edit_prod_post['post_whatsapp']) ? $edit_prod_post['post_whatsapp'] : '';
+								$cta_em_val = !empty($edit_prod_post['post_email']) ? $edit_prod_post['post_email'] : '';
+								$cta_ph_val = !empty($edit_prod_post['post_phone']) ? $edit_prod_post['post_phone'] : '';
+							}
+						}
+						$cta_form_id = 'edit-product-cta-form';
+						$cta_wrap_class = '';
+						echo Wo_LoadPage('story/includes/cta-contact-form');
+					?>
 					<input type="hidden" name="product_id" value="<?php echo $wo['product']['id'];?>">
 					<div class="wow_form_fields mb-0">
 						<label for="photos"><?php echo $wo['lang']['photos']; ?></label>

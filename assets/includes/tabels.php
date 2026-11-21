@@ -150,6 +150,9 @@ define('T_PENDING_PAYMENTS', 'Wo_PendingPayments');
 define('T_UPLOADED_MEDIA', 'Wo_UploadedMedia');
 define('T_BACKUP_CODES', 'Wo_Backup_Codes');
 define('T_USER_ACTIVITY_LOG', 'Wo_User_Activity_Log');
+define('T_ZUITCH_AI_CHATS', 'Wo_ZuitchAi_Chats');
+define('T_ZUITCH_AI_MESSAGES', 'Wo_ZuitchAi_Messages');
+define('T_ZUITCH_AI_RATINGS', 'Wo_ZuitchAi_Ratings');
 // define('T_COUNTRIES_ADS', 'Wo_CountriesAds');
 
 ?>

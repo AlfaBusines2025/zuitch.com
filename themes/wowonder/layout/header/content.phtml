@@ -30,7 +30,7 @@
 							<?php if ($wo['config']['classified'] == 1 && (!function_exists('Wo_IsMobile') || !Wo_IsMobile())) { ?>
 								<li class="wow_hdr_desk_only">
 									<a class="sixteen-font-size" href="https://zuitch.com/products" id="wo_marketplace_btns" aria-label="<?php echo isset($wo['lang']['marketplace']) ? $wo['lang']['marketplace'] : $wo['lang']['market']; ?>">
-										<i class="fa fa-shopping-cart wow_hdr_nav_fa" aria-hidden="true"></i>
+										<?php echo Wo_LoadPage('header/market-cart-icon'); ?>
 										<span class="wow_hdr_nav_lbl"><?php echo isset($wo['lang']['marketplace']) ? $wo['lang']['marketplace'] : $wo['lang']['market']; ?></span>
 									</a>
 								</li>
@@ -59,7 +59,7 @@
 								   href="<?php echo $wo['config']['site_url']; ?>/products"
 								   id="wo_marketplace_btns"
 								   aria-label="<?php echo isset($wo['lang']['marketplace']) ? $wo['lang']['marketplace'] : $wo['lang']['market']; ?>">
-									<i class="fa fa-shopping-cart wow_hdr_nav_fa" aria-hidden="true"></i>
+									<?php echo Wo_LoadPage('header/market-cart-icon'); ?>
 								</a>
 						</li>
 						<?php } ?>

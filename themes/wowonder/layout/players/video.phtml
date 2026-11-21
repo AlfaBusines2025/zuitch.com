@@ -285,9 +285,14 @@ if ($wo_reel_is_reel_view && !empty($wo_reel_view_tags)) { ?>
             }
             if (typeof p.unmute === 'function') {
                 p.unmute();
-            } else if (p.media) {
-                p.media.muted = false;
-                p.media.defaultMuted = false;
+            }
+            var media = p.media || (p.tagName === 'VIDEO' ? p : null);
+            if (media) {
+                media.muted = false;
+                media.defaultMuted = false;
+                try { media.volume = 1; } catch (eV) {}
+                try { media.removeAttribute('muted'); } catch (eA) {}
+                try { media.setAttribute('data-zuitch-user-unmuted', '1'); } catch (eU) {}
             }
         } catch (e) {}
     }

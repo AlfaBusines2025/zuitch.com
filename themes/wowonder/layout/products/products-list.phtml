@@ -25,9 +25,17 @@
 		<div class="produc_info">
 			<div class="wow_main_prod_foot" style="<?php echo(empty($wo['product']['units']) && $wo['product']['units'] < 1 ? 'padding-bottom: 5px;' : '') ?>">
 				<?php if ($wo['loggedin']) { if (!empty($wo['product']['seller']) && $wo['product']['seller']['id'] != $wo['user']['user_id']) { ?>
+					<?php
+						$zuitch_prod_wa = function_exists('zuitch_product_whatsapp') ? zuitch_product_whatsapp($wo['product']) : '';
+					?>
 					<button class="contact btn btn-default btn-mat" onclick="Wo_OpenChatTab(<?php echo $wo['product']['seller']['id']?>,0,<?php echo $wo['product']['id']?>)" title="<?php echo $wo['lang']['contact_seller'] ?>">
 						<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M20,2H4A2,2 0 0,0 2,4V22L6,18H20A2,2 0 0,0 22,16V4A2,2 0 0,0 20,2M6,9H18V11H6M14,14H6V12H14M18,8H6V6H18"></path></svg>
 					</button>
+					<?php if ($zuitch_prod_wa !== '') { ?>
+					<a class="contact btn btn-mat zuitch-product-wa" href="https://wa.me/<?php echo htmlspecialchars($zuitch_prod_wa, ENT_QUOTES, 'UTF-8'); ?>" target="_blank" rel="noopener noreferrer" title="WhatsApp" onclick="event.stopPropagation();">
+						<?php echo zuitch_whatsapp_icon_svg(24); ?>
+					</a>
+					<?php } ?>
 					<?php if ($wo['config']['store_system'] == 'on') { ?>
 					<?php if (!empty($wo['product']['units']) && $wo['product']['units'] > 0) { ?>
 						<button class="contact btn btn-main btn-mat" onclick="AddProductToCart(this,'<?php echo($wo['product']['id']); ?>','add')" title="<?php echo $wo['lang']['buy_now'] ?>">

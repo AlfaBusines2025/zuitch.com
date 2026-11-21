@@ -4,7 +4,7 @@ Add here your custom css styles Example: p { text-align: center; color: red; }
 
 */
 
-/* Más padding interno en la barra de cookies */
+/* Ms padding interno en la barra de cookies */
 .cc-window {
   margin: 0px 20px 70px !important; /* top, sides, bottom */
 }
@@ -30,4 +30,273 @@ Add here your custom css styles Example: p { text-align: center; color: red; }
 .leftcol .left-sidebar .wow_side_post_fltr > a {
   flex: 1 1 auto;
   justify-content: flex-start;
+}
+
+/* Mobile: feed a ancho completo (sin franja gris a la derecha) */
+@media (max-width: 991px) {
+  .content-container.container {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+  .content-container.container > .page-margin > .row {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+  .content-container .middlecol {
+    width: 100% !important;
+    float: none !important;
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+  }
+  .content-container .leftcol,
+  .content-container .rightcol,
+  .content-container .sidebar-conatnier {
+    display: none !important;
+  }
+}
+
+/* Comentarios y nombres de usuario alineados a la izquierda */
+.post .post-footer .comments-list .comment,
+.post .post-footer .comments-list .comment .comment-body,
+.post .post-footer .comments-list .comment .comment-heading,
+.post .post-footer .comments-list .comment .comment-heading .user,
+.post .post-footer .comments-list .comment .comment-text,
+.post .post-footer .comments-list .reply .reply-heading,
+.post .post-footer .comments-list .reply .reply-text,
+.lightbox-post-footer .comments-list .comment,
+.lightbox-post-footer .comments-list .comment .comment-heading,
+.lightbox-post-footer .comments-list .comment .comment-heading .user,
+.lightbox-post-footer .comments-list .comment .comment-text {
+  text-align: left !important;
+}
+.post .post-footer .comments-list .comment .comment-heading,
+.lightbox-post-footer .comments-list .comment .comment-heading {
+  text-align: left !important;
+}
+
+/*
+ * Mobile home: no horizontal pan, fixed navbar on iOS, publisher name flush left.
+ * Do NOT put overflow-x:hidden on html/body - that turns body into the scroll
+ * container on iOS/WKWebView and breaks position:fixed on the navbar.
+ */
+@media (max-width: 600px) {
+  html,
+  body {
+    overflow-x: visible !important;
+    max-width: 100%;
+  }
+
+  /* Clip overflow on content only (sibling of header) so fixed navbar stays on viewport */
+  .content-container {
+    max-width: 100% !important;
+    overflow-x: hidden;
+    overflow-x: clip;
+    box-sizing: border-box;
+    /* Header spacer below owns the offset; do not stack another 45px margin */
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+  }
+
+  header.header-container {
+    overflow: visible !important;
+    transform: none !important;
+    filter: none !important;
+    perspective: none !important;
+    width: 100%;
+    max-width: 100%;
+    /* Spacer in document flow = fixed bar height so stories stay below navbar */
+    display: block;
+    min-height: calc(48px + env(safe-area-inset-top, 0px));
+    height: calc(48px + env(safe-area-inset-top, 0px));
+    margin: 0;
+    padding: 0;
+  }
+
+  .navbar.navbar-default.navbar-fixed-top {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    z-index: 1030 !important;
+    padding-top: env(safe-area-inset-top, 0px);
+    box-sizing: border-box;
+    height: calc(48px + env(safe-area-inset-top, 0px));
+    min-height: calc(48px + env(safe-area-inset-top, 0px));
+    max-height: calc(48px + env(safe-area-inset-top, 0px));
+    display: flex !important;
+    align-items: center;
+  }
+
+  .navbar.navbar-default.navbar-fixed-top > .header-fixed1000 {
+    width: 100%;
+    flex: 1 1 auto;
+  }
+
+  .header-fixed1000,
+  .header-fixed1000 > .container-fluid {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box;
+  }
+
+  .header-fixed1000 > .container-fluid {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between;
+    min-height: 48px;
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+    gap: 8px;
+  }
+
+  .wow_hdr_innr_left {
+    display: flex !important;
+    align-items: center !important;
+    min-width: 0 !important;
+    flex: 0 0 auto !important;
+    justify-content: flex-start !important;
+  }
+
+  .brand.header-brand {
+    display: flex !important;
+    align-items: center;
+    flex-shrink: 1;
+    min-width: 0;
+    max-width: 72px;
+    line-height: 0;
+  }
+
+  .brand.header-brand img,
+  .header-brand img {
+    width: auto !important;
+    max-width: 72px !important;
+    height: auto !important;
+    max-height: 22px;
+    display: block;
+  }
+
+  /*
+   * Header layout: [logo left] [middle icons evenly] [avatar right]
+   * Middle icons share remaining width; no horizontal overflow.
+   */
+  #head_menu_rght {
+    float: none !important;
+    display: flex !important;
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    max-width: 100%;
+    margin: 0 !important;
+    padding: 0 !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 0;
+    overflow: visible;
+  }
+
+  #head_menu_rght > li {
+    float: none !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin: 0 !important;
+    position: relative;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
+  /* Middle icons: market, reels, search, messages, notifications */
+  #head_menu_rght > li.wow_hdr_mob_icon_li,
+  #head_menu_rght > li.wow_new_search_bbtn,
+  #head_menu_rght > li.messages-notification-container,
+  #head_menu_rght > li.notification-container {
+    flex: 1 1 0 !important;
+  }
+
+  /* Avatar pinned to the far right */
+  #head_menu_rght > li:has(> a.user-menu-combination) {
+    flex: 0 0 auto !important;
+    margin-left: 2px !important;
+    padding-left: 2px;
+  }
+
+  /* Account switcher overlay: do not take layout space */
+  #head_menu_rght > li.dropdown-switch-account {
+    flex: 0 0 0 !important;
+    width: 0 !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    position: absolute !important;
+    right: 0;
+    top: 100%;
+  }
+
+  #head_menu_rght > li > a,
+  #head_menu_rght .user-menu-combination,
+  #head_menu_rght .sixteen-font-size {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    height: 40px;
+    width: 100%;
+    max-width: 44px;
+    line-height: 1 !important;
+    box-sizing: border-box;
+  }
+
+  #head_menu_rght > li:has(> a.user-menu-combination) > a {
+    width: auto;
+    max-width: none;
+    padding: 0 2px !important;
+  }
+
+  #head_menu_rght .new-update-alert {
+    top: 2px !important;
+    left: auto !important;
+    right: calc(50% - 16px) !important;
+    margin: 0 !important;
+  }
+
+  #head_menu_rght .user-menu-combination .user-avatar,
+  #head_menu_rght .user-menu-combination .user-avatar img {
+    display: block;
+    margin: 0 !important;
+  }
+
+  /* Stories: horizontal scroll stays inside the strip */
+  .user-status-home,
+  .wow_home_stories {
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .user-status-home ul.status-list,
+  .wow_home_stories ul.status-list {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+
+  /* Publisher username flush left next to avatar */
+  .sun_pub_name {
+    left: 50px !important;
+    right: auto !important;
+    margin-left: 0 !important;
+    text-align: left !important;
+    width: auto !important;
+  }
+
+  .sun_pub_name span {
+    text-align: left !important;
+  }
 }

@@ -115,7 +115,7 @@ if ($f == 'products') {
                 ));
                 exit();
             }
-            $product_id = $product_data;
+			$product_id = $product_data;
             $post_data  = array(
                 'user_id' => Wo_Secure($wo['user']['user_id']),
                 'product_id' => Wo_Secure($product_id),
@@ -124,6 +124,9 @@ if ($f == 'products') {
                 'page_id' => $page_id,
                 'active' => ($wo['config']['store_review_system'] == 'off' ? 1 : 0),
             );
+            if (function_exists('zuitch_parse_post_cta_from_request')) {
+                $post_data = array_merge($post_data, zuitch_parse_post_cta_from_request());
+            }
             $id         = Wo_RegisterPost($post_data);
             if (count($_FILES['postPhotos']['name']) > 0 && !empty($id) && $id > 0) {
                 for ($i = 0; $i < count($_FILES['postPhotos']['name']); $i++) {
@@ -248,6 +251,9 @@ if ($f == 'products') {
                 exit();
             }
             $id = Wo_GetPostIDFromProdcutID($product_id);
+            if (!empty($id) && $id > 0 && function_exists('zuitch_parse_post_cta_from_request') && function_exists('Wo_UpdatePostData')) {
+                Wo_UpdatePostData($id, zuitch_parse_post_cta_from_request());
+            }
             if (isset($_FILES['postPhotos']['name'])) {
                 if (count($_FILES['postPhotos']['name']) > 0 && !empty($id) && $id > 0) {
                     for ($i = 0; $i < count($_FILES['postPhotos']['name']); $i++) {

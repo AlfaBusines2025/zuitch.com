@@ -1,0 +1,1924 @@
+<?php
+if (empty($wo['loggedin'])) {
+    return;
+}
+if (empty($wo['config']['zuitch_ai']) || (string) $wo['config']['zuitch_ai'] !== '1') {
+    return;
+}
+if (in_array($wo['page'], array('welcome', 'register', 'logout', 'maintenance'), true)) {
+    return;
+}
+$httpdocs = dirname(dirname(dirname(dirname(__DIR__))));
+require_once $httpdocs . '/assets/includes/zuitch_ai.php';
+$zaiIsAdmin = zuitch_ai_is_superadmin() ? 1 : 0;
+$zaiImages = (!empty($wo['config']['zuitch_ai_images']) && (string) $wo['config']['zuitch_ai_images'] === '1') ? 1 : 0;
+$zaiFiles = (!empty($wo['config']['zuitch_ai_files']) && (string) $wo['config']['zuitch_ai_files'] === '1') ? 1 : 0;
+$zaiVoice = (!empty($wo['config']['zuitch_ai_voice']) && (string) $wo['config']['zuitch_ai_voice'] === '1') ? 1 : 0;
+$zaiTts = (!isset($wo['config']['zuitch_ai_tts']) || (string) $wo['config']['zuitch_ai_tts'] === '1') ? 1 : 0;
+$zaiHash = function_exists('Wo_CreateSession') ? Wo_CreateSession() : '';
+$zaiIcon = !empty($wo['config']['theme_url'])
+    ? rtrim($wo['config']['theme_url'], '/') . '/img/icon.png'
+    : '/themes/wowonder/img/icon.png';
+$zaiFabBottom = $zaiIsAdmin ? 90 : 22;
+$zaiPanelBottom = $zaiIsAdmin ? 156 : 88;
+$fileAccept = !empty($wo['config']['zuitch_ai_file_ext'])
+    ? '.' . implode(',.', array_map('trim', explode(',', strtolower($wo['config']['zuitch_ai_file_ext']))))
+    : '.txt,.csv,.md,.pdf';
+?>
+<style>
+#zai-root {
+  --zai-brand: #72b0be;
+  --zai-dark: #0d3b5c;
+  --zai-accent: #235777;
+  --zai-bg: #ebf3f5;
+  --zai-soft: #e8f0f6;
+  font-family: Poppins, "Segoe UI", sans-serif;
+}
+#zai-fab {
+  position: fixed;
+  right: 20px;
+  bottom: calc(<?php echo (int) $zaiFabBottom; ?>px + env(safe-area-inset-bottom, 0px));
+  z-index: 100000;
+  width: 58px;
+  height: 58px;
+  padding: 0;
+  border-radius: 50%;
+  border: 3px solid #fff;
+  cursor: grab;
+  background: linear-gradient(145deg, var(--zai-dark) 0%, var(--zai-brand) 100%);
+  box-shadow: 0 10px 28px rgba(13, 59, 92, 0.38), 0 0 0 1px rgba(114, 176, 190, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+#zai-fab:active { cursor: grabbing; }
+#zai-fab .zai-fab-icon {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  pointer-events: none;
+}
+#zai-fab:hover { transform: translateY(-2px) scale(1.03); }
+#zai-panel {
+  position: fixed;
+  right: 20px;
+  bottom: calc(<?php echo (int) $zaiPanelBottom; ?>px + env(safe-area-inset-bottom, 0px));
+  z-index: 100001;
+  width: 460px;
+  max-width: calc(100vw - 24px);
+  height: 640px;
+  max-height: calc(100vh - 88px);
+  max-height: calc(100dvh - 88px);
+  background: #fff;
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 20px 50px rgba(13, 59, 92, 0.28), 0 0 0 1px rgba(60, 66, 87, 0.08);
+  display: none;
+  flex-direction: column;
+}
+#zai-panel.open { display: flex; }
+#zai-head {
+  background: linear-gradient(135deg, var(--zai-dark) 0%, var(--zai-brand) 55%, var(--zai-accent) 100%);
+  color: #fff;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: default;
+  user-select: none;
+  flex-shrink: 0;
+}
+#zai-head .zai-brand {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+#zai-head .zai-brand img {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  object-fit: cover;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0,0,0,.15);
+}
+#zai-head .zai-brand strong {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  display: block;
+  line-height: 1.2;
+}
+#zai-head .zai-brand span {
+  font-size: 11px;
+  opacity: 0.85;
+  font-weight: 500;
+}
+#zai-head button {
+  background: rgba(255,255,255,.18);
+  border: 0;
+  color: #fff;
+  border-radius: 10px;
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  min-height: 36px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 700;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  -webkit-tap-highlight-color: transparent;
+}
+#zai-head button:hover { background: rgba(255,255,255,.28); }
+#zai-head button svg {
+  width: 18px;
+  height: 18px;
+  display: block;
+  pointer-events: none;
+}
+#zai-history { display: none; }
+#zai-body { display: flex; flex: 1; min-height: 0; background: var(--zai-bg); position: relative; }
+#zai-sidebar {
+  width: 160px;
+  background: #fff;
+  border-right: 1px solid #e4ebf0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex-shrink: 0;
+  z-index: 2;
+}
+#zai-sidebar .zai-side-actions { padding: 10px; display: flex; flex-direction: column; gap: 6px; }
+#zai-sidebar .zai-side-actions button {
+  border: 1px solid #dce3ec;
+  background: var(--zai-soft);
+  border-radius: 10px;
+  font-size: 12px;
+  padding: 9px 10px;
+  cursor: pointer;
+  color: var(--zai-accent);
+  font-weight: 600;
+  text-align: left;
+}
+#zai-chat-list { overflow-y: auto; flex: 1; padding: 0 8px 10px; }
+.zai-chat-item {
+  padding: 10px 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 12px;
+  color: #374151;
+  margin-bottom: 4px;
+  border: 1px solid transparent;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.zai-chat-item:hover, .zai-chat-item.active {
+  background: var(--zai-soft);
+  border-color: #c9d9e6;
+  color: var(--zai-dark);
+  font-weight: 600;
+}
+#zai-main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+#zai-msgs {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 14px;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+}
+.zai-bubble {
+  max-width: 88%;
+  margin-bottom: 14px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  font-size: 13.5px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  word-break: break-word;
+  box-shadow: 0 2px 8px rgba(13, 59, 92, 0.06);
+}
+.zai-bubble.user {
+  margin-left: auto;
+  background: linear-gradient(135deg, var(--zai-accent), var(--zai-dark));
+  color: #fff;
+  border-bottom-right-radius: 5px;
+}
+.zai-bubble.assistant {
+  margin-right: auto;
+  background: #fff;
+  border: 1px solid #e4ebf0;
+  border-bottom-left-radius: 5px;
+  color: #1a2332;
+}
+.zai-bubble.assistant::before {
+  content: none;
+}
+.zai-cards { margin-top: 10px; display: flex; flex-direction: column; gap: 7px; }
+.zai-card {
+  display: block;
+  text-decoration: none;
+  background: linear-gradient(180deg, #fafcfd, #f3f8fa);
+  border: 1px solid #dce3ec;
+  border-radius: 12px;
+  padding: 10px 12px;
+  color: #1a2332;
+  transition: border-color .15s, box-shadow .15s;
+}
+.zai-card:hover {
+  border-color: var(--zai-brand);
+  box-shadow: 0 4px 14px rgba(114, 176, 190, 0.2);
+}
+.zai-card .t { font-weight: 700; font-size: 12.5px; color: var(--zai-accent); letter-spacing: -0.01em; }
+.zai-card .p { font-size: 11.5px; color: #5c6575; margin-top: 3px; line-height: 1.35; }
+.zai-rate {
+  margin-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  opacity: 0.5;
+  transition: opacity .15s ease;
+}
+.zai-rate:hover,
+.zai-rate:focus-within,
+.zai-rate.is-down,
+.zai-rate.has-vote {
+  opacity: 1;
+}
+.zai-rate button {
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  font-size: 11px;
+  padding: 4px 8px;
+  cursor: pointer;
+  color: #8b95a5;
+  font-weight: 500;
+  line-height: 1.3;
+}
+.zai-rate button:hover { color: #4b5563; background: #f3f5f8; }
+.zai-rate button.on { background: #eef7f1; color: #0b6b36; }
+.zai-rate .zai-down.on { background: #f8eeee; color: #9b2c2c; }
+.zai-admin {
+  display: none;
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px dashed #e8edf2;
+  width: 100%;
+}
+.zai-rate.is-down .zai-admin,
+.zai-rate.is-admin-open .zai-admin {
+  display: block;
+}
+.zai-admin .zai-admin-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+}
+.zai-admin textarea {
+  display: none;
+  width: 100%;
+  min-height: 48px;
+  border: 1px solid #e4ebf0;
+  border-radius: 8px;
+  font-size: 11px;
+  padding: 7px 8px;
+  resize: vertical;
+  margin-top: 6px;
+  background: #fafbfc;
+  color: #374151;
+}
+.zai-admin.is-editing textarea { display: block; }
+#zai-foot {
+  border-top: 1px solid #e4ebf0;
+  background: #fff;
+  padding: 10px 12px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  flex-shrink: 0;
+}
+#zai-composer {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #dce3ec;
+  border-radius: 16px;
+  background: #fff;
+  overflow: hidden;
+  transition: border-color .15s, box-shadow .15s;
+}
+#zai-composer:focus-within {
+  border-color: var(--zai-brand);
+  box-shadow: 0 0 0 3px rgba(114, 176, 190, 0.2);
+}
+#zai-input {
+  width: 100%;
+  box-sizing: border-box;
+  border: none;
+  border-radius: 0;
+  min-height: 56px;
+  max-height: 140px;
+  padding: 12px 14px 8px;
+  font-size: 15px;
+  line-height: 1.45;
+  resize: none;
+  outline: none;
+  font-family: inherit;
+  background: transparent;
+  color: #1a2332;
+  overflow-y: auto;
+}
+#zai-input::placeholder { color: #9aa3b2; }
+#zai-tools {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 6px 6px;
+  border-top: 1px solid #f0f3f7;
+}
+#zai-tools-left {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+#zai-send, #zai-attach, #zai-attach-file, #zai-mic {
+  border: none;
+  border-radius: 10px;
+  height: 36px;
+  min-width: 36px;
+  cursor: pointer;
+  background: var(--zai-accent);
+  color: #fff;
+  font-weight: 700;
+  padding: 0 12px;
+  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  flex-shrink: 0;
+}
+#zai-attach, #zai-attach-file, #zai-mic {
+  background: transparent;
+  color: var(--zai-accent);
+  padding: 0;
+}
+#zai-attach:hover, #zai-attach-file:hover, #zai-mic:hover {
+  background: var(--zai-soft);
+}
+#zai-attach svg, #zai-attach-file svg, #zai-mic svg {
+  width: 20px;
+  height: 20px;
+  display: block;
+  pointer-events: none;
+}
+#zai-send {
+  height: 34px;
+  min-width: 72px;
+  border-radius: 10px;
+  font-size: 12.5px;
+  letter-spacing: 0.01em;
+}
+#zai-mic.recording {
+  background: #e11d48;
+  color: #fff;
+  animation: zai-pulse 1s ease-in-out infinite;
+  box-shadow: 0 0 0 3px rgba(225, 29, 72, 0.25);
+}
+#zai-attach-preview {
+  display: none;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  padding: 0 4px 8px;
+  background: #fff;
+}
+#zai-attach-preview.has-files { display: flex; }
+.zai-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  background: var(--zai-soft);
+  color: var(--zai-accent);
+  border-radius: 999px;
+  padding: 4px 10px 4px 6px;
+  font-size: 11px;
+  font-weight: 600;
+}
+.zai-chip img {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+.zai-chip .zai-chip-x {
+  border: none;
+  background: transparent;
+  color: #8b95a5;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  padding: 0 2px;
+}
+.zai-listen {
+  margin-top: 8px;
+  border: none;
+  background: transparent;
+  color: var(--zai-accent);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  opacity: 0.65;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.zai-listen:hover { opacity: 1; }
+.zai-listen:disabled { opacity: 0.45; cursor: wait; }
+.zai-bubble.user.zai-voice-msg {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+}
+.zai-voice-msg audio {
+  width: 100%;
+  max-width: 280px;
+  height: 36px;
+}
+.zai-voice-transcript {
+  font-size: 12.5px;
+  line-height: 1.45;
+  opacity: 0.95;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.zai-voice-label {
+  font-size: 10px;
+  font-weight: 600;
+  opacity: 0.75;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+#zai-rec-bar {
+  display: none;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 8px;
+  padding: 10px 12px;
+  background: #fff5f5;
+  border: 1px solid #fecaca;
+  border-radius: 14px;
+}
+#zai-rec-bar.is-on { display: flex; }
+.zai-rec-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #e11d48;
+  flex-shrink: 0;
+  animation: zai-pulse 1s ease-in-out infinite;
+}
+#zai-rec-label {
+  flex: 1;
+  min-width: 120px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #9f1239;
+}
+#zai-rec-timer {
+  font-variant-numeric: tabular-nums;
+  font-size: 13px;
+  font-weight: 700;
+  color: #9f1239;
+}
+#zai-rec-cancel, #zai-rec-send {
+  border: none;
+  border-radius: 10px;
+  height: 34px;
+  padding: 0 12px;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+#zai-rec-cancel {
+  background: #fff;
+  color: #9f1239;
+  border: 1px solid #fecaca;
+}
+#zai-rec-send {
+  background: var(--zai-accent);
+  color: #fff;
+}
+#zai-typing {
+  display: none;
+  font-size: 12px;
+  color: #5c6575;
+  padding: 0 14px 8px;
+  font-weight: 500;
+}
+#zai-typing span {
+  display: inline-block;
+  animation: zai-pulse 1.2s ease-in-out infinite;
+}
+@keyframes zai-pulse {
+  0%, 100% { opacity: .45; }
+  50% { opacity: 1; }
+}
+#zai-side-backdrop {
+  display: none;
+  position: absolute;
+  inset: 0;
+  background: rgba(13, 59, 92, 0.28);
+  z-index: 1;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+@media (max-width: 991px) {
+  #zai-fab {
+    right: 12px;
+    z-index: 100000;
+  }
+  #zai-root.zai-open #zai-fab {
+    display: none !important;
+  }
+  #zai-panel {
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    max-width: none;
+    height: 100%;
+    height: 100dvh;
+    max-height: none;
+    border-radius: 0;
+    z-index: 100001;
+    box-shadow: none;
+  }
+  #zai-head {
+    padding: 10px 12px;
+    padding-top: calc(10px + env(safe-area-inset-top, 0px));
+  }
+  #zai-history { display: inline-flex; }
+  #zai-msgs { padding: 14px 12px 10px; }
+  .zai-bubble { max-width: 92%; }
+  #zai-sidebar {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: min(78vw, 280px);
+    min-width: 0;
+    transform: translateX(-105%);
+    transition: transform .22s ease;
+    box-shadow: 8px 0 28px rgba(13, 59, 92, 0.18);
+    border-right: 1px solid #e4ebf0;
+  }
+  #zai-body.zai-side-open #zai-sidebar {
+    transform: translateX(0);
+  }
+  #zai-body.zai-side-open #zai-side-backdrop {
+    display: block;
+  }
+  #zai-foot {
+    padding: 8px 10px calc(8px + env(safe-area-inset-bottom, 0px));
+  }
+  #zai-input {
+    min-height: 64px;
+    font-size: 16px;
+    padding: 12px 14px 6px;
+  }
+  #zai-composer { border-radius: 16px; }
+}
+body.zai-noscroll {
+  overflow: hidden !important;
+  touch-action: none;
+  overscroll-behavior: none;
+}
+</style>
+<div id="zai-root"
+     data-fab-bottom="<?php echo (int) $zaiFabBottom; ?>"
+     data-panel-bottom="<?php echo (int) $zaiPanelBottom; ?>">
+  <button type="button" id="zai-fab" title="Zuitch AI — asistente" aria-label="Zuitch AI — asistente">
+    <img class="zai-fab-icon" src="<?php echo htmlspecialchars($zaiIcon, ENT_QUOTES, 'UTF-8'); ?>" alt="Zuitch AI" width="58" height="58" decoding="async">
+  </button>
+  <div id="zai-panel" role="dialog" aria-label="Zuitch AI">
+    <div id="zai-head">
+      <div class="zai-brand">
+        <img src="<?php echo htmlspecialchars($zaiIcon, ENT_QUOTES, 'UTF-8'); ?>" alt="">
+        <div>
+          <strong>Zuitch AI</strong>
+          <span>Asistente de la plataforma</span>
+        </div>
+      </div>
+      <button type="button" id="zai-history" title="Historial de chats" aria-label="Historial de chats" aria-expanded="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h10"/></svg>
+      </button>
+      <button type="button" id="zai-new" title="Nuevo chat" aria-label="Nuevo chat">+</button>
+      <button type="button" id="zai-close" title="Cerrar" aria-label="Cerrar">×</button>
+    </div>
+    <div id="zai-body">
+      <button type="button" id="zai-side-backdrop" aria-label="Cerrar historial" tabindex="-1"></button>
+      <div id="zai-sidebar">
+        <div class="zai-side-actions">
+          <button type="button" id="zai-del-one">Borrar chat</button>
+          <button type="button" id="zai-del-all">Borrar todo</button>
+        </div>
+        <div id="zai-chat-list"></div>
+      </div>
+      <div id="zai-main">
+        <div id="zai-msgs"></div>
+        <div id="zai-typing"><span>Zuitch AI está pensando…</span></div>
+        <div id="zai-attach-preview" aria-live="polite"></div>
+        <div id="zai-foot">
+          <?php if ($zaiVoice) { ?>
+          <div id="zai-rec-bar" aria-live="polite">
+            <span class="zai-rec-dot" aria-hidden="true"></span>
+            <span id="zai-rec-label">Grabando… toca Enviar audio para mandar</span>
+            <span id="zai-rec-timer">0:00</span>
+            <button type="button" id="zai-rec-cancel">Cancelar</button>
+            <button type="button" id="zai-rec-send">Enviar audio</button>
+          </div>
+          <?php } ?>
+          <div id="zai-composer">
+            <textarea id="zai-input" rows="2" placeholder="Pregunta a Zuitch AI…" enterkeyhint="send"></textarea>
+            <div id="zai-tools">
+              <div id="zai-tools-left">
+                <?php if ($zaiImages) { ?>
+                <button type="button" id="zai-attach" title="Adjuntar imagen (máx. 4 MB)" aria-label="Adjuntar imagen">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.5"/><path d="M21 16l-5.5-5.5L7 19"/></svg>
+                </button>
+                <input type="file" id="zai-file" accept="image/jpeg,image/png,image/webp" style="display:none">
+                <?php } ?>
+                <?php if ($zaiFiles) { ?>
+                <button type="button" id="zai-attach-file" title="Adjuntar archivo (máx. 2 MB)" aria-label="Adjuntar archivo">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5z"/><path d="M14 3v5h5M8 13h8M8 17h6"/></svg>
+                </button>
+                <input type="file" id="zai-doc" accept="<?php echo htmlspecialchars($fileAccept, ENT_QUOTES, 'UTF-8'); ?>" style="display:none">
+                <?php } ?>
+                <?php if ($zaiVoice) { ?>
+                <button type="button" id="zai-mic" title="Grabar nota de voz" aria-label="Grabar nota de voz">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>
+                </button>
+                <?php } ?>
+              </div>
+              <button type="button" id="zai-send">Enviar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+(function () {
+  var isAdmin = <?php echo (int) $zaiIsAdmin; ?>;
+  var voiceEnabled = <?php echo (int) $zaiVoice; ?>;
+  var ttsEnabled = <?php echo (int) $zaiTts; ?>;
+  var hashId = <?php echo json_encode($zaiHash); ?>;
+  var ajaxUrl = (typeof Wo_Ajax_Requests_File === 'function') ? Wo_Ajax_Requests_File() : '/requests.php';
+  var root = document.getElementById('zai-root');
+  var defaultFabBottom = Number(root.getAttribute('data-fab-bottom') || 22);
+  var defaultPanelBottom = Number(root.getAttribute('data-panel-bottom') || 88);
+  var state = { chatId: 0, chats: [], busy: false };
+  var voiceState = {
+    recording: false,
+    cancel: false,
+    mediaRecorder: null,
+    chunks: [],
+    stream: null,
+    startedAt: 0,
+    maxMs: 60000,
+    timerId: null,
+    mime: ''
+  };
+  var ttsAudio = null;
+  var audioUnlocked = false;
+
+  /** Android WebView: play() only works after a user gesture; unlock once on tap. */
+  function unlockAudioPlayback() {
+    if (audioUnlocked) return;
+    try {
+      var silent = new Audio(
+        'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA='
+      );
+      silent.volume = 0.01;
+      var p = silent.play();
+      if (p && typeof p.then === 'function') {
+        p.then(function () {
+          try { silent.pause(); } catch (e) {}
+          audioUnlocked = true;
+        }).catch(function () {});
+      } else {
+        audioUnlocked = true;
+      }
+    } catch (e) {}
+    try {
+      if (window.speechSynthesis) window.speechSynthesis.getVoices();
+    } catch (e2) {}
+  }
+
+  function el(id) { return document.getElementById(id); }
+
+  function post(action, data, opts) {
+    opts = opts || {};
+    var fd = new FormData();
+    fd.append('hash', hashId);
+    if (data) {
+      Object.keys(data).forEach(function (k) { fd.append(k, data[k]); });
+    }
+    if (opts.image && opts.image.files && opts.image.files[0]) {
+      fd.append('image', opts.image.files[0]);
+    }
+    if (opts.file && opts.file.files && opts.file.files[0]) {
+      fd.append('file', opts.file.files[0]);
+    }
+    if (opts.audioBlob) {
+      var aname = opts.audioName || 'audio.webm';
+      fd.append('audio', opts.audioBlob, aname);
+    }
+    return fetch(ajaxUrl + '?f=zuitch_ai&s=' + encodeURIComponent(action), {
+      method: 'POST',
+      body: fd,
+      credentials: 'same-origin',
+      headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    }).then(function (r) { return r.json(); });
+  }
+
+  function setTyping(label) {
+    var box = el('zai-typing');
+    if (!box) return;
+    var span = box.querySelector('span');
+    if (span) span.textContent = label || 'Zuitch AI está pensando…';
+    box.style.display = label === false ? 'none' : 'block';
+  }
+
+  function detectTextLang(text) {
+    var t = String(text || '');
+    if (/[一-龥ぁ-んァ-ン]/.test(t)) return 'ja';
+    if (/[а-яА-ЯЁё]/.test(t)) return 'ru';
+    if (/[àâçéèêëïîôùûüÿœæ]/i.test(t) && /\b(le|la|les|des|une|est|pour)\b/i.test(t)) return 'fr';
+    if (/\b(the|and|you|what|how|is|are)\b/i.test(t) && !/[áéíóúñ¿¡]/i.test(t)) return 'en';
+    if (/[áéíóúñ¿¡]/i.test(t) || /\b(que|cómo|como|para|hola|gracias)\b/i.test(t)) return 'es';
+    return 'es';
+  }
+
+  function langToBcp47(lang) {
+    var l = String(lang || 'es').toLowerCase().slice(0, 2);
+    var map = { es: 'es-ES', en: 'en-US', pt: 'pt-BR', fr: 'fr-FR', de: 'de-DE', it: 'it-IT', ja: 'ja-JP', ru: 'ru-RU' };
+    return map[l] || (l + '-' + l.toUpperCase());
+  }
+
+  function stopTtsPlayback() {
+    try {
+      if (window.speechSynthesis) window.speechSynthesis.cancel();
+    } catch (e) {}
+    if (ttsAudio) {
+      try { ttsAudio.pause(); } catch (e2) {}
+      ttsAudio = null;
+    }
+  }
+
+  function speakViaOpenAi(text, lang, btn) {
+    unlockAudioPlayback();
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = 'Generando audio…';
+    }
+    return post('tts', { text: String(text).slice(0, 2000), lang: lang || 'es' }).then(function (res) {
+      if (!res || res.status !== 200 || !res.audio_url) {
+        throw new Error((res && res.message) || 'No se pudo generar el audio.');
+      }
+      if (btn) btn.textContent = 'Reproduciendo…';
+      stopTtsPlayback();
+      ttsAudio = new Audio(res.audio_url);
+      var playPromise = ttsAudio.play();
+      if (!playPromise || typeof playPromise.then !== 'function') {
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = '🔊 Escuchar';
+        }
+        return;
+      }
+      return playPromise.then(function () {
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = '🔊 Escuchar';
+        }
+      }).catch(function (err) {
+        var msg = (err && err.message) ? err.message : '';
+        if (/user gesture|NotAllowedError|not allowed/i.test(msg)) {
+          throw new Error('Toca de nuevo «Escuchar» para oír la respuesta.');
+        }
+        throw err;
+      });
+    }).catch(function (e) {
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = '🔊 Escuchar';
+      }
+      if (btn) alert(e.message || 'No se pudo reproducir el audio.');
+    });
+  }
+
+  function speakText(text, opts) {
+    opts = opts || {};
+    if (!ttsEnabled || !text) return Promise.resolve();
+    var lang = opts.lang || detectTextLang(text);
+    var btn = opts.btn || null;
+    var clean = String(text).replace(/\s+/g, ' ').slice(0, 1200);
+    stopTtsPlayback();
+
+    var canSynth = !!(window.speechSynthesis && typeof window.SpeechSynthesisUtterance === 'function');
+    if (!canSynth) {
+      return speakViaOpenAi(clean, lang, btn);
+    }
+
+    return new Promise(function (resolve) {
+      var voicesReady = function () {
+        try {
+          var u = new SpeechSynthesisUtterance(clean);
+          u.lang = langToBcp47(lang);
+          u.rate = 1.02;
+          var voices = window.speechSynthesis.getVoices() || [];
+          var prefix = String(lang).toLowerCase().slice(0, 2);
+          var match = voices.filter(function (v) {
+            return (v.lang || '').toLowerCase().indexOf(prefix) === 0;
+          });
+          if (match.length) u.voice = match[0];
+          var started = false;
+          var fallbackTimer = setTimeout(function () {
+            if (started) return;
+            try { window.speechSynthesis.cancel(); } catch (e) {}
+            speakViaOpenAi(clean, lang, btn).then(resolve);
+          }, 700);
+          u.onstart = function () {
+            started = true;
+            clearTimeout(fallbackTimer);
+            if (btn) {
+              btn.disabled = false;
+              btn.textContent = 'Reproduciendo…';
+            }
+          };
+          u.onend = function () {
+            if (btn) {
+              btn.disabled = false;
+              btn.textContent = '🔊 Escuchar';
+            }
+            resolve();
+          };
+          u.onerror = function () {
+            clearTimeout(fallbackTimer);
+            if (!started) {
+              speakViaOpenAi(clean, lang, btn).then(resolve);
+            } else {
+              if (btn) {
+                btn.disabled = false;
+                btn.textContent = '🔊 Escuchar';
+              }
+              resolve();
+            }
+          };
+          if (btn) {
+            btn.disabled = true;
+            btn.textContent = 'Preparando…';
+          }
+          window.speechSynthesis.speak(u);
+        } catch (e) {
+          speakViaOpenAi(clean, lang, btn).then(resolve);
+        }
+      };
+      var voices = window.speechSynthesis.getVoices() || [];
+      if (voices.length) voicesReady();
+      else {
+        var once = function () {
+          window.speechSynthesis.removeEventListener('voiceschanged', once);
+          voicesReady();
+        };
+        window.speechSynthesis.addEventListener('voiceschanged', once);
+        setTimeout(voicesReady, 400);
+      }
+    });
+  }
+
+  function appendUserVoiceBubble(opts) {
+    opts = opts || {};
+    var wrap = document.createElement('div');
+    wrap.className = 'zai-bubble user zai-voice-msg';
+    var url = opts.url || '';
+    var transcript = opts.transcript || '';
+    var html = '<div class="zai-voice-label">Nota de voz</div>';
+    if (url) {
+      html += '<audio controls preload="metadata" src="' + escapeHtml(url) + '"></audio>';
+    }
+    if (transcript) {
+      html += '<div class="zai-voice-transcript">' + escapeHtml(transcript) + '</div>';
+    } else if (!url) {
+      html += '<div class="zai-voice-transcript">🎤 Nota de voz…</div>';
+    }
+    wrap.innerHTML = html;
+    el('zai-msgs').appendChild(wrap);
+    el('zai-msgs').scrollTop = el('zai-msgs').scrollHeight;
+    return wrap;
+  }
+
+  function appendAssistantMessage(m, opts) {
+    opts = opts || {};
+    m = m || {};
+    m.rating = m.rating || null;
+    var wrap = document.createElement('div');
+    wrap.className = 'zai-bubble assistant';
+    var listen = '';
+    if (ttsEnabled && m.content) {
+      listen = '<button type="button" class="zai-listen" data-speak="1">🔊 Escuchar</button>';
+    }
+    var cards = m.cards;
+    if (cards && !Array.isArray(cards)) cards = [];
+    wrap.innerHTML = escapeHtml(m.content || '') + renderCards(cards || []) + listen + renderRate(m);
+    el('zai-msgs').appendChild(wrap);
+    el('zai-msgs').scrollTop = el('zai-msgs').scrollHeight;
+    bindRateHandlers(wrap);
+    var btn = wrap.querySelector('.zai-listen');
+    if (btn) {
+      btn.onclick = function () {
+        unlockAudioPlayback();
+        speakText(m.content || '', { lang: m.lang || detectTextLang(m.content || ''), btn: btn });
+      };
+    }
+    // Never auto-play after async replies: Android WebView blocks play() without a fresh user gesture.
+    return wrap;
+  }
+
+  function clearAttachPreview() {
+    var prev = el('zai-attach-preview');
+    if (!prev) return;
+    prev.innerHTML = '';
+    prev.classList.remove('has-files');
+  }
+
+  function refreshAttachPreview() {
+    var prev = el('zai-attach-preview');
+    if (!prev) return;
+    prev.innerHTML = '';
+    var imageInput = el('zai-file');
+    var docInput = el('zai-doc');
+    var has = false;
+    function addChip(label, thumbUrl, onClear) {
+      has = true;
+      var chip = document.createElement('span');
+      chip.className = 'zai-chip';
+      if (thumbUrl) {
+        var img = document.createElement('img');
+        img.src = thumbUrl;
+        img.alt = '';
+        chip.appendChild(img);
+      }
+      var t = document.createElement('span');
+      t.textContent = label;
+      chip.appendChild(t);
+      var x = document.createElement('button');
+      x.type = 'button';
+      x.className = 'zai-chip-x';
+      x.setAttribute('aria-label', 'Quitar');
+      x.textContent = '×';
+      x.onclick = onClear;
+      chip.appendChild(x);
+      prev.appendChild(chip);
+    }
+    if (imageInput && imageInput.files && imageInput.files[0]) {
+      var f = imageInput.files[0];
+      var url = URL.createObjectURL(f);
+      addChip(f.name || 'imagen', url, function () {
+        imageInput.value = '';
+        URL.revokeObjectURL(url);
+        refreshAttachPreview();
+      });
+    }
+    if (docInput && docInput.files && docInput.files[0]) {
+      var d = docInput.files[0];
+      addChip(d.name || 'archivo', null, function () {
+        docInput.value = '';
+        refreshAttachPreview();
+      });
+    }
+    prev.classList.toggle('has-files', has);
+  }
+
+  function validateAttach(input, maxMb, kind) {
+    if (!input || !input.files || !input.files[0]) return true;
+    var f = input.files[0];
+    if (f.size > maxMb * 1024 * 1024) {
+      alert((kind || 'El archivo') + ' supera ' + maxMb + ' MB.');
+      input.value = '';
+      refreshAttachPreview();
+      return false;
+    }
+    return true;
+  }
+
+  function escapeHtml(s) {
+    return String(s || '').replace(/[&<>"']/g, function (c) {
+      return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]);
+    });
+  }
+
+  function clamp(n, min, max) {
+    return Math.max(min, Math.min(max, n));
+  }
+
+  function viewportSize() {
+    var vv = window.visualViewport;
+    return {
+      w: (vv && vv.width) ? vv.width : window.innerWidth,
+      h: (vv && vv.height) ? vv.height : window.innerHeight
+    };
+  }
+
+  function safeInset(side) {
+    try {
+      var probe = getComputedStyle(document.documentElement).getPropertyValue('env(safe-area-inset-' + side + ')');
+      var n = parseFloat(probe);
+      return isNaN(n) ? 0 : n;
+    } catch (e) {
+      return 0;
+    }
+  }
+
+  // Clear old independent panel position so chat always follows the bubble
+  try { localStorage.removeItem('zai_panel_pos'); } catch (e) {}
+
+  function positionPanelNearFab() {
+    var fab = el('zai-fab');
+    var panel = el('zai-panel');
+    if (!fab || !panel || !panel.classList.contains('open')) return;
+
+    // On narrow screens CSS already pins the panel; avoid fighting layout
+    if (window.innerWidth <= 991) {
+      panel.style.left = '';
+      panel.style.top = '';
+      panel.style.right = '';
+      panel.style.bottom = '';
+      return;
+    }
+
+    var gap = 12;
+    var fabRect = fab.getBoundingClientRect();
+    var pw = panel.offsetWidth || 400;
+    var ph = panel.offsetHeight || 580;
+    var vp = viewportSize();
+    var vw = vp.w;
+    var vh = vp.h;
+    var pad = 8 + safeInset('bottom');
+
+    var left = fabRect.right - pw;
+    var top = fabRect.top - ph - gap;
+
+    if (top < 8) {
+      top = fabRect.bottom + gap;
+    }
+    if (top + ph > vh - pad) {
+      top = clamp(vh - ph - pad, 8, vh - pad);
+    }
+    if (left < 8) {
+      left = fabRect.left;
+    }
+    left = clamp(left, 8, Math.max(8, vw - pw - 8));
+    top = clamp(top, 8, Math.max(8, vh - ph - pad));
+
+    panel.style.left = left + 'px';
+    panel.style.top = top + 'px';
+    panel.style.right = 'auto';
+    panel.style.bottom = 'auto';
+  }
+
+  var fabDragState = { blocked: false, ignoreClick: false, moved: false };
+
+  function isMobileAi() {
+    return window.innerWidth <= 991;
+  }
+
+  /**
+   * Keep the composer above the virtual keyboard on mobile web.
+   * Many browsers overlay the keyboard without shrinking 100dvh; visualViewport does shrink.
+   */
+  function clearMobileKeyboardLayout() {
+    var panel = el('zai-panel');
+    if (!panel || !isMobileAi()) return;
+    panel.style.top = '';
+    panel.style.left = '';
+    panel.style.right = '';
+    panel.style.bottom = '';
+    panel.style.height = '';
+    panel.style.maxHeight = '';
+  }
+
+  function syncMobileKeyboardLayout() {
+    var panel = el('zai-panel');
+    if (!panel || !panel.classList.contains('open') || !isMobileAi()) {
+      return;
+    }
+    var vv = window.visualViewport;
+    var layoutH = window.innerHeight || document.documentElement.clientHeight || 0;
+    var h = (vv && vv.height) ? vv.height : layoutH;
+    var top = (vv && typeof vv.offsetTop === 'number') ? vv.offsetTop : 0;
+    // Keyboard open if visual height is meaningfully smaller than layout height.
+    var keyboardOpen = layoutH > 0 && (layoutH - h) > 80;
+    if (!keyboardOpen) {
+      clearMobileKeyboardLayout();
+      return;
+    }
+    panel.style.left = '0';
+    panel.style.right = '0';
+    panel.style.top = top + 'px';
+    panel.style.bottom = 'auto';
+    panel.style.height = Math.max(180, Math.round(h)) + 'px';
+    panel.style.maxHeight = 'none';
+  }
+
+  function ensureComposerVisible() {
+    if (!isMobileAi()) return;
+    syncMobileKeyboardLayout();
+    var foot = el('zai-foot');
+    var msgs = el('zai-msgs');
+    try {
+      if (foot && foot.scrollIntoView) {
+        foot.scrollIntoView({ block: 'end', inline: 'nearest', behavior: 'auto' });
+      }
+    } catch (e) {
+      try { if (foot) foot.scrollIntoView(false); } catch (e2) {}
+    }
+    if (msgs) msgs.scrollTop = msgs.scrollHeight;
+  }
+
+  function setSideOpen(open) {
+    var body = el('zai-body');
+    var hist = el('zai-history');
+    if (!body) return;
+    var on = !!open && isMobileAi();
+    body.classList.toggle('zai-side-open', on);
+    if (hist) hist.setAttribute('aria-expanded', on ? 'true' : 'false');
+  }
+
+  function autoResizeInput() {
+    var input = el('zai-input');
+    if (!input) return;
+    input.style.height = 'auto';
+    var minH = isMobileAi() ? 64 : 56;
+    var next = Math.min(Math.max(input.scrollHeight, minH), 140);
+    input.style.height = next + 'px';
+  }
+
+  function setPanelOpen(open) {
+    var p = el('zai-panel');
+    if (!p || !root) return;
+    p.classList.toggle('open', !!open);
+    root.classList.toggle('zai-open', !!open);
+    document.body.classList.toggle('zai-noscroll', !!(open && isMobileAi()));
+    if (!open) {
+      setSideOpen(false);
+      clearMobileKeyboardLayout();
+    }
+    if (open) {
+      requestAnimationFrame(function () {
+        positionPanelNearFab();
+        syncMobileKeyboardLayout();
+        requestAnimationFrame(function () {
+          positionPanelNearFab();
+          syncMobileKeyboardLayout();
+        });
+        autoResizeInput();
+      });
+      refreshChats().then(function () {
+        if (state.chats.length) {
+          openChat(state.chats[0].id);
+        } else {
+          renderMessages([]);
+        }
+        positionPanelNearFab();
+        syncMobileKeyboardLayout();
+      });
+    }
+  }
+
+  function togglePanel() {
+    var p = el('zai-panel');
+    if (!p) return;
+    setPanelOpen(!p.classList.contains('open'));
+  }
+
+  function makeFabDraggable() {
+    var node = el('zai-fab');
+    if (!node) return;
+    var storageKey = 'zai_fab_pos';
+    var dragThreshold = 14;
+    var dragging = false;
+    var moved = false;
+    var startX = 0, startY = 0, origLeft = 0, origTop = 0;
+
+    function applyPos(left, top) {
+      node.style.left = left + 'px';
+      node.style.top = top + 'px';
+      node.style.right = 'auto';
+      node.style.bottom = 'auto';
+    }
+
+    function clampFabPos(left, top) {
+      var vp = viewportSize();
+      var padB = 4 + safeInset('bottom');
+      var padT = 4 + safeInset('top');
+      var maxL = Math.max(0, vp.w - node.offsetWidth - 4);
+      var maxT = Math.max(0, vp.h - node.offsetHeight - padB);
+      return {
+        left: clamp(left, 0, maxL),
+        top: clamp(top, padT, maxT)
+      };
+    }
+
+    function restore() {
+      try {
+        var raw = localStorage.getItem(storageKey);
+        if (!raw) return;
+        var pos = JSON.parse(raw);
+        if (typeof pos.left === 'number' && typeof pos.top === 'number') {
+          var c = clampFabPos(pos.left, pos.top);
+          applyPos(c.left, c.top);
+        }
+      } catch (e) {}
+    }
+
+    function save() {
+      try {
+        var rect = node.getBoundingClientRect();
+        localStorage.setItem(storageKey, JSON.stringify({ left: rect.left, top: rect.top }));
+      } catch (e) {}
+    }
+
+    function onDown(e) {
+      // Mouse only here for desktop drag start; touch uses touchstart without preventDefault
+      // so the browser can still synthesize click when we don't open via touchend.
+      var point = e.touches ? e.touches[0] : e;
+      if (!point) return;
+      var rect = node.getBoundingClientRect();
+      dragging = true;
+      moved = false;
+      fabDragState.moved = false;
+      startX = point.clientX;
+      startY = point.clientY;
+      origLeft = rect.left;
+      origTop = rect.top;
+      // Do NOT preventDefault on touchstart — that cancels click on mobile/WebView.
+    }
+
+    function onMove(e) {
+      if (!dragging) return;
+      var point = e.touches ? e.touches[0] : e;
+      if (!point) return;
+      var dx = point.clientX - startX;
+      var dy = point.clientY - startY;
+      if (!moved && (Math.abs(dx) + Math.abs(dy)) < dragThreshold) return;
+      moved = true;
+      fabDragState.moved = true;
+      var c = clampFabPos(origLeft + dx, origTop + dy);
+      applyPos(c.left, c.top);
+      positionPanelNearFab();
+      // Only block scroll once we are actually dragging
+      if (e.cancelable && e.type.indexOf('touch') === 0) e.preventDefault();
+    }
+
+    function onUp(e) {
+      if (!dragging) return;
+      dragging = false;
+      var wasMoved = moved;
+      if (wasMoved) {
+        save();
+        positionPanelNearFab();
+        fabDragState.blocked = true;
+        fabDragState.ignoreClick = true;
+        setTimeout(function () {
+          fabDragState.blocked = false;
+          fabDragState.ignoreClick = false;
+        }, 350);
+      } else if (e && e.type && e.type.indexOf('touch') === 0) {
+        // Mobile/WebView: open on tap because touchstart no longer allows a reliable click
+        fabDragState.ignoreClick = true;
+        togglePanel();
+        setTimeout(function () { fabDragState.ignoreClick = false; }, 400);
+      }
+      moved = false;
+      fabDragState.moved = false;
+    }
+
+    node.addEventListener('mousedown', onDown);
+    node.addEventListener('touchstart', onDown, { passive: true });
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('touchmove', onMove, { passive: false });
+    window.addEventListener('mouseup', onUp);
+    window.addEventListener('touchend', onUp);
+    window.addEventListener('touchcancel', onUp);
+    window.addEventListener('resize', function () {
+      restore();
+      positionPanelNearFab();
+      syncMobileKeyboardLayout();
+    });
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', function () {
+        restore();
+        positionPanelNearFab();
+        syncMobileKeyboardLayout();
+      });
+      window.visualViewport.addEventListener('scroll', function () {
+        syncMobileKeyboardLayout();
+      });
+    }
+    restore();
+  }
+
+  makeFabDraggable();
+
+  function renderChats() {
+    var box = el('zai-chat-list');
+    box.innerHTML = '';
+    state.chats.forEach(function (c) {
+      var d = document.createElement('div');
+      d.className = 'zai-chat-item' + (Number(c.id) === Number(state.chatId) ? ' active' : '');
+      d.textContent = c.title || ('Chat #' + c.id);
+      d.onclick = function () { openChat(c.id); };
+      box.appendChild(d);
+    });
+  }
+
+  function renderCards(cards) {
+    if (!cards || !cards.length) return '';
+    var html = '<div class="zai-cards">';
+    cards.forEach(function (c) {
+      if (c.type === 'doc') {
+        html += '<div class="zai-card"><div class="t">Documentación</div><div class="p">' + escapeHtml(c.snippet || '').slice(0, 180) + '</div></div>';
+        return;
+      }
+      var price = c.price ? (' · ' + c.price) : '';
+      var href = c.url ? escapeHtml(c.url) : '#';
+      var typeLabel = c.type === 'producto' ? 'Producto' : (c.type === 'pagina' ? 'Página' : (c.type === 'grupo' ? 'Grupo' : ''));
+      html += '<a class="zai-card" href="' + href + '" target="_blank" rel="noopener"><div class="t">' + escapeHtml(c.title || '') + price + '</div><div class="p">' + (typeLabel ? escapeHtml(typeLabel) + ' · ' : '') + escapeHtml(c.snippet || '') + '</div></a>';
+    });
+    html += '</div>';
+    return html;
+  }
+
+  function renderRate(msg) {
+    var rid = msg.id;
+    var rating = msg.rating || {};
+    var hasVote = rating.rating === 'up' || rating.rating === 'down';
+    var isDown = rating.rating === 'down';
+    var hasCorr = !!(rating.admin_correction && String(rating.admin_correction).trim());
+    var cls = 'zai-rate';
+    if (hasVote) cls += ' has-vote';
+    if (isDown || hasCorr) cls += ' is-down';
+    var html = '<div class="' + cls + '" data-mid="' + rid + '">';
+    html += '<button type="button" class="zai-up' + (rating.rating === 'up' ? ' on' : '') + '" data-r="up" title="Útil">Útil</button>';
+    html += '<button type="button" class="zai-down' + (isDown ? ' on' : '') + '" data-r="down" title="No útil">No útil</button>';
+    if (isAdmin) {
+      html += '<div class="zai-admin' + (hasCorr ? ' is-editing' : '') + '">';
+      html += '<div class="zai-admin-actions">';
+      html += '<button type="button" class="zai-ok' + (Number(rating.admin_ok) === 1 ? ' on' : '') + '" title="Marcar respuesta como correcta">OK</button>';
+      html += '<button type="button" class="zai-corr-btn" title="Escribir corrección">Corregir</button>';
+      html += '</div>';
+      html += '<textarea class="zai-corr" placeholder="Lo que debió decir…">' + escapeHtml(rating.admin_correction || '') + '</textarea>';
+      html += '</div>';
+    }
+    html += '</div>';
+    return html;
+  }
+
+  function renderMessages(messages) {
+    var box = el('zai-msgs');
+    box.innerHTML = '';
+    if (!messages || !messages.length) {
+      box.innerHTML = '<div class="zai-bubble assistant">Hola, soy <strong>Zuitch AI</strong>. Puedo recomendar productos, páginas o grupos, y ayudarte con el uso de la plataforma. También puedes enviarme notas de voz o adjuntos.</div>';
+      return;
+    }
+    messages.forEach(function (m) {
+      if (m.role === 'assistant') {
+        appendAssistantMessage(m, { autoSpeak: false });
+        return;
+      }
+      var voice = m.cards && m.cards.voice ? m.cards.voice : null;
+      if (voice && (voice.url || voice.transcript)) {
+        appendUserVoiceBubble({
+          url: voice.url || '',
+          transcript: voice.transcript || String(m.content || '').replace(/^\[Nota de voz\]\s*/i, '')
+        });
+        return;
+      }
+      var content = String(m.content || '');
+      if (/^\[Nota de voz\]/i.test(content)) {
+        appendUserVoiceBubble({
+          transcript: content.replace(/^\[Nota de voz\]\s*/i, '')
+        });
+        return;
+      }
+      var d = document.createElement('div');
+      d.className = 'zai-bubble user';
+      d.textContent = content;
+      box.appendChild(d);
+    });
+    box.scrollTop = box.scrollHeight;
+  }
+
+  function bindRateHandlers(box) {
+    box.querySelectorAll('.zai-rate').forEach(function (wrap) {
+      var mid = wrap.getAttribute('data-mid');
+      var admin = wrap.querySelector('.zai-admin');
+      wrap.querySelectorAll('.zai-up, .zai-down').forEach(function (btn) {
+        btn.onclick = function () {
+          var r = btn.getAttribute('data-r');
+          post('rate', { message_id: mid, rating: r, comment: '' }).then(function () {
+            wrap.querySelectorAll('.zai-up, .zai-down').forEach(function (b) { b.classList.remove('on'); });
+            btn.classList.add('on');
+            wrap.classList.add('has-vote');
+            if (r === 'down') {
+              wrap.classList.add('is-down');
+            } else {
+              wrap.classList.remove('is-down');
+              if (admin) admin.classList.remove('is-editing');
+            }
+          });
+        };
+      });
+      var ok = wrap.querySelector('.zai-ok');
+      if (ok) {
+        ok.onclick = function () {
+          post('admin_correct', { message_id: mid, admin_ok: 1, admin_correction: '' }).then(function () {
+            ok.classList.add('on');
+            if (admin) admin.classList.remove('is-editing');
+          });
+        };
+      }
+      var corrBtn = wrap.querySelector('.zai-corr-btn');
+      if (corrBtn) {
+        corrBtn.onclick = function () {
+          var ta = wrap.querySelector('.zai-corr');
+          if (!admin) return;
+          if (!admin.classList.contains('is-editing')) {
+            admin.classList.add('is-editing');
+            wrap.classList.add('is-down');
+            if (ta) ta.focus();
+            return;
+          }
+          post('admin_correct', { message_id: mid, admin_ok: 0, admin_correction: ta.value || '' }).then(function () {
+            corrBtn.textContent = 'Guardado';
+            setTimeout(function () { corrBtn.textContent = 'Corregir'; }, 1600);
+          });
+        };
+      }
+    });
+  }
+
+  function refreshChats() {
+    return post('list_chats', {}).then(function (res) {
+      if (res.status === 200) {
+        state.chats = res.chats || [];
+        renderChats();
+      }
+    });
+  }
+
+  function openChat(id) {
+    state.chatId = Number(id);
+    renderChats();
+    setSideOpen(false);
+    return post('get_chat', { chat_id: id }).then(function (res) {
+      if (res.status === 200) {
+        renderMessages(res.messages || []);
+      }
+    });
+  }
+
+  function ensureChat() {
+    if (state.chatId) return Promise.resolve(state.chatId);
+    return post('new_chat', {}).then(function (res) {
+      if (res.status === 200 && res.chat) {
+        state.chatId = Number(res.chat.id);
+        return refreshChats().then(function () { return state.chatId; });
+      }
+      throw new Error('No se pudo crear el chat');
+    });
+  }
+
+  function send() {
+    if (state.busy) return;
+    var input = el('zai-input');
+    var text = (input.value || '').trim();
+    var imageInput = el('zai-file');
+    var docInput = el('zai-doc');
+    if (imageInput && !validateAttach(imageInput, 4, 'La imagen')) return;
+    if (docInput && !validateAttach(docInput, 2, 'El archivo')) return;
+    var hasImage = imageInput && imageInput.files && imageInput.files[0];
+    var hasDoc = docInput && docInput.files && docInput.files[0];
+    if (!text && !hasImage && !hasDoc) return;
+    state.busy = true;
+    setTyping('Zuitch AI está pensando…');
+    ensureChat().then(function (chatId) {
+      var userBubble = document.createElement('div');
+      userBubble.className = 'zai-bubble user';
+      var label = text;
+      if (!label && hasImage) label = '[imagen]';
+      if (!label && hasDoc) label = '[archivo]';
+      if (text && hasImage) label = text + ' [imagen]';
+      if (text && hasDoc) label = text + ' [archivo]';
+      userBubble.textContent = label;
+      el('zai-msgs').appendChild(userBubble);
+      el('zai-msgs').scrollTop = el('zai-msgs').scrollHeight;
+      input.value = '';
+      autoResizeInput();
+      return post('send', { chat_id: chatId, text: text }, { image: imageInput, file: docInput });
+    }).then(function (res) {
+      state.busy = false;
+      setTyping(false);
+      if (imageInput) imageInput.value = '';
+      if (docInput) docInput.value = '';
+      clearAttachPreview();
+      if (res.status !== 200) {
+        var err = document.createElement('div');
+        err.className = 'zai-bubble assistant';
+        err.textContent = res.message || 'Error al responder. Intenta de nuevo.';
+        el('zai-msgs').appendChild(err);
+        return;
+      }
+      state.chatId = Number(res.chat_id || state.chatId);
+      appendAssistantMessage(res.message || {}, { autoSpeak: false });
+      refreshChats();
+    }).catch(function (e) {
+      state.busy = false;
+      setTyping(false);
+      alert(e.message || 'Error');
+    });
+  }
+
+  function pickAudioMime() {
+    if (!window.MediaRecorder) return '';
+    var candidates = [
+      'audio/webm;codecs=opus',
+      'audio/webm',
+      'audio/mp4',
+      'audio/ogg;codecs=opus',
+      'audio/ogg'
+    ];
+    for (var i = 0; i < candidates.length; i++) {
+      if (MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(candidates[i])) {
+        return candidates[i];
+      }
+    }
+    return '';
+  }
+
+  function stopVoiceTracks() {
+    if (voiceState.stream) {
+      try {
+        voiceState.stream.getTracks().forEach(function (t) { t.stop(); });
+      } catch (e) {}
+      voiceState.stream = null;
+    }
+  }
+
+  function formatRecTimer(ms) {
+    var s = Math.floor(ms / 1000);
+    var m = Math.floor(s / 60);
+    s = s % 60;
+    return m + ':' + (s < 10 ? '0' : '') + s;
+  }
+
+  function setRecBar(on) {
+    var bar = el('zai-rec-bar');
+    if (!bar) return;
+    bar.classList.toggle('is-on', !!on);
+    if (voiceState.timerId) {
+      clearInterval(voiceState.timerId);
+      voiceState.timerId = null;
+    }
+    if (on) {
+      var timerEl = el('zai-rec-timer');
+      if (timerEl) timerEl.textContent = '0:00';
+      voiceState.timerId = setInterval(function () {
+        if (!voiceState.startedAt || !timerEl) return;
+        timerEl.textContent = formatRecTimer(Date.now() - voiceState.startedAt);
+      }, 250);
+    }
+  }
+
+  function setMicRecording(on) {
+    var mic = el('zai-mic');
+    if (mic) mic.classList.toggle('recording', !!on);
+    voiceState.recording = !!on;
+    setRecBar(on);
+    if (on) setTyping(false);
+  }
+
+  function startVoiceRecord() {
+    if (!voiceEnabled || state.busy || voiceState.recording) return;
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      alert('Tu navegador o la app no permiten el micrófono. Activa el permiso de audio para hablar con Zuitch AI.');
+      return;
+    }
+    var mime = pickAudioMime();
+    voiceState.mime = mime;
+    voiceState.cancel = false;
+    setTyping('Pidiendo permiso del micrófono…');
+    navigator.mediaDevices.getUserMedia({ audio: true }).then(function (stream) {
+      voiceState.stream = stream;
+      voiceState.chunks = [];
+      var opts = mime ? { mimeType: mime } : undefined;
+      var rec;
+      try {
+        rec = opts ? new MediaRecorder(stream, opts) : new MediaRecorder(stream);
+      } catch (e) {
+        rec = new MediaRecorder(stream);
+      }
+      voiceState.mediaRecorder = rec;
+      voiceState.startedAt = Date.now();
+      rec.ondataavailable = function (ev) {
+        if (ev.data && ev.data.size > 0) voiceState.chunks.push(ev.data);
+      };
+      rec.onstop = function () {
+        var wasCancel = !!voiceState.cancel;
+        voiceState.cancel = false;
+        setMicRecording(false);
+        var blobType = (rec.mimeType || mime || voiceState.mime || 'audio/webm').split(';')[0];
+        var blob = new Blob(voiceState.chunks, { type: blobType });
+        voiceState.chunks = [];
+        stopVoiceTracks();
+        if (wasCancel) {
+          setTyping(false);
+          return;
+        }
+        if (!blob.size) {
+          setTyping(false);
+          alert('No se capturó audio. Intenta de nuevo.');
+          return;
+        }
+        var elapsed = Date.now() - voiceState.startedAt;
+        if (elapsed < 400) {
+          setTyping(false);
+          alert('Nota demasiado corta. Graba al menos un segundo y toca Enviar audio.');
+          return;
+        }
+        sendVoiceBlob(blob, blobType);
+      };
+      rec.start(250);
+      setMicRecording(true);
+      if (voiceState._maxTimer) clearTimeout(voiceState._maxTimer);
+      voiceState._maxTimer = setTimeout(function () {
+        if (voiceState.recording) finishVoiceRecord(false);
+      }, voiceState.maxMs);
+    }).catch(function () {
+      setTyping(false);
+      setMicRecording(false);
+      alert('No se pudo usar el micrófono. En el navegador o la app, permite el acceso al micrófono para hablar con Zuitch AI.');
+    });
+  }
+
+  function finishVoiceRecord(cancel) {
+    voiceState.cancel = !!cancel;
+    if (voiceState._maxTimer) {
+      clearTimeout(voiceState._maxTimer);
+      voiceState._maxTimer = null;
+    }
+    var rec = voiceState.mediaRecorder;
+    if (rec && rec.state !== 'inactive') {
+      try { rec.stop(); } catch (e) {
+        setMicRecording(false);
+        stopVoiceTracks();
+      }
+    } else {
+      setMicRecording(false);
+      stopVoiceTracks();
+    }
+  }
+
+  function sendVoiceBlob(blob, mime) {
+    if (state.busy) return;
+    state.busy = true;
+    setTyping('Transcribiendo…');
+    var ext = 'webm';
+    if (mime.indexOf('mp4') !== -1 || mime.indexOf('m4a') !== -1) ext = 'm4a';
+    else if (mime.indexOf('ogg') !== -1) ext = 'ogg';
+    else if (mime.indexOf('mpeg') !== -1 || mime.indexOf('mp3') !== -1) ext = 'mp3';
+    var localUrl = '';
+    try { localUrl = URL.createObjectURL(blob); } catch (e) {}
+    ensureChat().then(function (chatId) {
+      var userBubble = appendUserVoiceBubble({
+        url: localUrl,
+        transcript: 'Transcribiendo…'
+      });
+      setTyping('Enviando…');
+      return post('voice', { chat_id: chatId }, { audioBlob: blob, audioName: 'audio.' + ext }).then(function (res) {
+        var audioEl = userBubble.querySelector('audio');
+        var trEl = userBubble.querySelector('.zai-voice-transcript');
+        if (res && res.audio_url && audioEl) {
+          audioEl.src = res.audio_url;
+          if (localUrl) {
+            try { URL.revokeObjectURL(localUrl); } catch (e2) {}
+          }
+        }
+        if (trEl) {
+          trEl.textContent = (res && res.transcript) ? res.transcript : 'Nota de voz';
+        }
+        setTyping('Zuitch AI está pensando…');
+        return res;
+      });
+    }).then(function (res) {
+      state.busy = false;
+      setTyping(false);
+      if (!res || res.status !== 200) {
+        var err = document.createElement('div');
+        err.className = 'zai-bubble assistant';
+        err.textContent = (res && res.message) ? res.message : 'No se pudo procesar la nota de voz.';
+        el('zai-msgs').appendChild(err);
+        return;
+      }
+      state.chatId = Number(res.chat_id || state.chatId);
+      var msg = res.message || {};
+      if (res.lang && !msg.lang) msg.lang = res.lang;
+      appendAssistantMessage(msg, { autoSpeak: false });
+      refreshChats();
+    }).catch(function (e) {
+      state.busy = false;
+      setTyping(false);
+      var msg = e.message || 'Error al enviar la nota de voz';
+      if (/user gesture|NotAllowedError|play\(\)/i.test(msg)) {
+        return;
+      }
+      alert(msg);
+    });
+  }
+
+  function bindMic() {
+    var mic = el('zai-mic');
+    if (!mic || !voiceEnabled) return;
+
+    mic.addEventListener('click', function (e) {
+      e.preventDefault();
+      unlockAudioPlayback();
+      if (state.busy) return;
+      if (voiceState.recording) return;
+      startVoiceRecord();
+    });
+
+    var sendBtn = el('zai-rec-send');
+    if (sendBtn) {
+      sendBtn.onclick = function () {
+        unlockAudioPlayback();
+        if (!voiceState.recording) return;
+        finishVoiceRecord(false);
+      };
+    }
+    var cancelBtn = el('zai-rec-cancel');
+    if (cancelBtn) {
+      cancelBtn.onclick = function () {
+        if (!voiceState.recording) {
+          setRecBar(false);
+          return;
+        }
+        finishVoiceRecord(true);
+      };
+    }
+  }
+
+  el('zai-fab').addEventListener('click', function (e) {
+    // After a touch tap we already toggled in touchend; skip synthetic click.
+    if (fabDragState.ignoreClick || fabDragState.blocked) {
+      e.preventDefault();
+      e.stopPropagation();
+      fabDragState.blocked = false;
+      return;
+    }
+    togglePanel();
+  });
+  el('zai-close').onclick = function () { setPanelOpen(false); };
+  window.addEventListener('resize', function () {
+    var p = el('zai-panel');
+    if (!p || !p.classList.contains('open')) return;
+    document.body.classList.toggle('zai-noscroll', isMobileAi());
+    if (!isMobileAi()) {
+      setSideOpen(false);
+      clearMobileKeyboardLayout();
+      positionPanelNearFab();
+    } else {
+      syncMobileKeyboardLayout();
+    }
+    autoResizeInput();
+  });
+  var histBtn = el('zai-history');
+  if (histBtn) {
+    histBtn.onclick = function () {
+      var body = el('zai-body');
+      setSideOpen(!(body && body.classList.contains('zai-side-open')));
+    };
+  }
+  var sideBackdrop = el('zai-side-backdrop');
+  if (sideBackdrop) {
+    sideBackdrop.onclick = function () { setSideOpen(false); };
+  }
+  el('zai-new').onclick = function () {
+    setSideOpen(false);
+    post('new_chat', {}).then(function (res) {
+      if (res.status === 200 && res.chat) {
+        state.chatId = Number(res.chat.id);
+        refreshChats().then(function () { renderMessages([]); });
+      }
+    });
+  };
+  el('zai-del-one').onclick = function () {
+    if (!state.chatId) return;
+    if (!confirm('¿Borrar este chat?')) return;
+    post('delete_chat', { chat_id: state.chatId }).then(function () {
+      state.chatId = 0;
+      refreshChats().then(function () {
+        if (state.chats.length) openChat(state.chats[0].id);
+        else renderMessages([]);
+      });
+    });
+  };
+  el('zai-del-all').onclick = function () {
+    if (!confirm('¿Borrar todo tu historial de Zuitch AI?')) return;
+    post('delete_all', {}).then(function () {
+      state.chatId = 0;
+      state.chats = [];
+      renderChats();
+      renderMessages([]);
+    });
+  };
+  el('zai-send').onclick = send;
+  el('zai-input').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      send();
+    }
+  });
+  el('zai-input').addEventListener('input', autoResizeInput);
+  el('zai-input').addEventListener('focus', function () {
+    if (!isMobileAi()) return;
+    syncMobileKeyboardLayout();
+    setTimeout(ensureComposerVisible, 50);
+    setTimeout(ensureComposerVisible, 280);
+  });
+  el('zai-input').addEventListener('blur', function () {
+    setTimeout(function () {
+      if (!isMobileAi()) return;
+      var active = document.activeElement;
+      if (active && (active.id === 'zai-input' || (el('zai-panel') && el('zai-panel').contains(active) && /INPUT|TEXTAREA|SELECT|BUTTON/.test(active.tagName)))) {
+        syncMobileKeyboardLayout();
+        return;
+      }
+      clearMobileKeyboardLayout();
+    }, 120);
+  });
+  autoResizeInput();
+  var attach = el('zai-attach');
+  if (attach) {
+    attach.onclick = function () { el('zai-file').click(); };
+  }
+  var attachFile = el('zai-attach-file');
+  if (attachFile) {
+    attachFile.onclick = function () { el('zai-doc').click(); };
+  }
+  var fileInp = el('zai-file');
+  if (fileInp) {
+    fileInp.addEventListener('change', function () {
+      validateAttach(fileInp, 4, 'La imagen');
+      refreshAttachPreview();
+    });
+  }
+  var docInp = el('zai-doc');
+  if (docInp) {
+    docInp.addEventListener('change', function () {
+      validateAttach(docInp, 2, 'El archivo');
+      refreshAttachPreview();
+    });
+  }
+  bindMic();
+  if (window.speechSynthesis) {
+    try { window.speechSynthesis.getVoices(); } catch (e) {}
+  }
+})();
+</script>
